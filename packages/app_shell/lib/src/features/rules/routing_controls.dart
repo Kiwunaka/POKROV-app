@@ -1,28 +1,41 @@
 part of pokrov_app_shell;
 
 class _LocalDpiCard extends StatelessWidget {
-  const _LocalDpiCard({required this.preferences, required this.onChanged, required this.hostPlatform, required this.routeMode});
+  const _LocalDpiCard({required this.preferences, required this.onChanged, required this.hostPlatform,
+    required this.routeMode, required this.windowsLocalDpiReady});
   final PokrovRoutingPreferences preferences;
   final ValueChanged<PokrovRoutingPreferences> onChanged;
   final HostPlatform hostPlatform;
   final RouteMode routeMode;
+  final bool windowsLocalDpiReady;
 
   @override
-  Widget build(BuildContext context) => _SectionCard(
-    title: 'Автоматический прямой доступ',
-    lines: const ['Пробует прямое соединение для разрешённых сервисов; при сбое использует VPN. Сервис видит ваш IP при прямом подключении.'],
-    child: _RoutingToggleRow(
-      key: const ValueKey('rules-local-dpi'),
-      title: 'Авто',
-      subtitle: routeMode == RouteMode.allExceptRu
-          ? 'YouTube: сначала напрямую, при сбое через VPN.'
-          : hostPlatform == HostPlatform.windows
-              ? 'Разрешённые выбранные сервисы, подготовленный Windows runtime.'
-              : 'Разрешённые выбранные сервисы, Android 10 и новее.',
-      value: preferences.localDpiEnabled,
-      onChanged: (value) => onChanged(preferences.copyWith(localDpiEnabled: value)),
-    ),
-  );
+  Widget build(BuildContext context) {
+    final supportedMode = const {RouteMode.allExceptRu, RouteMode.selectiveServices}.contains(routeMode);
+    final runtimeReady = hostPlatform != HostPlatform.windows || windowsLocalDpiReady;
+    return _SectionCard(
+      key: const ValueKey('rules-local-dpi-card'),
+      title: 'Обход блокировок',
+      lines: [
+        hostPlatform == HostPlatform.windows ? 'Windows: Flowseal / zapret.' : 'Android 10 и новее: ByeDPI.',
+        if (!runtimeReady)
+          'Flowseal / zapret недоступен: служба POKROV не подтвердила готовность компонента.'
+        else if (!supportedMode)
+          'Работает в режимах «Россия напрямую» и «Только выбранные сервисы».'
+        else
+          'Применяется при подключении POKROV. При прямом соединении сервис видит ваш IP.',
+      ],
+      child: !supportedMode || !runtimeReady ? null : _RoutingToggleRow(
+        key: const ValueKey('rules-local-dpi'),
+        title: 'Включить обход блокировок',
+        subtitle: routeMode == RouteMode.allExceptRu
+            ? 'YouTube: сначала напрямую, при сбое через VPN.'
+            : 'Для разрешённых выбранных сервисов: сначала напрямую, при сбое через VPN.',
+        value: preferences.localDpiEnabled,
+        onChanged: (value) => onChanged(preferences.copyWith(localDpiEnabled: value)),
+      ),
+    );
+  }
 }
 
 class _WindowsConnectionCard extends StatelessWidget {

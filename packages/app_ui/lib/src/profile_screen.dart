@@ -26,6 +26,7 @@ class ProfileScreen extends StatelessWidget {
     this.onDiagnostics,
     this.onShare,
     this.onWarp,
+    this.onBypass,
     this.onAppSettings,
     this.adSlot,
   });
@@ -46,6 +47,7 @@ class ProfileScreen extends StatelessWidget {
   final VoidCallback? onDiagnostics;
   final VoidCallback? onShare;
   final VoidCallback? onWarp;
+  final VoidCallback? onBypass;
   final VoidCallback? onAppSettings;
   final Widget? adSlot;
 
@@ -76,6 +78,7 @@ class ProfileScreen extends StatelessWidget {
           PokrovCard(
             child: Column(
               children: [
+                if (onBypass != null) PokrovRow(key: const ValueKey('profile-local-dpi'), title: 'Обход блокировок', value: 'Настроить', onTap: onBypass),
                 Container(
                   constraints: BoxConstraints(minHeight: 60),
                   padding: EdgeInsets.symmetric(vertical: 12),

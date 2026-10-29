@@ -243,6 +243,10 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (widget.hostPlatform == HostPlatform.android || widget.hostPlatform == HostPlatform.windows)
+          _LocalDpiCard(preferences: _draftPreferences, onChanged: _stage,
+            hostPlatform: widget.hostPlatform, routeMode: widget.fallbackMode,
+            windowsLocalDpiReady: widget.windowsLocalDpiReady),
         ui.PokrovCard(child: ui.PokrovRow(
           key: const ValueKey('rules-advanced-toggle'),
           title: 'Для опытных', value: _expanded ? 'Скрыть' : 'DNS, сеть',
@@ -261,11 +265,6 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
                         preferences: _draftPreferences,
                         onChanged: _stage,
                       ),
-                    if ((widget.hostPlatform == HostPlatform.android ||
-                         (widget.hostPlatform == HostPlatform.windows && widget.windowsLocalDpiReady)) &&
-                         const {RouteMode.allExceptRu, RouteMode.selectiveServices}.contains(widget.fallbackMode))
-                      _LocalDpiCard(preferences: _draftPreferences, onChanged: _stage,
-                          hostPlatform: widget.hostPlatform, routeMode: widget.fallbackMode),
                     _DnsAndLanCard(
                       hostPlatform: widget.hostPlatform,
                       fallbackMode: widget.fallbackMode,

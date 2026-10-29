@@ -148,6 +148,16 @@ mode is already saved, so its selected marker and scope description remain
 accurate even when the static platform mode list omits it. This presentation
 does not grant runtime catalog capability or change the active connection.
 
+Profile offers “Обход блокировок” in both interface modes; Rules also exposes
+the same control outside “Для опытных”: Flowseal / zapret on Windows and ByeDPI
+on Android. Its switch saves the existing local-DPI setting;
+the usual Save or Apply-and-reconnect action and normal Connect apply it.
+“Россия напрямую” tries YouTube directly before VPN fallback; Selective uses
+only permitted selected services. Other modes and missing Windows native
+readiness show a reason without an enable control. Signed catalog permissions,
+account access and native admission still decide whether the direct path runs;
+the saved switch is not a claim of a working route.
+
 Ordinary Full tunnel and “Россия напрямую” continue with the managed VPN profile
 when the optional catalog returns `503 routing_catalog_disabled` or
 `503 routing_catalog_unavailable`, or when an already authorized cached VPN

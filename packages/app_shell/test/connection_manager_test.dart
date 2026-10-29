@@ -1049,14 +1049,16 @@ class _CatalogPickerBootstrapper extends _CachedBootstrapper implements
 }
 
 class _CatalogPickerExperience extends _ExperienceStore {
-  _CatalogPickerExperience({this.preferences = const PokrovRoutingPreferences.defaults(), this.routeMode});
+  _CatalogPickerExperience({this.preferences = const PokrovRoutingPreferences.defaults(), this.routeMode,
+    this.interfaceMode = PokrovInterfaceMode.advanced});
   final PokrovRoutingPreferences preferences;
   final RouteMode? routeMode;
+  final PokrovInterfaceMode interfaceMode;
 
   @override
   Future<PokrovClientExperienceState> read() async =>
       const PokrovClientExperienceState.empty().copyWith(
-        interfaceMode: PokrovInterfaceMode.advanced, routingPreferences: preferences,
+        interfaceMode: interfaceMode, routingPreferences: preferences,
         firstRouteScopeConfirmed: routeMode != null, firstRouteScopeMode: routeMode);
 }
 
@@ -1800,6 +1802,103 @@ void main() {
     expect(find.text('Не применяется в режиме «Всё через POKROV».'), findsOneWidget);
     expect(find.text('В режиме «Всё через POKROV» правила «напрямую» не применяются.'), findsOneWidget);
     expect(store.preferences.dnsTransport, PokrovDnsTransport.direct);
+  });
+
+  testWidgets('Android profile bypass entry works in simple mode and saves without connecting', (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final nativeMutations = <String>[];
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'runtimeEngine.stageManagedProfile' || call.method == 'runtimeEngine.connect') {
+        nativeMutations.add(call.method);
+      }
+      return {'phase': 'initialized', 'supportsLiveConnect': true, 'canInitialize': false, 'canConnect': true};
+    });
+    tester.view.physicalSize = const Size(412, 915);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(channel, null);
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    final store = _CatalogPickerExperience(routeMode: RouteMode.allExceptRu, interfaceMode: PokrovInterfaceMode.simple,
+      preferences: const PokrovRoutingPreferences.defaults().copyWith(localDpiEnabled: false));
+    await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: _Bootstrapper(), firstLaunchStore: _FirstLaunchStore(),
+      clientExperienceStore: store, themeMode: ThemeMode.light, onThemeModeChanged: (_) {},
+    )));
+    await tester.pumpAndSettle();
+    expect(find.text('Правила'), findsNothing);
+    await tester.tap(find.text('Профиль'));
+    await tester.pumpAndSettle();
+    final entry = find.byKey(const ValueKey('profile-local-dpi'));
+    await tester.scrollUntilVisible(entry, 300, scrollable: find.descendant(
+      of: find.byType(ui.ProfileScreen), matching: find.byType(Scrollable)).first);
+    await tester.pumpAndSettle();
+    await tester.tap(entry);
+    await tester.pumpAndSettle();
+    final toggle = find.byKey(const ValueKey('rules-local-dpi'));
+    expect(find.byKey(const ValueKey('rules-advanced-open')), findsNothing);
+    expect(find.text('Android 10 и новее: ByeDPI.'), findsOneWidget);
+    expect(find.text('YouTube: сначала напрямую, при сбое через VPN.'), findsOneWidget);
+    expect((tester.widget(toggle) as dynamic).value, isFalse);
+    await tester.tap(toggle);
+    await tester.pumpAndSettle();
+    expect((tester.widget(toggle) as dynamic).value, isTrue);
+    expect(store.saved.routingPreferences.localDpiEnabled, isTrue);
+    final apply = find.byKey(const ValueKey('profile-local-dpi-apply'));
+    await tester.ensureVisible(apply);
+    await tester.pumpAndSettle();
+    await tester.tap(apply);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('rules-local-dpi-card')), findsNothing);
+    expect(find.byKey(const ValueKey('rules-advanced-open')), findsNothing);
+    expect(store.saved.interfaceMode, PokrovInterfaceMode.simple);
+    expect(nativeMutations, isEmpty, reason: 'saving a stopped connection must keep the normal Connect path');
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
+
+  testWidgets('Windows bypass entry explains missing native readiness and enables only an admitted installation', (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    tester.view.physicalSize = const Size(1280, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(channel, null);
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    for (final ready in [false, true]) {
+      messenger.setMockMethodCallHandler(channel, (_) async => {'phase': 'initialized',
+        'supportsLiveConnect': true, 'canInitialize': false, 'canConnect': true,
+        'windowsLocalDpiAdmissionVersion': ready ? 1 : 0});
+      await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
+        key: ValueKey(ready), appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+        bootstrapper: _Bootstrapper(), firstLaunchStore: _FirstLaunchStore(),
+        clientExperienceStore: _CatalogPickerExperience(routeMode: RouteMode.allExceptRu),
+        themeMode: ThemeMode.light, onThemeModeChanged: (_) {},
+      )));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Правила'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('rules-advanced-open')), findsNothing);
+      expect(find.text('Windows: Flowseal / zapret.'), findsOneWidget);
+      expect(find.byKey(const ValueKey('rules-local-dpi')), ready ? findsOneWidget : findsNothing);
+      expect(find.text('Flowseal / zapret недоступен: служба POKROV не подтвердила готовность компонента.'),
+        ready ? findsNothing : findsOneWidget);
+      if (ready) {
+        await tester.tap(find.text('Всё через POKROV'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Применить'));
+        await tester.pumpAndSettle();
+        expect(find.text('Работает в режимах «Россия напрямую» и «Только выбранные сервисы».'), findsOneWidget);
+        expect(find.byKey(const ValueKey('rules-local-dpi')), findsNothing);
+      }
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    }
   });
 
   testWidgets('SmartDNS picker follows authenticated Premium eligibility', (tester) async {

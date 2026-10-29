@@ -145,16 +145,22 @@ void main() {
     }
     InterfaceMode? selectedMode;
     var proxyOpened = false;
+    var bypassOpened = false;
     await _pump(tester, ProfileScreen(data: PokrovSampleData.profile(InterfaceMode.simple),
       onRenew: _noop, onModeChanged: (mode) => selectedMode = mode,
-      onTelegramProxy: () => proxyOpened = true), textScale: 2);
+      onTelegramProxy: () => proxyOpened = true, onBypass: () => bypassOpened = true), textScale: 2);
     await tester.tap(find.text('Telegram-прокси'));
     expect(proxyOpened, isTrue);
+    final bypass = find.byKey(const ValueKey('profile-local-dpi'));
+    await tester.ensureVisible(bypass);
+    await tester.tap(bypass);
+    expect(bypassOpened, isTrue);
     expect(tester.takeException(), isNull);
     final advanced = find.descendant(of: find.byType(PokrovSegmented), matching: find.text('Продвинутый'));
     expect(tester.renderObject<RenderParagraph>(advanced).didExceedMaxLines, isFalse,
       reason: 'the interface mode must remain readable at 200% text scale');
-    await tester.ensureVisible(advanced);
+    await tester.drag(find.byType(ProfileScreen), const Offset(0, -300));
+    await tester.pumpAndSettle();
     await tester.tap(advanced);
     expect(selectedMode, InterfaceMode.advanced);
     await _pump(tester, RulesScreen(data: PokrovSampleData.rules(selected: 'all'), onSelect: (_) {}, onApply: _noop));

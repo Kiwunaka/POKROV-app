@@ -804,6 +804,39 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     _queueClientExperienceWrite();
   }
 
+  void _openLocalDpiControl() {
+    PokrovHaptics.tap();
+    final savedEnabled = _clientExperience.routingPreferences.localDpiEnabled;
+    ui.showPokrovSheet<void>(context, (sheetContext) => StatefulBuilder(
+      builder: (context, setSheetState) {
+        final preferences = _clientExperience.routingPreferences;
+        final connected = _runtimeSnapshot?.phase == RuntimePhase.running;
+        return SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            _LocalDpiCard(preferences: preferences, hostPlatform: widget.appContext.hostPlatform,
+              routeMode: _selectedRouteMode,
+              windowsLocalDpiReady: _runtimeSnapshot?.windowsLocalDpiAdmissionVersion == 1,
+              onChanged: (next) {
+                _setRoutingPreferences(_clientExperience.routingPreferences.copyWith(localDpiEnabled: next.localDpiEnabled));
+                setSheetState(() {});
+              }),
+            if (preferences.localDpiEnabled != savedEnabled)
+              FilledButton.icon(
+                key: const ValueKey('profile-local-dpi-apply'),
+                onPressed: () {
+                  Navigator.of(sheetContext).pop();
+                  _applyRoutingPreferences(_clientExperience.routingPreferences);
+                },
+                icon: Icon(connected ? Icons.sync_rounded : Icons.check_rounded),
+                label: Text(connected ? 'Применить и переподключить' : 'Сохранить изменения'),
+              ),
+          ]),
+        );
+      },
+    ));
+  }
+
   void _openRulesForSelectedApps() {
     unawaited(_connectionManager.setInterfaceMode(PokrovInterfaceMode.advanced));
     setState(() {
@@ -3455,6 +3488,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             connectionPresentation: connectionPresentation,
             runtimeHeadline: _runtimeHeadline,
             onOpenWarp: _openWarpControl,
+            onOpenBypass: const {HostPlatform.android, HostPlatform.windows}.contains(widget.appContext.hostPlatform)
+                ? _openLocalDpiControl : null,
             themeMode: widget.themeMode,
             onThemeModeChanged: widget.onThemeModeChanged,
             interfaceMode: _clientExperience.interfaceMode,

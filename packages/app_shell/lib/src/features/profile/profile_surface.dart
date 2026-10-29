@@ -32,6 +32,7 @@ class _ProfileSection extends StatelessWidget {
     required this.connectionPresentation,
     required this.runtimeHeadline,
     required this.onOpenWarp,
+    this.onOpenBypass,
     required this.themeMode,
     required this.onThemeModeChanged,
     required this.interfaceMode,
@@ -89,6 +90,7 @@ class _ProfileSection extends StatelessWidget {
   final ConnectionPresentation connectionPresentation;
   final String? runtimeHeadline;
   final Future<void> Function() onOpenWarp;
+  final VoidCallback? onOpenBypass;
   final ThemeMode themeMode;
   final ValueChanged<ThemeMode> onThemeModeChanged;
   final PokrovInterfaceMode interfaceMode;
@@ -242,6 +244,7 @@ class _ProfileSection extends StatelessWidget {
         onAbout: () => _about(context),
         onShare: appShareBusy ? null : () => unawaited(onShareApp()),
         onWarp: interfaceMode == PokrovInterfaceMode.advanced ? () => unawaited(onOpenWarp()) : null,
+        onBypass: onOpenBypass,
         onAppSettings: appContext.hostPlatform == HostPlatform.windows
             ? () => _showWindowsShellPreferencesSheet(context, preferences: windowsShellPreferences,
                 onChanged: onWindowsShellPreferencesChanged)
