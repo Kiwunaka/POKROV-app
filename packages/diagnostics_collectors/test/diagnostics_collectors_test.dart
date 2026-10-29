@@ -25,6 +25,18 @@ void main() {
       ),
       throwsArgumentError,
     );
+    for (final diagnostic in [
+      {'endpoint': 'private.invalid'},
+      {'egress_target': 'https://private.invalid'},
+      {'egress_error_code': -1},
+      {'dns_ready': 'false'},
+    ]) {
+      expect(() => DiagnosticNetworkSummary(
+        routeMode: 'full_tunnel', connectionState: 'degraded', hostHealth: 'failed',
+        dnsState: 'failed', egressState: 'failed', warpState: 'disabled',
+        connectionDiagnostic: diagnostic,
+      ), throwsArgumentError);
+    }
   });
 
 }

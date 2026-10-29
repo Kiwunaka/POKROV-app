@@ -548,6 +548,7 @@ class ConnectionManager extends ChangeNotifier {
             const {'awg', 'hysteria2'}.contains(confirmed.candidate.protocol) ? false : null;
     return transport.isEmpty ? null : (transport: transport, throughBridge: throughBridge);
   }
+  String get attemptedTransportForDiagnostics => _candidateTransport(_reportedCandidate(_candidateRef));
   ({int generation, String digest, domain.TransportCandidate candidate})? _confirmedCandidate;
   TransportCandidateCatalog? _transportCatalog;
   final _candidateSelector = SmartConnectCandidateSelector();

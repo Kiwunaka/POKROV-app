@@ -602,6 +602,13 @@ Support contract rules:
   Diagnostics retains `support_key_set_expired` and tells the operator to renew
   the server contract; it does not claim a report was saved. A fresh signed set
   restores both actions without changing client trust or the encryption scheme.
+- the ordinary encrypted network summary includes the already collected, closed
+  `connection_diagnostic`: last attempted transport/phase, native failure and
+  cleanup flags, Core version, DNS/route counts and egress stage, numeric error,
+  bounded timing and DNS/TUN results when available. The last negative native
+  receipt survives rollback in this summary. It contains no profile, endpoint,
+  address or raw error text, performs no new probe and leaves event/crash journals
+  behind the existing temporary extended-mode consent.
 - the private encrypted outbox admits at most 24 MiB across saved envelopes
   and interrupted temporary writes, on both Android and Windows. Each envelope
   must fit the existing 2.5 MiB read limit before writing. Admission is serialized

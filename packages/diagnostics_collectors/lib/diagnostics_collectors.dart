@@ -82,7 +82,8 @@ final class DiagnosticNetworkSummary {
     required this.dnsState,
     required this.egressState,
     required this.warpState,
-  }) {
+    Map<String, Object> connectionDiagnostic = const {},
+  }) : connectionDiagnostic = Map<String, Object>.unmodifiable(connectionDiagnostic) {
     _requireToken(routeMode, 'routeMode', <String>{
       'all_except_ru',
       'excluded_apps',
@@ -116,6 +117,34 @@ final class DiagnosticNetworkSummary {
       'fallback',
       'unavailable',
     });
+    for (final entry in connectionDiagnostic.entries) {
+      final value = entry.value;
+      final valid = switch (entry.key) {
+        'core_version' => value is String && RegExp(r'^\d{1,3}\.\d{1,3}\.\d{1,3}$').hasMatch(value),
+        'error_code' => value is String && KnownOperationalErrorCodes.contains(value),
+        'failure_kind' => DiagnosticEventRecord.runtimeFailureKinds.contains(value),
+        'failure_operation' => connectionFailureOperations.contains(value),
+        'native_phase' => const {'artifact_missing', 'artifact_ready', 'connecting', 'busy',
+          'initialized', 'config_staged', 'running', 'recovery_required'}.contains(value),
+        'attempted_transport' => const {'vless_reality', 'vless_grpc_tls', 'xhttp_reality',
+          'xhttp_tls', 'vless_dnstt_noise', 'vless_slipstream_tls', 'naive', 'hysteria2', 'awg31', 'warp'}.contains(value),
+        'latest_attempt_phase' => const {'intent', 'profile', 'core', 'tun', 'routes', 'dns',
+          'egress', 'verified', 'rollback', 'stopped'}.contains(value),
+        'module_matches' || 'profile_matches' || 'cleanup_confirmed' || 'dns_ready' ||
+        'egress_dns_a_accepted' || 'egress_http_local_is_tun' => value is bool,
+        'ipv4_route_count' || 'ipv6_route_count' => value is int && value >= 0 && value <= 65535,
+        'egress_stage' => const {'tun_dns', 'dns_setup', 'dns_send', 'dns_wait', 'dns_reply',
+          'http_setup', 'connect', 'tls', 'sending', 'response', 'proof', 'retry_wait'}.contains(value),
+        'egress_outcome' => const {'succeeded', 'failed', 'cancelled', 'deadline', 'timeout'}.contains(value),
+        'egress_error_domain' => const {'none', 'win32', 'winsock', 'winhttp', 'dns', 'ntstatus', 'http_status'}.contains(value),
+        'egress_error_code' => value is int && value >= 0 && value <= 0xffffffff,
+        'egress_elapsed_ms' => value is int && value >= 0 && value <= 86400000,
+        'egress_owner_remaining_ms_at_entry' => value is int && value >= 0 && value <= 3000,
+        'egress_target' => const {'owned_api', 'owned_reserve'}.contains(value),
+        _ => false,
+      };
+      if (!valid) throw ArgumentError('Invalid connection diagnostic field: ${entry.key}');
+    }
   }
 
   final String routeMode;
@@ -124,6 +153,7 @@ final class DiagnosticNetworkSummary {
   final String dnsState;
   final String egressState;
   final String warpState;
+  final Map<String, Object> connectionDiagnostic;
 
   Map<String, Object?> toJson() => <String, Object?>{
         'connection_state': connectionState,
@@ -132,6 +162,7 @@ final class DiagnosticNetworkSummary {
         'host_health': hostHealth,
         'route_mode': routeMode,
         'warp_state': warpState,
+        if (connectionDiagnostic.isNotEmpty) 'connection_diagnostic': connectionDiagnostic,
       };
 }
 

@@ -11943,6 +11943,10 @@ class AppFirstSupportTicketService
             requestTimeoutOverride: requestTimeoutOverride,
           );
         } on BootstrapFailure catch (error) {
+          if (path == '/api/client/support/bundles/key-set' &&
+              error.code == 'support_key_set_expired') {
+            throw const SupportBundleFailure('support_key_set_expired');
+          }
           if (attempt == 0 &&
               _bootstrapper._isSessionFailure(error.statusCode)) {
             state = await _startTrial(

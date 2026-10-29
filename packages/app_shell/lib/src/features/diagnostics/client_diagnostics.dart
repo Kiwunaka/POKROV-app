@@ -522,6 +522,7 @@ abstract final class PokrovDiagnosticsPresenter {
     PokrovAuthRequestDiagnostic? authRequest,
     PokrovConnectionFailureDiagnostic? connectionFailure,
     ({String transport, bool? throughBridge})? confirmedConnection,
+    String attemptedTransport = '',
     List<DiagnosticEventRecord> candidateProbeEvents = const [],
     DateTime? checkedAtUtc,
     ClientReleaseHealthBaseline releaseHealthBaseline =
@@ -603,6 +604,41 @@ abstract final class PokrovDiagnosticsPresenter {
       _ => PokrovDiagnosticMessageKey.noActiveAttempt,
     };
     final timelineAttempts = _timelineAttempts(timelineBreadcrumbs);
+    final lastAttempt = timelineAttempts.lastOrNull;
+    final nativeFailure = connectionFailure?.nativeFailure;
+    final egressObservation = nativeFailure?.egressProbeObservation ?? snapshot?.egressProbeObservation;
+    final failureKind = nativeFailure?.failureKind ?? connectionFailure?.recoveryFailureKind ?? snapshot?.lastFailureKind;
+    final connectionDiagnostic = <String, Object>{
+      if (snapshot?.coreVersion case final version?)
+        if (RegExp(r'^\d{1,3}\.\d{1,3}\.\d{1,3}$').hasMatch(version)) 'core_version': version,
+      if (errorCode != null) 'error_code': errorCode,
+      if (DiagnosticEventRecord.runtimeFailureKinds.contains(failureKind)) 'failure_kind': failureKind!,
+      if (lastAttempt?.failureOperation ?? nativeFailure?.operation case final operation?)
+        'failure_operation': operation,
+      if (attemptedTransport.isNotEmpty) 'attempted_transport': attemptedTransport,
+      if (lastAttempt?.entries.lastOrNull case final entry?) 'latest_attempt_phase': entry.phaseKey,
+      if (nativeFailure != null) ...{
+        'native_phase': nativeFailure.nativePhase,
+        'module_matches': nativeFailure.moduleMatches,
+        'profile_matches': nativeFailure.profileMatches,
+        if (nativeFailure.cleanupConfirmed != null) 'cleanup_confirmed': nativeFailure.cleanupConfirmed!,
+      },
+      if (snapshot?.dnsReady != null) 'dns_ready': snapshot!.dnsReady!,
+      if (snapshot?.ipv4RouteCount != null) 'ipv4_route_count': snapshot!.ipv4RouteCount!,
+      if (snapshot?.ipv6RouteCount != null) 'ipv6_route_count': snapshot!.ipv6RouteCount!,
+      if (egressObservation case final observation?) ...{
+        'egress_stage': observation.stage,
+        'egress_outcome': observation.outcome,
+        'egress_error_domain': observation.errorDomain,
+        'egress_error_code': observation.errorCode,
+        'egress_elapsed_ms': observation.elapsedMs,
+        if (observation.target != null) 'egress_target': observation.target!,
+        if (observation.ownerRemainingMsAtEntry != null)
+          'egress_owner_remaining_ms_at_entry': observation.ownerRemainingMsAtEntry!,
+        if (observation.dnsAAccepted != null) 'egress_dns_a_accepted': observation.dnsAAccepted!,
+        if (observation.httpLocalIsTun != null) 'egress_http_local_is_tun': observation.httpLocalIsTun!,
+      },
+    };
     final events = <DiagnosticEventRecord>[
       if (supportModePolicy != null) ...[
         for (final breadcrumb in timelineBreadcrumbs)
@@ -668,6 +704,7 @@ abstract final class PokrovDiagnosticsPresenter {
       systemSummary: systemSummary,
       crashes: crashes,
       events: events,
+      connectionDiagnostic: connectionDiagnostic,
     );
     final supportCode = pokrovSupportDiagnosticCode(
       prepared: prepared,
@@ -704,7 +741,7 @@ abstract final class PokrovDiagnosticsPresenter {
       crashDiagnosticsReady: crashDiagnosticsReady,
       candidateDiagnosticsReady: candidateDiagnosticsReady,
       runtimeStatsDelivery: runtimeStatsDelivery,
-      egressProbeObservation: snapshot?.egressProbeObservation,
+      egressProbeObservation: egressObservation,
       safeActionKeys: problemBook?.safeActions ?? const <String>[],
       timelineAttempts: timelineAttempts,
       releaseHealthBaseline: releaseHealthBaseline,
@@ -971,6 +1008,7 @@ PreparedSupportBundle preparePokrovClientSupportBundle({
   DiagnosticSystemSummary? systemSummary,
   List<DiagnosticEventRecord> events = const [],
   List<DiagnosticCrashRecord> crashes = const [],
+  Map<String, Object> connectionDiagnostic = const {},
 }) {
   final platform = hostPlatform == HostPlatform.android ? 'android' : 'windows';
   final channel = hostPlatform == HostPlatform.android &&
@@ -1014,6 +1052,7 @@ PreparedSupportBundle preparePokrovClientSupportBundle({
           _ => 'unknown',
         },
         warpState: warpState,
+        connectionDiagnostic: connectionDiagnostic,
       ),
     ),
     profile: supportModePolicy == null

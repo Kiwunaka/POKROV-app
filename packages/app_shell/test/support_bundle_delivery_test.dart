@@ -6,10 +6,11 @@ import 'package:cryptography/cryptography.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
-import 'package:pokrov_app_shell/app_first_runtime_bootstrap.dart';
+import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_diagnostics_collectors/diagnostics_collectors.dart';
 import 'package:pokrov_support_bundle/support_bundle.dart';
+import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
 void main() {
   final now = DateTime.utc(2026, 8, 21, 12);
@@ -289,11 +290,27 @@ void main() {
       connectionTimeout: const Duration(milliseconds: 100),
       requestTimeout: const Duration(milliseconds: 100),
     );
-    final prepared = const SupportBundleBuilder().prepare(
-      snapshot: _snapshot(),
-      profile: SupportDiagnosticProfile.summary,
-      now: exportNow,
+    final report = PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel,
+      statusLabel: 'failed', warpState: 'disabled', now: exportNow,
+      appVersion: '1.5.0', buildNumber: '4242', releaseChannel: 'private',
+      candidateLabel: 'fixture', encryptedDeliveryAvailable: true,
+      attemptedTransport: 'hysteria2',
+      snapshot: const RuntimeSnapshot(
+        hostPlatform: HostPlatform.windows, lane: RuntimeLane.windowsService,
+        phase: RuntimePhase.configStaged, artifactDirectory: null,
+        coreBinaryPath: null, helperBinaryPath: null, stagedConfigPath: null,
+        supportsLiveConnect: true, canInitialize: false, canConnect: true,
+        message: 'Bearer private-fixture https://private.invalid/profile',
+        coreVersion: '1.2.15', dnsReady: false, ipv4RouteCount: 0,
+        ipv6RouteCount: 0, lastFailureKind: 'core_egress_dns_failed',
+        egressProbeObservation: (stage: 'dns_setup', outcome: 'failed',
+          errorDomain: 'winsock', errorCode: 10049, elapsedMs: 3,
+          target: 'owned_api', ownerRemainingMsAtEntry: 2997,
+          dnsAAccepted: false, httpLocalIsTun: false),
+      ),
     );
+    final prepared = report.preparedBundle;
 
     final result = await service.exportSupportBundle(
       hostPlatform: HostPlatform.windows,
@@ -311,6 +328,34 @@ void main() {
     expect(decoded['ciphertext_b64'], isNotEmpty);
     expect(decoded, isNot(contains('files')));
     expect(decoded, isNot(contains('connection_state')));
+    final agreement = X25519();
+    final shared = await agreement.sharedSecretKey(
+      keyPair: await agreement.newKeyPairFromSeed(List<int>.filled(32, 8)),
+      remotePublicKey: SimplePublicKey(base64Url.decode(base64Url.normalize(
+        decoded['ephemeral_public_key_b64'] as String)), type: KeyPairType.x25519),
+    );
+    final key = await Hkdf(hmac: Hmac.sha256(), outputLength: 32).deriveKey(
+      secretKey: shared, nonce: utf8.encode(prepared.preview.diagnosticId),
+      info: utf8.encode('pokrov-support-bundle-v1'),
+    );
+    List<int> bytes(String field) => base64Url.decode(base64Url.normalize(decoded[field] as String));
+    final plaintext = await AesGcm.with256bits().decrypt(
+      SecretBox(bytes('ciphertext_b64'), nonce: bytes('nonce_b64'), mac: Mac(bytes('mac_b64'))),
+      secretKey: key, aad: utf8.encode(prepared.manifestSha256),
+    );
+    final payload = jsonDecode(utf8.decode(plaintext)) as Map;
+    final files = (payload['files'] as List).cast<Map>();
+    expect(files.map((file) => file['path']),
+      ['build/identity.json', 'network/summary.json', 'redaction/report.json']);
+    final network = jsonDecode(utf8.decode(base64Url.decode(base64Url.normalize(
+      files.singleWhere((file) => file['path'] == 'network/summary.json')['content_b64'] as String)))) as Map;
+    expect(network['connection_diagnostic'], containsPair('egress_error_code', 10049));
+    expect(network['connection_diagnostic'], containsPair('egress_stage', 'dns_setup'));
+    expect(network['connection_diagnostic'], containsPair('egress_dns_a_accepted', false));
+    expect(network['connection_diagnostic'], containsPair('egress_http_local_is_tun', false));
+    expect(network['connection_diagnostic'], containsPair('attempted_transport', 'hysteria2'));
+    expect(utf8.decode(plaintext), isNot(contains('private-fixture')));
+    expect(utf8.decode(plaintext), isNot(contains('private.invalid')));
   });
 
   test('expired recipient contract blocks both actions and a renewed contract recovers',
@@ -329,6 +374,7 @@ void main() {
     final expired = await _keySetFixture(current.subtract(const Duration(days: 8)));
     final renewed = await _keySetFixture(current);
     var envelope = expired.envelope;
+    var expiredApiResponse = false;
     var uploadRequests = 0;
     const uploadId = '01234567-89ab-4cde-8fab-0123456789ab';
     unawaited(() async {
@@ -343,7 +389,13 @@ void main() {
               'provisioning': {'status': 'ready', 'sync_ok': true},
             }));
           case '/api/client/support/bundles/key-set':
-            request.response.write(jsonEncode(envelope));
+            if (expiredApiResponse) {
+              request.response.statusCode = HttpStatus.serviceUnavailable;
+              request.response.headers.set('X-POKROV-Auth-Error', 'support_key_set_expired');
+              request.response.write('{"detail":{"code":"support_key_set_expired"}}');
+            } else {
+              request.response.write(jsonEncode(envelope));
+            }
           case '/api/client/support/bundles/upload-tickets':
             uploadRequests++;
             final upload = jsonDecode(body) as Map<String, dynamic>;
@@ -379,6 +431,7 @@ void main() {
       (error) => error.code, 'code', 'support_key_set_expired'));
     await expectLater(service.exportSupportBundle(
       hostPlatform: HostPlatform.windows, prepared: prepared), expiredFailure);
+    expiredApiResponse = true;
     await expectLater(service.deliverSupportBundle(
       hostPlatform: HostPlatform.windows, prepared: prepared,
       caseSummary: 'Owned expiry regression'), expiredFailure);
@@ -387,6 +440,7 @@ void main() {
     expect(uploadRequests, 0);
 
     envelope = renewed.envelope;
+    expiredApiResponse = false;
     expect((await service.exportSupportBundle(
       hostPlatform: HostPlatform.windows, prepared: prepared)).state,
       SupportBundleExportState.exported);

@@ -1283,6 +1283,7 @@ void main() {
       );
       expect(report().copyWith(checkedAtUtc: DateTime.now().toUtc()).connectionFailure?.nativeFailure?.cleanupConfirmed,
         isTrue);
+      expect(report().egressProbeObservation, nativeFailure!.egressProbeObservation);
       await tester.pumpWidget(MaterialApp(home: PokrovDiagnosticsScreen(
         initialReport: report(), onRefresh: () async => report(), onOpenProtection: () {}, onOpenSupport: () {},
       )));
