@@ -217,6 +217,8 @@ class _ProfileSection extends StatelessWidget {
         onModeChanged: (mode) => onInterfaceModeChanged(mode == ui.InterfaceMode.simple
             ? PokrovInterfaceMode.simple : PokrovInterfaceMode.advanced),
         onAccount: () => _account(context),
+        onTelegramProxy: () => onOpenHandoff('cabinet',
+          Uri.parse(appContext.cabinetUrl).resolve('/telegram/').toString()),
         onDevices: () => _devices(context),
         onLoginCode: () => _devices(context),
         onActivate: () => _showRedeemSheet(context, hintCode: appContext.redeemHint,

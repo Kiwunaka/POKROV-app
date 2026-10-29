@@ -87,6 +87,12 @@ This local POST12 source change is `NOT_VERIFIED`. See
 the [runtime owner](../architecture/bootstrap-workflow.md#shell-operation-ownership-local-post12-implementation).
 
 Telegram is optional for first launch, trial activation, and normal daily use.
+
+Profile includes `Telegram-прокси` for every account, independently of VPN access.
+It opens `/telegram/` through the existing cabinet session handoff; the cabinet
+issues the personal WEB proxy link and hands it to Telegram. Credentials are not
+stored in the app. The platform owns availability and issuance rules in
+`VPN/infra/telegram-web-proxy/README.md`.
 It remains a recovery, reward, community, and fallback-support surface rather than the primary login wall.
 Browser continuation currently starts from app handoff, Telegram, and the evidence-backed email continuation lane where delivery readiness is green.
 

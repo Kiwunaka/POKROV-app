@@ -21,6 +21,7 @@ class ProfileScreen extends StatelessWidget {
     this.onBonuses,
     this.onAbout,
     this.onAccount,
+    this.onTelegramProxy,
     this.onActivate,
     this.onDiagnostics,
     this.onShare,
@@ -40,6 +41,7 @@ class ProfileScreen extends StatelessWidget {
   final VoidCallback? onBonuses;
   final VoidCallback? onAbout;
   final VoidCallback? onAccount;
+  final VoidCallback? onTelegramProxy;
   final VoidCallback? onActivate;
   final VoidCallback? onDiagnostics;
   final VoidCallback? onShare;
@@ -63,6 +65,7 @@ class ProfileScreen extends StatelessWidget {
             child: Column(
               children: [
                 if (onAccount != null) PokrovRow(title: 'Telegram и почта', value: data.accountLinked, valueColor: pokrovColor(context, PokrovColors.accent), valueBold: true, onTap: onAccount),
+                if (onTelegramProxy != null) PokrovRow(title: 'Telegram-прокси', value: 'Бесплатно', onTap: onTelegramProxy),
                 if (onDevices != null) PokrovRow(title: 'Устройства', value: data.devices, onTap: onDevices),
                 if (onLoginCode != null) PokrovRow(title: 'Код для входа на другом устройстве', onTap: onLoginCode),
                 if (onActivate != null) PokrovRow(title: 'Ввести код входа или активации', onTap: onActivate, divider: false),

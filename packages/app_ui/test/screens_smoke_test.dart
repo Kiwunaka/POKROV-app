@@ -144,8 +144,12 @@ void main() {
       expect(find.text('Продвинутый'), findsOneWidget);
     }
     InterfaceMode? selectedMode;
+    var proxyOpened = false;
     await _pump(tester, ProfileScreen(data: PokrovSampleData.profile(InterfaceMode.simple),
-      onRenew: _noop, onModeChanged: (mode) => selectedMode = mode), textScale: 2);
+      onRenew: _noop, onModeChanged: (mode) => selectedMode = mode,
+      onTelegramProxy: () => proxyOpened = true), textScale: 2);
+    await tester.tap(find.text('Telegram-прокси'));
+    expect(proxyOpened, isTrue);
     expect(tester.takeException(), isNull);
     final advanced = find.descendant(of: find.byType(PokrovSegmented), matching: find.text('Продвинутый'));
     expect(tester.renderObject<RenderParagraph>(advanced).didExceedMaxLines, isFalse,
