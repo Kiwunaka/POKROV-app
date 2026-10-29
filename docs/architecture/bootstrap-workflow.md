@@ -226,6 +226,26 @@ last-success and UDP failure memory stay inside their group. Cache reserves also
 follow server priority. Explicit pins, WARP and cached-authority guards still
 apply; the selected country names the exit. The UI adapters described in
 [DESIGN.md](../../DESIGN.md) retain this runtime authority unchanged.
+
+`SmartConnectCandidateSelector` accepts an optional local `CandidateRankerShadow`
+for owned QA. It snapshots the actual admitted DNSTT/Slipstream queue within one
+priority group and address family, preserves the last-good head start, and scores
+the fixed `pokrov-preaction-v1` Transformer on a background isolate. Only completed
+attempts enter the eight-item history; preparation/control failures
+remain control observations, unknown fields stay unknown, and a network/catalog
+change resets history. Scores never change Auto's queue or launch extra probes.
+No weights are bundled and the default manager has no observer. A private build
+can set `POKROV_RANKER_SHADOW_MODEL_PATH` to an approved model in local app-readable
+storage: the shell loads it once off the UI isolate, and online/offline candidate
+selection waits for that local load before using the observer. Missing/invalid
+assets log `shadow_load_failed` and retain the existing selection. `shadow_ready`
+means loaded; `shadow candidates=... order=...` confirms an actual comparison and
+contains only counts/indices. This private file path is not public packaging.
+Export an approved local checkpoint with `scripts/export_candidate_ranker.py`; the opt-in
+`candidate_ranker_shadow_test.dart` uses `POKROV_RANKER_MODEL` and
+`POKROV_RANKER_RESEARCH_DIR` to check the real model against ONNX. This source path
+is not an enabled release feature or evidence of a real-network improvement.
+
 When the API is unavailable, the cache selector keeps the online WARP order and
 budgets: a currently enabled manual chain first, ordinary paths after its failure,
 then direct WARP. Cached or server consent alone does not admit either WARP group;

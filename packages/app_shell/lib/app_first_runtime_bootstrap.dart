@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:cryptography/cryptography.dart' show Sha256;
 
@@ -23,6 +25,8 @@ import 'offline_invitation_contract.dart';
 export 'offline_invitation_contract.dart';
 import 'app_shell.dart' show ConnectionOperationSuperseded;
 import 'client_routing_preferences.dart';
+import 'src/connection/candidate_ranker_model.dart';
+export 'src/connection/candidate_ranker_model.dart';
 import 'routing_catalog_policy.dart';
 import 'src/features/rules/routing_catalog_store.dart';
 import 'src/features/rules/ru_app_catalog.dart';
@@ -39,6 +43,7 @@ part 'src/features/rules/transport_profile_loader.dart';
 part 'src/features/rules/transport_profile_preparation.dart';
 part 'src/features/rules/transport_payload_preparation.dart';
 part 'src/connection/smart_connect_resolver.dart';
+part 'src/connection/candidate_ranker_shadow.dart';
 part 'src/connection/managed_manifest_decoder.dart';
 part 'src/connection/offline_invitation_bootstrap.dart';
 part 'src/observability/runtime_stats_outbox.dart';

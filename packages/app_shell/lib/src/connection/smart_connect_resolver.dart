@@ -107,9 +107,11 @@ class SmartConnectCandidateSelector {
     return alternatives;
   }
 
-  SmartConnectCandidateSelector({DateTime Function()? now}) : _now = now ?? DateTime.now;
+  SmartConnectCandidateSelector({DateTime Function()? now, this.rankerShadow})
+      : _now = now ?? DateTime.now;
 
   final DateTime Function() _now;
+  CandidateRankerShadow? rankerShadow;
   final _successful = <String, String>{};
   final _failedUntil = <(String, String), DateTime>{};
   final _udpFailedUntil = <String, DateTime>{};
@@ -147,12 +149,17 @@ class SmartConnectCandidateSelector {
     String preferredCountryCode = '',
     String recoveryCandidateRef = '',
     bool? ipv6Available,
+    String? networkClass,
     Set<String> excludedCandidateRefs = const {},
     Duration probeTimeout = const Duration(seconds: 4),
     Duration selectionTimeout = const Duration(seconds: 12),
     bool excludeProbeCleanupFromBudget = false,
   }) async {
     if (network.isEmpty) throw StateError('smart_connect_network_unavailable');
+    // Keep one observer owner throughout this selection, including an async
+    // private-build model load that finishes during another selection.
+    final ranker = rankerShadow;
+    final rankerGeneration = ranker?._begin(network, catalog.revision);
     final now = _now();
     _failedUntil.removeWhere((_, expires) => !expires.isAfter(now));
     _udpFailedUntil.removeWhere((_, expires) => !expires.isAfter(now));
@@ -284,6 +291,7 @@ class SmartConnectCandidateSelector {
       final cancellation = Completer<void>();
       probes.add(cancellation);
       var timedOut = false;
+      var nativeStarted = false;
       SmartConnectCandidateProbeResult? outcome;
       Timer? timeout;
       final probeClock = Stopwatch();
@@ -307,6 +315,7 @@ class SmartConnectCandidateSelector {
         nativeTimeout = remainingProbeBudget < probeTimeout
             ? remainingProbeBudget : probeTimeout;
         probeClock.start();
+        nativeStarted = true;
         final familyStart = familyStarted[candidate.candidateRef];
         if (familyStart != null) {
           familyClocks[candidate.candidateRef] = probeClock;
@@ -321,6 +330,9 @@ class SmartConnectCandidateSelector {
         outcome = await probe(candidate, cancellation.future, nativeTimeout);
         if (ended.isCompleted) return;
         if (!timedOut && outcome.profile != null) {
+          ranker?._observe(rankerGeneration!, candidate, outcome, _now(),
+              nativeTimeout, remainingProbeBudget, ipv6Available, networkClass,
+              nativeStarted: nativeStarted);
           onProbeResult?.call(candidate, outcome);
           winner = outcome.profile;
           if (candidate.network == 'udp') _udpFailedUntil.remove(network);
@@ -388,6 +400,9 @@ class SmartConnectCandidateSelector {
           preparation: outcome.preparation,
           http64kFailure: failureKind == 'probe_failed' ? outcome.http64kFailure : null,
           http64kObservation: failureKind == 'probe_failed' ? outcome.http64kObservation : null);
+      ranker?._observe(rankerGeneration!, candidate, failed, _now(),
+          remainingProbeBudget < probeTimeout ? remainingProbeBudget : probeTimeout,
+          remainingProbeBudget, ipv6Available, networkClass, nativeStarted: nativeStarted);
       onProbeResult?.call(candidate, failed);
       recordFailure(network, candidate.candidateRef, failureKind);
       if (candidate.network == 'udp' && _networkFailureKinds.contains(failureKind)) {
@@ -419,6 +434,14 @@ class SmartConnectCandidateSelector {
           await Future.any<void>([ended.future, earlier.value.future]);
         }
         if (ended.isCompleted || candidates.isEmpty || startedCount >= maxAttempts) return;
+        // Shadow only reads the admitted, ordered queue. Its result has no
+        // return path into scheduling, cancellation, hints or group admission.
+        final remaining = selectionTimeout - probeTime;
+        ranker?._compare(generation: rankerGeneration!, candidates: candidates,
+            groups: priorityGroups, preferred: preferred, at: _now(),
+            probeBudget: remaining < probeTimeout ? remaining : probeTimeout,
+            selectionBudget: remaining, ipv6Available: ipv6Available,
+            networkClass: networkClass);
         await run(candidates.removeAt(0), selectionTimeout - probeTime,
             (elapsed) => probeTime += elapsed);
       }

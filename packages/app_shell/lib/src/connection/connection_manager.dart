@@ -49,6 +49,7 @@ class ConnectionManager extends ChangeNotifier {
     required PokrovClientExperienceStore clientExperienceStore,
     required PokrovFileConnectHintStore connectHintStore,
     PokrovClientObservability? observability,
+    Future<CandidateRankerShadow>? candidateRankerShadow,
     Duration actionTimeout = const Duration(seconds: 18),
     PokrovWifiProbe? currentWifiProbe,
     PokrovForegroundConnectPolicy? foregroundConnectPolicy,
@@ -71,6 +72,15 @@ class ConnectionManager extends ChangeNotifier {
         _authorizeAndroidVpnConnect = authorizeAndroidConnect,
         _refreshSubscriptionInfo = refreshSubscription,
         _onNotice = onNotice {
+    if (candidateRankerShadow != null) {
+      _candidateRankerReady = candidateRankerShadow.then((observer) {
+        if (_disposed) return;
+        _candidateSelector.rankerShadow = observer;
+        debugPrint('POKROV_RANKER shadow_ready');
+      }).catchError((Object _) {
+        debugPrint('POKROV_RANKER shadow_load_failed');
+      });
+    }
     _selectedRouteMode = appContext.runtimeProfile.defaultRouteMode;
     _connectionCoordinator = ConnectionCoordinator(
       primaryConnectEnabled: _canPrimaryConnect,
@@ -541,6 +551,9 @@ class ConnectionManager extends ChangeNotifier {
   ({int generation, String digest, domain.TransportCandidate candidate})? _confirmedCandidate;
   TransportCandidateCatalog? _transportCatalog;
   final _candidateSelector = SmartConnectCandidateSelector();
+  Future<void>? _candidateRankerReady;
+  Future<void> get candidateRankerReady => _candidateRankerReady ?? Future<void>.value();
+  CandidateRankerShadow? get candidateRankerShadow => _candidateSelector.rankerShadow;
   String? _candidateNetworkKey;
   String? _candidateOfflineNetworkKey;
   String? _candidateNetworkClass;
@@ -2772,12 +2785,14 @@ class ConnectionManager extends ChangeNotifier {
                 ? const Duration(seconds: 7)
                 : const Duration(seconds: 12);
         try {
+          if (_candidateRankerReady != null) await _candidateRankerReady;
           payload = await _candidateSelector.select(
             catalog: TransportCandidateCatalog(
                 revision: catalog.revision, selectedCandidateRef: catalog.selectedCandidateRef,
                 candidates: group),
             network: key, platform: _appContext.hostPlatform,
             ipv6Available: network.ipv6Available,
+            networkClass: network.networkClass,
             // Country was checked against the full catalog before grouping.
             cancelled: cancelled,
             recoveryCandidateRef: recoveryCandidateRef,
@@ -3034,12 +3049,14 @@ class ConnectionManager extends ChangeNotifier {
           final twoWaveWarp = coldConnect && inputs.hostPlatform == HostPlatform.android &&
               identical(group, warpCandidates) && group.length > 3;
           try {
+            if (_candidateRankerReady != null) await _candidateRankerReady;
             selected = await _candidateSelector.select(
               catalog: TransportCandidateCatalog(revision: catalog.revision,
                   selectedCandidateRef: catalog.selectedCandidateRef,
                   candidates: group),
               network: key, platform: inputs.hostPlatform,
               ipv6Available: network.ipv6Available,
+              networkClass: network.networkClass,
               cancelled: _connectionCoordinator.whenOperationEnds(generation),
               recoveryCandidateRef: recoveryCandidateRef, excludedCandidateRefs: excludedCandidateRefs,
               selectionTimeout: identical(group, dnsCandidates)

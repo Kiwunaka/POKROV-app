@@ -505,6 +505,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       store: widget.firstLaunchStore ?? const PokrovFileFirstLaunchStore(),
     );
     _clientExperienceStore = widget.clientExperienceStore;
+    const rankerModelPath = String.fromEnvironment('POKROV_RANKER_SHADOW_MODEL_PATH');
     _connectionManager = ConnectionManager(
       appContext: widget.appContext,
       runtimeEngine: runtimeEngine,
@@ -514,6 +515,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       clientExperienceStore: _clientExperienceStore,
       connectHintStore: widget.connectHintStore,
       observability: widget.observability,
+      candidateRankerShadow: rankerModelPath.isEmpty
+          ? null : CandidateRankerShadow.loadLocal(rankerModelPath),
       actionTimeout: widget.runtimeActionTimeout,
       currentWifiProbe: widget.currentWifiProbe,
       windowsTunnelAuthorizer: widget.windowsTunnelAuthorizer,
