@@ -1353,7 +1353,8 @@ class FreeProfileAccess {
   bool get isPending =>
       transition == FreeProfileTransition.softTransitionPending ||
       transition == FreeProfileTransition.resetPending;
-  bool get hasRecoverableError => transition == FreeProfileTransition.error;
+  bool get hasRecoverableError =>
+      isFreeAccess && transition == FreeProfileTransition.error;
   bool get isConfirmedSoftMode =>
       isConsistent &&
       accessState == 'free_soft_mode' &&

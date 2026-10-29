@@ -219,6 +219,27 @@ void main() {
     );
     expect(soft?.isConfirmedSoftMode, isTrue);
 
+    final freeError = FreeProfileAccess.tryParse(
+      access: <String, Object?>{
+        'access_state': 'free_monthly',
+        'free_profile_state': 'error',
+      },
+    );
+    expect(freeError?.hasRecoverableError, isTrue);
+
+    final paidWithOldFreeError = FreeProfileAccess.tryParse(
+      access: <String, Object?>{
+        'access_state': 'paid_unlimited',
+        'free_profile_state': 'error',
+      },
+      freeCaps: <String, Object?>{
+        'transition_state': 'error',
+        'error_code': 'target_traffic_reset_failed',
+      },
+    );
+    expect(paidWithOldFreeError?.hasRecoverableError, isFalse);
+    expect(paidWithOldFreeError?.needsConservativePresentation, isFalse);
+
     final mismatch = FreeProfileAccess.tryParse(
       access: <String, Object?>{
         'access_state': 'free_monthly',
