@@ -161,6 +161,7 @@ class SmartConnectCandidateSelector {
     // private-build model load that finishes during another selection.
     final ranker = rankerShadow;
     final rankerGeneration = ranker?._begin(contextGeneration, catalog.revision);
+    final capturing = ranker?._capturePath != null;
     final now = _now();
     _failedUntil.removeWhere((_, expires) => !expires.isAfter(now));
     _udpFailedUntil.removeWhere((_, expires) => !expires.isAfter(now));
@@ -266,6 +267,16 @@ class SmartConnectCandidateSelector {
     final ended = Completer<void>();
     final probes = <Completer<void>>{};
     final settled = <Future<void>>[];
+    final committed = <String, TransportCandidate>{};
+    final parallelism = const {HostPlatform.android, HostPlatform.ios}.contains(platform) ? 3 : 4;
+    final fixedPrefix = <TransportCandidate>[];
+    for (final group in capturing ? priorityGroups.values.toSet() : <int>{}) {
+      final rows = candidates.where((candidate) => priorityGroups[candidate.candidateRef] == group).toList();
+      final naive = rows.indexWhere((candidate) => candidate.protocol == 'naive');
+      if (naive >= 0 && rows.every((candidate) => CandidateRankerShadow._pathKind(candidate) == 'direct')) {
+        fixedPrefix.addAll(rows.take(naive + 1));
+      }
+    }
     ManagedProfilePayload? winner;
     BootstrapFailure? apiFailure;
     var cancelledByOwner = false;
@@ -289,10 +300,25 @@ class SmartConnectCandidateSelector {
         void Function(Duration) countProbeTime) async {
       if (ended.isCompleted) return;
       startedCount++;
+      final capture = !capturing ? null : ranker!._capture(generation: rankerGeneration!,
+          choices: [candidate, ...candidates], catalog: catalog.candidates,
+          committed: [...fixedPrefix, ...committed.values], groups: priorityGroups,
+          failedUntil: {for (final entry in _failedUntil.entries)
+            if (entry.key.$1 == network) entry.key.$2: entry.value},
+          udpFailed: _udpFailedUntil.containsKey(network),
+          preferredRef: preferred, recoveryRef: recoveryCandidateRef,
+          nativeSchedulePending: committed.isNotEmpty,
+          policyFixedRefs: {for (final item in fixedPrefix) item.candidateRef,
+            ...ipv6Siblings.keys, for (final item in ipv6Siblings.values) item.candidateRef},
+          parallelism: parallelism, at: _now(),
+          probeBudget: remainingProbeBudget < probeTimeout ? remainingProbeBudget : probeTimeout,
+          selectionBudget: remainingProbeBudget, ipv6Available: ipv6Available, networkClass: networkClass);
+      if (capturing) committed[candidate.candidateRef] = candidate;
       final cancellation = Completer<void>();
       probes.add(cancellation);
       var timedOut = false;
       var nativeStarted = false;
+      var capturedSuccess = false;
       SmartConnectCandidateProbeResult? outcome;
       Timer? timeout;
       final probeClock = Stopwatch();
@@ -333,7 +359,8 @@ class SmartConnectCandidateSelector {
         if (!timedOut && outcome.profile != null) {
           ranker?._observe(rankerGeneration!, candidate, outcome, _now(),
               nativeTimeout, remainingProbeBudget, ipv6Available, networkClass,
-              nativeStarted: nativeStarted);
+              nativeStarted: nativeStarted, capture: capture);
+          capturedSuccess = true;
           onProbeResult?.call(candidate, outcome);
           winner = outcome.profile;
           if (candidate.network == 'udp') _udpFailedUntil.remove(network);
@@ -384,6 +411,11 @@ class SmartConnectCandidateSelector {
               ? nativeTimeout : probeClock.elapsed);
         }
         probes.remove(cancellation);
+        committed.remove(candidate.candidateRef);
+        if (ended.isCompleted && !capturedSuccess) {
+          ranker?._captureCancelled(capture, _now(), nativeStarted: nativeStarted,
+              elapsed: outcome?.duration ?? probeClock.elapsed, cancelledByOwner: cancelledByOwner);
+        }
         final familyFinish = familySettled[candidate.candidateRef];
         if (familyFinish != null && !familyFinish.isCompleted) familyFinish.complete();
         final group = priorityGroups[candidate.candidateRef]!;
@@ -403,7 +435,8 @@ class SmartConnectCandidateSelector {
           http64kObservation: failureKind == 'probe_failed' ? outcome.http64kObservation : null);
       ranker?._observe(rankerGeneration!, candidate, failed, _now(),
           remainingProbeBudget < probeTimeout ? remainingProbeBudget : probeTimeout,
-          remainingProbeBudget, ipv6Available, networkClass, nativeStarted: nativeStarted);
+          remainingProbeBudget, ipv6Available, networkClass, nativeStarted: nativeStarted,
+          capture: capture);
       onProbeResult?.call(candidate, failed);
       recordFailure(network, candidate.candidateRef, failureKind);
       if (candidate.network == 'udp' && _networkFailureKinds.contains(failureKind)) {
@@ -460,7 +493,6 @@ class SmartConnectCandidateSelector {
         await Future.any<void>([ended.future, preferredRun,
           Future<void>.delayed(const Duration(milliseconds: 350))]);
       }
-      final parallelism = const {HostPlatform.android, HostPlatform.ios}.contains(platform) ? 3 : 4;
       final workerCount = preferredRun == null || preferredSettled
           ? parallelism : parallelism - 1;
       for (var index = 0; index < workerCount; index++) {

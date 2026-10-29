@@ -25,11 +25,12 @@ shell.ConnectionManager manager(Future<CandidateRankerShadow> model) => shell.Co
 );
 
 TransportCandidate candidate(String transport, int priority,
-    {String family = 'ipv4', String? bridge}) => TransportCandidate(
+    {String family = 'ipv4', String? bridge, String protocol = 'vless',
+      String network = 'tcp'}) => TransportCandidate(
   candidateRef: 'private-node:$transport:$priority', profileRef: 'private-profile',
-  nodeCode: 'private-node', countryCode: 'CH', protocol: 'vless',
+  nodeCode: 'private-node', countryCode: 'CH', protocol: protocol,
   transport: transport, protection: transport == 'dnstt' ? 'noise' : 'tls',
-  priority: priority, network: 'tcp', flow: '', minimumClientRelease: '1.5.0',
+  priority: priority, network: network, flow: '', minimumClientRelease: '1.5.0',
   minimumCoreRelease: null, family: family, bridgeId: bridge,
   platforms: {HostPlatform.android, HostPlatform.windows}, requiredFeatures: {},
 );
@@ -111,6 +112,83 @@ Future<CandidateRankerComparison> exercise(CandidateRankerModel model) async {
 }
 
 void main() {
+  test('owned capture pairs immutable pre-action memory with only the chosen native outcome', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-capture-');
+    addTearDown(() => directory.delete(recursive: true));
+    final file = File('${directory.path}/attempts.jsonl');
+    var at = DateTime.utc(2026, 10, 29);
+    final observer = CandidateRankerShadow.capture(file.path);
+    final selector = SmartConnectCandidateSelector(now: () => at, rankerShadow: observer);
+    final remembered = candidate('udp', 0, protocol: 'awg', network: 'udp');
+    final awg = candidate('udp', 1, protocol: 'awg', network: 'udp');
+    final hy2 = candidate('udp', 2, protocol: 'hysteria2', network: 'udp');
+    final catalog = TransportCandidateCatalog(revision: 'private-catalog',
+        selectedCandidateRef: remembered.candidateRef, candidates: [remembered, awg, hy2]);
+    selector.recordFailure('private-network', remembered.candidateRef, 'connect_failed');
+    Future<void> select() => selector.select(catalog: catalog, network: 'private-network',
+      platform: HostPlatform.windows, cancelled: Completer<void>().future,
+      contextGeneration: 'private-generation', networkClass: 'ethernet', ipv6Available: false,
+      probe: (item, cancelled, timeout) async {
+        await Future<void>.delayed(Duration(milliseconds: item == awg ? 2 : 8));
+        return item == awg ? const SmartConnectCandidateProbeResult.failure('connect_failed',
+            duration: Duration(milliseconds: 2), probeStage: 'proxy_dial') : success(item);
+      });
+    await select();
+    await observer.settled;
+    final firstRows = (await file.readAsLines()).map((line) => jsonDecode(line) as Map).toList();
+    expect(firstRows.length, 2);
+    final first = firstRows.first['decision'] as Map;
+    expect(first['history'], isEmpty);
+    final descriptors = first['candidates'] as List;
+    expect(descriptors.map((item) => item['protocol']), ['awg', 'hysteria2']);
+    expect(descriptors.first['selector_memory'], {
+      'memory_known': 1, 'failed_same_protocol_path': 0.25,
+      'failed_same_protocol_path_node': 0.25, 'failed_other_protocol_same_path': 0.0,
+      'failed_same_protocol_other_path': 0.0, 'failed_self': 0,
+      'failed_same_protocol_path_ttl': 1.0, 'failed_other_protocol_same_path_ttl': 0.0,
+      'udp_failed': 0,
+    });
+    expect(descriptors.last['selector_memory']['failed_other_protocol_same_path'], 0.25);
+    expect((firstRows.last['decision']['candidates'] as List).first['cohort_total_count'], 1);
+    expect(firstRows.map((row) => row['outcome']['result']), ['network_failure', 'pass']);
+    expect(firstRows.every((row) => row['outcome']['native_started'] == true), isTrue);
+    at = at.add(const Duration(seconds: 2));
+    await select();
+    await observer.settled;
+    final content = await file.readAsString();
+    expect(content, isNot(contains('private-')));
+    final last = jsonDecode(content.trim().split('\n').last) as Map;
+    expect(last['decision']['history'].length, 2);
+    expect(last['decision']['candidates'].length, 1);
+    expect(last['decision']['candidates'][0]['selector_memory']['failed_other_protocol_same_path'], 0.5);
+    expect(observer.lastComparison, isNull);
+  });
+
+  test('a settled losing native probe is captured as control and never a network label', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-capture-cancel-');
+    addTearDown(() => directory.delete(recursive: true));
+    final file = File('${directory.path}/attempts.jsonl');
+    final observer = CandidateRankerShadow.capture(file.path);
+    final first = candidate('tcp', 0), second = candidate('udp', 1);
+    await SmartConnectCandidateSelector(rankerShadow: observer).select(
+      catalog: TransportCandidateCatalog(revision: '1', selectedCandidateRef: first.candidateRef,
+          candidates: [first, second]), network: 'network', platform: HostPlatform.windows,
+      contextGeneration: 'physical-1', cancelled: Completer<void>().future,
+      probe: (item, cancelled, timeout) async {
+        if (item == first) {
+          await cancelled;
+          return const SmartConnectCandidateProbeResult.failure('connect_failed',
+              duration: Duration(milliseconds: 3), probeStage: 'proxy_dial');
+        }
+        return success(item);
+      });
+    await observer.settled;
+    final rows = (await file.readAsLines()).map((line) => jsonDecode(line) as Map).toList();
+    expect(rows.map((row) => row['outcome']['result']), ['pass', 'control']);
+    expect(rows.last['outcome']['failure_kind'], 'owner_superseded');
+    expect(rows.last['outcome']['native_started'], isTrue);
+  });
+
   test('local loader rejects an oversized asset instead of accepting its truncated prefix', () async {
     final file = File('${Directory.systemTemp.path}/pokrov-ranker-size-${DateTime.now().microsecondsSinceEpoch}.bin');
     addTearDown(() => file.delete());

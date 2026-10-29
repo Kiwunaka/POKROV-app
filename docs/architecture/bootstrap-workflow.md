@@ -249,6 +249,18 @@ Export an approved local checkpoint with `scripts/export_candidate_ranker.py`; t
 `POKROV_RANKER_RESEARCH_DIR` to check the real model against ONNX. This source path
 is not an enabled release feature or evidence of a real-network improvement.
 
+Owned QA can also set `POKROV_SELECTOR_QA_CAPTURE_PATH` to an existing writable
+local directory's JSONL file, with or without the v1 model. The observer records
+at most 256 admitted attempts per process: each completed row pairs the immutable
+preparation-time queue, path/cohort and existing four-minute selector-memory
+snapshot (`pokrov-preaction-v3`) with only that attempt's completed outcome.
+Candidate/context refs are local numbers; raw node, profile, endpoint and network
+identifiers are omitted. Superseded/cancelled attempts remain control observations.
+Rows append asynchronously; a failed sink disables capture and cannot block
+Connect. Capture does not upload data or rank ordinary candidates. Researchers
+must classify natural versus controlled QA conditions and keep post-action
+`outcome` outside model/advice inputs; the other candidates have no outcome label.
+
 When the API is unavailable, the cache selector keeps the online WARP order and
 budgets: a currently enabled manual chain first, ordinary paths after its failure,
 then direct WARP. Cached or server consent alone does not admit either WARP group;
