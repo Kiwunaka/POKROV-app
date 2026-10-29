@@ -4,8 +4,10 @@ import 'dart:typed_data';
 /// Fixed CPU inference for the validated pokrov-preaction-v1 Transformer.
 /// This reads an explicitly supplied local asset; it never downloads a model.
 class CandidateRankerModel {
+  static const byteLength = 8 + 933700 * 4;
+
   CandidateRankerModel.fromBytes(Uint8List bytes) {
-    if (bytes.length != 8 + 933700 * 4 ||
+    if (bytes.length != byteLength ||
         String.fromCharCodes(bytes.take(8)) != 'PKRTF001') {
       throw const FormatException('candidate_ranker_model_contract');
     }

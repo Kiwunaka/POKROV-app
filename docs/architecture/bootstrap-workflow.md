@@ -238,8 +238,9 @@ retain ML history across physical networks; an unknown generation keeps no prior
 history. Scores never change Auto's queue or launch extra probes.
 No weights are bundled and the default manager has no observer. A private build
 can set `POKROV_RANKER_SHADOW_MODEL_PATH` to an approved model in local app-readable
-storage: the shell loads it once off the UI isolate, and online/offline candidate
-selection waits for that local load before using the observer. Missing/invalid
+storage: the shell loads it once off the UI isolate with a fixed-size bounded
+read. Online/offline candidate selection uses the observer only when ready and
+never waits for file loading, including during cancellation. Missing/invalid
 assets log `shadow_load_failed` and retain the existing selection. `shadow_ready`
 means loaded; `shadow candidates=... order=...` confirms an actual comparison and
 contains only counts/indices. This private file path is not public packaging.

@@ -1175,12 +1175,14 @@ ConnectionManager _manager(
   Future<bool> Function()? authorizeAndroid,
   PokrovClientObservability? observability,
   FirstSessionCoordinator? firstSessionCoordinator,
+  Future<CandidateRankerShadow>? candidateRankerShadow,
 }) =>
     ConnectionManager(
       appContext: buildSeedAppContext(hostPlatform: runtime.hostPlatform),
       runtimeEngine: runtime,
       bootstrapper: bootstrapper,
       observability: observability,
+      candidateRankerShadow: candidateRankerShadow,
       accountSessionCoordinator:
           AccountSessionCoordinator(accountActions: null),
       firstSessionCoordinator:
@@ -4393,6 +4395,26 @@ void main() {
     expect(runtime.probedProtocols, ['awg', 'awg']);
     expect(runtime.activeProbes, isEmpty);
     expect(runtime.connectCalls, 2);
+  });
+
+  test('pending local ranker load blocks neither candidate probes nor cancellation', () async {
+    final loading = Completer<CandidateRankerShadow>();
+    final runtime = _Runtime()..supportsCandidates = true..holdProbes = true;
+    final manager = _manager(runtime, _Bootstrapper(catalog: true),
+        candidateRankerShadow: loading.future);
+    addTearDown(manager.dispose);
+    addTearDown(() {
+      if (!loading.isCompleted) loading.completeError(const FormatException('unavailable_test_model'));
+    });
+    final connecting = manager.connect();
+    await runtime.probeStarted.future.timeout(const Duration(seconds: 1));
+    await manager.disconnect().timeout(const Duration(seconds: 1));
+    await connecting.timeout(const Duration(seconds: 1));
+    expect(loading.isCompleted, isFalse);
+    expect(manager.busy, isFalse);
+    expect(runtime.activeProbes, isEmpty);
+    expect(runtime.connectCalls, 0);
+    expect(manager.candidateRankerShadow, isNull);
   });
 
   test('Android first Connect can cancel while certificate preparation waits', () async {

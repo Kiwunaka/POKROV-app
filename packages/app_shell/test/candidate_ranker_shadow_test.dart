@@ -111,6 +111,15 @@ Future<CandidateRankerComparison> exercise(CandidateRankerModel model) async {
 }
 
 void main() {
+  test('local loader rejects an oversized asset instead of accepting its truncated prefix', () async {
+    final file = File('${Directory.systemTemp.path}/pokrov-ranker-size-${DateTime.now().microsecondsSinceEpoch}.bin');
+    addTearDown(() => file.delete());
+    final bytes = Uint8List(CandidateRankerModel.byteLength + 1)
+      ..setRange(0, 8, 'PKRTF001'.codeUnits);
+    await file.writeAsBytes(bytes);
+    await expectLater(CandidateRankerShadow.loadLocal(file.path), throwsFormatException);
+  });
+
   test('shadow observes actual admitted DNS probes without changing order, history labels or context', () async {
     final result = await exercise(zeroModel());
     expect(result.modelOrder, [0, 1]);

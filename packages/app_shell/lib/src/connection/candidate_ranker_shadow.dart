@@ -6,8 +6,15 @@ class CandidateRankerShadow {
   CandidateRankerShadow(this._model);
 
   static Future<CandidateRankerShadow> loadLocal(String path) async {
-    final model = await Isolate.run(() =>
-        CandidateRankerModel.fromBytes(File(path).readAsBytesSync()));
+    final model = await Isolate.run(() {
+      final file = File(path).openSync();
+      try {
+        // One extra byte detects a larger checkpoint without reading it all.
+        return CandidateRankerModel.fromBytes(file.readSync(CandidateRankerModel.byteLength + 1));
+      } finally {
+        file.closeSync();
+      }
+    });
     return CandidateRankerShadow(model);
   }
 

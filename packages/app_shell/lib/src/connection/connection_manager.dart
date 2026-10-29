@@ -2785,7 +2785,6 @@ class ConnectionManager extends ChangeNotifier {
                 ? const Duration(seconds: 7)
                 : const Duration(seconds: 12);
         try {
-          if (_candidateRankerReady != null) await _candidateRankerReady;
           payload = await _candidateSelector.select(
             catalog: TransportCandidateCatalog(
                 revision: catalog.revision, selectedCandidateRef: catalog.selectedCandidateRef,
@@ -3050,7 +3049,6 @@ class ConnectionManager extends ChangeNotifier {
           final twoWaveWarp = coldConnect && inputs.hostPlatform == HostPlatform.android &&
               identical(group, warpCandidates) && group.length > 3;
           try {
-            if (_candidateRankerReady != null) await _candidateRankerReady;
             selected = await _candidateSelector.select(
               catalog: TransportCandidateCatalog(revision: catalog.revision,
                   selectedCandidateRef: catalog.selectedCandidateRef,
