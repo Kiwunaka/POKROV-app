@@ -3401,6 +3401,7 @@ class ConnectionManager extends ChangeNotifier {
               bool authorityUnavailable(BootstrapFailure error) =>
                   error.code == 'smart_access_admission_paused' ||
                   error.code == 'smart_access_access_denied' ||
+                  error.code == 'smart_access_policy_changed' ||
                   (error.statusCode == null &&
                       error.operationalCode == 'API-002') ||
                   const {
@@ -5248,7 +5249,7 @@ class ConnectionManager extends ChangeNotifier {
     return _smartAccessRouteProfile?.policy.vpnAvailable == false &&
         _isCurrentSmartAccessProfile(failed) &&
         const {'core_egress_dns_failed', 'core_egress_connect_failed', 'core_egress_tls_failed',
-          'core_smart_access_lease_expired'}
+          'core_egress_probe_failed', 'core_egress_timeout', 'core_smart_access_lease_expired'}
             .contains(failed.lastFailureKind);
   }
 

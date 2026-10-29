@@ -110,6 +110,13 @@ They must not enable Core's mobile 45 MiB connection killer, which can close all
 sockets during a later relay dial and appear as a connection failure after a
 successful startup. Android keeps its existing memory limit.
 
+An ordinary local SmartDNS profile also enters the existing protected VPN
+fallback when native egress reports a failed probe or timeout. If provider
+policy changes between fetching it and requesting a lease, the client discards
+that operation's SmartDNS grants and uses the catalog's existing VPN fallback;
+the next connection fetches the current policy. Profile ownership, signed
+scope, revocation and expiry checks still apply.
+
 At the earlier 21 October checkpoint, signed catalog 28/security 2 and provider
 policy **2/security 1** admitted only **WLrus and DNS-AI**, for Windows Gemini
 and all eligible active Premium access. Publication used the existing key and Action Intent, with exact

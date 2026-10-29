@@ -55,6 +55,7 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
   Object? exactProfileFailure;
   String accessNetworkAsn = '';
   String? materialConfigPayload;
+  FreeProfileAccess? profileAccess;
   final cancelledExactProfiles = <String>[];
   SmartConnectProfile? smartConnect;
   final nodePreferences = <SmartConnectProfile>[];
@@ -121,6 +122,7 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
         (selectedCandidateRef.isEmpty ? candidates.first.candidateRef : selectedCandidateRef));
     ManagedProfilePayload material(TransportCandidate candidate) => ManagedProfilePayload(
       accessNetworkAsn: accessNetworkAsn,
+      freeProfileAccess: profileAccess,
       profileName: catalog ? candidate.candidateRef : '$nodeCode:profile_0',
       transportCatalog: catalog ? TransportCandidateCatalog(revision: 'test',
           selectedCandidateRef: selected.candidateRef, candidates: candidates) : null,
@@ -416,12 +418,29 @@ class _QaProfileFailureBootstrapper extends AppFirstRuntimeBootstrapper {
   }) async => true;
 }
 
-class _PartialSmartDnsBootstrapper extends _QaProfileFailureBootstrapper {
-  _PartialSmartDnsBootstrapper(Directory directory, this.catalog, this.providers, this.issueLease)
-      : super(directory) { cached.cacheAvailable = false; }
+class _SmartDnsBootstrapper extends _QaProfileFailureBootstrapper {
+  _SmartDnsBootstrapper(Directory directory, this.catalog, this.providers, this.issueLease)
+      : super(directory) {
+    cached.cacheAvailable = false;
+    cached.profileAccess = FreeProfileAccess.tryParse(access: {'access_state': 'paid_unlimited'});
+    cached.materialConfigPayload = jsonEncode({
+      'inbounds': [{'type': 'tun', 'tag': 'tun-in'}],
+      'outbounds': [
+        {'type': 'socks', 'tag': 'node', 'server': '127.0.0.1', 'server_port': 1080},
+        {'type': 'selector', 'tag': 'proxy', 'outbounds': ['node']},
+        {'type': 'direct', 'tag': 'direct'},
+      ],
+      'route': {'final': 'proxy'},
+      'dns': {'servers': [
+        {'tag': 'dns-remote', 'address': 'tls://1.1.1.1', 'detour': 'proxy'},
+        {'tag': 'dns-direct', 'address': 'local', 'detour': 'direct'},
+      ], 'final': 'dns-remote'},
+    });
+  }
   final VerifiedRoutingCatalog catalog;
   final VerifiedSmartAccessProviderPolicy providers;
   final Future<VerifiedSmartAccessLease> Function(String) issueLease;
+  int providerReads = 0;
   int leaseRequests = 0;
 
   @override
@@ -430,6 +449,9 @@ class _PartialSmartDnsBootstrapper extends _QaProfileFailureBootstrapper {
   bool get smartAccessEnabled => true;
   @override
   bool get smartAccessControlAvailable => true;
+  @override
+  Future<WarpControlStatus> fetchWarpStatus({required HostPlatform hostPlatform,
+      Future<void>? cancelled}) async => WarpControlStatus.fromPolicy(WarpRuntimePolicy.clientLocalDefault);
   @override
   Future<ClientSubscriptionInfo> fetchClientSubscription({required HostPlatform hostPlatform,
       Duration? requestTimeout, Future<void>? cancelled}) async => ClientSubscriptionInfo.fromJson({
@@ -442,7 +464,10 @@ class _PartialSmartDnsBootstrapper extends _QaProfileFailureBootstrapper {
   @override
   Future<VerifiedSmartAccessProviderPolicy> fetchSmartAccessProviders({required HostPlatform hostPlatform,
       required bool Function() operationIsCurrent, required Duration remainingBudget,
-      required Future<void> cancelled}) async => providers;
+      required Future<void> cancelled}) async {
+    providerReads++;
+    return providers;
+  }
   @override
   Future<VerifiedSmartAccessLease> requestSmartAccessLease({required HostPlatform hostPlatform,
       required VerifiedRoutingCatalog catalog, required VerifiedSmartAccessProviderPolicy providerPolicy,
@@ -472,7 +497,7 @@ Future<Map<String, Object?>> _signedSmartDns(Map<String, Object?> payload,
 String _smartDnsTime(DateTime time) => '${time.toUtc().toIso8601String().split('.').first}Z';
 
 Future<({VerifiedRoutingCatalog catalog, VerifiedSmartAccessProviderPolicy providers,
-    SmartAccessVerifier verifier, SimpleKeyPair key})> _smartDnsFixture() async {
+    SmartAccessVerifier verifier, SimpleKeyPair key})> _smartDnsFixture({bool completeIpv4Scope = false}) async {
   final now = DateTime.now().toUtc();
   final start = _smartDnsTime(now.subtract(const Duration(minutes: 1)));
   final end = _smartDnsTime(now.add(const Duration(hours: 1)));
@@ -520,11 +545,44 @@ Future<({VerifiedRoutingCatalog catalog, VerifiedSmartAccessProviderPolicy provi
       'enabled': true, 'verification': 'verified', 'platform': 'windows', 'origin': 'current-origin',
       'family': id == 'old' ? 'ipv4' : 'ipv6', 'feature': 'web_request', 'transport': 'tls_tcp_443_visible_sni',
       'checks': {for (final name in ['resolver_transport', 'dns_answer', 'tls_certificate', 'feature_request']) name: 'PASS'},
-      'domains': id == 'old' ? [domains.first] : domains,
+      'domains': id == 'old' && !completeIpv4Scope ? [domains.first] : domains,
       'proof_ref': 'fixture', 'proof_sha256': digest, 'observed_at': start, 'expires_at': end}],
   }, 'pokrov-smart-access-providers-v1', key), now: now, minimumRevision: 0,
       minimumSecurityRevision: 1, currentPayloadSha256: null);
   return (catalog: catalog, providers: providers, verifier: verifier, key: key);
+}
+
+Future<VerifiedSmartAccessLease> _smartDnsLease({required VerifiedRoutingCatalog catalog,
+    required VerifiedSmartAccessProviderPolicy providers, required SmartAccessVerifier verifier,
+    required SimpleKeyPair key, required String profile}) async {
+  final capability = (providers.payload['capabilities']! as List).cast<Map>()
+      .singleWhere((row) => row['capability_id'] == 'gemini-old');
+  const nonce = '0123456789abcdef0123456789abcdef';
+  final issued = DateTime.now().toUtc().subtract(const Duration(seconds: 1));
+  final request = <String, Object?>{'request_nonce': nonce, 'profile_sha256': profile,
+    'route_mode': 'selective', 'capability_id': 'gemini-old',
+    'catalog_sha256': catalog.payloadSha256, 'provider_policy_sha256': providers.payloadSha256,
+    for (final field in ['platform', 'origin', 'family', 'feature']) field: capability[field]};
+  final envelope = await _signedSmartDns({
+    'schema_version': 'pokrov-smart-access-grant-v1', 'request_nonce': nonce,
+    'device_binding': await smartAccessProfileSha256(
+      'pokrov-smart-access-device-v1\u0000$nonce\u0000synthetic-account\u0000synthetic-install'),
+    'profile_sha256': profile, 'route_mode': 'selective',
+    'lease': {'schema_version': 'pokrov-smart-access-lease-v1', 'lease_id': nonce, 'audience': 'lab',
+      'provider_id': 'old', 'provider_revision': 1, 'permission_id': 'old', 'permission_revision': 1,
+      'capability_id': 'gemini-old', 'provider_policy_revision': 1, 'provider_security_revision': 1,
+      'provider_policy_sha256': providers.payloadSha256, 'catalog_revision': 1, 'catalog_security_revision': 1,
+      'catalog_sha256': catalog.payloadSha256,
+      for (final field in ['service_id', 'platform', 'origin', 'family', 'feature', 'transport', 'domains']) field: capability[field],
+      'issued_at': _smartDnsTime(issued),
+      'new_flows_until': _smartDnsTime(issued.add(const Duration(minutes: 5))),
+      'active_flows_until': _smartDnsTime(issued.add(const Duration(minutes: 10))),
+      'resolver_url': 'https://dns.example.test/dns-query', 'relay_addresses': ['1.1.1.1'],
+      'max_new_connections_per_minute': 1, 'max_concurrent_connections': 1, 'relay_connect_policy': null},
+  }, 'pokrov-smart-access-grant-v1', key);
+  return verifier.verifyLease(envelope, request: request,
+    accountId: 'synthetic-account', installId: 'synthetic-install', catalog: catalog,
+    providerPolicy: providers, now: DateTime.now().toUtc());
 }
 
 class _StartupAccountBootstrapper extends _StatsBootstrapper implements AppFirstClientDataService {
@@ -866,6 +924,37 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
     calls.add('cancel:$requestId');
     cancelled.add(requestId);
   }
+}
+
+class _SmartDnsRuntime extends _Runtime implements RuntimeSmartAccessControl {
+  _SmartDnsRuntime() : super(hostPlatform: HostPlatform.windows) {
+    routingCatalogWindowVersion = 1;
+    routingCatalogControlVersion = 4;
+    smartAccessLeaseVersion = 1;
+  }
+
+  @override
+  Future<RuntimeSnapshot> stageSmartAccessProfile(ManagedProfilePayload payload, {
+    required Future<String> Function(String, RuntimeSnapshot) persistRestrictions,
+    required bool Function() operationIsCurrent,
+  }) async {
+    profileDigest = await smartAccessProfileSha256(payload.configPayload);
+    return stageManagedProfile(payload);
+  }
+
+  @override
+  Future<RuntimeSnapshot> replaceManagedProfile(ManagedProfilePayload payload, {
+    required bool Function() operationIsCurrent,
+    Future<String> Function(String, RuntimeSnapshot)? persistRestrictions,
+  }) async {
+    profileDigest = await smartAccessProfileSha256(payload.configPayload);
+    return super.replaceManagedProfile(payload, operationIsCurrent: operationIsCurrent,
+      persistRestrictions: persistRestrictions);
+  }
+
+  @override
+  Future<bool> revokeSmartAccessLease({required String profileDigest,
+    required String leaseId, required bool terminateActive}) async => true;
 }
 
 class _ExperienceStore implements PokrovClientExperienceStore {
@@ -5257,34 +5346,9 @@ void main() {
 
     final directory = await Directory.systemTemp.createTemp('pokrov-partial-smart-dns-');
     addTearDown(() => _deleteTestDirectory(directory));
-    final bootstrapper = _PartialSmartDnsBootstrapper(directory, fixture.catalog, partial, (profile) async {
-      const nonce = '0123456789abcdef0123456789abcdef';
-      final issued = DateTime.now().toUtc().subtract(const Duration(seconds: 1));
-      final request = <String, Object?>{'request_nonce': nonce, 'profile_sha256': profile,
-        'route_mode': 'selective', 'capability_id': 'gemini-old',
-        'catalog_sha256': fixture.catalog.payloadSha256, 'provider_policy_sha256': partial.payloadSha256,
-        for (final field in ['platform', 'origin', 'family', 'feature']) field: old[field]};
-      final envelope = await _signedSmartDns({
-        'schema_version': 'pokrov-smart-access-grant-v1', 'request_nonce': nonce,
-        'device_binding': await smartAccessProfileSha256(
-          'pokrov-smart-access-device-v1\u0000$nonce\u0000synthetic-account\u0000synthetic-install'),
-        'profile_sha256': profile, 'route_mode': 'selective',
-        'lease': {'schema_version': 'pokrov-smart-access-lease-v1', 'lease_id': nonce, 'audience': 'lab',
-          'provider_id': 'old', 'provider_revision': 1, 'permission_id': 'old', 'permission_revision': 1,
-          'capability_id': 'gemini-old', 'provider_policy_revision': 1, 'provider_security_revision': 1,
-          'provider_policy_sha256': partial.payloadSha256, 'catalog_revision': 1, 'catalog_security_revision': 1,
-          'catalog_sha256': fixture.catalog.payloadSha256,
-          for (final field in ['service_id', 'platform', 'origin', 'family', 'feature', 'transport', 'domains']) field: old[field],
-          'issued_at': _smartDnsTime(issued),
-          'new_flows_until': _smartDnsTime(issued.add(const Duration(minutes: 5))),
-          'active_flows_until': _smartDnsTime(issued.add(const Duration(minutes: 10))),
-          'resolver_url': 'https://dns.example.test/dns-query', 'relay_addresses': ['1.1.1.1'],
-          'max_new_connections_per_minute': 1, 'max_concurrent_connections': 1, 'relay_connect_policy': null},
-      }, 'pokrov-smart-access-grant-v1', fixture.key);
-      return fixture.verifier.verifyLease(envelope, request: request,
-        accountId: 'synthetic-account', installId: 'synthetic-install', catalog: fixture.catalog,
-        providerPolicy: partial, now: DateTime.now().toUtc());
-    });
+    final bootstrapper = _SmartDnsBootstrapper(directory, fixture.catalog, partial,
+      (profile) => _smartDnsLease(catalog: fixture.catalog, providers: partial,
+        verifier: fixture.verifier, key: fixture.key, profile: profile));
     final runtime = _Runtime(hostPlatform: HostPlatform.windows)
       ..routingCatalogWindowVersion = 1..routingCatalogControlVersion = 4..smartAccessLeaseVersion = 1;
     final manager = _manager(runtime, bootstrapper,
@@ -5302,6 +5366,95 @@ void main() {
     expect(manager.presentation.isVerified, isFalse);
     expect(runtime.stagedPayloads, isEmpty, reason: 'a partial local profile must never be staged as DNS-only');
     expect(runtime.connectCalls, 0);
+  });
+
+  for (final failure in ['core_egress_probe_failed', 'core_egress_timeout']) {
+    test('local SmartDNS $failure recovers through protected VPN', () async {
+      final fixture = await _smartDnsFixture(completeIpv4Scope: true);
+      final directory = await Directory.systemTemp.createTemp('pokrov-smart-dns-recovery-');
+      addTearDown(() => _deleteTestDirectory(directory));
+      final bootstrapper = _SmartDnsBootstrapper(directory, fixture.catalog, fixture.providers,
+        (profile) => _smartDnsLease(catalog: fixture.catalog, providers: fixture.providers,
+          verifier: fixture.verifier, key: fixture.key, profile: profile))
+        ..cached.failure = null;
+      final runtime = _SmartDnsRuntime();
+      final experience = _ExperienceStore();
+      final manager = _manager(runtime, bootstrapper,
+        experienceStore: experience,
+        authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+      addTearDown(manager.dispose);
+      manager.updateExperience(const PokrovClientExperienceState.empty().copyWith(
+        routingPreferences: const PokrovRoutingPreferences.defaults().copyWith(
+          selectedCatalogServiceIds: {'gemini'}, smartDnsProviderId: 'old')));
+      manager.selectRouteMode(RouteMode.selectiveServices);
+      await manager.connect();
+      expect(manager.status.phase, ConnectionPhase.connected);
+      expect(bootstrapper.cached.resolutions, isEmpty, reason: 'initial connection is local SmartDNS');
+      final local = jsonDecode(runtime.stagedPayloads.single.configPayload) as Map;
+      expect((local['outbounds'] as List).cast<Map>().any((row) => row['type'] == 'pokrov-smart-access'), isTrue);
+      runtime.periodicFailureKind = failure;
+      runtime.warpEgressFailure = true;
+      expect((await manager.readSnapshot()).lastFailureKind, failure);
+      final deadline = DateTime.now().add(const Duration(seconds: 3));
+      while (runtime.handoffCalls == 0 && DateTime.now().isBefore(deadline)) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(runtime.handoffCalls, 1, reason: '${manager.headline}; ${experience.saved.protectionEvents.map((event) => event.detail).join('; ')}');
+      while (manager.busy) { await Future<void>.delayed(Duration.zero); }
+      expect(manager.status.phase, ConnectionPhase.connected);
+      expect(bootstrapper.cached.resolutions, hasLength(1));
+      expect(bootstrapper.leaseRequests, 1, reason: 'VPN recovery does not retry the failed provider');
+      expect(runtime.handoffCalls, 1);
+      expect(runtime.calls, isNot(contains('disconnect')), reason: 'recovery retains the native owner');
+      final fallback = jsonDecode(runtime.stagedPayloads.last.configPayload) as Map;
+      expect((fallback['outbounds'] as List).cast<Map>().any((row) => row['type'] == 'pokrov-smart-access'), isFalse);
+      expect(((fallback['route'] as Map)['rules'] as List).cast<Map>().any((row) =>
+        (row['domain'] as List?)?.contains('gemini.google.com') == true && row['outbound'] == 'proxy'), isTrue);
+    });
+  }
+
+  test('SmartDNS policy publication race uses VPN and refetches on next Connect', () async {
+    final fixture = await _smartDnsFixture(completeIpv4Scope: true);
+    final directory = await Directory.systemTemp.createTemp('pokrov-smart-dns-policy-race-');
+    addTearDown(() => _deleteTestDirectory(directory));
+    var policyChanged = true;
+    final bootstrapper = _SmartDnsBootstrapper(directory, fixture.catalog, fixture.providers, (profile) async {
+      if (policyChanged) {
+        throw const BootstrapFailure('provider policy changed', code: 'smart_access_policy_changed',
+          statusCode: HttpStatus.conflict);
+      }
+      return _smartDnsLease(catalog: fixture.catalog, providers: fixture.providers,
+        verifier: fixture.verifier, key: fixture.key, profile: profile);
+    })..cached.failure = null;
+    final runtime = _SmartDnsRuntime();
+    final experience = _ExperienceStore();
+    final manager = _manager(runtime, bootstrapper,
+      experienceStore: experience,
+      authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    addTearDown(manager.dispose);
+    manager.updateExperience(const PokrovClientExperienceState.empty().copyWith(
+      routingPreferences: const PokrovRoutingPreferences.defaults().copyWith(
+        selectedCatalogServiceIds: {'gemini'}, smartDnsProviderId: 'old')));
+    manager.selectRouteMode(RouteMode.selectiveServices);
+    await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.connected,
+      reason: '${manager.headline}; ${experience.saved.protectionEvents.map((event) => event.detail).join('; ')}');
+    expect(bootstrapper.providerReads, 1);
+    expect(bootstrapper.leaseRequests, 1);
+    expect(bootstrapper.cached.resolutions, hasLength(1));
+    final fallback = jsonDecode(runtime.stagedPayloads.single.configPayload) as Map;
+    expect((fallback['outbounds'] as List).cast<Map>().any((row) => row['type'] == 'pokrov-smart-access'), isFalse);
+    expect(((fallback['route'] as Map)['rules'] as List).cast<Map>().any((row) =>
+      (row['domain'] as List?)?.contains('gemini.google.com') == true && row['outbound'] == 'proxy'), isTrue);
+    await manager.disconnect();
+    policyChanged = false;
+    await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(bootstrapper.providerReads, 2);
+    expect(bootstrapper.leaseRequests, 2);
+    expect(bootstrapper.cached.resolutions, hasLength(1));
+    final local = jsonDecode(runtime.stagedPayloads.last.configPayload) as Map;
+    expect((local['outbounds'] as List).cast<Map>().any((row) => row['type'] == 'pokrov-smart-access'), isTrue);
   });
 
   test('catalog DNS lane failure asks to check DNS settings', () async {

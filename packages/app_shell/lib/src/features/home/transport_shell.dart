@@ -177,6 +177,7 @@ extension _TransportShellOperations on ConnectionManager {
                 bool authorityUnavailable(BootstrapFailure error) =>
                   error.code == 'smart_access_admission_paused' ||
                   error.code == 'smart_access_access_denied' ||
+                  error.code == 'smart_access_policy_changed' ||
                   (error.statusCode == null && error.operationalCode == 'API-002') ||
                   const {HttpStatus.requestTimeout, HttpStatus.tooManyRequests, HttpStatus.badGateway,
                     HttpStatus.serviceUnavailable, HttpStatus.gatewayTimeout}.contains(error.statusCode);
