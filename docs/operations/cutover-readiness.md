@@ -15,7 +15,22 @@ setup exited 0 and app/service/Core 1.2.14 started in the Clean VM. The seven
 assets were checked against the draft; unchanged protocol QA was not repeated.
 Strict-v2 is not required by the current release plan.
 
-Current private **1.5.0+4238**, App `3db825b6`, uses Core 1.2.15 / ABI2
+On 29 October provider policy **5/state 4/security 1** was published once with
+WLrus Windows covering both exact Gemini hosts. DNS-AI Windows, WLrus Android
+and the existing provider/permission objects stayed unchanged; catalog
+**32/state 31/security 2** and signed compatibility 31 remain live. Windows 4239
+returned 433 through both WLrus RPC hosts under native QA. After publication,
+ordinary 4240 Gemini-only/SmartDNS Auto returned 395 with a normal lease and
+native Gemini gateway/readiness PASS. WLrus attribution uses its unique full
+public scope; no correlated per-lease provider/revision or public RPC trace was
+retained. Zapret 4240 native/control passed, but its unanswered prompt remains
+inconclusive and it was not published. Backend `51312c1` is live; one foreground
+QA Refresh received new native ACKs with the same probe/profile. Final settings,
+DNS/routes/proxy/WinHTTP matched baseline, owned processes/TUN/guard were cleared,
+and VM PoweredOff was confirmed at 05:40:52 UTC. Public release metadata and the
+paused release automation remain unchanged.
+
+Historical private **1.5.0+4238**, App `3db825b6`, used Core 1.2.15 / ABI2
 (`1b74a65`). Four production-signed Android APKs, the unsigned Windows setup
 and its single-installer ZIP passed package, version, ABI and runtime-binding
 checks. The packages include complete-scope SmartDNS selection and local-to-VPN
@@ -26,7 +41,7 @@ the actual manual catalog and exposed CH Naive. One ordinary Gemini-only IS
 connection reached running/DNS/egress with TUN, but did not establish that the
 partial-local SmartDNS fallback branch ran. The new IPC budget (`c43e3b01`),
 unbundled Naive refresh (`6c38ddb9`) and SmartDNS failure recovery (`6f325a23`)
-are source fixes for private 4239; its build and runtime checks are pending. See
+shipped in private 4240. See
 [Windows acceptance](windows-release-readiness.md) for the package scope.
 
 Previous private **1.5.0+4228**, App `ee9c7fc0` / Core `698662e`, is built.

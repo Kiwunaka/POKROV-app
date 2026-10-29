@@ -1,6 +1,6 @@
 # Smart Access DNS routing
 
-## Current delivery — 28 October 2026
+## Current delivery — 29 October 2026
 
 The owner approved commercial embedded use of Shecan, Astra/Astracat, GeoHide,
 Bezmezhau, WLrus, DNS-AI and Zapret DNS. For these agreements, an eligible paid
@@ -9,10 +9,14 @@ bonus, manual or family access. The server uses the existing trial/paid/bonus
 Premium projection, including its manual/family handling, and excludes Free and
 expired/blocked access. No payment receipt, `provider_payment` origin or new
 entitlement class is required. Provider fees (fixed or percentage) remain under
-discussion; no spending is authorized. Public release remains paused. The live
-readback at 07:41:40 UTC confirmed catalog 30/state 30/security 2 and provider
-policy 4/state 3/security 1, with admission open. It contains WLrus and DNS-AI
-for Windows Gemini, and WLrus for Android Gemini, all current-origin/IPv4/web.
+discussion; no spending is authorized. Public release remains paused. One
+canonical publication at 05:07:24 UTC on 29 October activated provider policy
+5/state 4/security 1, with admission open and exact readback. Catalog
+32/state 31/security 2 and signed compatibility catalog 31 remain live. Only
+WLrus Windows changed: its verified Gemini scope now contains exact
+`gemini.google.com` and `geminiweb-pa.clients6.google.com`. The original DNS-AI
+Windows and WLrus Android capabilities and both provider/permission objects
+were preserved unchanged, all current-origin/IPv4/web.
 The provider policy and its three verified capabilities expire on 17 November
 2026 at 19:36:53 UTC. Android 4222 NativeQA produced a real Gemini answer;
 on 4225 the ordinary UI showed Gemini enabled and selectable. Android 4227 also
@@ -43,6 +47,30 @@ custom DoH settings are separate. An owner's commercial permission alone does
 not add a provider to this signed policy. Shecan, Astra/Astracat, GeoHide,
 Bezmezhau and Zapret are currently absent; Android DNS-AI also has no admitted
 capability. These are delivery gaps, not hidden picker entries.
+
+Windows 4239 native QA returned **433** for 146 + 287. Fresh RPC responses from
+both exact hosts used WLrus `191.217.212.16` over HTTP/2; the secondary host used
+`/v1/processSession`. Native admission and initial control passed. A separate
+secondary-host GET returned secure TLS 1.3/HTTP 404 through the same relay.
+
+An ordinary Windows 4240 Gemini-only/SmartDNS Automatic connection after the
+publication returned **395** for 238 + 157, with one normal lease and an available
+Gemini gateway whose resolver/DNS/TLS readiness passed. WLrus attribution follows
+from its unique full two-host public capability; the retained runtime receipt
+did not export a correlated per-lease provider/revision. The ordinary trace
+contained only its ready marker and exited with an error, so it supplies no new
+per-host RPC claim. Stop restored the exact settings/network baseline; App,
+TUN, guard and owned browser/debug processes were cleared, and the VM reached
+PoweredOff at 05:40:52 UTC.
+
+Zapret on 4240 passed native admission/control and returned secure HTTP 200 from
+the secondary host through `83.217.211.149`, but the question stayed in the
+composer and no answer appeared. Its feature result is **inconclusive**; the
+provider cause was not established and no Zapret capability was published.
+That run also accepted the server-only QA Refresh fix `51312c1`: new native
+configure ACKs succeeded while the same permit, probe, profile and module
+remained bound. The fix keeps the finite worker capability stable across a
+foreground refresh; native guards, expiry and revocation remain unchanged.
 
 The 28 October targeted recheck used verified TLS and one Gemini A query per
 endpoint; it did not repeat the accepted WLrus/DNS-AI feature checks. Brain
@@ -101,8 +129,9 @@ The private QA contract now requires exactly `gemini.google.com` and that RPC
 host; both receive the same signed SmartDNS/TCP443 scope, while sibling and
 unrelated names retain Direct. Ordinary grants retain their independently
 verified domain scope and do not inherit an added host merely from the catalog.
-App fix `b8783faf` passed its changed contract/compiler tests; new catalog,
-server rollout and real feature acceptance remain separate unfinished steps.
+App fix `b8783faf` passed its changed contract/compiler tests. Catalog 32 and
+policy 5 now carry the accepted WLrus Windows two-host scope; each remaining
+provider still requires its own functional acceptance.
 
 Windows local SmartDNS profiles use the same memory policy as ordinary managed
 Windows profiles: `disableMemoryLimit=true`, retained through routing copies.
