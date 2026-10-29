@@ -227,8 +227,8 @@ follow server priority. Explicit pins, WARP and cached-authority guards still
 apply; the selected country names the exit. The UI adapters described in
 [DESIGN.md](../../DESIGN.md) retain this runtime authority unchanged.
 
-`SmartConnectCandidateSelector` accepts an optional local `CandidateRankerShadow`
-for owned QA. It snapshots the actual admitted DNSTT/Slipstream queue within one
+`SmartConnectCandidateSelector` uses `CandidateRankerShadow` as a read-only local
+observer. It snapshots the actual admitted DNSTT/Slipstream queue within one
 priority group and address family, preserves the last-good head start, and scores
 the fixed `pokrov-preaction-v1` Transformer on a background isolate. Only completed
 attempts enter the eight-item history; preparation/control failures
@@ -236,18 +236,25 @@ remain control observations, unknown fields stay unknown, and a runtime physical
 network generation/catalog change resets history. The last-good ASN key cannot
 retain ML history across physical networks; an unknown generation keeps no prior
 history. Scores never change Auto's queue or launch extra probes.
-No weights are bundled and the default manager has no observer. A private build
-can set `POKROV_RANKER_SHADOW_MODEL_PATH` to an approved model in local app-readable
-storage: the shell loads it once off the UI isolate with a fixed-size bounded
-read. Online/offline candidate selection uses the observer only when ready and
-never waits for file loading, including during cancellation. Missing/invalid
-assets log `shadow_load_failed` and retain the existing selection. `shadow_ready`
+Windows and Android production builds include the approved v1/F82 model as
+`packages/pokrov_app_shell/assets/models/candidate-ranker-v1.bin` in the Flutter
+bundle. Builders require `CandidateRankerModelPath`, validate the fixed 3,734,808
+byte `PKRTF001` input and verify the packaged bytes against that input. Weights
+are staged into an ignored asset; no binary is committed. The shell asynchronously
+loads this fixed bundle asset and checks its size before transferring it to the
+parsing isolate. It needs neither an external QA file nor a network request;
+the old `POKROV_RANKER_SHADOW_MODEL_PATH` define is no longer used.
+Online/offline selection uses the observer only when ready and never waits for
+loading, including during cancellation. Missing/invalid assets log
+`shadow_load_failed` and retain the existing selection. `shadow_ready`
 means loaded; `shadow candidates=... order=...` confirms an actual comparison and
-contains only counts/indices. This private file path is not public packaging.
+contains only counts/indices. V3/F102 remains research: it is incompatible with
+this v1 parser and is not bundled or used for active candidate selection.
 Export an approved local checkpoint with `scripts/export_candidate_ranker.py`; the opt-in
 `candidate_ranker_shadow_test.dart` uses `POKROV_RANKER_MODEL` and
-`POKROV_RANKER_RESEARCH_DIR` to check the real model against ONNX. This source path
-is not an enabled release feature or evidence of a real-network improvement.
+`POKROV_RANKER_RESEARCH_DIR` to check the real model against ONNX. `loadLocal`
+remains available for explicit owned QA with its bounded file read. The bundled
+shadow is a release feature, not evidence of a real-network improvement.
 
 Owned QA can also set `POKROV_SELECTOR_QA_CAPTURE_PATH` to an existing writable
 local directory's JSONL file, with or without the v1 model. The observer records

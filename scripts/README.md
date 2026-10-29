@@ -63,6 +63,26 @@ produced signer/debuggable/version/ABI or required Windows files/signature;
 it does not replace tests, device acceptance or release approval. Outputs stay
 ignored and outside Git/LFS.
 
+Both production builders also require `-CandidateRankerModelPath` pointing to
+the approved exported v1/F82 shadow model, currently
+`E:/POKROV-tools/experiments/connection-selection/contract-transformer-runtime.bin`.
+They stage the fixed 3,734,808-byte `PKRTF001` file into the ignored
+`packages/app_shell/assets/models/candidate-ranker-v1.bin` and verify that the
+Windows bundle or every APK contains those exact bytes. `SkipBuild` cannot
+package an old Windows bundle without the model. No external runtime path or
+download is used, and V3/F102 is not a valid input. Remove the obsolete
+`POKROV_RANKER_SHADOW_MODEL_PATH` entry from the selected defines file; retain its
+other trust values. An ordinary source checkout does not require the weights.
+
+For the focused real-asset check without building a release, dot-source
+`scripts/candidate-ranker-asset.ps1` and call `Sync-PokrovCandidateRankerAsset`
+with `-ModelPath` and `-RepositoryRoot`. From `apps/windows_shell`, set
+`POKROV_RANKER_BUNDLE_TEST=1` and run `flutter test
+../../packages/app_shell/test/candidate_ranker_shadow_test.dart --plain-name
+"staged v1 bundle reaches the manager and scores without a local model path"`.
+Running from the host supplies the same package-prefixed Flutter asset key used
+by the application. Normal package tests mock this asset and need no model file.
+
 ## Development checks
 
 Run `flutter analyze` and focused `flutter test` cases from the changed package

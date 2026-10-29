@@ -1,11 +1,29 @@
 part of '../../app_first_runtime_bootstrap.dart';
 
-/// A local owned-QA observer. It cannot return a candidate to the scheduler.
-/// Only a private build with an explicit local model/capture path enables it.
+/// A local shadow observer. It cannot return a candidate to the scheduler.
+/// Production loads the fixed bundled v1 model; capture is private QA only.
 class CandidateRankerShadow {
   CandidateRankerShadow(this._model, {String? capturePath}) : _capturePath = capturePath;
 
   CandidateRankerShadow.capture(String path) : _model = null, _capturePath = path;
+
+  static const bundledAsset = 'packages/pokrov_app_shell/assets/models/candidate-ranker-v1.bin';
+
+  static Future<CandidateRankerShadow> loadBundled({String? capturePath}) async {
+    // The production builders bound this package asset to the fixed v1 size.
+    // Check again before transferring bytes or allocating parsed weights.
+    final data = await rootBundle.load(bundledAsset);
+    if (data.lengthInBytes != CandidateRankerModel.byteLength) {
+      throw const FormatException('candidate_ranker_model_contract');
+    }
+    final model = await _parseBytes(Uint8List.sublistView(data));
+    return CandidateRankerShadow(model, capturePath: capturePath);
+  }
+
+  // A separate closure scope does not transfer the platform AssetBundle or
+  // pending channel operations into the parsing isolate.
+  static Future<CandidateRankerModel> _parseBytes(Uint8List bytes) =>
+      Isolate.run(() => CandidateRankerModel.fromBytes(bytes));
 
   static Future<CandidateRankerShadow> loadLocal(String path, {String? capturePath}) async {
     final model = await Isolate.run(() {

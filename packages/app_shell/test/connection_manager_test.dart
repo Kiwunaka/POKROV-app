@@ -4506,14 +4506,21 @@ void main() {
     expect(runtime.connectCalls, 2);
   });
 
-  test('pending local ranker load blocks neither candidate probes nor cancellation', () async {
-    final loading = Completer<CandidateRankerShadow>();
+  test('pending bundled ranker load blocks neither candidate probes nor cancellation', () async {
+    final loading = Completer<ByteData?>();
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMessageHandler('flutter/assets', (message) {
+      expect(utf8.decode(Uint8List.sublistView(message!)), CandidateRankerShadow.bundledAsset);
+      return loading.future;
+    });
     final runtime = _Runtime()..supportsCandidates = true..holdProbes = true;
     final manager = _manager(runtime, _Bootstrapper(catalog: true),
-        candidateRankerShadow: loading.future);
+        candidateRankerShadow: CandidateRankerShadow.loadBundled());
     addTearDown(manager.dispose);
-    addTearDown(() {
-      if (!loading.isCompleted) loading.completeError(const FormatException('unavailable_test_model'));
+    addTearDown(() async {
+      if (!loading.isCompleted) loading.complete(null);
+      await manager.candidateRankerReady;
+      messenger.setMockMessageHandler('flutter/assets', null);
     });
     final connecting = manager.connect();
     await runtime.probeStarted.future.timeout(const Duration(seconds: 1));

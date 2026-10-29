@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/services.dart';
 import 'package:pokrov_app_shell/app_first_runtime_bootstrap.dart';
 import 'package:pokrov_app_shell/app_shell.dart' as shell;
 import 'package:pokrov_core_domain/core_domain.dart';
@@ -46,9 +47,8 @@ SmartConnectCandidateProbeResult success(TransportCandidate candidate) =>
       profileName: candidate.candidateRef, configPayload: '{}'),
       duration: const Duration(milliseconds: 12), probeStage: 'http_64k');
 
-Future<CandidateRankerComparison> exercise(CandidateRankerModel model) async {
+Future<CandidateRankerComparison> exercise(CandidateRankerShadow shadow) async {
   var at = DateTime.utc(2026, 10, 29);
-  final shadow = CandidateRankerShadow(model);
   final selector = SmartConnectCandidateSelector(now: () => at, rankerShadow: shadow);
   final first = candidate('dnstt', 0);
   final second = candidate('slipstream', 1);
@@ -112,6 +112,43 @@ Future<CandidateRankerComparison> exercise(CandidateRankerModel model) async {
 }
 
 void main() {
+  final binding = TestWidgetsFlutterBinding.ensureInitialized();
+  test('bundled model loads and scores using only the fixed Flutter asset', () async {
+    final keys = <String>[];
+    final bytes = Uint8List(CandidateRankerModel.byteLength)
+      ..setRange(0, 8, 'PKRTF001'.codeUnits);
+    binding.defaultBinaryMessenger.setMockMessageHandler('flutter/assets', (message) async {
+      keys.add(utf8.decode(Uint8List.sublistView(message!)));
+      return ByteData.sublistView(bytes);
+    });
+    addTearDown(() => binding.defaultBinaryMessenger.setMockMessageHandler('flutter/assets', null));
+    final observed = await exercise(await CandidateRankerShadow.loadBundled());
+    expect(keys, [CandidateRankerShadow.bundledAsset]);
+    expect(observed.modelOrder, [0, 1]);
+  });
+
+  test('bundle rejects oversized bytes and a different model contract', () async {
+    var bytes = Uint8List(CandidateRankerModel.byteLength + 1)
+      ..setRange(0, 8, 'PKRTF001'.codeUnits);
+    binding.defaultBinaryMessenger.setMockMessageHandler('flutter/assets', (_) async => ByteData.sublistView(bytes));
+    addTearDown(() => binding.defaultBinaryMessenger.setMockMessageHandler('flutter/assets', null));
+    await expectLater(CandidateRankerShadow.loadBundled(), throwsFormatException);
+    bytes = Uint8List(CandidateRankerModel.byteLength)
+      ..setRange(0, 8, 'PKRTF003'.codeUnits);
+    await expectLater(CandidateRankerShadow.loadBundled(), throwsFormatException);
+  });
+
+  test('staged v1 bundle reaches the manager and scores without a local model path', () async {
+    final loaded = manager(CandidateRankerShadow.loadBundled());
+    addTearDown(loaded.dispose);
+    await loaded.candidateRankerReady;
+    expect(loaded.candidateRankerShadow, isNotNull);
+    final observed = await exercise(loaded.candidateRankerShadow!);
+    expect(observed.scores.length, 2);
+    expect(observed.scores.every((score) => score.isFinite), true);
+  }, skip: Platform.environment['POKROV_RANKER_BUNDLE_TEST'] != '1'
+      ? 'Stage the model and run from a host app with POKROV_RANKER_BUNDLE_TEST=1.' : false);
+
   test('owned capture pairs immutable pre-action memory with only the chosen native outcome', () async {
     final directory = await Directory.systemTemp.createTemp('pokrov-capture-');
     addTearDown(() => directory.delete(recursive: true));
@@ -207,7 +244,7 @@ void main() {
   });
 
   test('shadow observes actual admitted DNS probes without changing order, history labels or context', () async {
-    final result = await exercise(zeroModel());
+    final result = await exercise(CandidateRankerShadow(zeroModel()));
     expect(result.modelOrder, [0, 1]);
   });
 
@@ -247,8 +284,8 @@ void main() {
   }, skip: modelPath == null ? 'Set POKROV_RANKER_MODEL for local asset integration.' : false);
 
   test('owned local Transformer matches ONNX on the actual scheduler snapshot', () async {
-    final observed = await exercise(CandidateRankerModel.fromBytes(
-        await File(modelPath!).readAsBytes()));
+    final observed = await exercise(CandidateRankerShadow(CandidateRankerModel.fromBytes(
+        await File(modelPath!).readAsBytes())));
     final process = await Process.start(
       Platform.environment['POKROV_RANKER_PYTHON'] ?? 'python', ['-c', r'''
 import json, sys

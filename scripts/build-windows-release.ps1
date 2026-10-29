@@ -8,6 +8,7 @@ param(
   [string]$RuntimeArtifactsPath,
   [string]$WindowsReleasePath,
   [string]$CoreArtifactDirectory,
+  [string]$CandidateRankerModelPath,
   [string]$SupportSigningKeyId = $env:POKROV_SUPPORT_SIGNING_KEY_ID,
   [string]$SupportSigningPublicKey = $env:POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64,
   [string]$TransportTrustDefinesFile,
@@ -452,6 +453,9 @@ function Invoke-TrustedAuthenticodeSigning {
 }
 
 $root = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot 'candidate-ranker-asset.ps1')
+$rankerAssetPath = Sync-PokrovCandidateRankerAsset -ModelPath $CandidateRankerModelPath -RepositoryRoot $root
+$rankerAssetRelative = 'data/flutter_assets/packages/pokrov_app_shell/assets/models/candidate-ranker-v1.bin'
 $windowsReleaseSeedPath = Join-Path $root "config\\windows-release.seed.json"
 $windowsReleaseSeed = Get-Content -Raw -LiteralPath $windowsReleaseSeedPath | ConvertFrom-Json
 $windowsReleaseConfig = if ($WindowsReleasePath) {
@@ -462,6 +466,7 @@ $requiredFiles = @(
   (@($windowsReleaseSeed.required_files) + @($windowsReleaseConfig.required_files)) |
     Select-Object -Unique
 )
+$requiredFiles += $rankerAssetRelative
 $appDirectory = Join-Path $root "apps\\windows_shell"
 $pubspecPath = Join-Path $appDirectory "pubspec.yaml"
 $version = Resolve-VersionFromPubspec -PubspecPath $pubspecPath
@@ -649,6 +654,12 @@ function Write-Utf8BomFile {
 }
 
 $releaseOutputDirectory = Join-Path $root $windowsReleaseConfig.bundle_root
+$builtRankerAsset = Join-Path $releaseOutputDirectory $rankerAssetRelative
+Assert-PokrovCandidateRankerAsset -Path $builtRankerAsset
+if ((Get-FileHash -LiteralPath $builtRankerAsset -Algorithm SHA256).Hash -ne
+    (Get-FileHash -LiteralPath $rankerAssetPath -Algorithm SHA256).Hash) {
+  throw 'Built shadow model differs from the selected input. Rebuild before packaging.'
+}
 $buildRequiredFiles = @(
   $requiredFiles |
     Where-Object { $appLocalMsvcRuntimeFiles -notcontains $_ }

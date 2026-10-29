@@ -9,6 +9,7 @@ param(
   [string]$RuntimeArtifactsPath,
   [string]$WindowsReleasePath,
   [string]$CoreArtifactDirectory,
+  [string]$CandidateRankerModelPath,
   [switch]$SyncRuntime,
   [switch]$Arm64Only
 )
@@ -66,6 +67,9 @@ function Set-ProcessEnvironmentValue {
 }
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot 'candidate-ranker-asset.ps1')
+$rankerAssetPath = Sync-PokrovCandidateRankerAsset -ModelPath $CandidateRankerModelPath -RepositoryRoot $repoRoot
+$rankerAssetHash = (Get-FileHash -LiteralPath $rankerAssetPath -Algorithm SHA256).Hash
 $versionParityArguments = @{ Platforms = @("android") }
 if ($CoreRoot) { $versionParityArguments.CoreRoot = $CoreRoot }
 if ($RuntimeArtifactsPath) { $versionParityArguments.RuntimeArtifactsPath = $RuntimeArtifactsPath }
@@ -196,11 +200,28 @@ if ($Arm64Only) {
   $artifacts = @($artifacts | Where-Object { $_.abi -in @("universal", "arm64-v8a") })
 }
 
+Add-Type -AssemblyName System.IO.Compression.FileSystem
 foreach ($artifact in $artifacts) {
   $apkPath = [string]$artifact.path
   if (-not (Test-Path -LiteralPath $apkPath -PathType Leaf)) {
     throw "An expected production APK was not produced."
   }
+
+  $archive = [IO.Compression.ZipFile]::OpenRead($apkPath)
+  try {
+    $modelEntry = $archive.GetEntry('assets/flutter_assets/packages/pokrov_app_shell/assets/models/candidate-ranker-v1.bin')
+    if ($null -eq $modelEntry -or $modelEntry.Length -ne 3734808) {
+      throw 'Production APK is missing the bounded v1 shadow model.'
+    }
+    $modelStream = $modelEntry.Open()
+    $digest = [Security.Cryptography.SHA256]::Create()
+    try {
+      $packagedHash = ([BitConverter]::ToString($digest.ComputeHash($modelStream))).Replace('-', '')
+      if ($packagedHash -ne $rankerAssetHash) {
+        throw 'APK shadow model differs from the selected input.'
+      }
+    } finally { $digest.Dispose(); $modelStream.Dispose() }
+  } finally { $archive.Dispose() }
 
   $verificationOutput = @(& $apksigner verify --verbose --print-certs $apkPath 2>&1 | ForEach-Object { [string]$_ })
   if ($LASTEXITCODE -ne 0) {

@@ -31,6 +31,7 @@ apps/windows_shell/windows/runner/resources/runtime/libcronet.dll
 apps/windows_shell/windows/runner/resources/runtime/slipstream-client.exe
 apps/windows_shell/windows/runner/resources/runtime/slipstream-LICENSE.txt
 apps/android_shell/assets/licenses/slipstream-LICENSE.txt
+packages/app_shell/assets/models/*.bin
 apps/windows_shell/windows/runner/resources/runtime/local-dpi/
 !artifacts/README.md
 
