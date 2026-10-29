@@ -258,6 +258,10 @@ existing 8 MiB cache limit, expiry and account binding still apply.
 When Naive H2 follows two TCP alternatives, an unbundled refresh fetches its exact
 material and retains it for offline use.
 
+An explicit manual candidate also governs background refresh. The refresh
+requests that candidate and stores its material under the manual selection's
+cache binding, so an offline fallback can load the chosen transport.
+
 In a mixed catalog, the legacy IPv4 base shares its typed IPv6
 sibling's native-start fence and cannot probe while that sibling is preparing.
 A manually selected country keeps all reserves in that country,

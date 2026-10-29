@@ -3531,7 +3531,8 @@ class AppFirstRuntimeBootstrapper
           code: 'managed_profile_superseded', statusCode: 409, operation: 'managed_profile');
       }
     }
-    var currentCandidateRef = selectedCandidateRef;
+    var currentCandidateRef = inputs.preferredCandidateRef.isNotEmpty
+        ? inputs.preferredCandidateRef : selectedCandidateRef;
     if (alternativesOnly) {
       final cached = await loadCachedManagedProfile(inputs, preferProven: true,
           selectedCandidateRef: selectedCandidateRef, runtimeFeatures: runtimeFeatures, coreRelease: coreRelease);

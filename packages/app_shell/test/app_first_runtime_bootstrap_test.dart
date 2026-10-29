@@ -2061,14 +2061,16 @@ void main() {
           }));
         } else if (request.uri.path == '/api/client/profile/managed') {
           queries.add(request.uri.queryParameters);
+          final selectedReserve = request.uri.queryParameters['selected_candidate_ref'] == reserveRef;
           final body = jsonEncode({
             'profile_revision': 'slipstream-reserve', 'config_format': 'singbox-json',
-            'transport_profile': 'legacy_reality_fallback', 'transport_kind': 'reality',
-            'config_payload': config(false),
+            'transport_profile': selectedReserve ? 'slipstream_vless' : 'legacy_reality_fallback',
+            'transport_kind': selectedReserve ? 'slipstream' : 'reality',
+            'config_payload': config(selectedReserve),
             'transport_catalog': {'schema_version': 'pokrov-transport-catalog-v1',
-              'revision': 'slipstream-reserve', 'selected_candidate_ref': ordinaryRef,
+              'revision': 'slipstream-reserve', 'selected_candidate_ref': selectedReserve ? reserveRef : ordinaryRef,
               'candidates': [candidate(false), ...extraCandidates, candidate(true)]},
-            'candidate_materials': [
+            if (!selectedReserve) 'candidate_materials': [
               for (final reserve in [false, true]) {
                 'candidate_ref': reserve ? reserveRef : ordinaryRef,
                 'transport_kind': reserve ? 'slipstream' : 'reality',
@@ -2145,6 +2147,13 @@ void main() {
     carrier['resolvers'] = ['8.8.8.8:53'];
     bypassCarrier = true;
     await expectLater(resolve(), throwsA(isA<TransportManifestFailure>()));
+    bypassCarrier = false;
+    const manualInputs = ManagedProfileCacheInputs(hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel, preferredCandidateRef: reserveRef);
+    await online.refreshCachedManagedProfile(manualInputs, runtimeFeatures: features);
+    expect((await restarted.loadCachedManagedProfile(manualInputs,
+      selectedCandidateRef: reserveRef, runtimeFeatures: features))?.materialCandidate?.candidateRef,
+      reserveRef, reason: 'a manual refresh must cache the chosen transport for offline fallback');
   });
 
   test('managed Naive H2 preserves authenticated TLS material and rejects incompatible cache or delivery', () async {
