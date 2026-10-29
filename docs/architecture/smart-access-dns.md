@@ -325,28 +325,19 @@ Old clients without the capability cannot select this carrier.
 
 CH now serves `s.t.portal-privacy.online` through a bounded UDP dispatcher on
 public port 53; the original `t.portal-privacy.online` DNSTT backend remains.
-Through recursive resolver `95.85.240.254:53`, Slipstream passed owned HTTPS204
-and exact 65536-byte payload; retained DNSTT passed the current Core probe in
-8679 ms. The guarded cutover is kept, its timer is inactive, and services are
-enabled for boot. During ordinary manual selection on Windows4235, issuance,
-bundled-client startup, TLS and HTTPS204 succeeded, but the API64KiB body did
-not finish within the 30-second candidate budget (`probe_budget_expired`). TUN
-was not started; Auto was not repeated. CH Slipstream issuance was therefore
-returned to disabled with its existing catalog rollback; the server and DNSTT
-remain running. Client transfer diagnosis and Auto/TUN acceptance are pending,
-as are Android device/real whitelist checks. Server/package checks do not
-establish those results.
-
-The follow-up isolated official Windows CLI/Xray check, without Core's DNS
-relay or TUN, also stopped at 8192 payload bytes within 30 seconds; verified
-HTTPS204 took 6057 ms. On the actual home Pi4, official ARM64 CLI/Xray through
-the same resolver passed HTTPS204 in 3017 ms but returned no 64KiB body before
-the same deadline. The second approved WLrus resolver `138.124.254.134:53`
-reached only 13037 bytes; a single documented BBR comparison on the original
-resolver did not finish HTTPS204. These results do not establish a Windows-only
-or Core-relay-only cause, nor prove DPI. No timeout, provider or runtime default
-was changed; all owned diagnostic children and private temporary files were
-removed. Do not repeat these unchanged paths as acceptance checks.
+After the dispatcher lifecycle fix and manual-selection cache correction,
+private Windows build 4240 / Core 1.2.15 passed real App manual and Auto/TUN
+checks on 2026-10-29 through recursive resolver `95.85.240.254:53`. Native probes
+completed verified TLS, owned HTTPS204 and exact 65536-byte reads in 7871 ms
+(manual) and 5654 ms (Auto), within the unchanged 30-second budget. Auto selected
+`vless_slipstream_tls` while two temporary guest rules blocked ordinary service
+traffic on the physical interface, preserving UDP53, App API, loopback and TUN.
+The effective native graph contained only VLESS over Slipstream, its bundled
+helper belonged to the service, and TUN/DNS/egress were healthy. Both normal
+Stops passed; the final preferences and network baseline were restored and the
+two rules removed. CH Slipstream issuance remains enabled alongside DNSTT for
+eligible Premium devices with the required capability. Android device and real
+whitelist-network checks remain unverified.
 
 The earlier `VPN/scripts/local_slipstream_lab.py` POSIX loopback exercise remains
 historical lab work, separate from this deployed Rust carrier. DNSTT is a
@@ -354,8 +345,7 @@ different wire protocol and remains available alongside Slipstream.
 
 The pinned upstream was archived on 2026-08-28; its author discusses resolver
 rate limits, loss and polling in the [deprecation notice](https://github.com/Mygod/slipstream-rust/discussions/111).
-This is relevant maintenance context, not evidence for the Windows timeout's
-cause. No replacement transport or unreviewed upstream revision was enabled.
+No replacement transport or unreviewed upstream revision was enabled.
 
 Root confirmed network/process cleanup after 4200: ordinary Stop left running/guard/TUN/winws 0;
 allExceptRu/IS, Automatic SmartDNS, local DPI off and empty service selection
