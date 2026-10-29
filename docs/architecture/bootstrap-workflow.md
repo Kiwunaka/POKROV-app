@@ -279,6 +279,13 @@ Other candidates settle as control observations. Model load/inference, external
 advice and native time are separate measurements; this staged QA does not prove
 readiness within live scheduler deadlines, native App admission or a quality gain.
 The default selector and the private v1 DNS-only scorer remain unchanged.
+On 29 October, the old XHTTP/AWG advice was rejected before native work because
+the owned cache had changed. A fresh TCP/AWG snapshot gave the same TCP choice
+from frozen F102 and Decider; exactly one Core 1.2.15 probe passed TLS/204/64 KiB
+in 4170 ms. The remote helper took 8927 ms through the source probe boundary,
+exceeding its 8000 ms budget, so the scheduler kept a control outcome. The QA
+result keeps raw Core and source outcomes separately: native proof passed,
+source admission did not. No production timeout or ordering rule was changed.
 
 When the API is unavailable, the cache selector keeps the online WARP order and
 budgets: a currently enabled manual chain first, ordinary paths after its failure,

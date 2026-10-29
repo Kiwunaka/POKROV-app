@@ -150,6 +150,9 @@ void main() {
     String? nativeSelectedRef;
     var stoppedAfterAdvisedFailure = false;
     int? nativeStartedAtMs;
+    int? helperWallMs;
+    Map<String, dynamic>? nativeHelperOutcome;
+    String? sourceFailureKind;
     final caseClock = Stopwatch()..start();
     var attempts = 0;
     Object? helperError;
@@ -208,6 +211,9 @@ void main() {
                   }
                 },
           onProbeResult: (candidate, result) {
+            if (candidate.candidateRef == nativeSelectedRef) {
+              sourceFailureKind = result.failureKind;
+            }
             if (bundle != null &&
                 result.profile == null &&
                 candidate.candidateRef == nativeSelectedRef) {
@@ -221,6 +227,7 @@ void main() {
             nativeStartedAtMs ??= DateTime.now().millisecondsSinceEpoch;
             attempts++;
             try {
+              final helperClock = Stopwatch()..start();
               final process = await Process.run('pwsh.exe', [
                 '-NoProfile',
                 '-File',
@@ -230,6 +237,7 @@ void main() {
                 '-TimeoutMs',
                 '${timeout.inMilliseconds}'
               ]);
+              helperWallMs = helperClock.elapsedMilliseconds;
               expect(process.exitCode, 0,
                   reason: 'Owned native helper did not settle cleanly');
               final row =
@@ -239,6 +247,19 @@ void main() {
                   anyOf('natural_owned', 'controlled_fault_injection'));
               expect(row['core_version'], matches(r'^\d+\.\d+\.\d+$'));
               expect(row['duration_ms'], isA<int>());
+              nativeHelperOutcome = {
+                for (final key in const [
+                  'origin',
+                  'probe_contract',
+                  'success',
+                  'failure_kind',
+                  'stage',
+                  'duration_ms',
+                  'core_version',
+                  'abi'
+                ])
+                  key: row[key],
+              };
               final duration =
                   Duration(milliseconds: row['duration_ms'] as int);
               return row['success'] == true
@@ -293,11 +314,14 @@ void main() {
           'decider_choice': bundle?['decider_advice']['choice'],
           'decider_request_latency_ms': bundle?['decider_request_latency_ms'],
           'local_model': bundle?['local_model'],
-          'native_outcome': exportOnly
+          'native_outcome': nativeHelperOutcome,
+          'source_outcome': exportOnly
               ? null
               : rows.singleWhere(
                   (row) => row['outcome']['native_started'] == true)['outcome'],
-          'native_started_at_ms': nativeStartedAtMs,
+          'source_failure_kind': sourceFailureKind,
+          'helper_started_at_ms': nativeStartedAtMs,
+          'helper_wall_ms': helperWallMs,
           'source_preaction_at_ms':
               (initialSnapshot!['decision'] as Map)['at_ms'],
           'case_wall_ms': caseClock.elapsedMilliseconds,
