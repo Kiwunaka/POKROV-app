@@ -1,5 +1,18 @@
 # Windows acceptance
 
+Private Windows **1.5.0+4242**, App `bffea7db`, reuses Core **1.2.15 / ABI2**
+and the unchanged private4241 trust/shadow input. The unsigned setup and
+installer-only ZIP are in `E:/POKROV-tools/temp/release-1.5.0-4242`; standard
+packaging, x64 PE, compiled-input and ZIP byte-equality checks passed. The Clean
+VM upgrade from 4241 retained access and routing preferences. Telegram-proxy and
+bypass entries were visible; the bypass toggle persisted without Connect and was
+restored. One encrypted export and owned report **#92** passed; the server
+decrypted and strictly validated its three files in RAM, including the idle
+`connection_diagnostic` Core/DNS/error metadata. No new VPN attempt was made.
+Normal Exit left app/TUN/helpers absent, DNS/routes/proxy/preferences matched the
+baseline, and the VM was PoweredOff/Unlocked. Android was not built; no public
+release was published.
+
 Private Windows **1.5.0+4241**, App `b119b7c6`, includes the opt-in v1
 candidate-ranker shadow with bounded local model reads and cancellable cold Connect.
 It reuses Core **1.2.15 / ABI2** (`1b74a65`) from the retained private4235 SDK.
