@@ -58,9 +58,10 @@ Future<CandidateRankerComparison> exercise(CandidateRankerModel model) async {
       selectedCandidateRef: first.candidateRef,
       candidates: [first, second, excluded, ipv6, laterGroup]);
   var starts = <String>[];
-  Future<void> select(String network) async {
+  Future<void> select(String network, {String context = 'physical-generation-1'}) async {
     await selector.select(catalog: catalog, network: network,
       platform: HostPlatform.windows, cancelled: Completer<void>().future,
+      contextGeneration: context,
       ipv6Available: false, excludedCandidateRefs: {excluded.candidateRef},
       probeTimeout: const Duration(seconds: 30), selectionTimeout: const Duration(seconds: 30),
       probe: (item, cancelled, timeout) async {
@@ -100,7 +101,9 @@ Future<CandidateRankerComparison> exercise(CandidateRankerModel model) async {
   expect(observed.tokens[738 + 6 * 82 + 78], 0);
 
   at = at.add(const Duration(seconds: 1));
-  await select('different-private-network');
+  // The last-good selection key can remain unchanged across WiFi networks
+  // sharing an ASN; the physical generation must still clear model history.
+  await select('private-physical-network', context: 'physical-generation-2');
   expect(shadow.lastComparison!.decision['history'], isEmpty);
   expect(shadow.lastComparison!.decision['context_generation'],
       (observed.decision['context_generation'] as int) + 1);

@@ -2793,6 +2793,7 @@ class ConnectionManager extends ChangeNotifier {
             network: key, platform: _appContext.hostPlatform,
             ipv6Available: network.ipv6Available,
             networkClass: network.networkClass,
+            contextGeneration: context,
             // Country was checked against the full catalog before grouping.
             cancelled: cancelled,
             recoveryCandidateRef: recoveryCandidateRef,
@@ -3057,6 +3058,7 @@ class ConnectionManager extends ChangeNotifier {
               network: key, platform: inputs.hostPlatform,
               ipv6Available: network.ipv6Available,
               networkClass: network.networkClass,
+              contextGeneration: context,
               cancelled: _connectionCoordinator.whenOperationEnds(generation),
               recoveryCandidateRef: recoveryCandidateRef, excludedCandidateRefs: excludedCandidateRefs,
               selectionTimeout: identical(group, dnsCandidates)

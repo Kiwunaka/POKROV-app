@@ -12,7 +12,7 @@ class CandidateRankerShadow {
   }
 
   final CandidateRankerModel _model;
-  String? _network, _catalog;
+  String? _context, _catalog;
   var _generation = 0;
   final _refs = <String, int>{};
   final _history = <Map<String, Object?>>[];
@@ -21,9 +21,11 @@ class CandidateRankerShadow {
   String? lastFailure;
   Future<void> get settled => _pending ?? Future<void>.value();
 
-  int _begin(String network, String catalog) {
-    if (_network != network || _catalog != catalog) {
-      _network = network;
+  int _begin(String? context, String catalog) {
+    // The selector's last-good key may describe an ASN shared by several
+    // physical networks. Only the runtime generation can retain ML history.
+    if (context == null || _context != context || _catalog != catalog) {
+      _context = context;
       _catalog = catalog;
       _generation++;
       _refs.clear();

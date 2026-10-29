@@ -232,8 +232,10 @@ for owned QA. It snapshots the actual admitted DNSTT/Slipstream queue within one
 priority group and address family, preserves the last-good head start, and scores
 the fixed `pokrov-preaction-v1` Transformer on a background isolate. Only completed
 attempts enter the eight-item history; preparation/control failures
-remain control observations, unknown fields stay unknown, and a network/catalog
-change resets history. Scores never change Auto's queue or launch extra probes.
+remain control observations, unknown fields stay unknown, and a runtime physical
+network generation/catalog change resets history. The last-good ASN key cannot
+retain ML history across physical networks; an unknown generation keeps no prior
+history. Scores never change Auto's queue or launch extra probes.
 No weights are bundled and the default manager has no observer. A private build
 can set `POKROV_RANKER_SHADOW_MODEL_PATH` to an approved model in local app-readable
 storage: the shell loads it once off the UI isolate, and online/offline candidate

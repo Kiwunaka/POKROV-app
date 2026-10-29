@@ -150,6 +150,7 @@ class SmartConnectCandidateSelector {
     String recoveryCandidateRef = '',
     bool? ipv6Available,
     String? networkClass,
+    String? contextGeneration,
     Set<String> excludedCandidateRefs = const {},
     Duration probeTimeout = const Duration(seconds: 4),
     Duration selectionTimeout = const Duration(seconds: 12),
@@ -159,7 +160,7 @@ class SmartConnectCandidateSelector {
     // Keep one observer owner throughout this selection, including an async
     // private-build model load that finishes during another selection.
     final ranker = rankerShadow;
-    final rankerGeneration = ranker?._begin(network, catalog.revision);
+    final rankerGeneration = ranker?._begin(contextGeneration, catalog.revision);
     final now = _now();
     _failedUntil.removeWhere((_, expires) => !expires.isAfter(now));
     _udpFailedUntil.removeWhere((_, expires) => !expires.isAfter(now));
