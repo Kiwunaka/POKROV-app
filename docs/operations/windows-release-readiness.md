@@ -8,8 +8,16 @@ The unsigned setup and its single-installer ZIP are in
 compiled-define and archive byte-equality checks passed. The private trust input
 adds only `POKROV_RANKER_SHADOW_MODEL_PATH=C:/ProgramData/POKROV/qa/candidate-ranker-v1.bin`;
 all existing trust pins are preserved. The v1 weights remain external and are not
-packaged. Shadow only observes the existing selector; active reranking is disabled.
-Android was not rebuilt, and installed Windows runtime acceptance is pending.
+packaged. Shadow only observes the existing selector; its v1 scoring is restricted
+to comparable DNS carriers, and active reranking is disabled.
+Installed 4241 passed the owned VM check: the normal owner loaded v1 (`shadow_ready`)
+and one ordinary IS Auto connection reached native running/DNS/egress. Account,
+secure store, preferences and install identity survived the upgrade. Owner IPC
+Disconnect restored the exact DNS/routes/proxy/preferences baseline; App/TUN/guard
+and owned helpers were absent, and the hypervisor confirmed PoweredOff. The IS
+case did not enter the DNS scoring guard, so it does not establish inference or
+active-ML acceptance. The pending-loader cancellation race is covered by the
+focused unit regression, not by this VM run. Android was not rebuilt.
 Public 1.4.5 and draft 4175 are unchanged.
 
 Private **1.5.0+4240**, App `ac57f2f4`, reuses Core **1.2.15 / ABI2**
