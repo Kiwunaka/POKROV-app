@@ -260,6 +260,12 @@ Rows append asynchronously; a failed sink disables capture and cannot block
 Connect. Capture does not upload data or rank ordinary candidates. Researchers
 must classify natural versus controlled QA conditions and keep post-action
 `outcome` outside model/advice inputs; the other candidates have no outcome label.
+The opt-in `candidate_ranker_native_capture_test.dart` runs this source selector
+against a caller-supplied owned native helper and sanitized local catalog through
+`POKROV_SELECTOR_QA_CATALOG`, `POKROV_SELECTOR_QA_PROBE_SCRIPT` and
+`POKROV_SELECTOR_QA_CAPTURE`. The helper receives only a local candidate slot and
+timeout; profiles stay in its owned guest. This tests source scheduling and real
+native outcomes, not the installed App lifecycle or end-to-end Connect latency.
 
 When the API is unavailable, the cache selector keeps the online WARP order and
 budgets: a currently enabled manual chain first, ordinary paths after its failure,
