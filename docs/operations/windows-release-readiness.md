@@ -24,6 +24,15 @@ native reserve bootstrap and Gemini remain unaccepted. Stop and normal tray Exit
 restored preferences, DNS, all 16 routes, proxy and WinHTTP; refreshed auth tokens
 were preserved. Root approved a Running VM handoff for the next owned probe.
 
+On **4243**, one new finite source-only attempt verified the retained QA context
+from `16064b8d` despite the general report-refresh failure. It exposed
+`PathAccessException` while reading the secure session pair; the original OS
+errno was not retained. The staged graph contained only Direct, Block and
+SmartAccess, with both exact Gemini hosts on the same lease and no VPN fallback.
+Provider readiness was still pending; native bootstrap and Gemini were not
+accepted. Stop and normal tray Exit again restored the exact preferences,
+DNS, 16 routes, proxy and WinHTTP, preserving refreshed auth tokens.
+
 Private Windows **1.5.0+4241**, App `b119b7c6`, includes the opt-in v1
 candidate-ranker shadow with bounded local model reads and cancellable cold Connect.
 It reuses Core **1.2.15 / ABI2** (`1b74a65`) from the retained private4235 SDK.
