@@ -1,5 +1,17 @@
 # Windows acceptance
 
+Private Windows **1.5.0+4241**, App `b119b7c6`, includes the opt-in v1
+candidate-ranker shadow with bounded local model reads and cancellable cold Connect.
+It reuses Core **1.2.15 / ABI2** (`1b74a65`) from the retained private4235 SDK.
+The unsigned setup and its single-installer ZIP are in
+`E:/POKROV-tools/temp/release-1.5.0-4241`; version, required-file, runtime-binding,
+compiled-define and archive byte-equality checks passed. The private trust input
+adds only `POKROV_RANKER_SHADOW_MODEL_PATH=C:/ProgramData/POKROV/qa/candidate-ranker-v1.bin`;
+all existing trust pins are preserved. The v1 weights remain external and are not
+packaged. Shadow only observes the existing selector; active reranking is disabled.
+Android was not rebuilt, and installed Windows runtime acceptance is pending.
+Public 1.4.5 and draft 4175 are unchanged.
+
 Private **1.5.0+4240**, App `ac57f2f4`, reuses Core **1.2.15 / ABI2**
 (`1b74a65`). Four production-signed, non-debuggable APKs, the unsigned Windows
 setup and its single-installer ZIP are in `E:/POKROV-tools/temp/release-1.5.0-4240`.
