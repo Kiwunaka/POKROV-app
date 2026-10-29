@@ -6,6 +6,44 @@ import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 
 void main() {
+  testWidgets('Broadcast appears in the existing inbox on app open and is marked read', (tester) async {
+    final client = _InboxClient()
+      ..inbox = ClientNotificationInbox.fromJson({
+        'unreadCount': 1,
+        'items': [
+          {
+            'id': 'broadcast-app-campaign',
+            'kind': 'message',
+            'title': 'Сообщение от POKROV',
+            'body': 'Новая информация для вашего аккаунта.',
+            'createdAt': '2026-10-29T12:00:00Z',
+            'ctaLabel': '',
+            'ctaHref': null,
+            'read': false,
+          },
+        ],
+      });
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: client,
+      supportTicketService: client,
+      firstLaunchStore: _CompletedFirstLaunch(),
+      clientExperienceStore: _MemoryExperience(),
+    ));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.byTooltip('Уведомления · 1'), findsOneWidget);
+    await tester.tap(find.byTooltip('Уведомления · 1'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Сообщение от POKROV'), findsOneWidget);
+    expect(find.text('Новая информация для вашего аккаунта.'), findsOneWidget);
+    expect(find.byKey(const ValueKey('profile-notification-cta-broadcast-app-campaign')), findsNothing);
+    expect(client.readBatches, [['broadcast-app-campaign']]);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('Home inbox refreshes once per minute and stops on pause or session loss', (tester) async {
     final client = _InboxClient();
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
