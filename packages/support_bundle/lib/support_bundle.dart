@@ -463,9 +463,12 @@ final class SupportSignedContractVerifier {
     );
     final instant = now.toUtc();
     if (issuedAt.isAfter(instant.add(const Duration(minutes: 5))) ||
-        !expiresAt.isAfter(instant) ||
+        !expiresAt.isAfter(issuedAt) ||
         expiresAt.difference(issuedAt) > const Duration(days: 31)) {
       throw const SupportBundleFailure('support_key_set_time_invalid');
+    }
+    if (!expiresAt.isAfter(instant)) {
+      throw const SupportBundleFailure('support_key_set_expired');
     }
     final rawKeys = payload['keys'];
     if (rawKeys is! List || rawKeys.isEmpty || rawKeys.length > 8) {

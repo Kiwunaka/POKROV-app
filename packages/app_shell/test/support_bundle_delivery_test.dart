@@ -312,6 +312,91 @@ void main() {
     expect(decoded, isNot(contains('files')));
     expect(decoded, isNot(contains('connection_state')));
   });
+
+  test('expired recipient contract blocks both actions and a renewed contract recovers',
+      () async {
+    final temporary = await Directory.systemTemp.createTemp('pokrov-key-expiry-');
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final previousSecureStorage = FlutterSecureStoragePlatform.instance;
+    FlutterSecureStoragePlatform.instance =
+        TestFlutterSecureStoragePlatform(<String, String>{});
+    addTearDown(() async {
+      FlutterSecureStoragePlatform.instance = previousSecureStorage;
+      await server.close(force: true);
+      await temporary.delete(recursive: true);
+    });
+    final current = DateTime.now().toUtc();
+    final expired = await _keySetFixture(current.subtract(const Duration(days: 8)));
+    final renewed = await _keySetFixture(current);
+    var envelope = expired.envelope;
+    var uploadRequests = 0;
+    const uploadId = '01234567-89ab-4cde-8fab-0123456789ab';
+    unawaited(() async {
+      await for (final request in server) {
+        final body = await utf8.decoder.bind(request).join();
+        request.response.headers.contentType = ContentType.json;
+        switch (request.uri.path) {
+          case '/api/client/session/start-trial':
+            request.response.write(jsonEncode({
+              'session': {'session_token': 'expiry-fixture-session',
+                'account_id': 'expiry-fixture-account'},
+              'provisioning': {'status': 'ready', 'sync_ok': true},
+            }));
+          case '/api/client/support/bundles/key-set':
+            request.response.write(jsonEncode(envelope));
+          case '/api/client/support/bundles/upload-tickets':
+            uploadRequests++;
+            final upload = jsonDecode(body) as Map<String, dynamic>;
+            request.response.write(jsonEncode({
+              'upload_id': uploadId, 'upload_ticket': 'fixture-upload-ticket',
+              'ticket_id': 57, 'next_offset': upload['size_bytes'],
+              'status': 'uploading',
+            }));
+          case '/api/client/support/bundles/uploads/$uploadId/complete':
+            request.response.write('{"status":"queued"}');
+          default:
+            request.response.statusCode = 404;
+            request.response.write('{}');
+        }
+        await request.response.close();
+      }
+    }());
+    final destination = _RecordingExportDestination();
+    final service = AppFirstSupportTicketService(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}',
+      supportDirectoryResolver: () async => temporary,
+      supportSigningPublicKeysById: {
+        'root-test': expired.signingPublicKey,
+      },
+      supportBundleExportDestination: destination,
+      maxRequestAttempts: 1,
+    );
+    final prepared = const SupportBundleBuilder().prepare(
+      snapshot: _snapshot(), profile: SupportDiagnosticProfile.summary,
+      now: current,
+    );
+    final expiredFailure = throwsA(isA<SupportBundleFailure>().having(
+      (error) => error.code, 'code', 'support_key_set_expired'));
+    await expectLater(service.exportSupportBundle(
+      hostPlatform: HostPlatform.windows, prepared: prepared), expiredFailure);
+    await expectLater(service.deliverSupportBundle(
+      hostPlatform: HostPlatform.windows, prepared: prepared,
+      caseSummary: 'Owned expiry regression'), expiredFailure);
+    expect(destination.bundle, isNull);
+    expect(await service.listPendingSupportBundles(), isEmpty);
+    expect(uploadRequests, 0);
+
+    envelope = renewed.envelope;
+    expect((await service.exportSupportBundle(
+      hostPlatform: HostPlatform.windows, prepared: prepared)).state,
+      SupportBundleExportState.exported);
+    expect((await service.deliverSupportBundle(
+      hostPlatform: HostPlatform.windows, prepared: prepared,
+      caseSummary: 'Owned expiry regression')).state,
+      SupportBundleDeliveryState.queued);
+    expect(uploadRequests, 1);
+    expect(await service.listPendingSupportBundles(), isEmpty);
+  });
 }
 
 Future<VerifiedSupportRecipient> _recipient(DateTime now) async {
@@ -325,9 +410,9 @@ Future<
       VerifiedSupportRecipient recipient,
     })> _keySetFixture(DateTime now) async {
   final signing = Ed25519();
-  final signingPair = await signing.newKeyPair();
+  final signingPair = await signing.newKeyPairFromSeed(List<int>.filled(32, 7));
   final signingPublic = await signingPair.extractPublicKey();
-  final recipientPair = await X25519().newKeyPair();
+  final recipientPair = await X25519().newKeyPairFromSeed(List<int>.filled(32, 8));
   final recipientPublic = await recipientPair.extractPublicKey();
   final payload = <String, Object?>{
     'expires_at': now.add(const Duration(days: 7)).toIso8601String(),

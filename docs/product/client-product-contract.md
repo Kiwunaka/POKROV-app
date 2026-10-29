@@ -598,6 +598,10 @@ Support contract rules:
   X25519 recipient key set. The client stores only the encrypted envelope in
   private app support storage before upload, follows the server-authoritative
   resume offset and removes it only after queued/validated completion
+- an expired signed recipient set blocks new encryption for both send and export.
+  Diagnostics retains `support_key_set_expired` and tells the operator to renew
+  the server contract; it does not claim a report was saved. A fresh signed set
+  restores both actions without changing client trust or the encryption scheme.
 - the private encrypted outbox admits at most 24 MiB across saved envelopes
   and interrupted temporary writes, on both Android and Windows. Each envelope
   must fit the existing 2.5 MiB read limit before writing. Admission is serialized

@@ -11646,6 +11646,9 @@ class AppFirstSupportTicketService
     );
     final recipient = resolution.recipient;
     if (recipient == null) {
+      if (resolution.onlineFailure case final SupportBundleFailure failure) {
+        throw failure;
+      }
       throw SupportBundleTransferFailure(
         'support_recipient_unavailable',
         resolution.onlineFailure is SupportTicketFailure
@@ -11690,6 +11693,9 @@ class AppFirstSupportTicketService
       prepared.preview.diagnosticId,
     );
     if (recipient == null && existing == null) {
+      if (onlineFailure case final SupportBundleFailure failure) {
+        throw failure;
+      }
       throw SupportBundleTransferFailure(
         'support_recipient_unavailable',
         onlineFailure is SupportTicketFailure

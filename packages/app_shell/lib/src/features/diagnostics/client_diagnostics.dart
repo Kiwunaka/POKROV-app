@@ -1393,6 +1393,13 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
       _ => null,
     };
     return switch (code) {
+      'support_key_set_expired' || 'support_recipient_expired' =>
+        'Срок ключа шифрования поддержки истёк. Оператору нужно обновить ключ на сервере. Диагностика не отправлена и не экспортирована. Код: $code.',
+      'support_signing_key_unknown' || 'support_signature_invalid' ||
+      'support_key_set_time_invalid' || 'support_key_invalid' =>
+        'Ключ шифрования поддержки не прошёл проверку. Диагностика не отправлена и не экспортирована. Код: $code.',
+      'support_recipient_unavailable' =>
+        'Не удалось получить проверенный ключ шифрования поддержки. Код: support_recipient_unavailable.',
       'support_mode_volume_exhausted' =>
         'Лимит режима поддержки исчерпан. Для нового расширенного отчёта нужен новый код от оператора. Сохранённые отчёты можно отправить повторно.',
       'support_mode_inactive' =>
