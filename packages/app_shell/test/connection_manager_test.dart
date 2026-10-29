@@ -608,7 +608,7 @@ class _SmartDnsAccountBootstrapper extends _StartupAccountBootstrapper
   bool get smartAccessEnabled => true;
 }
 
-class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, RuntimeCandidateProbing, RuntimeProtectedHandoff, RuntimeNetworkAvailability {
+class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, RuntimeConnectProgress, RuntimeCandidateProbing, RuntimeProtectedHandoff, RuntimeNetworkAvailability {
   _Runtime({this.heldOperation, this.hostPlatform = HostPlatform.android});
   final String? heldOperation;
   bool supportsCandidates = false;
@@ -866,6 +866,12 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
       await releaseStopRead!.future;
     }
     return value(phase);
+  }
+
+  @override
+  Future<RuntimeSnapshot> snapshotForConnectRequest(String requestId) {
+    expect(requestId, _request);
+    return snapshot();
   }
 
   @override
@@ -1715,7 +1721,7 @@ void main() {
         .singleWhere((server) => server['tag'] == 'pokrov-user-dns');
     expect(ordinaryDns['type'], 'https');
     expect(ordinaryDns['server'], 'dns.example');
-    expect(ordinaryDns['detour'], isNull);
+    expect(ordinaryDns['detour'], 'proxy', reason: 'Full keeps saved direct DNS inside the VPN');
     expect(ordinaryDns['domain_resolver'], 'local');
     expect(preferences.toJson(), isNot(contains('externalSmartDnsEnabled')));
   });
@@ -2657,13 +2663,15 @@ void main() {
     expect(runtime.stagedPayloads.single.warpPolicy.canEnableRuntime, isFalse);
     expect(runtime.connectCalls, 1);
     final restarted = bootstrapper();
-    final migrated = await restarted.loadCachedManagedProfile(
+    final retained = await restarted.loadCachedManagedProfile(inputs,
+      runtimeFeatures: RuntimeTransportFeature.values.toSet(), coreRelease: '1.2.9');
+    expect(retained?.cacheEntryId, cached?.cacheEntryId,
+        reason: 'the explicit Advanced candidate pin survives another process restart without an API');
+    expect(await restarted.loadCachedManagedProfile(
       ManagedProfileCacheInputs(hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode,
         preferredCountryCode: 'DE'),
-      runtimeFeatures: RuntimeTransportFeature.values.toSet(), coreRelease: '1.2.9');
-    expect(migrated?.cacheEntryId, cached?.cacheEntryId,
-        reason: 'the upgraded country binding survives another process restart without an API');
-    expect(await restarted.loadCachedManagedProfile(inputs), isNull);
+      runtimeFeatures: RuntimeTransportFeature.values.toSet(), coreRelease: '1.2.9'), isNull,
+        reason: 'an explicit Advanced candidate pin is not migrated into country Auto');
   });
 
   test('API outage and failed node use an authorized cached other node through expiry grace', () async {
@@ -4288,7 +4296,7 @@ void main() {
     addTearDown(noConsent.dispose);
     noConsent.restoreConnectionPreferences(
       const PokrovClientExperienceState.empty().copyWith(
-        interfaceMode: PokrovInterfaceMode.advanced, preferredCandidateRef: direct.candidateRef), const {});
+        interfaceMode: PokrovInterfaceMode.simple, preferredCandidateRef: direct.candidateRef), const {});
     await noConsent.connect();
     expect(noConsentRuntime.probedProtocols, ['vless']);
     expect(noConsentRuntime.connectCalls, 0);
