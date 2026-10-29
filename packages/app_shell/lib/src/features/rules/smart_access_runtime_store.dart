@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../../shared/secure_storage.dart';
+
 import '../../../routing_catalog_contract.dart';
 import '../../../smart_access_profile.dart';
 import '../../../catalog_runtime_identity.dart';
@@ -52,11 +54,11 @@ class SmartAccessRuntimeStore {
   SmartAccessRuntimeStore({required this.platform,
     this.audience = const String.fromEnvironment('POKROV_SMART_ACCESS_AUDIENCE', defaultValue: 'production'),
     FlutterSecureStorage? storage, DateTime Function()? now})
-      : _storage = storage ?? const FlutterSecureStorage(), _now = now ?? DateTime.now;
+      : _storage = PokrovSecureStorage(storage), _now = now ?? DateTime.now;
 
   final String platform;
   final String audience;
-  final FlutterSecureStorage _storage;
+  final PokrovSecureStorage _storage;
   final DateTime Function() _now;
   static final Map<String, Future<void>> _queues = {};
   String get _key => 'pokrov-smart-access-runtime-$platform-$audience-v1';

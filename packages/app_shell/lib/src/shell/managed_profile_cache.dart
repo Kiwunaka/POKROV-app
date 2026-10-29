@@ -4,6 +4,8 @@ import 'dart:math';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../shared/secure_storage.dart';
+
 class ManagedProfileCacheRead {
   const ManagedProfileCacheRead({this.payload, this.accessEnded = false});
 
@@ -17,7 +19,7 @@ class ManagedProfileCache {
   ManagedProfileCache({
     FlutterSecureStorage? storage,
     DateTime Function()? now,
-  })  : _storage = storage ?? const FlutterSecureStorage(),
+  })  : _storage = PokrovSecureStorage(storage),
         _now = now ?? DateTime.now;
 
   static const offlineWindow = Duration(hours: 24);
@@ -27,7 +29,7 @@ class ManagedProfileCache {
     return base64UrlEncode(List<int>.generate(16, (_) => random.nextInt(256)));
   }
   static const _maxBytes = 8 * 1024 * 1024;
-  final FlutterSecureStorage _storage;
+  final PokrovSecureStorage _storage;
   final DateTime Function() _now;
   Future<void> _writes = Future<void>.value();
   final Map<String, int> _invalidations = {};

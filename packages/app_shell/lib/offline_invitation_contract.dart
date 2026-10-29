@@ -4,6 +4,8 @@ import 'dart:math';
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import 'src/shared/secure_storage.dart';
+
 const invitationRequestPurpose = 'pokrov.invitation-request.v1';
 const offlineInvitationPurpose = 'pokrov.offline-invitation.v1';
 
@@ -115,10 +117,10 @@ class VerifiedOfflineInvitation {
 
 class OfflineInvitationReceiver {
   OfflineInvitationReceiver({required this.trust, FlutterSecureStorage? storage,
-      DateTime Function()? clock}) : _storage = storage ?? const FlutterSecureStorage(),
+      DateTime Function()? clock}) : _storage = PokrovSecureStorage(storage),
       _clock = clock ?? DateTime.now;
   final OfflineInvitationTrust trust;
-  final FlutterSecureStorage _storage;
+  final PokrovSecureStorage _storage;
   final DateTime Function() _clock;
   DateTime get now => _clock().toUtc();
   String _key(String platform, String installId) => 'pokrov.offline-invitation.$platform.$installId';

@@ -76,6 +76,13 @@ accepted the request, not that retained state or a live TUN was erased.
 | First-launch, theme, hint, and promo markers | small file or SharedPreferences stores | scalar or bounded-list tokens | Convenience-only. Unknown/corrupt values fall back to the documented safe default. They do not carry session, profile, update, or release authority. |
 | Android system-surface preferences | `AndroidSystemSurfacePreferencesStore`; private `pokrov_system_surfaces` SharedPreferences | legacy scalar booleans only; current policy is all false | A read never restores notification detail authority. Any retained country, speed, or route `true` value is rewritten to false; writes also persist only false. This is a one-way privacy migration for convenience state, not a session/profile schema migration. |
 
+Windows secure-storage reads, writes and deletes share one app-isolate queue
+across the session, catalog, profile and invitation stores: the pinned backend
+keeps all keys in one DPAPI file. This prevents a reader from observing a pending
+file write and separate keys from overwriting each other's updates. Backend
+failures reach their caller unchanged and do not block later operations; no retry,
+credential reset, storage migration or cryptographic change is introduced.
+
 App-first trial and refresh responses bind session metadata to
 `canonical_account_id`, preferring the nested session value and then the
 top-level value. Legacy `account_id` is used only when neither canonical field

@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../../shared/secure_storage.dart';
+
 import '../../../routing_catalog_contract.dart';
 import '../../../routing_catalog_policy.dart';
 
@@ -13,7 +15,7 @@ class RoutingCatalogStore {
     required this.enabled,
     FlutterSecureStorage? storage,
     DateTime Function()? now,
-  }) : _storage = storage ?? const FlutterSecureStorage(),
+  }) : _storage = PokrovSecureStorage(storage),
        _now = now ?? DateTime.now;
 
   factory RoutingCatalogStore.pinned() => RoutingCatalogStore(
@@ -23,7 +25,7 @@ class RoutingCatalogStore {
 
   final RoutingCatalogVerifier verifier;
   final bool enabled;
-  final FlutterSecureStorage _storage;
+  final PokrovSecureStorage _storage;
   final DateTime Function() _now;
   bool get available => enabled && verifier.configured;
   String get _key => 'pokrov-routing-catalog-${verifier.audience}-v1';

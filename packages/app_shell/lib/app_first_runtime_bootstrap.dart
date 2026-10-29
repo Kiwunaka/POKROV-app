@@ -34,6 +34,7 @@ import 'src/features/rules/smart_access_policy_store.dart';
 import 'src/features/rules/transport_manifest_store.dart';
 import 'src/features/rules/transport_manifest_time.dart';
 import 'src/observability/release_health_baseline.dart';
+import 'src/shared/secure_storage.dart';
 import 'src/shell/managed_profile_cache.dart';
 import 'src/shell/runtime_connectivity_report.dart';
 import 'src/warp/pokrov_warp_direct.dart';
@@ -490,9 +491,9 @@ class FlutterSecureAppFirstSessionSecretStore
     implements AppFirstSessionSecretStore {
   FlutterSecureAppFirstSessionSecretStore({
     FlutterSecureStorage? storage,
-  }) : _storage = storage ?? const FlutterSecureStorage();
+  }) : _storage = PokrovSecureStorage(storage);
 
-  final FlutterSecureStorage _storage;
+  final PokrovSecureStorage _storage;
 
   String _key({
     required HostPlatform hostPlatform,

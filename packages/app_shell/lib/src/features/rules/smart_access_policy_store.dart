@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../../shared/secure_storage.dart';
+
 import '../../../routing_catalog_contract.dart';
 
 /// Retains only public policy floors and the observed clock. No service
@@ -9,14 +11,14 @@ import '../../../routing_catalog_contract.dart';
 class SmartAccessPolicyStore {
   SmartAccessPolicyStore({required this.verifier, required this.enabled,
     FlutterSecureStorage? storage, DateTime Function()? now})
-    : _storage = storage ?? const FlutterSecureStorage(), _now = now ?? DateTime.now;
+    : _storage = PokrovSecureStorage(storage), _now = now ?? DateTime.now;
 
   factory SmartAccessPolicyStore.pinned() => SmartAccessPolicyStore(
     verifier: SmartAccessVerifier.pinned(), enabled: const bool.fromEnvironment('POKROV_SMART_ACCESS_ENABLED'));
 
   final SmartAccessVerifier verifier;
   final bool enabled;
-  final FlutterSecureStorage _storage;
+  final PokrovSecureStorage _storage;
   final DateTime Function() _now;
   bool get available => enabled && verifier.configured;
   String get _key => 'pokrov-smart-access-floors-${verifier.audience}-v1';

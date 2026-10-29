@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
+import '../../shared/secure_storage.dart';
+
 import '../../../routing_catalog_contract.dart';
 import 'transport_manifest_time.dart';
 
@@ -88,11 +90,11 @@ class TransportManifestSelection {
 /// Call only from the app isolate. This store never activates a transport.
 class TransportManifestStore {
   TransportManifestStore({required this.verifier, required this.enabled, required this.clock,
-      this.onCommitted, FlutterSecureStorage? storage}) : _storage = storage ?? const FlutterSecureStorage();
+      this.onCommitted, FlutterSecureStorage? storage}) : _storage = PokrovSecureStorage(storage);
 
   final TransportManifestVerifier verifier;
   final bool enabled;
-  final FlutterSecureStorage _storage;
+  final PokrovSecureStorage _storage;
   final RuntimeBootClock clock;
   final Future<void> Function(TransportAdmission admission)? onCommitted;
   bool get available => enabled && verifier.configured;
