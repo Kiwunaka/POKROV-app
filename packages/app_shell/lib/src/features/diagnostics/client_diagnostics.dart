@@ -1288,9 +1288,9 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
       _refreshing = true;
       _refreshError = null;
     });
+    var refreshFailed = false;
     try {
       var next = await widget.onRefresh();
-      final qaContext = await widget.onReadFirstProviderQaContext?.call();
       final releaseHealthRefresh = widget.onReleaseHealthRefresh;
       if (includeReleaseHealth && releaseHealthRefresh != null) {
         next = next.copyWith(
@@ -1302,16 +1302,23 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
       }
       setState(() {
         _report = next;
-        _qaContext = qaContext;
       });
     } on Object {
-      if (mounted) {
+      refreshFailed = true;
+    }
+    try {
+      // A failed runtime refresh must not hide the retained QA rejection.
+      final qaContext = await widget.onReadFirstProviderQaContext?.call();
+      if (mounted) setState(() => _qaContext = qaContext);
+    } on Object {
+      refreshFailed = true;
+    } finally {
+      if (mounted && refreshFailed) {
         setState(() {
           _refreshError =
               'Не удалось обновить проверку. Показана последняя безопасная сводка.';
         });
       }
-    } finally {
       await _loadPendingBundles();
       if (mounted) {
         setState(() {

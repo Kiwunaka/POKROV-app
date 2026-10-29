@@ -1448,20 +1448,26 @@ void main() {
     await tester.runAsync(observability.flush);
   });
 
-  testWidgets('QA start exception refreshes closed context and stays visible after admission disappears', (tester) async {
+  testWidgets('QA start exception retains closed context when diagnostics refresh fails', (tester) async {
     final report = PokrovDiagnosticsPresenter.fromRuntime(
-      hostPlatform: HostPlatform.android, routeMode: RouteMode.fullTunnel,
+      hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel,
       snapshot: null, statusLabel: 'idle', warpState: 'disabled', now: DateTime.now().toUtc(),
       appVersion: '1.5.0', buildNumber: 'fixture', releaseChannel: 'private', candidateLabel: 'fixture',
       encryptedDeliveryAvailable: false,
     );
     Map<String, Object?>? closedContext;
     var refreshes = 0;
+    var refreshFails = false;
     Widget screen({required bool admitted}) => MaterialApp(home: PokrovDiagnosticsScreen(
-      initialReport: report, onRefresh: () async { refreshes++; return report; },
+      initialReport: report, onRefresh: () async {
+        refreshes++;
+        if (refreshFails) throw StateError('private refresh failure');
+        return report;
+      },
       onOpenProtection: () {}, onOpenSupport: () {},
       onStartFirstProviderQa: !admitted ? null : () async {
-        closedContext = const {'control_reason': 'start_exception', 'start_error': 'qa_start: StateError'};
+        refreshFails = true;
+        closedContext = const {'control_reason': 'core_egress_timeout', 'start_error': 'qa_start: StateError'};
         throw StateError('private fixture message must stay hidden');
       },
       onReadFirstProviderQaContext: () async => closedContext,
@@ -1476,7 +1482,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(refreshes, refreshesBeforeStart + 1);
     expect(find.textContaining('qa_start: StateError'), findsOneWidget);
+    expect(find.textContaining('core_egress_timeout'), findsOneWidget);
     expect(find.textContaining('private fixture message'), findsNothing);
+    expect(find.textContaining('private refresh failure'), findsNothing);
+    refreshFails = false;
     closedContext = null;
     await tester.pumpWidget(screen(admitted: false));
     await tester.tap(find.byKey(const ValueKey('diagnostics-refresh-action')));

@@ -501,7 +501,9 @@ bounded protection history. The summary preserves a classified control failure
 through the outer start error. Android also logs closed QA control failure reasons
 under `POKROV-SmartDNS`, without profile or connection material. Diagnostics
 refreshes that summary after the error and retains its error card when the pending
-admission disappears. Raw exception
+admission disappears. QA context refresh is independent of the general diagnostics
+report, so a report refresh failure cannot hide the retained native rejection.
+Raw exception
 messages, stack paths and connection material are not displayed or retained.
 The connection observer keeps `ConnectionConnectedUnverified` pending even when
 all four native flags are already ready. It does not send that complete set to
