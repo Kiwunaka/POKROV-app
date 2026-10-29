@@ -125,9 +125,16 @@ void main() {
     final catalog = TransportCandidateCatalog(revision: 'private-catalog',
         selectedCandidateRef: remembered.candidateRef, candidates: [remembered, awg, hy2]);
     selector.recordFailure('private-network', remembered.candidateRef, 'connect_failed');
+    final admissions = <Map<String, Object?>>[];
     Future<void> select() => selector.select(catalog: catalog, network: 'private-network',
       platform: HostPlatform.windows, cancelled: Completer<void>().future,
       contextGeneration: 'private-generation', networkClass: 'ethernet', ipv6Available: false,
+      prepare: (item, cancelled) async {
+        final snapshot = observer.lastPreAction!;
+        expect(snapshot.containsKey('outcome'), isFalse);
+        expect(() => snapshot['outcome'] = {}, throwsUnsupportedError);
+        admissions.add(snapshot);
+      },
       probe: (item, cancelled, timeout) async {
         await Future<void>.delayed(Duration(milliseconds: item == awg ? 2 : 8));
         return item == awg ? const SmartConnectCandidateProbeResult.failure('connect_failed',
@@ -137,6 +144,7 @@ void main() {
     await observer.settled;
     final firstRows = (await file.readAsLines()).map((line) => jsonDecode(line) as Map).toList();
     expect(firstRows.length, 2);
+    expect(firstRows.first['decision'], admissions.first['decision']);
     final first = firstRows.first['decision'] as Map;
     expect(first['history'], isEmpty);
     final descriptors = first['candidates'] as List;

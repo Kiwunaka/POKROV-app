@@ -30,6 +30,10 @@ class CandidateRankerShadow {
   final _history = <Map<String, Object?>>[];
   Future<void>? _pending;
   CandidateRankerComparison? lastComparison;
+  /// Immutable metadata for the most recent admission, available synchronously
+  /// to an owned QA prepare callback. Reading it cannot change the queue.
+  Map<String, Object?>? _lastPreAction;
+  Map<String, Object?>? get lastPreAction => _lastPreAction;
   String? lastFailure;
   Future<void> get settled => Future.wait([
     _pending ?? Future<void>.value(), _captureWrites,
@@ -45,6 +49,7 @@ class CandidateRankerShadow {
       _refs.clear();
       _history.clear();
       lastComparison = null;
+      _lastPreAction = null;
     }
     return _generation;
   }
@@ -152,7 +157,7 @@ class CandidateRankerShadow {
         }),
       });
     }
-    return Map<String, Object?>.unmodifiable({
+    return _lastPreAction = Map<String, Object?>.unmodifiable({
       'schema': 'pokrov-owned-selector-outcome-v1', 'attempt': ++_captured,
       'mandatory_preferred': choices.first.candidateRef == preferredRef,
       'native_schedule_pending': nativeSchedulePending,

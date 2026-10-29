@@ -267,6 +267,19 @@ against a caller-supplied owned native helper and sanitized local catalog throug
 timeout; profiles stay in its owned guest. This tests source scheduling and real
 native outcomes, not the installed App lifecycle or end-to-end Connect latency.
 
+For a fresh ordinary direct IPv4 wave, the same runner can first export
+`POKROV_SELECTOR_QA_PREACTION` without starting native work. The read-only
+`lastPreAction` snapshot is available at preparation; `scripts/score_selector_capture.py`
+uses the frozen research F102 checkpoint/encoder and prepares the closed Decider
+input without API calls. An explicitly obtained answer is supplied through
+`POKROV_SELECTOR_QA_ADVICE`: the runner rechecks the current initial snapshot
+(only wall time may differ), rejects policy-fixed/recovery/last-good or changed
+inputs, and allows exactly the advised candidate to reach the owned native helper.
+Other candidates settle as control observations. Model load/inference, external
+advice and native time are separate measurements; this staged QA does not prove
+readiness within live scheduler deadlines, native App admission or a quality gain.
+The default selector and the private v1 DNS-only scorer remain unchanged.
+
 When the API is unavailable, the cache selector keeps the online WARP order and
 budgets: a currently enabled manual chain first, ordinary paths after its failure,
 then direct WARP. Cached or server consent alone does not admit either WARP group;
