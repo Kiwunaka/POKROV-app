@@ -1,6 +1,6 @@
 # Client release status
 
-Updated 27 October 2026. The owner's [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
+Updated 29 October 2026. The owner's [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
 is the only current release queue; [Execution section 0](C:/Users/kiwun/Downloads/POKROV_EXECUTION_PLAN_2026-09-24.md)
 explains how to continue. Dated results below retain their original scope and do
 not create new tasks or permission to repeat accepted checks.
@@ -15,7 +15,21 @@ setup exited 0 and app/service/Core 1.2.14 started in the Clean VM. The seven
 assets were checked against the draft; unchanged protocol QA was not repeated.
 Strict-v2 is not required by the current release plan.
 
-Current private **1.5.0+4228**, App `ee9c7fc0` / Core `698662e`, is built.
+Current private **1.5.0+4238**, App `3db825b6`, uses Core 1.2.15 / ABI2
+(`1b74a65`). Four production-signed Android APKs, the unsigned Windows setup
+and its single-installer ZIP passed package, version, ABI and runtime-binding
+checks. The packages include complete-scope SmartDNS selection and local-to-VPN
+fallback (`e249c8e3`), stopped-client country catalog refresh (`b6f28446`) and
+the Windows LocalDPI package guard (`110f78bf`). Installation on the Clean VM
+preserved identity and settings; the stopped-client country change refreshed
+the actual manual catalog and exposed CH Naive. One ordinary Gemini-only IS
+connection reached running/DNS/egress with TUN, but did not establish that the
+partial-local SmartDNS fallback branch ran. The new IPC budget (`c43e3b01`),
+unbundled Naive refresh (`6c38ddb9`) and SmartDNS failure recovery (`6f325a23`)
+are source fixes for private 4239; its build and runtime checks are pending. See
+[Windows acceptance](windows-release-readiness.md) for the package scope.
+
+Previous private **1.5.0+4228**, App `ee9c7fc0` / Core `698662e`, is built.
 The included `0f28428b` repair normalizes canonical DNS lanes for both fresh and
 cached profiles in Android Automatic. The owner's phone is unavailable, so its
 controlled Android 4228 check has not been run. Windows 4228
@@ -247,7 +261,7 @@ The accepted 4200 Flowseal and 4195 Gemini checks below were not repeated.
 All six final 4228 artifacts remain in `E:/POKROV-tools/temp/release-1.5.0-4228`.
 Temporary Android/Windows build trees were removed after checks, with absolute
 paths verified; no build process or temporary P: drive remains. This table retains
-the earlier 4227 set; current 4228 acceptance is stated above.
+the earlier 4227 set; the 4228 acceptance is stated above.
 
 | Private artifact | Path |
 | --- | --- |
