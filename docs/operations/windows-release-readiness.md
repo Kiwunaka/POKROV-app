@@ -1,5 +1,11 @@
 # Windows acceptance
 
+Private **1.5.0+4239**, App `9bee989a`, reuses Core **1.2.15 / ABI2**
+(`1b74a65`). Four production-signed, non-debuggable APKs, the unsigned Windows
+setup and its single-installer ZIP are in `E:/POKROV-tools/temp/release-1.5.0-4239`.
+The builders passed version, ABI and runtime-binding checks; the ZIP entry matches
+the setup. Package checks do not establish installed runtime acceptance.
+
 Private **1.5.0+4238**, App `3db825b6`, includes the Windows LocalDPI packaging
 guard, timeout and DNS copy updates, complete SmartDNS scope with local-to-VPN
 fallback, and Naive country catalog refresh. Four production-signed, non-debuggable
