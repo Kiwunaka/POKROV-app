@@ -431,6 +431,13 @@ joins or installations.
 
 ## Existing scoped runtime and historical QA
 
+A signed provider may supply one canonical public `resolver_bootstrap_ip`; the
+lease must carry the same value. App connects its HTTPS DNS transport to that IP
+with the original resolver hostname for TLS certificate verification. The pin is
+part of the runtime scope and a changed pin requires fresh preparation. Absence
+preserves the existing hostname projection and scope hash. This extension is used
+by the version-bound private QA policy before public provider publication.
+
 An IPv4 lease explicitly sets `address_strategy: ipv4_only` when bootstrapping
 its provider's DoH hostname through `dns-direct`. App's existing DNS normalization
 carries this into `domain_resolver.strategy` before staging; the global DNS

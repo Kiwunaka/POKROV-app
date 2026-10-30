@@ -33,6 +33,17 @@ Provider readiness was still pending; native bootstrap and Gemini were not
 accepted. Stop and normal tray Exit again restored the exact preferences,
 DNS, 16 routes, proxy and WinHTTP, preserving refreshed auth tokens.
 
+Installed **4244** passed normal account loading after the Windows secure-store
+serialization fix. Two finite Bezmezhau QA attempts reached native control but
+timed out in its three-second Smart probe; the second captured live readiness
+failure with no completed resolver stage. After Stop/TUN removal, one direct A
+query to `8.8.8.8` returned the published primary `181.215.40.49` in 83 ms; TCP/443
+to that address did not connect within 3,054 ms. Source **4245** adds a signed
+resolver IP pin with the original TLS hostname, allowing private QA to use the
+previously checked official reserve. Native feature acceptance is still pending.
+Normal tray Exit preserved routing preferences, DNS, all 16 IPv4/IPv6 routes,
+proxy and WinHTTP; refreshed auth was retained.
+
 Private Windows **1.5.0+4241**, App `b119b7c6`, includes the opt-in v1
 candidate-ranker shadow with bounded local model reads and cancellable cold Connect.
 It reuses Core **1.2.15 / ABI2** (`1b74a65`) from the retained private4235 SDK.

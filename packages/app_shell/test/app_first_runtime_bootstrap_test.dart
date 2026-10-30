@@ -480,17 +480,18 @@ void main() {
       (error) => error.code, 'code', 'catalog_local_dpi_authority')));
   });
 
-  for (final (serviceId, controlFailure, hostPlatform, comssDns) in <(String, String?, HostPlatform, bool)>[
+  for (final (serviceId, controlFailure, hostPlatform, comssDns, resolverBootstrapIp) in <(String, String?, HostPlatform, bool, String?)>[
     for (final failure in const <String?>[null, 'core_egress_tls_failed', 'service_unavailable', 'unknown_private_control_code', 'smart_access_signature_invalid', 'control_deadline'])
-      ('gemini', failure, HostPlatform.windows, false),
-    ('chatgpt', null, HostPlatform.windows, false),
-    ('gemini', null, HostPlatform.android, false),
-    ('gemini', null, HostPlatform.android, true),
-    ('gemini', 'smart_access_signature_invalid', HostPlatform.android, false),
-    ('gemini', 'smart_access_runtime_control_unconfirmed', HostPlatform.android, false),
-    ('gemini', 'unknown_private_control_code', HostPlatform.android, false),
+      ('gemini', failure, HostPlatform.windows, false, null),
+    ('gemini', null, HostPlatform.windows, false, '31.58.216.201'),
+    ('chatgpt', null, HostPlatform.windows, false, null),
+    ('gemini', null, HostPlatform.android, false, null),
+    ('gemini', null, HostPlatform.android, true, null),
+    ('gemini', 'smart_access_signature_invalid', HostPlatform.android, false, null),
+    ('gemini', 'smart_access_runtime_control_unconfirmed', HostPlatform.android, false, null),
+    ('gemini', 'unknown_private_control_code', HostPlatform.android, false, null),
   ]) {
-  test('${hostPlatform.name} explicit first-provider QA uses the signed disabled $serviceId projection through ordinary managed stage${comssDns ? ' with Comss DNS' : controlFailure == null ? '' : ' with $controlFailure'}', () async {
+  test('${hostPlatform.name} explicit first-provider QA uses the signed disabled $serviceId projection through ordinary managed stage${resolverBootstrapIp != null ? ' with resolver bootstrap IP' : comssDns ? ' with Comss DNS' : controlFailure == null ? '' : ' with $controlFailure'}', () async {
     final refreshDuringStart = hostPlatform == HostPlatform.windows && serviceId == 'gemini' && controlFailure == null;
     final httpOverrides = HttpOverrides.current;
     HttpOverrides.global = null;
@@ -537,6 +538,7 @@ void main() {
       'max_new_connections_per_minute': 1, 'max_concurrent_connections_per_lease': 1, 'relay_connect_policy': null};
     final provider = <String, Object?>{'provider_id': 'owned-provider', 'revision': 1, 'kind': hostPlatform == HostPlatform.android ? 'external' : 'owned', 'enabled': true,
       'permission_id': 'owned-permission', 'resolver_url': 'https://dns.example.test/dns-query',
+      if (resolverBootstrapIp != null) 'resolver_bootstrap_ip': resolverBootstrapIp,
       'relay_addresses': ['1.1.1.1'], 'privacy_review_ref': 'privacy-review', 'privacy_review_sha256': await _qaDigest('privacy')};
     final capability = <String, Object?>{'capability_id': '$serviceId-qa', 'provider_id': 'owned-provider', 'provider_revision': 1,
       'service_id': serviceId, 'enabled': false, 'verification': 'source_only',
@@ -623,6 +625,7 @@ void main() {
               'catalog_sha256': catalog.payloadSha256, 'service_id': serviceId, 'platform': hostPlatform.name, 'origin': 'current-origin',
               'family': 'ipv4', 'feature': 'web_request', 'transport': 'tls_tcp_443_visible_sni', 'issued_at': issued,
               'new_flows_until': qaEnd, 'active_flows_until': qaEnd, 'resolver_url': provider['resolver_url'],
+              if (resolverBootstrapIp != null) 'resolver_bootstrap_ip': resolverBootstrapIp,
               'relay_addresses': provider['relay_addresses'], 'domains': capability['domains'],
               'max_new_connections_per_minute': 1, 'max_concurrent_connections': 1, 'relay_connect_policy': null};
             final grant = await _qaSigned({'schema_version': 'pokrov-smart-access-grant-v1', 'request_nonce': body['request_nonce'],
@@ -973,8 +976,15 @@ void main() {
       reason: 'QA compiles its scoped projection with local DPI disabled');
     final providerDns = ((staged!['dns'] as Map)['servers'] as List).cast<Map>()
         .singleWhere((server) => server['tag'] == 'pokrov-smart-access-dns-$leaseId');
-    expect(providerDns['domain_resolver'], {'server': comssDns ? 'pokrov-catalog-user-dns-direct' : 'dns-direct', 'strategy': 'ipv4_only'},
-      reason: 'an IPv4 lease must not wait for AAAA when bootstrapping its DoH hostname');
+    if (resolverBootstrapIp == null) {
+      expect(providerDns['domain_resolver'], {'server': comssDns ? 'pokrov-catalog-user-dns-direct' : 'dns-direct', 'strategy': 'ipv4_only'},
+        reason: 'an IPv4 lease must not wait for AAAA when bootstrapping its DoH hostname');
+    } else {
+      expect(providerDns['type'], 'https');
+      expect(providerDns['server'], resolverBootstrapIp);
+      expect(providerDns['tls'], {'enabled': true, 'server_name': 'dns.example.test'});
+      expect(providerDns['domain_resolver'], isNull);
+    }
     if (comssDns) {
       final serverTags = ((staged!['dns'] as Map)['servers'] as List).cast<Map>().map((row) => row['tag']).toSet();
       expect(serverTags, contains('pokrov-catalog-user-dns-direct'));

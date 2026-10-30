@@ -277,6 +277,7 @@ bool _sameNativePolicyScope(VerifiedSmartAccessLease grant, Map<String, Object?>
   if (capability['verification'] != 'verified' || proofIssued == null || proofExpires == null ||
       now.isBefore(proofIssued) || !now.isBefore(proofExpires) ||
       provider['resolver_url'] != lease['resolver_url'] ||
+      provider['resolver_bootstrap_ip'] != lease['resolver_bootstrap_ip'] ||
       permission['max_new_connections_per_minute'] != lease['max_new_connections_per_minute'] ||
       permission['max_concurrent_connections_per_lease'] != lease['max_concurrent_connections'] ||
       !smartAccessRelayConnectPoliciesMatch(permission['relay_connect_policy'], lease['relay_connect_policy']) ||
@@ -467,6 +468,15 @@ Map<String, Object?> smartAccessNativeDns(VerifiedSmartAccessLease grant, {
 }) {
   _validateNativeEndpoints(grant);
   if (directOutbound.isEmpty || bootstrapDnsServer.isEmpty) _invalid();
+  final bootstrap = grant.lease['resolver_bootstrap_ip'];
+  if (bootstrap is String) {
+    final endpoint = Uri.parse(grant.lease['resolver_url']! as String);
+    return Map.unmodifiable({
+      'type': 'https', 'tag': smartAccessDnsTag(grant), 'server': bootstrap,
+      'server_port': endpoint.port, 'path': endpoint.path, 'detour': directOutbound,
+      'tls': {'enabled': true, 'server_name': endpoint.host},
+    });
+  }
   return Map.unmodifiable({
     'tag': smartAccessDnsTag(grant), 'address': grant.lease['resolver_url'],
     'address_resolver': bootstrapDnsServer, 'detour': directOutbound,
@@ -482,7 +492,7 @@ void _validateNativeEndpoints(VerifiedSmartAccessLease grant) {
       relays.length > 8 || relays.toSet().length != relays.length) _invalid();
   for (final raw in relays) {
     final address = raw is String ? InternetAddress.tryParse(raw) : null;
-    if (address == null || !_publicRelay(address) ||
+    if (address == null || !smartAccessPublicIp(address) ||
         (address.type == InternetAddressType.IPv4) != (family == 'ipv4')) _invalid();
   }
   final rawUrl = lease['resolver_url'];
@@ -492,7 +502,13 @@ void _validateNativeEndpoints(VerifiedSmartAccessLease grant) {
       rawUrl.contains('\\') || rawUrl.runes.any((rune) => rune < 33)) _invalid();
   final host = url.host.replaceAll(RegExp(r'^\[|\]$'), '');
   final address = InternetAddress.tryParse(host);
-  if (address != null ? !_publicRelay(address) : !_domain(host)) _invalid();
+  if (address != null ? !smartAccessPublicIp(address) : !_domain(host)) _invalid();
+  if (lease.containsKey('resolver_bootstrap_ip')) {
+    final bootstrap = lease['resolver_bootstrap_ip'];
+    final bootstrapAddress = bootstrap is String ? InternetAddress.tryParse(bootstrap) : null;
+    if (bootstrapAddress == null || bootstrapAddress.address != bootstrap ||
+        !smartAccessPublicIp(bootstrapAddress)) _invalid();
+  }
   final domains = lease['domains'];
   if (domains is! List || domains.isEmpty || domains.length > 256) _invalid();
   final seen = <String>{};
@@ -507,31 +523,5 @@ void _validateNativeEndpoints(VerifiedSmartAccessLease grant) {
 bool _domain(String value) => value.length <= 253 && value.split('.').length >= 2 &&
     value.split('.').every((label) => RegExp(r'^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$').hasMatch(label)) &&
     InternetAddress.tryParse(value) == null;
-
-// Same relay boundary as Core; special/mapped/translation addresses cannot
-// smuggle a private target through a signed public-provider projection.
-bool _publicRelay(InternetAddress address) {
-  if (address.address.contains('%')) return false;
-  final bytes = address.rawAddress;
-  bool inside(String cidr) {
-    final parts = cidr.split('/');
-    final network = InternetAddress(parts[0]).rawAddress;
-    if (bytes.length != network.length) return false;
-    final bits = int.parse(parts[1]);
-    for (var index = 0; index < (bits + 7) ~/ 8; index++) {
-      final remaining = bits - index * 8;
-      final mask = remaining >= 8 ? 255 : (255 << (8 - remaining)) & 255;
-      if ((bytes[index] & mask) != (network[index] & mask)) return false;
-    }
-    return true;
-  }
-  if (bytes.length == 16 && !inside('2000::/3')) return false;
-  return !const [
-    '0.0.0.0/8', '10.0.0.0/8', '100.64.0.0/10', '127.0.0.0/8', '169.254.0.0/16',
-    '172.16.0.0/12', '192.0.0.0/24', '192.0.2.0/24', '192.88.99.0/24', '192.168.0.0/16',
-    '198.18.0.0/15', '198.51.100.0/24', '203.0.113.0/24', '224.0.0.0/3',
-    '2001::/23', '2001:db8::/32', '2002::/16', '3fff::/20',
-  ].any(inside);
-}
 
 Never _invalid() => throw const RoutingCatalogFailure('smart_access_native_projection_invalid');

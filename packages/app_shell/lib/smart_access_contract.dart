@@ -39,10 +39,11 @@ void _validateProviderRows(Map<String, Object?> payload) {
   void lifetime(Object? start, Object? end) {
     if (!_time(start).isBefore(_time(end))) invalid();
   }
-  Map<String, Map<String, Object?>> rows(String collection, String identity, Set<String> keys) {
+  Map<String, Map<String, Object?>> rows(String collection, String identity, Set<String> keys,
+      {Set<String> optionalKeys = const {}}) {
     final result = <String, Map<String, Object?>>{};
     for (final row in (payload[collection]! as List).cast<Map<String, Object?>>()) {
-      _keys(row, keys);
+      _keys(row, {...keys, ...optionalKeys.where(row.containsKey)});
       final key = id(row[identity]);
       if (result.containsKey(key)) invalid();
       result[key] = row;
@@ -65,16 +66,21 @@ void _validateProviderRows(Map<String, Object?> payload) {
     _validateRelayConnectPolicy(permission['relay_connect_policy']);
   }
   final providers = rows('providers', 'provider_id', const {'provider_id', 'revision', 'kind', 'enabled',
-    'permission_id', 'resolver_url', 'relay_addresses', 'privacy_review_ref', 'privacy_review_sha256'});
+    'permission_id', 'resolver_url', 'relay_addresses', 'privacy_review_ref', 'privacy_review_sha256'},
+    optionalKeys: const {'resolver_bootstrap_ip'});
   for (final provider in providers.values) {
     _revision(provider['revision']); id(provider['privacy_review_ref']); digest(provider['privacy_review_sha256']);
     final permission = permissions[id(provider['permission_id'])];
     final relays = provider['relay_addresses'];
     final resolver = provider['resolver_url'];
+    final bootstrap = provider['resolver_bootstrap_ip'];
+    final bootstrapAddress = bootstrap is String ? InternetAddress.tryParse(bootstrap) : null;
     if (permission == null || permission['provider_id'] != provider['provider_id'] ||
         provider['enabled'] is! bool || !const {'owned', 'external'}.contains(provider['kind']) ||
         resolver is! String || resolver.isEmpty || resolver.length > 512 ||
         relays is! List || relays.isEmpty || relays.length > 8 || relays.any((value) => value is! String)) invalid();
+    if (provider.containsKey('resolver_bootstrap_ip') && (bootstrapAddress == null ||
+        bootstrapAddress.address != bootstrap || !smartAccessPublicIp(bootstrapAddress))) invalid();
   }
   final capabilities = rows('capabilities', 'capability_id', const {'capability_id', 'provider_id',
     'provider_revision', 'service_id', 'enabled', 'verification', 'checks', 'platform', 'origin', 'family',
@@ -150,6 +156,7 @@ class VerifiedSmartAccessProviderPolicy {
       for (final field in const ['capability_id', 'service_id', 'platform', 'origin', 'family', 'feature', 'transport', 'domains'])
         field: capability[field],
       'resolver_url': provider['resolver_url'], 'relay_addresses': relays,
+      if (provider['resolver_bootstrap_ip'] != null) 'resolver_bootstrap_ip': provider['resolver_bootstrap_ip'],
       'max_new_connections_per_minute': permission['max_new_connections_per_minute'],
       'max_concurrent_connections': permission['max_concurrent_connections_per_lease'],
       'relay_connect_policy': permission['relay_connect_policy']};
@@ -207,6 +214,7 @@ Future<String> _smartAccessRuntimeScopeSha256(Map<String, Object?> grant, Map<St
       'permission_id', 'capability_id', 'service_id', 'platform', 'origin',
       'family', 'feature', 'transport', 'resolver_url', 'relay_addresses',
       'max_new_connections_per_minute', 'max_concurrent_connections', 'relay_connect_policy']) field: lease[field],
+    if (lease['resolver_bootstrap_ip'] != null) 'resolver_bootstrap_ip': lease['resolver_bootstrap_ip'],
     'domains': domains};
   return (await Sha256().hash(utf8.encode('pokrov-smart-access-runtime-scope-v1\n${_canonical(scope)}')))
       .bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
@@ -613,12 +621,12 @@ class SmartAccessVerifier {
       }
       final lease = grant['lease'];
       if (lease is! Map<String, Object?>) throw const RoutingCatalogFailure('smart_access_lease_invalid');
-      _keys(lease, const {'schema_version', 'lease_id', 'audience', 'provider_id', 'provider_revision',
+      _keys(lease, {'schema_version', 'lease_id', 'audience', 'provider_id', 'provider_revision',
         'permission_id', 'permission_revision', 'capability_id', 'provider_policy_revision', 'provider_security_revision',
         'provider_policy_sha256', 'catalog_revision', 'catalog_security_revision', 'catalog_sha256', 'service_id',
         'platform', 'origin', 'family', 'feature', 'transport', 'issued_at', 'new_flows_until', 'active_flows_until',
         'resolver_url', 'relay_addresses', 'domains', 'max_new_connections_per_minute', 'max_concurrent_connections',
-        'relay_connect_policy'});
+        'relay_connect_policy', if (lease.containsKey('resolver_bootstrap_ip')) 'resolver_bootstrap_ip'});
       _validateRelayConnectPolicy(lease['relay_connect_policy']);
       if (lease['schema_version'] != 'pokrov-smart-access-lease-v1' || lease['audience'] != audience ||
           catalog.payload['audience'] != audience || providerPayload['audience'] != audience ||
@@ -664,6 +672,8 @@ class SmartAccessVerifier {
           capability['provider_id'] != lease['provider_id'] || capability['service_id'] != lease['service_id'] ||
           const ['platform', 'origin', 'family', 'feature', 'transport'].any((key) => capability[key] != lease[key]) ||
           _canonical(capability['domains']) != _canonical(lease['domains']) ||
+          provider.containsKey('resolver_bootstrap_ip') != lease.containsKey('resolver_bootstrap_ip') ||
+          provider['resolver_bootstrap_ip'] != lease['resolver_bootstrap_ip'] ||
           provider['resolver_url'] != lease['resolver_url'] || relays is! List || providerRelays is! List ||
           relays.isEmpty || relays.length > 8 || relays.any((value) => value is! String || !providerRelays.contains(value)) ||
           lease['max_new_connections_per_minute'] != permission['max_new_connections_per_minute'] ||
@@ -712,4 +722,30 @@ class SmartAccessVerifier {
     } on RoutingCatalogFailure { rethrow; }
       on Object { throw const RoutingCatalogFailure('smart_access_verification_failed'); }
   }
+}
+
+// Same relay boundary as Core; special/mapped/translation addresses cannot
+// smuggle a private target through a signed public-provider projection.
+bool smartAccessPublicIp(InternetAddress address) {
+  if (address.address.contains('%')) return false;
+  final bytes = address.rawAddress;
+  bool inside(String cidr) {
+    final parts = cidr.split('/');
+    final network = InternetAddress(parts[0]).rawAddress;
+    if (bytes.length != network.length) return false;
+    final bits = int.parse(parts[1]);
+    for (var index = 0; index < (bits + 7) ~/ 8; index++) {
+      final remaining = bits - index * 8;
+      final mask = remaining >= 8 ? 255 : (255 << (8 - remaining)) & 255;
+      if ((bytes[index] & mask) != (network[index] & mask)) return false;
+    }
+    return true;
+  }
+  if (bytes.length == 16 && !inside('2000::/3')) return false;
+  return !const [
+    '0.0.0.0/8', '10.0.0.0/8', '100.64.0.0/10', '127.0.0.0/8', '169.254.0.0/16',
+    '172.16.0.0/12', '192.0.0.0/24', '192.0.2.0/24', '192.88.99.0/24', '192.168.0.0/16',
+    '198.18.0.0/15', '198.51.100.0/24', '203.0.113.0/24', '224.0.0.0/3',
+    '2001::/23', '2001:db8::/32', '2002::/16', '3fff::/20',
+  ].any(inside);
 }

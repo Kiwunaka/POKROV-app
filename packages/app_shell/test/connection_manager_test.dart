@@ -497,7 +497,8 @@ Future<Map<String, Object?>> _signedSmartDns(Map<String, Object?> payload,
 String _smartDnsTime(DateTime time) => '${time.toUtc().toIso8601String().split('.').first}Z';
 
 Future<({VerifiedRoutingCatalog catalog, VerifiedSmartAccessProviderPolicy providers,
-    SmartAccessVerifier verifier, SimpleKeyPair key})> _smartDnsFixture({bool completeIpv4Scope = false}) async {
+    SmartAccessVerifier verifier, SimpleKeyPair key})> _smartDnsFixture({bool completeIpv4Scope = false,
+      String? resolverBootstrapIp}) async {
   final now = DateTime.now().toUtc();
   final start = _smartDnsTime(now.subtract(const Duration(minutes: 1)));
   final end = _smartDnsTime(now.add(const Duration(hours: 1)));
@@ -538,6 +539,7 @@ Future<({VerifiedRoutingCatalog catalog, VerifiedSmartAccessProviderPolicy provi
     'providers': [for (final id in ['old', 'complete']) {
       'provider_id': id, 'revision': 1, 'kind': id == 'old' ? 'owned' : 'external', 'enabled': true,
       'permission_id': id, 'resolver_url': 'https://dns.example.test/dns-query',
+      if (resolverBootstrapIp != null) 'resolver_bootstrap_ip': resolverBootstrapIp,
       'relay_addresses': [id == 'old' ? '1.1.1.1' : '2606:4700:4700::1111'],
       'privacy_review_ref': 'fixture', 'privacy_review_sha256': digest}],
     'capabilities': [for (final id in ['old', 'complete']) {
@@ -554,9 +556,12 @@ Future<({VerifiedRoutingCatalog catalog, VerifiedSmartAccessProviderPolicy provi
 
 Future<VerifiedSmartAccessLease> _smartDnsLease({required VerifiedRoutingCatalog catalog,
     required VerifiedSmartAccessProviderPolicy providers, required SmartAccessVerifier verifier,
-    required SimpleKeyPair key, required String profile}) async {
+    required SimpleKeyPair key, required String profile, String? resolverBootstrapIpOverride}) async {
   final capability = (providers.payload['capabilities']! as List).cast<Map>()
       .singleWhere((row) => row['capability_id'] == 'gemini-old');
+  final provider = (providers.payload['providers']! as List).cast<Map>()
+      .singleWhere((row) => row['provider_id'] == 'old');
+  final resolverBootstrapIp = resolverBootstrapIpOverride ?? provider['resolver_bootstrap_ip'];
   const nonce = '0123456789abcdef0123456789abcdef';
   final issued = DateTime.now().toUtc().subtract(const Duration(seconds: 1));
   final request = <String, Object?>{'request_nonce': nonce, 'profile_sha256': profile,
@@ -578,6 +583,7 @@ Future<VerifiedSmartAccessLease> _smartDnsLease({required VerifiedRoutingCatalog
       'new_flows_until': _smartDnsTime(issued.add(const Duration(minutes: 5))),
       'active_flows_until': _smartDnsTime(issued.add(const Duration(minutes: 10))),
       'resolver_url': 'https://dns.example.test/dns-query', 'relay_addresses': ['1.1.1.1'],
+      if (resolverBootstrapIp != null) 'resolver_bootstrap_ip': resolverBootstrapIp,
       'max_new_connections_per_minute': 1, 'max_concurrent_connections': 1, 'relay_connect_policy': null},
   }, 'pokrov-smart-access-grant-v1', key);
   return verifier.verifyLease(envelope, request: request,
@@ -5468,6 +5474,49 @@ void main() {
     expect(manager.status.phase, ConnectionPhase.actionRequired);
     expect(manager.presentation.isVerified, isFalse);
     expect(runtime.connectCalls, 2, reason: 'signature failure cannot fall through to the VPN cache');
+  });
+
+  test('SmartDNS resolver bootstrap pins preserve TLS identity and bind renewal scope', () async {
+    final legacy = await _smartDnsFixture();
+    final pinned = await _smartDnsFixture(resolverBootstrapIp: '31.58.216.201');
+    final profile = await smartAccessProfileSha256('resolver bootstrap profile');
+    Future<VerifiedSmartAccessLease> leaseFor(({VerifiedRoutingCatalog catalog,
+        VerifiedSmartAccessProviderPolicy providers, SmartAccessVerifier verifier, SimpleKeyPair key}) fixture,
+        {String? override}) => _smartDnsLease(catalog: fixture.catalog, providers: fixture.providers,
+          verifier: fixture.verifier, key: fixture.key, profile: profile, resolverBootstrapIpOverride: override);
+    final oldGrant = await leaseFor(legacy);
+    final grant = await leaseFor(pinned);
+    expect(smartAccessNativeDns(oldGrant, directOutbound: 'direct', bootstrapDnsServer: 'dns-direct'), {
+      'tag': smartAccessDnsTag(oldGrant), 'address': 'https://dns.example.test/dns-query',
+      'address_resolver': 'dns-direct', 'detour': 'direct', 'address_strategy': 'ipv4_only',
+    });
+    expect(oldGrant.runtimeScopeSha256, '8f92044cb134bbf8c18c4146581b3985a4c7a263398e96f7e0226703f5270d9f');
+    expect(smartAccessNativeDns(grant, directOutbound: 'direct', bootstrapDnsServer: 'dns-direct'), {
+      'type': 'https', 'tag': smartAccessDnsTag(grant), 'server': '31.58.216.201',
+      'server_port': 443, 'path': '/dns-query', 'detour': 'direct',
+      'tls': {'enabled': true, 'server_name': 'dns.example.test'},
+    });
+    expect(grant.runtimeScopeSha256, isNot(oldGrant.runtimeScopeSha256));
+    await expectLater(leaseFor(pinned, override: '1.0.0.1'),
+      throwsA(isA<RoutingCatalogFailure>().having((failure) => failure.code, 'code', 'smart_access_capability_mismatch')));
+    await expectLater(_smartDnsFixture(resolverBootstrapIp: '127.0.0.1'),
+      throwsA(isA<RoutingCatalogFailure>().having((failure) => failure.code, 'code', 'smart_access_policy_invalid')));
+    final identity = SmartAccessLeaseIdentity.fromGrant(grant);
+    Future<VerifiedSmartAccessProviderPolicy> updatedPolicy(String pin) async => pinned.verifier.verifyProvider(
+      await _signedSmartDns({
+        ...pinned.providers.payload, 'revision': 2,
+        'providers': [for (final row in pinned.providers.payload['providers']! as List)
+          {...(row as Map).cast<String, Object?>(), 'resolver_bootstrap_ip': pin}],
+      }, 'pokrov-smart-access-providers-v1', pinned.key), now: DateTime.now().toUtc(),
+      minimumRevision: 1, minimumSecurityRevision: 1, currentPayloadSha256: pinned.providers.payloadSha256);
+    final same = await updatedPolicy('31.58.216.201');
+    expect(await smartAccessLeaseRevocation(grant: identity, policy: same, now: DateTime.now().toUtc(),
+      verifiedGrant: grant), isNull);
+    expect(await same.matchesRetainedRuntimeScope(identity.lease, DateTime.now().toUtc()), isTrue);
+    final changed = await updatedPolicy('1.0.0.1');
+    expect(await smartAccessLeaseRevocation(grant: identity, policy: changed, now: DateTime.now().toUtc(),
+      verifiedGrant: grant), SmartAccessLeaseRevocation.drain);
+    expect(await changed.matchesRetainedRuntimeScope(identity.lease, DateTime.now().toUtc()), isFalse);
   });
 
   test('SmartDNS complete scope wins before affinity and partial local access uses VPN fallback', () async {
