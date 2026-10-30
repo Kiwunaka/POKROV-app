@@ -1,5 +1,19 @@
 # Windows acceptance
 
+Private Windows **1.5.0+4245**, App `d35a9892` / Core **1.2.15 / ABI2**, accepted
+finite source-only Bezmezhau policy **8** on 30 October: the first native receipt
+at 19:46 UTC passed resolver/DNS/TLS in **162/162/206 ms**, with its fallback guard
+open. At 19:51 UTC, one fresh Gemini request for 237 + 486 returned **723**;
+both exact hosts recorded HTTP **200 / h2 POST** RPCs before the permit expired
+at 19:54:32 UTC. The graph used pinned DoH `31.58.216.201` with original TLS name
+`dns.bezmezhau.com` and the signed primary/reserve relay pool with existing
+500 ms per-attempt / 1,000 ms total / two-attempt limits; neither exact host had
+a VPN fallback route. Public provider policy **5** and catalog **32** are unchanged.
+Normal Stop, owned browser close and tray Exit preserved routing preferences,
+DNS, all 16 IPv4/IPv6 routes, proxy and WinHTTP without rolling back auth; app,
+TUN, owned helpers/debug listener and temporary tasks were absent. Guest OS
+shutdown completed, and the hypervisor confirmed **PoweredOff / Unlocked**.
+
 Private Windows **1.5.0+4242**, App `bffea7db`, reuses Core **1.2.15 / ABI2**
 and the unchanged private4241 trust/shadow input. The unsigned setup and
 installer-only ZIP are in `E:/POKROV-tools/temp/release-1.5.0-4242`; standard
@@ -40,7 +54,7 @@ failure with no completed resolver stage. After Stop/TUN removal, one direct A
 query to `8.8.8.8` returned the published primary `181.215.40.49` in 83 ms; TCP/443
 to that address did not connect within 3,054 ms. Source **4245** adds a signed
 resolver IP pin with the original TLS hostname, allowing private QA to use the
-previously checked official reserve. Native feature acceptance is still pending.
+previously checked official reserve. That run supplied no browser feature acceptance.
 Normal tray Exit preserved routing preferences, DNS, all 16 IPv4/IPv6 routes,
 proxy and WinHTTP; refreshed auth was retained.
 
