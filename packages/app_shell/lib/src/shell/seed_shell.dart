@@ -2423,6 +2423,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       snapshot: snapshot ?? _runtimeSnapshot,
       confirmedConnection: _connectionManager.confirmedConnectionForDiagnostics(snapshot ?? _runtimeSnapshot),
       attemptedTransport: _connectionManager.attemptedTransportForDiagnostics,
+      candidateRankerState: _connectionManager.candidateRankerDiagnosticState,
       statusLabel: _connectionPresentation.title,
       warpState: _diagnosticWarpState(diagnostics),
       now: DateTime.now().toUtc(),

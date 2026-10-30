@@ -168,6 +168,8 @@ enum PokrovDiagnosticMessageKey {
   final String wireKey;
 }
 
+enum CandidateRankerDiagnosticState { unavailable, loading, ready, compared, loadFailed, inferenceFailed }
+
 enum PokrovDiagnosticEvidenceState { confirmed, pending, attention, unknown }
 
 enum PokrovDiagnosticTimelineState { active, confirmed, attention, ended }
@@ -379,6 +381,7 @@ final class PokrovDiagnosticsReport {
     this.currentAppCrash,
     this.authRequest,
     this.connectionFailure,
+    this.candidateRankerState,
     this.showWindowsLocalDpiRuntime = false,
     this.windowsLocalDpiRuntime,
     this.androidLocalDpiSummary,
@@ -412,6 +415,7 @@ final class PokrovDiagnosticsReport {
   final DiagnosticCrashRecord? currentAppCrash;
   final PokrovAuthRequestDiagnostic? authRequest;
   final PokrovConnectionFailureDiagnostic? connectionFailure;
+  final CandidateRankerDiagnosticState? candidateRankerState;
   final bool showWindowsLocalDpiRuntime;
   final WindowsLocalDpiRuntime? windowsLocalDpiRuntime;
   final String? androidLocalDpiSummary;
@@ -479,6 +483,7 @@ final class PokrovDiagnosticsReport {
         currentAppCrash: currentAppCrash,
         authRequest: authRequest,
         connectionFailure: connectionFailure,
+        candidateRankerState: candidateRankerState,
         showWindowsLocalDpiRuntime: showWindowsLocalDpiRuntime,
         windowsLocalDpiRuntime: windowsLocalDpiRuntime,
         androidLocalDpiSummary: androidLocalDpiSummary,
@@ -521,6 +526,7 @@ abstract final class PokrovDiagnosticsPresenter {
     DiagnosticCrashRecord? currentAppCrash,
     PokrovAuthRequestDiagnostic? authRequest,
     PokrovConnectionFailureDiagnostic? connectionFailure,
+    CandidateRankerDiagnosticState? candidateRankerState,
     ({String transport, bool? throughBridge})? confirmedConnection,
     String attemptedTransport = '',
     List<DiagnosticEventRecord> candidateProbeEvents = const [],
@@ -730,6 +736,7 @@ abstract final class PokrovDiagnosticsPresenter {
       currentAppCrash: currentAppCrash,
       authRequest: authRequest,
       connectionFailure: connectionFailure,
+      candidateRankerState: candidateRankerState,
       showWindowsLocalDpiRuntime: hostPlatform == HostPlatform.windows && localDpiMode,
       windowsLocalDpiRuntime: snapshot?.windowsLocalDpiRuntime,
       androidLocalDpiSummary: hostPlatform == HostPlatform.android && localDpiMode
@@ -1600,6 +1607,21 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
                               key: const ValueKey('diagnostics-auth-request'),
                               style: theme.textTheme.bodySmall,
                             ),
+                            if (_report.candidateRankerState case final state?) ...[
+                              const SizedBox(height: 6),
+                              Text(
+                                switch (state) {
+                                  CandidateRankerDiagnosticState.unavailable => 'Теневой ML: состояние недоступно.',
+                                  CandidateRankerDiagnosticState.loading => 'Теневой ML: модель загружается.',
+                                  CandidateRankerDiagnosticState.ready => 'Теневой ML: модель загружена, сравнение не подтверждено.',
+                                  CandidateRankerDiagnosticState.compared => 'Теневой ML: сравнение выполнено; на порядок Auto не влияет.',
+                                  CandidateRankerDiagnosticState.loadFailed => 'Теневой ML: модель не загрузилась.',
+                                  CandidateRankerDiagnosticState.inferenceFailed => 'Теневой ML: последнее вычисление завершилось ошибкой.',
+                                },
+                                key: const ValueKey('diagnostics-shadow-ranker'),
+                                style: theme.textTheme.bodySmall,
+                              ),
+                            ],
                             if (_report.previousAppCrash != null) ...[
                               const SizedBox(height: 6),
                               Text(

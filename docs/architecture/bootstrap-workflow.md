@@ -248,8 +248,12 @@ Online/offline selection uses the observer only when ready and never waits for
 loading, including during cancellation. Missing/invalid assets log
 `shadow_load_failed` and retain the existing selection. `shadow_ready`
 means loaded; `shadow candidates=... order=...` confirms an actual comparison and
-contains only counts/indices. V3/F102 remains research: it is incompatible with
-this v1 parser and is not bundled or used for active candidate selection.
+contains only counts/indices. Diagnostics → Technical details also shows whether
+the model loaded and whether a comparison was observed in the current selector
+context. This local status contains no candidate order or connection identifiers
+and is not added to support reports or server payloads. V3/F102 remains research:
+it is incompatible with this v1 parser and is not bundled or used for active
+candidate selection.
 Export an approved local checkpoint with `scripts/export_candidate_ranker.py`; the opt-in
 `candidate_ranker_shadow_test.dart` uses `POKROV_RANKER_MODEL` and
 `POKROV_RANKER_RESEARCH_DIR` to check the real model against ONNX. `loadLocal`

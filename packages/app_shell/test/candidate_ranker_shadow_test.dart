@@ -4,8 +4,8 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter/services.dart';
 import 'package:pokrov_app_shell/app_first_runtime_bootstrap.dart';
 import 'package:pokrov_app_shell/app_shell.dart' as shell;
 import 'package:pokrov_core_domain/core_domain.dart';
@@ -122,9 +122,72 @@ void main() {
       return ByteData.sublistView(bytes);
     });
     addTearDown(() => binding.defaultBinaryMessenger.setMockMessageHandler('flutter/assets', null));
-    final observed = await exercise(await CandidateRankerShadow.loadBundled());
+    final shadow = await CandidateRankerShadow.loadBundled();
+    final loaded = manager(Future.value(shadow));
+    addTearDown(loaded.dispose);
+    await loaded.candidateRankerReady;
+    expect(loaded.candidateRankerDiagnosticState, shell.CandidateRankerDiagnosticState.ready);
+    final observed = await exercise(shadow);
+    expect(loaded.candidateRankerDiagnosticState, shell.CandidateRankerDiagnosticState.compared);
     expect(keys, [CandidateRankerShadow.bundledAsset]);
     expect(observed.modelOrder, [0, 1]);
+
+    shadow.lastFailure = 'inference_failed';
+    expect(loaded.candidateRankerDiagnosticState, shell.CandidateRankerDiagnosticState.inferenceFailed);
+    final single = candidate('dnstt', 0);
+    await SmartConnectCandidateSelector(rankerShadow: shadow).select(
+      catalog: TransportCandidateCatalog(revision: 'catalog-2', selectedCandidateRef: single.candidateRef, candidates: [single]),
+      network: 'network', contextGeneration: 'new-context', platform: HostPlatform.android,
+      cancelled: Completer<void>().future, probe: (item, _, __) async => success(item),
+    );
+    expect(loaded.candidateRankerDiagnosticState, shell.CandidateRankerDiagnosticState.ready);
+
+    final failed = manager(Future<CandidateRankerShadow>.error(const FormatException()));
+    addTearDown(failed.dispose);
+    await failed.candidateRankerReady;
+    expect(failed.candidateRankerDiagnosticState, shell.CandidateRankerDiagnosticState.loadFailed);
+  });
+
+  testWidgets('technical diagnostics show shadow status without exposing it in the summary', (tester) async {
+    final model = Completer<CandidateRankerShadow>();
+    final loaded = manager(model.future);
+    addTearDown(loaded.dispose);
+    final now = DateTime.utc(2026, 10, 30);
+    shell.PokrovDiagnosticsReport report() => shell.PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: HostPlatform.android, routeMode: RouteMode.fullTunnel,
+      snapshot: null, statusLabel: 'idle', warpState: 'disabled', now: now,
+      appVersion: '1.5.0', buildNumber: '4245', releaseChannel: 'private',
+      candidateLabel: 'fixture', encryptedDeliveryAvailable: false,
+      candidateRankerState: loaded.candidateRankerDiagnosticState,
+    );
+
+    expect(loaded.candidateRankerDiagnosticState, shell.CandidateRankerDiagnosticState.loading);
+    await tester.pumpWidget(MaterialApp(home: shell.PokrovDiagnosticsScreen(
+      initialReport: report(), onRefresh: () async => report(),
+      onOpenProtection: () {}, onOpenSupport: () {},
+    )));
+    expect(find.byKey(const ValueKey('diagnostics-shadow-ranker')), findsNothing);
+    final technical = find.byKey(const ValueKey('diagnostics-technical-details'));
+    await tester.ensureVisible(technical);
+    await tester.tap(technical);
+    await tester.pumpAndSettle();
+    expect(find.text('Теневой ML: модель загружается.'), findsOneWidget);
+
+    final shadow = CandidateRankerShadow(zeroModel());
+    model.complete(shadow);
+    await tester.pump();
+    expect(loaded.candidateRankerDiagnosticState, shell.CandidateRankerDiagnosticState.ready);
+    await tester.tap(find.byKey(const ValueKey('diagnostics-refresh-action')));
+    await tester.pumpAndSettle();
+    expect(find.text('Теневой ML: модель загружена, сравнение не подтверждено.'), findsOneWidget);
+
+    shadow.lastComparison = CandidateRankerComparison({}, Float32List(0), [], []);
+    expect(loaded.candidateRankerDiagnosticState, shell.CandidateRankerDiagnosticState.compared);
+    expect(report().copyWith().candidateRankerState, shell.CandidateRankerDiagnosticState.compared);
+    expect(report().supportDiagnosticFields().keys.where((key) => key.contains('ranker') || key.contains('shadow')), isEmpty);
+    await tester.tap(find.byKey(const ValueKey('diagnostics-refresh-action')));
+    await tester.pumpAndSettle();
+    expect(find.text('Теневой ML: сравнение выполнено; на порядок Auto не влияет.'), findsOneWidget);
   });
 
   test('bundle rejects oversized bytes and a different model contract', () async {

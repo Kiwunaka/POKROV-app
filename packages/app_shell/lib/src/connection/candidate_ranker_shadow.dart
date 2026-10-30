@@ -67,6 +67,7 @@ class CandidateRankerShadow {
       _refs.clear();
       _history.clear();
       lastComparison = null;
+      lastFailure = null;
       _lastPreAction = null;
     }
     return _generation;

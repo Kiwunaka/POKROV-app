@@ -78,6 +78,7 @@ class ConnectionManager extends ChangeNotifier {
         _candidateSelector.rankerShadow = observer;
         debugPrint('POKROV_RANKER shadow_ready');
       }).catchError((Object _) {
+        _candidateRankerLoadFailed = true;
         debugPrint('POKROV_RANKER shadow_load_failed');
       });
     }
@@ -553,8 +554,22 @@ class ConnectionManager extends ChangeNotifier {
   TransportCandidateCatalog? _transportCatalog;
   final _candidateSelector = SmartConnectCandidateSelector();
   Future<void>? _candidateRankerReady;
+  bool _candidateRankerLoadFailed = false;
   Future<void> get candidateRankerReady => _candidateRankerReady ?? Future<void>.value();
   CandidateRankerShadow? get candidateRankerShadow => _candidateSelector.rankerShadow;
+  CandidateRankerDiagnosticState get candidateRankerDiagnosticState {
+    final shadow = candidateRankerShadow;
+    if (shadow == null) {
+      if (_candidateRankerReady == null) return CandidateRankerDiagnosticState.unavailable;
+      return _candidateRankerLoadFailed
+          ? CandidateRankerDiagnosticState.loadFailed
+          : CandidateRankerDiagnosticState.loading;
+    }
+    if (shadow.lastFailure != null) return CandidateRankerDiagnosticState.inferenceFailed;
+    return shadow.lastComparison == null
+        ? CandidateRankerDiagnosticState.ready
+        : CandidateRankerDiagnosticState.compared;
+  }
   String? _candidateNetworkKey;
   String? _candidateOfflineNetworkKey;
   String? _candidateNetworkClass;
