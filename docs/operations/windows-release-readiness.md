@@ -1,5 +1,23 @@
 # Windows acceptance
 
+Private Windows/Android **1.5.0+4247**, App `9aa5f5f5`, has all six packages in
+`E:/POKROV-tools/temp/release-1.5.0-4247`, reusing Core **1.2.15 / ABI2** and the
+bundled v1 shadow model. Public opt-in provider policy **9 / security 1 / state 5**
+is active; legacy policy **5**, its original five capabilities and catalog **32**
+are unchanged. Installed **4246** passed ordinary authenticated
+`GET providers?resolver_bootstrap_ip=1`, a production Premium lease and one normal
+Connect for Gemini through Bezmezhau, without a QA permit. The Windows IPv4
+`current-origin / web_request / selective` lease covered exactly
+`gemini.google.com` and `geminiweb-pa.clients6.google.com`; fresh native DNS used
+`31.58.216.201:443/dns-query` with TLS name `dns.bezmezhau.com`. Resolver/DNS/TLS
+passed in **51/52/198 ms**, with Gemini available and its fallback guard open.
+The accepted Gemini HTTP/RPC smoke was not repeated. Installed **4247** passed
+the Diagnostics and Technical Details UI check after the grey-screen fix and
+showed the shadow model loaded, with comparison unconfirmed; a real DNS-pair
+inference was not established. Upgrades retained account identity and auth, and
+cleanup restored preferences, DNS, all **16 routes (11 IPv4 + 5 IPv6)**, proxy
+and WinHTTP, with app/TUN/owned helpers absent. No public release was published.
+
 Private Windows **1.5.0+4245**, App `d35a9892` / Core **1.2.15 / ABI2**, accepted
 finite source-only Bezmezhau policy **8** on 30 October: the first native receipt
 at 19:46 UTC passed resolver/DNS/TLS in **162/162/206 ms**, with its fallback guard
