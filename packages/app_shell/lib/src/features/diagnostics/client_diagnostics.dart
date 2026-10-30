@@ -611,6 +611,10 @@ abstract final class PokrovDiagnosticsPresenter {
     };
     final timelineAttempts = _timelineAttempts(timelineBreadcrumbs);
     final lastAttempt = timelineAttempts.lastOrNull;
+    // Proof and result are timeline markers, not phases in the support contract.
+    final lastAttemptPhase = lastAttempt?.entries.reversed
+        .where((entry) => entry.phaseKey != 'proof' && entry.phaseKey != 'result')
+        .firstOrNull;
     final nativeFailure = connectionFailure?.nativeFailure;
     final egressObservation = nativeFailure?.egressProbeObservation ?? snapshot?.egressProbeObservation;
     final failureKind = nativeFailure?.failureKind ?? connectionFailure?.recoveryFailureKind ?? snapshot?.lastFailureKind;
@@ -622,7 +626,7 @@ abstract final class PokrovDiagnosticsPresenter {
       if (lastAttempt?.failureOperation ?? nativeFailure?.operation case final operation?)
         'failure_operation': operation,
       if (attemptedTransport.isNotEmpty) 'attempted_transport': attemptedTransport,
-      if (lastAttempt?.entries.lastOrNull case final entry?) 'latest_attempt_phase': entry.phaseKey,
+      if (lastAttemptPhase != null) 'latest_attempt_phase': lastAttemptPhase.phaseKey,
       if (nativeFailure != null) ...{
         'native_phase': nativeFailure.nativePhase,
         'module_matches': nativeFailure.moduleMatches,

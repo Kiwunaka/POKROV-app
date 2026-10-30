@@ -34,7 +34,10 @@ only the existing allowlisted operational code, API failure kind and HTTP/IO
 numbers. This in-memory summary does not read credentials or private journals;
 the application crash summary is a separate observation.
 Local routing-catalog validation failures retain the existing `routing_catalog`
-operation in connection diagnostics and runtime reports.
+operation in connection diagnostics and runtime reports. The network summary
+uses the latest actual connection phase, skipping proof and terminal-result
+markers; the complete local timeline still shows both markers. This keeps the
+summary within the existing support contract after an attempt finishes.
 
 An admitted first-provider QA attempt requires fresh online preparation. Its
 deadline is not shortened by the ordinary cached-profile fallback, and a fresh

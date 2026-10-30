@@ -21,8 +21,9 @@ import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_diagnostics_collectors/diagnostics_collectors.dart';
 import 'package:pokrov_observability_contracts/observability_contracts.dart' show ObservabilityPrivacyClass;
 import 'package:pokrov_observability_runtime/observability_runtime.dart'
-    show OperationalAttributePolicy, OperationalFailureMapper;
+    show OperationalAttributePolicy, OperationalBreadcrumb, OperationalFailureMapper;
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
+import 'package:pokrov_support_bundle/support_bundle.dart' show PreparedSupportBundle;
 
 Future<void> _deleteTestDirectory(Directory directory) async {
   // Synchronous disposal can leave bootstrap reads or atomic-file cleanup settling.
@@ -1352,6 +1353,67 @@ void main() {
       expect(observability.connectionTimelineBreadcrumbs.last.name, 'app.connection.attempt.finished');
       expect(observability.connectionTimelineBreadcrumbs.last.outcome.name, 'succeeded');
     }, beginsWithDisconnect: false);
+  });
+
+  testWidgets('Diagnostics opens after proof and completed connection with loaded shadow', (tester) async {
+    final fixture = await tester.runAsync(() async {
+      final directory = await Directory.systemTemp.createTemp('pokrov-diagnostics-completed-');
+      final observability = await PokrovClientObservability.start(
+          hostPlatform: HostPlatform.windows, directoryResolver: () async => directory);
+      final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+        ..phase = RuntimePhase.running
+        ..coreVersion = '1.2.15'
+        ..pendingFirstEgress = true;
+      final pending = runtime.value(RuntimePhase.running);
+      late List<OperationalBreadcrumb> pendingBreadcrumbs;
+      late RuntimeSnapshot verified;
+      await observability.runConnectionAction(() async {
+        observability.observeConnection(ConnectionConnectedUnverified(
+          stage: ConnectionStage.egress, snapshot: pending));
+        pendingBreadcrumbs = observability.connectionTimelineBreadcrumbs;
+        runtime.pendingFirstEgress = false;
+        verified = runtime.value(RuntimePhase.running);
+        observability.observeConnection(ConnectionConnectedVerified(snapshot: verified));
+      }, beginsWithDisconnect: false);
+      return (directory: directory, observability: observability, pending: pending,
+          pendingBreadcrumbs: pendingBreadcrumbs, verified: verified,
+          verifiedBreadcrumbs: observability.connectionTimelineBreadcrumbs);
+    });
+    addTearDown(() => _deleteTestDirectory(fixture!.directory));
+    expect(fixture!.pendingBreadcrumbs.last.name, 'app.connection.proof.observed');
+    expect(fixture.verifiedBreadcrumbs.last.name, 'app.connection.attempt.finished');
+    final now = DateTime.utc(2026, 10, 30);
+    PokrovDiagnosticsReport report(RuntimeSnapshot snapshot, List<OperationalBreadcrumb> breadcrumbs) =>
+        PokrovDiagnosticsPresenter.fromRuntime(
+          hostPlatform: HostPlatform.windows, routeMode: RouteMode.selectiveServices,
+          snapshot: snapshot, statusLabel: 'connected', warpState: 'disabled', now: now,
+          appVersion: '1.5.0', buildNumber: '4247', releaseChannel: 'private', candidateLabel: 'fixture',
+          encryptedDeliveryAvailable: false, attemptedTransport: 'vless_reality',
+          timelineBreadcrumbs: breadcrumbs, candidateRankerState: CandidateRankerDiagnosticState.ready,
+        );
+    String networkHash(PreparedSupportBundle bundle) => bundle.preview.files
+        .singleWhere((file) => file.path == 'network/summary.json').sha256;
+    String expectedNetworkHash(RuntimeSnapshot snapshot, String phase) => networkHash(
+      preparePokrovClientSupportBundle(
+        hostPlatform: HostPlatform.windows, routeMode: RouteMode.selectiveServices,
+        snapshot: snapshot, warpState: 'disabled', now: now, appVersion: '1.5.0',
+        buildNumber: '4247', releaseChannel: 'private', candidateLabel: 'fixture',
+        connectionDiagnostic: {'core_version': '1.2.15', 'attempted_transport': 'vless_reality',
+          'latest_attempt_phase': phase, 'dns_ready': true},
+      ),
+    );
+    final verifiedReport = report(fixture.verified, fixture.verifiedBreadcrumbs);
+    expect(networkHash(verifiedReport.preparedBundle), expectedNetworkHash(fixture.verified, 'verified'));
+    final pendingReport = report(fixture.pending, fixture.pendingBreadcrumbs);
+    expect(networkHash(pendingReport.preparedBundle), expectedNetworkHash(fixture.pending, 'egress'));
+    await tester.pumpWidget(MaterialApp(home: PokrovDiagnosticsScreen(
+      initialReport: verifiedReport, onRefresh: () async => verifiedReport,
+      onOpenProtection: () {}, onOpenSupport: () {},
+    )));
+    expect(find.byKey(const ValueKey('diagnostics-screen')), findsOneWidget);
+    await _openTechnicalDiagnostics(tester);
+    expect(find.text('Теневой ML: модель загружена, сравнение не подтверждено.'), findsOneWidget);
+    await tester.runAsync(fixture.observability.flush);
   });
 
   test('pending QA preserves fresh profile deadline and primary failure instead of offline catalog fallback', () async {
