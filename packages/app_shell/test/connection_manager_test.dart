@@ -14,6 +14,7 @@ import 'package:pokrov_app_shell/routing_catalog_contract.dart';
 import 'package:pokrov_app_shell/routing_catalog_policy.dart';
 import 'package:pokrov_app_shell/smart_access_profile.dart';
 import 'package:pokrov_app_shell/src/features/rules/routing_catalog_store.dart';
+import 'package:pokrov_app_shell/src/features/rules/smart_access_policy_store.dart';
 import 'package:pokrov_app_shell/src/shell/managed_profile_cache.dart';
 import 'package:pokrov_app_shell/src/shell/runtime_connectivity_report.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
@@ -5474,6 +5475,96 @@ void main() {
     expect(manager.status.phase, ConnectionPhase.actionRequired);
     expect(manager.presentation.isVerified, isFalse);
     expect(runtime.connectCalls, 2, reason: 'signature failure cannot fall through to the VPN cache');
+  });
+
+  test('ordinary SmartDNS delivery opts in to signed resolver bootstrap IPs', () async {
+    final originalHttpOverrides = HttpOverrides.current;
+    HttpOverrides.global = null;
+    addTearDown(() => HttpOverrides.global = originalHttpOverrides);
+    final originalStorage = FlutterSecureStoragePlatform.instance;
+    FlutterSecureStoragePlatform.instance = TestFlutterSecureStoragePlatform({});
+    final directory = await Directory.systemTemp.createTemp('pokrov-smart-dns-delivery-');
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() async {
+      await server.close(force: true);
+      await _deleteTestDirectory(directory);
+      FlutterSecureStoragePlatform.instance = originalStorage;
+    });
+    final fixture = await _smartDnsFixture(resolverBootstrapIp: '31.58.216.201');
+    final legacyEnvelope = await _signedSmartDns({...fixture.providers.payload,
+      'providers': [for (final row in fixture.providers.payload['providers']! as List)
+        {...(row as Map).cast<String, Object?>()}..remove('resolver_bootstrap_ip')],
+    }, 'pokrov-smart-access-providers-v1', fixture.key);
+    final pinnedEnvelope = await _signedSmartDns({...fixture.providers.payload, 'revision': 2},
+      'pokrov-smart-access-providers-v1', fixture.key);
+    final profile = await smartAccessProfileSha256('ordinary SmartDNS delivery');
+    final template = await _smartDnsLease(catalog: fixture.catalog, providers: fixture.providers,
+      verifier: fixture.verifier, key: fixture.key, profile: profile);
+    await File('${directory.path}/app-first-session-windows.json').writeAsString(jsonEncode({
+      'schema_version': 1, 'install_id': 'synthetic-install', 'account_id': 'synthetic-account',
+      'session_token_storage': 'secure', 'managed_manifest_path': '/api/client/profile/managed',
+    }));
+    final secrets = MemoryAppFirstSessionSecretStore();
+    await secrets.writeSessionToken(hostPlatform: HostPlatform.windows,
+      installId: 'synthetic-install', sessionToken: 'synthetic-session');
+    var published = false;
+    final requests = <String>[];
+    unawaited(() async {
+      await for (final request in server) {
+        requests.add('${request.method} ${request.uri}');
+        expect(request.headers.value(HttpHeaders.authorizationHeader), 'Bearer synthetic-session');
+        Object reply;
+        if (request.uri.path == '/api/client/smart-access/providers') {
+          expect(request.method, 'GET');
+          expect(request.uri.queryParameters, {'resolver_bootstrap_ip': '1'});
+          await request.drain<void>();
+          reply = {'schema': 'smart-access-providers-response-v1',
+            'envelope': published ? pinnedEnvelope : legacyEnvelope};
+        } else {
+          expect(request.method, 'POST');
+          expect(request.uri.path, '/api/client/smart-access/lease');
+          final body = jsonDecode(await utf8.decoder.bind(request).join()) as Map<String, dynamic>;
+          expect(body['provider_policy_sha256'], pinnedEnvelope['payload_sha256']);
+          final nonce = body['request_nonce'];
+          reply = {'schema': 'smart-access-lease-response-v1', 'envelope': await _signedSmartDns({
+            ...template.grant, 'request_nonce': nonce,
+            'device_binding': await smartAccessProfileSha256(
+              'pokrov-smart-access-device-v1\u0000$nonce\u0000synthetic-account\u0000synthetic-install'),
+            'lease': {...template.lease, 'provider_policy_revision': 2,
+              'provider_policy_sha256': pinnedEnvelope['payload_sha256']},
+          }, 'pokrov-smart-access-grant-v1', fixture.key)};
+        }
+        request.response.headers.contentType = ContentType.json;
+        request.response.write(jsonEncode(reply));
+        await request.response.close();
+      }
+    }());
+    final public = base64Encode((await fixture.key.extractPublicKey()).bytes);
+    final bootstrapper = AppFirstRuntimeBootstrapper(apiBaseUrl: 'http://127.0.0.1:${server.port}',
+      apiFallbackBaseUrls: const [], supportDirectoryResolver: () async => directory,
+      sessionSecretStore: secrets, maxRequestAttempts: 1,
+      routingCatalogStore: RoutingCatalogStore(enabled: true,
+        verifier: RoutingCatalogVerifier(publicKeysById: {'fixture': public}, audience: 'lab')),
+      smartAccessPolicyStore: SmartAccessPolicyStore(enabled: true, verifier: fixture.verifier));
+    final cancelled = Completer<void>();
+    Future<VerifiedSmartAccessProviderPolicy> fetch() => bootstrapper.fetchSmartAccessProviders(
+      hostPlatform: HostPlatform.windows, operationIsCurrent: () => true,
+      remainingBudget: const Duration(seconds: 5), cancelled: cancelled.future);
+    final legacy = await fetch();
+    expect((legacy.payload['providers']! as List).cast<Map>().first.containsKey('resolver_bootstrap_ip'), isFalse);
+    published = true;
+    final pinned = await fetch();
+    expect(availableSmartAccessProviders(policy: pinned, platform: 'windows', now: DateTime.now())
+      .map((provider) => provider['provider_id']), contains('old'));
+    final grant = await bootstrapper.requestSmartAccessLease(hostPlatform: HostPlatform.windows,
+      catalog: fixture.catalog, providerPolicy: pinned, capabilityId: 'gemini-old',
+      profileSha256: profile, origin: 'current-origin', family: 'ipv4', feature: 'web_request',
+      operationIsCurrent: () => true, remainingBudget: const Duration(seconds: 5), cancelled: cancelled.future);
+    expect(grant.lease['resolver_bootstrap_ip'], '31.58.216.201');
+    expect(smartAccessNativeDns(grant, directOutbound: 'direct', bootstrapDnsServer: 'dns-direct')['tls'],
+      {'enabled': true, 'server_name': 'dns.example.test'});
+    expect(requests, hasLength(3));
+    expect(requests.any((request) => request.contains('first-provider-qa')), isFalse);
   });
 
   test('SmartDNS resolver bootstrap pins preserve TLS identity and bind renewal scope', () async {

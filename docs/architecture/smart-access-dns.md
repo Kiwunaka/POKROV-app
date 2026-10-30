@@ -435,8 +435,14 @@ A signed provider may supply one canonical public `resolver_bootstrap_ip`; the
 lease must carry the same value. App connects its HTTPS DNS transport to that IP
 with the original resolver hostname for TLS certificate verification. The pin is
 part of the runtime scope and a changed pin requires fresh preparation. Absence
-preserves the existing hostname projection and scope hash. This extension is used
-by the version-bound private QA policy before public provider publication.
+preserves the existing hostname projection and scope hash. Build 4246 requests
+`GET /api/client/smart-access/providers?resolver_bootstrap_ip=1` to opt in to
+ordinary signed policies with this field. The same authenticated provider fetch
+feeds the picker, connection preparation and foreground renewal; lease requests
+retain the verified policy hash. Servers can keep returning an original signed
+compatible policy to clients that do not send this opt-in. Premium eligibility
+continues to use the existing trial/paid/bonus projection, including manual and
+family access.
 
 An IPv4 lease explicitly sets `address_strategy: ipv4_only` when bootstrapping
 its provider's DoH hostname through `dns-direct`. App's existing DNS normalization

@@ -5459,7 +5459,7 @@ class AppFirstRuntimeBootstrapper
     var finished = false;
     unawaited(cancelled.then((_) { if (!finished) client.close(force: true); }));
     try {
-      final response = await _requestJson(method: 'GET', path: '/api/client/smart-access/providers',
+      final response = await _requestJson(method: 'GET', path: '/api/client/smart-access/providers?resolver_bootstrap_ip=1',
         hostPlatform: hostPlatform, client: client, bearerToken: state.sessionToken,
         maximumResponseBytes: smartAccessPolicyMaximumBytes + 1024, allowRetries: false);
       await requireCurrent();
