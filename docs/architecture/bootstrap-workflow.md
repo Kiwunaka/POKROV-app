@@ -2003,6 +2003,11 @@ corresponding-source delivery; remaining gaps stay explicit in release readiness
 
 ## Update Handoff Boundary
 
+The profile's About sheet exposes a manual update check, including a retry after
+a download or install-source permission failure. Manual checks may reopen the
+same validated update while automatic checks stay deduplicated; silent delivery
+and metadata trust checks still apply. A failed prompt does not consume its retry.
+
 The shared shell may present and open an update only when the metadata carries a
 positive bounded byte size, a 64-hex SHA-256, and the exact canonical target
 `https://github.com/Kiwunaka/pokrov/releases/download/<tag>/<asset>.apk`.

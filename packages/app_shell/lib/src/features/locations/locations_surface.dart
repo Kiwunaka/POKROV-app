@@ -179,12 +179,13 @@ class _LocationsSectionState extends State<_LocationsSection> {
         )],
         notice: widget.locationsCatalogBusy ? 'Загружаем страны…'
             : (widget.locationsCatalogError ?? '').isNotEmpty
-                ? 'Список не обновился. Показываем сохранённые страны.'
+                ? widget.locationsCatalogError
                 : countries.isEmpty ? 'Пока доступен автоматический выбор.' : null,
       ),
       onAuto: widget.nodePreferenceBusy ? null : widget.onAutomaticLocationSelected,
       onSelect: widget.onPreferredCountrySelected,
-      onRefresh: widget.locationsCatalogBusy ? null : widget.onRefreshLocationsCatalog,
+      onRefresh: widget.onRefreshLocationsCatalog,
+      refreshing: widget.locationsCatalogBusy,
       onSelectConnection: widget.interfaceMode == PokrovInterfaceMode.advanced &&
               (widget.transportCatalog?.candidates.isNotEmpty ?? false) ? _selectConnection : null,
       selectedConnectionLabel: _preferredCandidate == null ? null : _locationCandidateLabel(_preferredCandidate!),

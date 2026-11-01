@@ -189,36 +189,35 @@ class ConnectionManager extends ChangeNotifier {
     }
   }
 
-  Future<void> refreshTransportCatalog({bool force = false}) {
-    if (!force) return _transportCatalog == null ? _refreshManagedProfileCache() : Future<void>.value();
+  Future<bool> refreshTransportCatalog({bool force = false}) {
+    if (!force) return _transportCatalog == null ? _refreshManagedProfileCache() : Future<bool>.value(true);
     return _explicitCatalogRefresh ??= () async {
       try {
         await _cacheRefreshCompletion?.future;
         final revision = _managedProfileRevision;
-        await _refreshManagedProfileCache();
+        var refreshed = await _refreshManagedProfileCache();
         // A country change discards the old result. Finish the explicit action
         // with one refresh for the latest choice, coalescing repeated taps.
-        if (revision != _managedProfileRevision) await _refreshManagedProfileCache();
+        if (revision != _managedProfileRevision) refreshed = await _refreshManagedProfileCache();
+        return refreshed;
       } finally {
         _explicitCatalogRefresh = null;
       }
     }();
   }
 
-  Future<void> _refreshManagedProfileCache({bool alternativesOnly = false}) async {
-    final migration = _connectionPreferenceMigration;
-    if (migration != null) await migration;
+  Future<bool> _refreshManagedProfileCache({bool alternativesOnly = false}) async {
     final generation = _connectionCoordinator.operationGeneration;
     if (alternativesOnly && _cacheRefreshInFlight) await _cacheRefreshCompletion?.future;
-    if (!_connectionCoordinator.ownsOperation(generation)) return;
-    if (_disposed || _runtimeBusy || _cacheRefreshInFlight) return;
+    if (!_connectionCoordinator.ownsOperation(generation)) return false;
+    if (_disposed || _runtimeBusy || _cacheRefreshInFlight) return false;
     final service = _bootstrapper;
-    if (service is AppFirstRuntimeBootstrapper && service.invitationNetworkDeferred) return;
-    if (service is! CachedManagedProfileBootstrapper) return;
+    if (service is AppFirstRuntimeBootstrapper && service.invitationNetworkDeferred) return false;
+    if (service is! CachedManagedProfileBootstrapper) return false;
     final features = _runtimeSnapshot?.availableTransportFeatures ?? const <RuntimeTransportFeature>{};
     // Before Core initialization, a legacy-only request would replace the
     // existing full catalog. Connect refreshes with the loaded capabilities.
-    if (features.isEmpty) return;
+    if (features.isEmpty) return false;
     _cacheRefreshInFlight = true;
     final completion = Completer<void>();
     _cacheRefreshCompletion = completion;
@@ -226,32 +225,45 @@ class ConnectionManager extends ChangeNotifier {
     final profileRevision = _managedProfileRevision;
     final coreRelease = _runtimeSnapshot?.coreVersion;
     final selectedCandidateRef = _activeCandidateRef ?? '';
-    bool current() => !_disposed && _connectionCoordinator.ownsOperation(generation) &&
+    final finished = Completer<void>();
+    final cancelled = Future.any<void>([
+      _connectionCoordinator.whenOperationChanges(generation), finished.future,
+    ]);
+    var active = true;
+    bool current() => active && !_disposed && _connectionCoordinator.ownsOperation(generation) &&
         profileRevision == _managedProfileRevision;
     try {
-      final cached = await (service as CachedManagedProfileBootstrapper).loadCachedManagedProfile(inputs,
-          selectedCandidateRef: selectedCandidateRef, runtimeFeatures: features, coreRelease: coreRelease);
-      if (!current()) return;
-      if (cached?.transportCatalog != null) {
-        _update(() => _transportCatalog = cached!.transportCatalog);
-      }
-      await (service as CachedManagedProfileBootstrapper).refreshCachedManagedProfile(
-        inputs,
-        runtimeFeatures: features,
-        coreRelease: coreRelease,
-        cancelled: _connectionCoordinator.whenOperationChanges(generation),
-        selectedCandidateRef: selectedCandidateRef,
-        alternativesOnly: alternativesOnly,
-      );
-      if (!current()) return;
-      final refreshed = await (service as CachedManagedProfileBootstrapper).loadCachedManagedProfile(inputs,
-          selectedCandidateRef: selectedCandidateRef, runtimeFeatures: features, coreRelease: coreRelease);
-      if (current() && refreshed?.transportCatalog != null) {
+      return await () async {
+        final migration = _connectionPreferenceMigration;
+        if (migration != null) await migration;
+        if (!current()) return false;
+        final cached = await (service as CachedManagedProfileBootstrapper).loadCachedManagedProfile(inputs,
+            selectedCandidateRef: selectedCandidateRef, runtimeFeatures: features, coreRelease: coreRelease);
+        if (!current()) return false;
+        if (cached?.transportCatalog != null) {
+          _update(() => _transportCatalog = cached!.transportCatalog);
+        }
+        await (service as CachedManagedProfileBootstrapper).refreshCachedManagedProfile(
+          inputs,
+          runtimeFeatures: features,
+          coreRelease: coreRelease,
+          cancelled: cancelled,
+          selectedCandidateRef: selectedCandidateRef,
+          alternativesOnly: alternativesOnly,
+        );
+        if (!current()) return false;
+        final refreshed = await (service as CachedManagedProfileBootstrapper).loadCachedManagedProfile(inputs,
+            selectedCandidateRef: selectedCandidateRef, runtimeFeatures: features, coreRelease: coreRelease);
+        if (!current() || refreshed?.transportCatalog == null) return false;
         _update(() => _transportCatalog = refreshed!.transportCatalog);
-      }
+        return true;
+      }().timeout(_actionTimeout);
     } on Object {
       // A metadata refresh never interrupts a working connection.
+      return false;
     } finally {
+      active = false;
+      finished.complete();
       _cacheRefreshInFlight = false;
       completion.complete();
       if (identical(_cacheRefreshCompletion, completion)) _cacheRefreshCompletion = null;
@@ -595,7 +607,7 @@ class ConnectionManager extends ChangeNotifier {
   Timer? _networkContextTimer;
   bool _cacheRefreshInFlight = false;
   Completer<void>? _cacheRefreshCompletion;
-  Future<void>? _explicitCatalogRefresh;
+  Future<bool>? _explicitCatalogRefresh;
   String? get headline => _runtimeHeadline;
   bool get canCancel => _connectionCoordinator.canCancelPrimaryConnect;
   ConnectionStatus get status {

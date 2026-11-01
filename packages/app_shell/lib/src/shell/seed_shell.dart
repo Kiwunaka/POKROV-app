@@ -876,10 +876,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       });
     }
     try {
-      if (forceTransportCatalog) await _connectionManager.refreshTransportCatalog(force: true);
+      final transportsRefreshed = !forceTransportCatalog ||
+          await _connectionManager.refreshTransportCatalog(force: true);
       final serverCatalog = await service.fetchLocationsCatalog(
         hostPlatform: widget.appContext.hostPlatform,
-      );
+      ).timeout(widget.runtimeActionTimeout);
       // City probe targets are direct Node addresses. A selected or running
       // bridge must keep those targets unopened, including an explicit refresh.
       final bridgeSelected =
@@ -896,7 +897,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           ? await (widget.nodeLatencyProbe ?? measurePokrovNodeLatencies)(
               widget.appContext.hostPlatform,
               pokrovLocationLatencyTargets(serverCatalog),
-            )
+            ).timeout(widget.runtimeActionTimeout)
           : const <String, int>{};
       final catalog = applyPokrovDeviceLatencies(
         serverCatalog,
@@ -907,7 +908,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
       setState(() {
         _locationsCatalog = catalog;
-        _locationsCatalogError = null;
+        _locationsCatalogError = transportsRefreshed ? null
+            : 'Страны обновлены, но список соединений не обновился. Попробуйте ещё раз.';
         _locationsUsingCache = false;
         _clientExperience = _clientExperience.copyWith(
           cachedLocations: catalog,
@@ -1447,7 +1449,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     );
   }
 
-  Future<void> _checkForClientUpdate() async {
+  Future<void> _checkForClientUpdate({bool forcePrompt = false}) async {
     final releaseActions = _releaseActionService;
     if (releaseActions == null) {
       return;
@@ -1466,6 +1468,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       },
       hostPlatform: widget.appContext.hostPlatform,
       isActive: () => mounted,
+      forcePrompt: forcePrompt,
+      onNoUpdate: forcePrompt
+          ? () => showPokrovSnack(context, 'Доступных обновлений нет.')
+          : null,
       onUpdateAvailable: () {
         unawaited(_reportClientLifecycle('update_available'));
       },
@@ -1482,6 +1488,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       },
       onFailure: (_, __) {
         widget.observability?.recordUpdateCheckFailed();
+        if (forcePrompt && mounted) {
+          showPokrovSnack(context,
+            'Не удалось проверить обновление. Проверьте сеть и повторите.',
+            tone: PokrovSnackTone.danger);
+        }
         unawaited(
           _reportClientLifecycle(
             'failed',
@@ -1667,7 +1678,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           );
           showPokrovSnack(
             context,
-            'Разрешите POKROV устанавливать обновления. Скачанный APK уже проверен.',
+            'Разрешите установку, затем повторите обновление: Профиль → О приложении. APK уже проверен.',
           );
         case PokrovClientUpdateInstallStatus.unsupported:
         case PokrovClientUpdateInstallStatus.failed:
@@ -1684,7 +1695,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           );
           showPokrovSnack(
             context,
-            'Не удалось скачать или проверить обновление. Попробуйте еще раз.',
+            'Не удалось скачать или проверить обновление. Повторите: Профиль → О приложении.',
             tone: PokrovSnackTone.danger,
           );
       }
@@ -1700,7 +1711,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
     showPokrovSnack(
       context,
-      'Не удалось открыть загрузку обновления. Попробуйте еще раз.',
+      'Не удалось открыть загрузку. Повторите: Профиль → О приложении.',
       tone: PokrovSnackTone.danger,
     );
   }
@@ -2341,6 +2352,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         return;
       case 'email-recovery':
         unawaited(_openEmailSessionRecovery());
+        return;
+      case 'check-update':
+        unawaited(_checkForClientUpdate(forcePrompt: true));
         return;
       case 'cabinet':
         unawaited(_openCabinetWithHandoff(value));

@@ -81,6 +81,8 @@ class ClientUpdateCoordinator {
     required ClientUpdateMetadataLoader loadMetadata,
     required HostPlatform hostPlatform,
     required bool Function() isActive,
+    bool forcePrompt = false,
+    VoidCallback? onNoUpdate,
     required VoidCallback onUpdateAvailable,
     required ClientUpdatePresenter presentUpdate,
     required ClientUpdateFailureReporter onFailure,
@@ -91,20 +93,24 @@ class ClientUpdateCoordinator {
     _checkBusy = true;
     try {
       final metadata = await loadMetadata();
-      if (!isActive() || metadata.silentUpdate) {
+      if (!isActive()) {
         return;
       }
       final update = metadata.updateFor(hostPlatform);
+      if (metadata.silentUpdate || !update.shouldPrompt) {
+        onNoUpdate?.call();
+        return;
+      }
       final promptKey =
           '${update.platform}:${update.latestVersion}:${update.updatePolicy}';
-      if (!update.shouldPrompt || promptKey == _lastPromptedUpdateKey) {
+      if (!forcePrompt && promptKey == _lastPromptedUpdateKey) {
         return;
       }
       onUpdateAvailable();
-      _lastPromptedUpdateKey = promptKey;
       _promptVisible = true;
       try {
         await presentUpdate(update);
+        _lastPromptedUpdateKey = promptKey;
       } finally {
         _promptVisible = false;
       }

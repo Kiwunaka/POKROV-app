@@ -8,12 +8,13 @@ import 'widgets.dart';
 /// Simple mode shows «быстро / далеко», advanced shows milliseconds.
 class LocationsScreen extends StatelessWidget {
   const LocationsScreen({super.key, required this.data, required this.onAuto, required this.onSelect,
-    this.onRefresh, this.onSelectConnection, this.selectedConnectionLabel});
+    this.onRefresh, this.refreshing = false, this.onSelectConnection, this.selectedConnectionLabel});
 
   final LocationsViewData data;
   final VoidCallback? onAuto;
   final ValueChanged<String> onSelect;
   final VoidCallback? onRefresh;
+  final bool refreshing;
   final VoidCallback? onSelectConnection;
   final String? selectedConnectionLabel;
 
@@ -31,7 +32,7 @@ class LocationsScreen extends StatelessWidget {
               Expanded(child: Text(advanced ? 'Локации' : 'Страна', style: pokrovTextStyle(context, PokrovText.title))),
               if (onRefresh != null) IconButton.filledTonal(
                 key: ValueKey('locations-refresh-measurements'),
-                onPressed: onRefresh,
+                onPressed: refreshing ? null : onRefresh,
                 tooltip: 'Обновить список',
                 style: IconButton.styleFrom(backgroundColor: pokrovColor(context, PokrovColors.surface), foregroundColor: pokrovColor(context, PokrovColors.accent)),
                 icon: Icon(Icons.refresh_rounded),

@@ -171,6 +171,7 @@ class _CachedBootstrapper extends _Bootstrapper implements CachedManagedProfileB
   _CachedBootstrapper({bool warpEnabled = false, bool bundle = false})
       : super(catalog: true, warpEnabled: warpEnabled, bundle: bundle);
   bool cacheAvailable = true;
+  Future<ManagedProfilePayload?>? cacheLoadGate;
   Future<void>? cacheRefreshGate;
   Object? nextCacheRefreshFailure;
   final cacheRefreshEntered = Completer<void>();
@@ -193,6 +194,8 @@ class _CachedBootstrapper extends _Bootstrapper implements CachedManagedProfileB
     bool preferProven = false, String selectedCandidateRef = '',
     Set<RuntimeTransportFeature>? runtimeFeatures, String? coreRelease,
   }) async {
+    final pending = cacheLoadGate;
+    if (pending != null) return pending;
     if (!cacheAvailable) return null;
     final cachedCandidates = cachedCatalog?.candidates ?? alternatives;
     final selected = cachedCandidates.firstWhere((candidate) =>
@@ -1030,9 +1033,12 @@ class _CatalogPickerBootstrapper extends _CachedBootstrapper implements
   int subscriptionReads = 0;
   int catalogReads = 0;
   ClientLocationsCatalog? locationsCatalog;
+  Future<ClientLocationsCatalog>? locationsGate;
   @override
-  Future<ClientLocationsCatalog> fetchLocationsCatalog({required HostPlatform hostPlatform, String query = ''}) async =>
-      locationsCatalog ?? ClientLocationsCatalog.fromJson({'countries': []});
+  Future<ClientLocationsCatalog> fetchLocationsCatalog({required HostPlatform hostPlatform, String query = ''}) async {
+    final pending = locationsGate;
+    return pending != null ? await pending : locationsCatalog ?? ClientLocationsCatalog.fromJson({'countries': []});
+  }
   @override
   bool get routingCatalogEnabled => true;
   @override
@@ -1186,6 +1192,7 @@ ConnectionManager _manager(
   PokrovClientObservability? observability,
   FirstSessionCoordinator? firstSessionCoordinator,
   Future<CandidateRankerShadow>? candidateRankerShadow,
+  Duration actionTimeout = const Duration(seconds: 18),
 }) =>
     ConnectionManager(
       appContext: buildSeedAppContext(hostPlatform: runtime.hostPlatform),
@@ -1193,6 +1200,7 @@ ConnectionManager _manager(
       bootstrapper: bootstrapper,
       observability: observability,
       candidateRankerShadow: candidateRankerShadow,
+      actionTimeout: actionTimeout,
       accountSessionCoordinator:
           AccountSessionCoordinator(accountActions: null),
       firstSessionCoordinator:
@@ -3835,6 +3843,38 @@ void main() {
   });
   }
 
+  test('catalog refresh releases a stalled cache read and ignores its late result', () async {
+    final bootstrapper = _CachedBootstrapper();
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+      ..supportsCandidates = true..coreVersion = '1.2.12'..phase = RuntimePhase.initialized;
+    final manager = _manager(runtime, bootstrapper,
+      actionTimeout: const Duration(milliseconds: 50));
+    addTearDown(manager.dispose);
+    await manager.refresh();
+    await manager.refreshTransportCatalog(force: true);
+    final previous = await bootstrapper.loadCachedManagedProfile(
+      const ManagedProfileCacheInputs(hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel));
+    final stalled = Completer<ManagedProfilePayload?>();
+    bootstrapper.cacheLoadGate = stalled.future;
+
+    expect(await manager.refreshTransportCatalog(force: true)
+        .timeout(const Duration(seconds: 1)), isFalse);
+    expect(manager.transportCatalog?.revision, 'cached');
+    bootstrapper
+      ..cacheLoadGate = null
+      ..refreshedCatalog = TransportCandidateCatalog(revision: 'new-node',
+        selectedCandidateRef: _CachedBootstrapper.alternatives.first.candidateRef,
+        candidates: _CachedBootstrapper.alternatives);
+    expect(await manager.refreshTransportCatalog(force: true), isTrue,
+      reason: 'a failed refresh must leave the next explicit action usable');
+    stalled.complete(previous);
+    await Future<void>.delayed(Duration.zero);
+    expect(manager.transportCatalog?.revision, 'new-node',
+      reason: 'an expired read cannot replace the newer catalog');
+    expect(runtime.stagedPayloads, isEmpty);
+    expect(runtime.connectCalls, 0);
+  });
+
   test('explicit Locations refresh follows the latest country after an in-flight refresh', () async {
     const directRef = 'us:legacy_reality_fallback';
     Map<String, Object?> candidate({bool bridge = false}) => {
@@ -4150,6 +4190,34 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.descendant(of: find.byKey(const ValueKey('home-location-chip')),
         matching: find.text('Исландия')), findsOneWidget);
+    expect(nativeMutations, isEmpty);
+
+    await tester.tap(find.text('Локации'));
+    await tester.pumpAndSettle();
+    final stalled = Completer<ClientLocationsCatalog>();
+    bootstrapper.locationsGate = stalled.future;
+    final refresh = find.byKey(const ValueKey('locations-refresh-measurements'));
+    await tester.tap(refresh);
+    await tester.pump();
+    expect(refresh, findsOneWidget, reason: 'the refresh action stays visible while loading');
+    expect(tester.widget<IconButton>(refresh).onPressed, isNull);
+    await tester.pump(const Duration(seconds: 19));
+    await tester.pumpAndSettle();
+    expect(tester.widget<IconButton>(refresh).onPressed, isNotNull);
+    expect(find.textContaining('Не удалось обновить список локаций'), findsOneWidget);
+    expect(find.text('Исландия'), findsOneWidget, reason: 'the previous list remains usable after timeout');
+    bootstrapper
+      ..locationsGate = null
+      ..nextCacheRefreshFailure = const SocketException('offline');
+    await tester.tap(refresh);
+    await tester.pumpAndSettle();
+    expect(find.text('Страны обновлены, но список соединений не обновился. Попробуйте ещё раз.'), findsOneWidget);
+    await tester.tap(refresh);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('не обновился'), findsNothing);
+    stalled.complete(ClientLocationsCatalog.fromJson({'countries': []}));
+    await tester.pumpAndSettle();
+    expect(find.text('Исландия'), findsOneWidget, reason: 'late responses cannot replace a successful retry');
     expect(nativeMutations, isEmpty);
   });
 

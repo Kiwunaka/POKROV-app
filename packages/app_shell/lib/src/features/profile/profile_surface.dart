@@ -182,6 +182,10 @@ class _ProfileSection extends StatelessWidget {
     child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text('POKROV ' + pokrovClientVersion, style: ui.pokrovTextStyle(context, ui.PokrovText.heading)),
       Text('Обновления приходят в уведомления.', style: ui.pokrovTextStyle(context, ui.PokrovText.body)),
+      ui.PokrovRow(title: 'Проверить обновление', onTap: () {
+        Navigator.of(context).pop();
+        onOpenHandoff('check-update', '');
+      }),
       ui.PokrovRow(title: 'Публичная оферта', onTap: () => onOpenHandoff('legal', PlatformProductFacts.offerUrl)),
       ui.PokrovRow(title: 'Конфиденциальность', onTap: () => onOpenHandoff('legal', PlatformProductFacts.privacyUrl)),
       ui.PokrovRow(title: 'Официальные релизы', onTap: () => onOpenHandoff('release', PlatformProductFacts.githubReleasesUrl)),

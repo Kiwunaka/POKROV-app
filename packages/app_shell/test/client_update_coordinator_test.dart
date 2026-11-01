@@ -77,6 +77,77 @@ void main() {
     expect(failures, 1);
     expect(presentations, 1);
   });
+
+  test('manual check can retry the same update without repeating automatic prompts',
+      () async {
+    final coordinator = ClientUpdateCoordinator();
+    var presentations = 0;
+
+    Future<void> check({bool manual = false}) => coordinator.checkAndPresent(
+          loadMetadata: () async => _updateMetadata,
+          hostPlatform: HostPlatform.android,
+          isActive: () => true,
+          forcePrompt: manual,
+          onUpdateAvailable: () {},
+          presentUpdate: (_) async => presentations += 1,
+          onFailure: (_, __) => fail('unexpected update failure'),
+        );
+
+    await check();
+    await check();
+    expect(presentations, 1);
+    await check(manual: true);
+    expect(presentations, 2);
+    await check();
+    expect(presentations, 2);
+  });
+
+  test('failed presentation does not suppress the next update attempt', () async {
+    final coordinator = ClientUpdateCoordinator();
+    var presentations = 0;
+    var failures = 0;
+
+    Future<void> check() => coordinator.checkAndPresent(
+          loadMetadata: () async => _updateMetadata,
+          hostPlatform: HostPlatform.android,
+          isActive: () => true,
+          onUpdateAvailable: () {},
+          presentUpdate: (_) async {
+            presentations += 1;
+            if (presentations == 1) throw StateError('presentation failed');
+          },
+          onFailure: (_, __) => failures += 1,
+        );
+
+    await check();
+    await check();
+    expect(presentations, 2);
+    expect(failures, 1);
+  });
+
+  test('manual check respects silent delivery and reports no available update',
+      () async {
+    final coordinator = ClientUpdateCoordinator();
+    var noUpdate = 0;
+    await coordinator.checkAndPresent(
+      loadMetadata: () async => ClientAppsMetadata(
+        android: _updateMetadata.android,
+        windows: _updateMetadata.windows,
+        docsUrl: _updateMetadata.docsUrl,
+        updatedAt: _updateMetadata.updatedAt,
+        updateCheckMode: _updateMetadata.updateCheckMode,
+        silentUpdate: true,
+      ),
+      hostPlatform: HostPlatform.android,
+      isActive: () => true,
+      forcePrompt: true,
+      onNoUpdate: () => noUpdate += 1,
+      onUpdateAvailable: () => fail('silent update must remain hidden'),
+      presentUpdate: (_) async => fail('silent update must remain hidden'),
+      onFailure: (_, __) => fail('unexpected update failure'),
+    );
+    expect(noUpdate, 1);
+  });
 }
 
 const _updateMetadata = ClientAppsMetadata(

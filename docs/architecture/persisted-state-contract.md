@@ -37,6 +37,13 @@ from secure storage for the same connection operation and profile inputs. Newly
 ready transports appear without another Connect; adopting this public metadata
 does not stage a profile, change the running candidate, or renew its proof.
 
+Catalog metadata refresh, including local cache reads, has the existing runtime
+action timeout. A timed-out refresh cancels its owned profile requests and cannot
+publish a late catalog; storage transactions retain their existing serialization.
+Locations keeps the refresh button visible while the request is pending, bounds
+the country request and latency measurements, and enables retry after failure.
+An unsuccessful connection-catalog refresh is shown even if countries loaded.
+
 Android Flutter connect/cancel request IDs are process-local only
 (source work, NOT_VERIFIED). The runtime engine uses a weak in-memory snapshot
 association, and the host retains one current request plus its cancellation
