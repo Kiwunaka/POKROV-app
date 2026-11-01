@@ -148,4 +148,39 @@ void main() {
     expect(coordinator.subscriptionInfo, isNull);
     expect(coordinator.freeProfileAccess, same(access));
   });
+
+  test('confirmed paid display survives stale free profile metadata', () {
+    final coordinator = AccountSessionCoordinator(accountActions: null);
+    const access = FreeProfileAccess(
+      accessState: 'free_monthly',
+      transition: FreeProfileTransition.standard,
+      activeRole: 'free',
+      softModeActive: false,
+      provisioningJobId: null,
+      errorCode: null,
+      isConsistent: true,
+    );
+    final subscription = ClientSubscriptionInfo(
+      lane: 'paidUnlimited',
+      expiresAt: '2026-08-29T12:00:00Z',
+      daysLeft: 7,
+      autoRenew: false,
+      renewUrl: Uri.parse('https://pay.pokrov.space/checkout/'),
+      plans: const [],
+      trafficPolicy: const {'kind': 'unlimited'},
+    );
+
+    coordinator.updateFreeProfileAccess(access);
+    expect(coordinator.freeProfileAccessForDisplay, same(access));
+    coordinator.updateSubscriptionInfo(subscription);
+    expect(coordinator.freeProfileAccessForDisplay, isNull);
+
+    // Restoring the old cache must not hide paid access or grant the cached
+    // profile any capabilities beyond its original free access.
+    coordinator.updateFreeProfileAccess(access);
+    expect(coordinator.subscriptionInfo, same(subscription));
+    expect(coordinator.freeProfileAccessForDisplay, isNull);
+    expect(coordinator.freeProfileAccess, same(access));
+    expect(coordinator.freeProfileAccess!.isFreeAccess, isTrue);
+  });
 }

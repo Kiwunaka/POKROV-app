@@ -3358,7 +3358,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             retainsProtection: _connectionManager.retainsProtection,
             onHelp: _showSupportHub,
             appContext: widget.appContext,
-            freeProfileAccess: _freeProfileAccess,
+            freeProfileAccess: _accountSessionCoordinator.freeProfileAccessForDisplay,
             protectionState: protectionState,
             protectionIntents: protectionIntents,
             revealHold: _firstLaunchStep != _FirstLaunchStep.ready,
@@ -3457,7 +3457,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           ),
       (context) => _ProfileSection(
             appContext: widget.appContext,
-            freeProfileAccess: _freeProfileAccess,
+            freeProfileAccess: _accountSessionCoordinator.freeProfileAccessForDisplay,
             selectedRouteMode: _selectedRouteMode,
             hasProvisionedAccess: hasProvisionedAccess,
             onOpenHandoff: _showSeedHandoff,

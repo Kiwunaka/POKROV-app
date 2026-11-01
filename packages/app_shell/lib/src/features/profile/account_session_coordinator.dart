@@ -15,6 +15,11 @@ class AccountSessionCoordinator {
   FreeProfileAccess? get freeProfileAccess => _freeProfileAccess;
   ClientSubscriptionInfo? get subscriptionInfo => _subscriptionInfo;
 
+  // A session-guarded subscription owns the account label; cached profile
+  // access still governs the capabilities of that profile.
+  FreeProfileAccess? get freeProfileAccessForDisplay =>
+      _subscriptionInfo?.lane == 'paidUnlimited' ? null : _freeProfileAccess;
+
   void updateFreeProfileAccess(FreeProfileAccess? value) {
     _freeProfileAccess = value;
   }

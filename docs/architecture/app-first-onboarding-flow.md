@@ -235,6 +235,12 @@ profile refresh; it does not clear access, claim payment or reset navigation.
 These reads use the existing bounded app-first HTTP request path. Native browser,
 tray, upgrade and payment acceptance still require exact installed-package proof.
 
+A paid subscription accepted through the current session guards owns the Home
+and Profile access status. Older free managed-profile metadata, including a
+restored cache, cannot mask that status. The original managed-profile access
+still governs its capabilities; this presentation rule does not authorize paid
+routing or connection material.
+
 The shell passes its app-first bootstrapper to the support ticket service.
 Support and account requests therefore share the same in-flight session refresh:
 concurrent expired-session responses rotate the refresh credential once, then
