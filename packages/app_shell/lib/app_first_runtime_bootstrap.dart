@@ -7027,6 +7027,7 @@ class AppFirstRuntimeBootstrapper
       throw const BootstrapFailure(
         'Сохраненная сессия устройства недоступна. Используйте почту или код, '
         'чтобы восстановить доступ.',
+        code: 'device_recovery_required',
       );
     }
     if (parsed.requiresSchemaMigration) {

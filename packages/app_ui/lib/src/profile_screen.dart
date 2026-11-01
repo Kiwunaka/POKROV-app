@@ -13,6 +13,7 @@ class ProfileScreen extends StatelessWidget {
     required this.data,
     required this.onRenew,
     required this.onModeChanged,
+    this.accessActionLabel = 'Продлить',
     this.onDevices,
     this.onLoginCode,
     this.onTheme,
@@ -34,6 +35,7 @@ class ProfileScreen extends StatelessWidget {
   final ProfileViewData data;
   final VoidCallback onRenew;
   final ValueChanged<InterfaceMode> onModeChanged;
+  final String accessActionLabel;
   final VoidCallback? onDevices;
   final VoidCallback? onLoginCode;
   final VoidCallback? onTheme;
@@ -60,7 +62,7 @@ class ProfileScreen extends StatelessWidget {
         children: [
           Text('Профиль', style: pokrovTextStyle(context, PokrovText.title)),
           SizedBox(height: 12),
-          _AccessCard(data: data, onRenew: onRenew),
+          _AccessCard(data: data, onRenew: onRenew, actionLabel: accessActionLabel),
           if (adSlot != null) Padding(padding: const EdgeInsets.only(top: 12), child: adSlot!),
           SectionLabel('Аккаунт'),
           PokrovCard(
@@ -138,10 +140,11 @@ class ProfileScreen extends StatelessWidget {
 }
 
 class _AccessCard extends StatelessWidget {
-  const _AccessCard({required this.data, required this.onRenew});
+  const _AccessCard({required this.data, required this.onRenew, required this.actionLabel});
 
   final ProfileViewData data;
   final VoidCallback onRenew;
+  final String actionLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -201,7 +204,7 @@ class _AccessCard extends StatelessWidget {
                   shape: StadiumBorder(),
                   textStyle: TextStyle(fontFamily: pokrovFontFamily, fontSize: 14, fontWeight: FontWeight.w800),
                 ),
-                child: Text('Продлить'),
+                child: Text(actionLabel),
               ),
             ],
           ),

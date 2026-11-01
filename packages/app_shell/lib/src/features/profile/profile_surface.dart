@@ -4,6 +4,7 @@ class _ProfileSection extends StatelessWidget {
   const _ProfileSection({
     required this.appContext,
     required this.freeProfileAccess,
+    required this.loginRecoveryRequired,
     required this.selectedRouteMode,
     required this.hasProvisionedAccess,
     required this.onOpenHandoff,
@@ -59,6 +60,7 @@ class _ProfileSection extends StatelessWidget {
 
   final SeedAppContext appContext;
   final FreeProfileAccess? freeProfileAccess;
+  final bool loginRecoveryRequired;
   final RouteMode selectedRouteMode;
   final bool hasProvisionedAccess;
   final void Function(String label, String value) onOpenHandoff;
@@ -202,8 +204,10 @@ class _ProfileSection extends StatelessWidget {
         data: ui.ProfileViewData(
           mode: interfaceMode == PokrovInterfaceMode.advanced ? ui.InterfaceMode.advanced : ui.InterfaceMode.simple,
           accessBadge: 'Доступ',
-          accessTitle: _accessMainLabel(appContext, summary, freeProfileAccess, subscriptionInfo),
-          accessDetail: _freeProfileAccessNotice(freeProfileAccess) ??
+          accessTitle: loginRecoveryRequired ? 'Нужно восстановить вход'
+              : _accessMainLabel(appContext, summary, freeProfileAccess, subscriptionInfo),
+          accessDetail: loginRecoveryRequired ? 'Подтвердите вход одноразовым кодом из письма.'
+              : _freeProfileAccessNotice(freeProfileAccess) ??
               (expires.isEmpty ? '' : 'До ' + expires),
           accountLinked: linked.isEmpty ? 'Добавить' : linked.join(' · '),
           devices: 'Управлять',
@@ -213,7 +217,9 @@ class _ProfileSection extends StatelessWidget {
         ),
         adSlot: accountPromo == null ? null : _HomeAdminPromoCard(slot: accountPromo, compact: false,
           keyPrefix: 'profile-promo', onOpenHandoff: onOpenHandoff, onPromoEvent: onPromoEvent),
-        onRenew: () => _showSubscriptionSheet(context, appContext: appContext,
+        accessActionLabel: loginRecoveryRequired ? 'Восстановить вход' : 'Продлить',
+        onRenew: loginRecoveryRequired ? () => onOpenHandoff('email-recovery', '')
+            : () => _showSubscriptionSheet(context, appContext: appContext,
           hasProvisionedAccess: hasProvisionedAccess, subscriptionInfo: subscriptionInfo,
           onOpenHandoff: onOpenHandoff),
         onModeChanged: (mode) => onInterfaceModeChanged(mode == ui.InterfaceMode.simple

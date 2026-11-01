@@ -149,7 +149,7 @@ void main() {
     expect(coordinator.freeProfileAccess, same(access));
   });
 
-  test('confirmed paid display survives stale free profile metadata', () {
+  test('confirmed paid display survives stale free metadata and distinguishes login failure', () {
     final coordinator = AccountSessionCoordinator(accountActions: null);
     const access = FreeProfileAccess(
       accessState: 'free_monthly',
@@ -182,5 +182,16 @@ void main() {
     expect(coordinator.freeProfileAccessForDisplay, isNull);
     expect(coordinator.freeProfileAccess, same(access));
     expect(coordinator.freeProfileAccess!.isFreeAccess, isTrue);
+
+    coordinator.recordSessionFailure(const BootstrapFailure('Network unavailable', statusCode: 503));
+    coordinator.recordSessionFailure(TimeoutException('Network timeout'));
+    coordinator.recordSessionFailure(const BootstrapFailure('Superseded', code: 'session_changed'));
+    expect(coordinator.loginRecoveryRequired, isFalse);
+    coordinator.recordSessionFailure(const BootstrapFailure('Session expired', statusCode: 401));
+    expect(coordinator.loginRecoveryRequired, isTrue);
+    expect(coordinator.subscriptionInfo, same(subscription));
+    expect(coordinator.freeProfileAccess, same(access));
+    coordinator.updateSubscriptionInfo(subscription);
+    expect(coordinator.loginRecoveryRequired, isFalse);
   });
 }

@@ -1019,6 +1019,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   void _stopNotificationsOnSessionFailure(Object error) {
+    if (_accountSessionCoordinator.recordSessionFailure(error) && mounted) {
+      setState(() {});
+    }
     if (error is BootstrapFailure &&
         (error.statusCode == 401 || error.statusCode == 403)) {
       _notificationsSessionReady = false;
@@ -3391,6 +3394,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             onHelp: _showSupportHub,
             appContext: widget.appContext,
             freeProfileAccess: _accountSessionCoordinator.freeProfileAccessForDisplay,
+            loginRecoveryRequired: _accountSessionCoordinator.loginRecoveryRequired,
             protectionState: protectionState,
             protectionIntents: protectionIntents,
             revealHold: _firstLaunchStep != _FirstLaunchStep.ready,
@@ -3414,7 +3418,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             onWarpConsentChanged: _setWarpRuntimeConsent,
             notificationsUnread: _notificationsUnread,
             onOpenNotifications: _openNotificationsInbox,
-            onOpenProfile: () => _selectTab(SeedTab.profile),
+            onOpenProfile: _accountSessionCoordinator.loginRecoveryRequired
+                ? () => unawaited(_openEmailSessionRecovery())
+                : () => _selectTab(SeedTab.profile),
             onOpenPromoHandoff: _showSeedHandoff,
             onPromoEvent: _reportPromoEvent,
           ),
@@ -3490,6 +3496,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       (context) => _ProfileSection(
             appContext: widget.appContext,
             freeProfileAccess: _accountSessionCoordinator.freeProfileAccessForDisplay,
+            loginRecoveryRequired: _accountSessionCoordinator.loginRecoveryRequired,
             selectedRouteMode: _selectedRouteMode,
             hasProvisionedAccess: hasProvisionedAccess,
             onOpenHandoff: _showSeedHandoff,

@@ -10,6 +10,7 @@ class _QuickConnectSection extends StatelessWidget {
     required this.onHelp,
     required this.appContext,
     required this.freeProfileAccess,
+    required this.loginRecoveryRequired,
     required this.protectionState,
     required this.protectionIntents,
     required this.revealHold,
@@ -38,6 +39,7 @@ class _QuickConnectSection extends StatelessWidget {
   final bool retainsProtection;
   final Future<void> Function() onHelp;
   final FreeProfileAccess? freeProfileAccess;
+  final bool loginRecoveryRequired;
   final ProtectionViewState protectionState;
   final ProtectionIntents protectionIntents;
 
@@ -80,7 +82,8 @@ class _QuickConnectSection extends StatelessWidget {
       data: ui.HomeViewData(
         phase: stoppedFailure ? ui.ConnectionPhase.error : _homeUiPhase(presentation),
         mode: advanced ? ui.InterfaceMode.advanced : ui.InterfaceMode.simple,
-        accessBadge: _accessShortValue(appContext, bonusSummary, freeProfileAccess, subscriptionInfo),
+        accessBadge: loginRecoveryRequired ? 'Восстановить вход'
+            : _accessShortValue(appContext, bonusSummary, freeProfileAccess, subscriptionInfo),
         countryCaption: country.isEmpty ? 'Страна · авто' : 'Страна',
         countryLabel: country.isEmpty ? 'Авто' : _locationCountryDisplayName(country, country),
         countryCode: country.isEmpty ? null : country,
@@ -101,7 +104,9 @@ class _QuickConnectSection extends StatelessWidget {
           ui.HealthCheck('Сайты', ok: snapshot?.dnsState == RuntimeDiagnosticState.healthy),
           ui.HealthCheck('Защита', ok: snapshot?.coreEgressValidated == true),
         ],
-        tip: showTip ? ui.NextStepTip(title: 'Подпишись на канал',
+        tip: loginRecoveryRequired ? const ui.NextStepTip(title: 'Нужно восстановить вход',
+          text: 'Подтвердите вход одноразовым кодом из письма.', icon: Icons.alternate_email_rounded)
+          : showTip ? ui.NextStepTip(title: 'Подпишись на канал',
           text: _telegramBonusHomeLabel(bonusSummary), icon: Icons.send_rounded) : null,
         showAdSlot: slots.isNotEmpty,
       ),
@@ -113,7 +118,7 @@ class _QuickConnectSection extends StatelessWidget {
       onOpenAccess: onOpenProfile,
       onNotifications: onOpenNotifications,
       onWarpChanged: warpBusy ? null : (value) => unawaited(onWarpConsentChanged(value)),
-      onTip: onTelegramBonus,
+      onTip: loginRecoveryRequired ? onOpenProfile : onTelegramBonus,
       onHelp: () => unawaited(onHelp()),
       adSlot: slots.isEmpty ? null : Column(children: [
         for (final slot in slots) Padding(

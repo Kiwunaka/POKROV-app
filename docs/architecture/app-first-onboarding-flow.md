@@ -250,6 +250,12 @@ Signed public support encryption keys are fetched without an app session so
 diagnostic export can also explain a broken login; signature verification remains
 mandatory.
 
+An account read that finally rejects the app session shows “Нужно восстановить
+вход” on Home and Profile and opens the existing email recovery from the access
+action instead of checkout. Network failures and superseded requests do not set
+this state. Previously confirmed subscription facts and raw profile capabilities
+are retained; successful authentication/subscription refresh clears the notice.
+
 The shell passes its app-first bootstrapper to the support ticket service.
 Support and account requests therefore share the same in-flight session refresh:
 concurrent expired-session responses rotate the refresh credential once, then

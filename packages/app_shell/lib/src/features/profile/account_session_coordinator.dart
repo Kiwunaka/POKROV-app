@@ -11,9 +11,11 @@ class AccountSessionCoordinator {
   FreeProfileAccess? _freeProfileAccess;
   ClientSubscriptionInfo? _subscriptionInfo;
   Future<void>? _summaryRefresh;
+  bool _loginRecoveryRequired = false;
 
   FreeProfileAccess? get freeProfileAccess => _freeProfileAccess;
   ClientSubscriptionInfo? get subscriptionInfo => _subscriptionInfo;
+  bool get loginRecoveryRequired => _loginRecoveryRequired;
 
   // A session-guarded subscription owns the account label; cached profile
   // access still governs the capabilities of that profile.
@@ -26,6 +28,16 @@ class AccountSessionCoordinator {
 
   void updateSubscriptionInfo(ClientSubscriptionInfo? value) {
     _subscriptionInfo = value;
+    _loginRecoveryRequired = false;
+  }
+
+  bool recordSessionFailure(Object error) {
+    if (_loginRecoveryRequired || error is! BootstrapFailure ||
+        !(error.statusCode == 401 || const {
+          'auth_session_expired', 'device_recovery_required', 'fresh_auth_required',
+        }.contains(error.code))) return false;
+    _loginRecoveryRequired = true;
+    return true;
   }
 
   void clearSubscriptionInfo() {
