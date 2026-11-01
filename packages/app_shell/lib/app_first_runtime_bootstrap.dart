@@ -3714,14 +3714,14 @@ class AppFirstRuntimeBootstrapper
         'Выберите хотя бы одно приложение в разделе «Правила».',
       );
     }
-    var state = await _loadOrCreateState(hostPlatform);
+    final preparationClock = Stopwatch()..start();
+    var state = await _loadOrCreateState(hostPlatform, timeout: timeout);
     requests.requireActive();
     final client = requests.attach(_createHttpClient(hostPlatform));
     var timedOut = false;
     var accessPreparing = false;
     String? currentOperation;
     String? deadlineOperation;
-    final preparationClock = Stopwatch()..start();
     var preparationStage = 'session';
     int? preparationHttpStatus;
     Map<String, Object> preparation() => {
@@ -3741,7 +3741,7 @@ class AppFirstRuntimeBootstrapper
       timedOut = true;
       client.close(force: true);
     }
-    var timer = timeout == null ? null : Timer(timeout, expireProfile);
+    var timer = timeout == null ? null : Timer(timeout - preparationClock.elapsed, expireProfile);
 
     try {
       for (var attempt = 0; attempt < 2; attempt += 1) {
@@ -5883,7 +5883,7 @@ class AppFirstRuntimeBootstrapper
     Future<void>? cancelled,
   }) async {
     final requests = _ManagedProfileRequests(cancelled);
-    var state = await _loadOrCreateState(hostPlatform);
+    var state = await _loadOrCreateState(hostPlatform, timeout: requestTimeoutOverride);
     requests.requireActive();
     final client = requests.attach(_createHttpClient(hostPlatform));
     try {
@@ -6853,13 +6853,23 @@ class AppFirstRuntimeBootstrapper
   HttpClient _createHttpClient(HostPlatform _) =>
       _httpClientFactory()..connectionTimeout = connectionTimeout;
 
+  Future<T> _waitForLocalState<T>(Future<T> pending, {Duration? timeout}) =>
+      pending.timeout(timeout ?? requestTimeout, onTimeout: () {
+        throw const BootstrapFailure(
+          'Локальное хранилище POKROV не ответило вовремя. Повторите попытку.',
+          code: 'local_state_timeout', operation: 'local_state',
+          operationalCode: 'APP-BOOT-004',
+        );
+      });
+
   Future<_StoredBootstrapState> _loadOrCreateState(
-    HostPlatform hostPlatform,
-  ) {
+    HostPlatform hostPlatform, {
+    Duration? timeout,
+  }) {
     final key = hostPlatform.name;
     final inFlight = _initialStateFlights[key];
     if (inFlight != null) {
-      return inFlight;
+      return _waitForLocalState(inFlight, timeout: timeout);
     }
     final creation = _loadOrCreateStateWithFileLock(hostPlatform);
     _initialStateFlights[key] = creation;
@@ -6867,7 +6877,9 @@ class AppFirstRuntimeBootstrapper
       (_) => _removeInitialStateFlight(key, creation),
       onError: (_, __) => _removeInitialStateFlight(key, creation),
     );
-    return creation;
+    // Keep the original operation in the flight and file queue after a caller
+    // times out; releasing either would let later account writes race its IO.
+    return _waitForLocalState(creation, timeout: timeout);
   }
 
   Future<_StoredBootstrapState> _loadOrCreateStateWithFileLock(
@@ -6905,7 +6917,7 @@ class AppFirstRuntimeBootstrapper
     }
   }
 
-  Future<_StoredBootstrapState?> _loadState(HostPlatform hostPlatform) async {
+  Future<_StoredBootstrapState?> _loadState(HostPlatform hostPlatform) => _waitForLocalState(() async {
     final file = await _stateFile(hostPlatform);
     return _withAppFirstStateFileLock(
       file,
@@ -6921,7 +6933,7 @@ class AppFirstRuntimeBootstrapper
         return state;
       },
     );
-  }
+  }());
 
   Future<_StoredBootstrapState?> _loadStateFromFile(
     HostPlatform hostPlatform,

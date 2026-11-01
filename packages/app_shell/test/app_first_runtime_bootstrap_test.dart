@@ -66,6 +66,21 @@ class _PausedProfileCacheClear extends ManagedProfileCache {
   }
 }
 
+class _PausedSecureStoragePlatform extends TestFlutterSecureStoragePlatform {
+  _PausedSecureStoragePlatform(super.data);
+  final readStarted = Completer<void>();
+  final releaseRead = Completer<void>();
+  var reads = 0;
+
+  @override
+  Future<String?> read({required String key, required Map<String, String> options}) async {
+    reads += 1;
+    if (!readStarted.isCompleted) readStarted.complete();
+    await releaseRead.future;
+    return super.read(key: key, options: options);
+  }
+}
+
 Object? _qaSorted(Object? value) {
   if (value is Map) return {for (final key in value.keys.cast<String>().toList()..sort()) key: _qaSorted(value[key])};
   if (value is List) return value.map(_qaSorted).toList();
@@ -2846,6 +2861,98 @@ void main() {
         jsonDecode(await stateFile.readAsString()) as Map<String, dynamic>;
     expect(preserved['install_id'], 'secure-session-without-secret');
     expect(preserved['session_token_storage'], 'secure');
+  });
+
+  test('local state deadlines keep a paused secure read serialized through account recovery', () async {
+    final httpOverrides = HttpOverrides.current;
+    HttpOverrides.global = null;
+    addTearDown(() => HttpOverrides.global = httpOverrides);
+    final directory = await Directory.systemTemp.createTemp('pokrov-state-read-deadline-');
+    addTearDown(() => directory.delete(recursive: true));
+    const platform = HostPlatform.android;
+    const installId = 'state-deadline-install';
+    const secretKey = 'pokrov.app_first.session.android.$installId';
+    final values = <String, String>{secretKey: jsonEncode({
+      'version': 1, 'access_token': 'old-access', 'refresh_token': 'old-refresh',
+    })};
+    final storage = _PausedSecureStoragePlatform(values);
+    final previousStorage = FlutterSecureStoragePlatform.instance;
+    FlutterSecureStoragePlatform.instance = storage;
+    addTearDown(() {
+      if (!storage.releaseRead.isCompleted) storage.releaseRead.complete();
+      FlutterSecureStoragePlatform.instance = previousStorage;
+    });
+    final file = File('${directory.path}${Platform.pathSeparator}app-first-session-android.json');
+    final originalState = {
+      'schema_version': 1, 'install_id': installId, 'account_id': 'old-account',
+      'session_token_storage': 'secure', 'managed_manifest_path': '/api/client/profile/managed',
+      'profile_revision': 'old-revision',
+    };
+    await file.writeAsString(jsonEncode(originalState));
+    final requests = <String>[];
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    server.listen((request) async {
+      requests.add('${request.method} ${request.uri.path}');
+      await utf8.decoder.bind(request).join();
+      request.response.headers.contentType = ContentType.json;
+      request.response.write(jsonEncode({'ok': true, 'session': {
+        'scope': 'client', 'account_id': 'new-account',
+        'access_token': 'new-access', 'refresh_token': 'new-refresh',
+      }}));
+      await request.response.close();
+    });
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => directory,
+      requestTimeout: const Duration(milliseconds: 400),
+      maxRequestAttempts: 1,
+    );
+    final localFailure = isA<BootstrapFailure>()
+        .having((error) => error.code, 'code', 'local_state_timeout')
+        .having((error) => error.operation, 'operation', 'local_state')
+        .having((error) => error.operationalErrorCode, 'operational code', 'APP-BOOT-004')
+        .having((error) => error.statusCode, 'HTTP status', isNull)
+        .having((error) => error.apiFailureKind, 'network failure', isNull);
+    var profileFinished = false;
+    final profile = expectLater(bootstrapper.resolveManagedProfile(
+      hostPlatform: platform, routeMode: RouteMode.fullTunnel,
+      timeout: const Duration(milliseconds: 80),
+    ).timeout(const Duration(seconds: 2)), throwsA(localFailure)).then((_) => profileFinished = true);
+    await storage.readStarted.future;
+    final queued = Future.wait([
+      expectLater(bootstrapper.fetchClientSubscription(hostPlatform: platform)
+          .timeout(const Duration(seconds: 2)), throwsA(localFailure)),
+      expectLater(bootstrapper.fetchLocationsCatalog(hostPlatform: platform)
+          .timeout(const Duration(seconds: 2)), throwsA(localFailure)),
+      expectLater(bootstrapper.refreshCachedManagedProfile(const ManagedProfileCacheInputs(
+        hostPlatform: platform, routeMode: RouteMode.fullTunnel,
+      )).timeout(const Duration(seconds: 2)), throwsA(localFailure)),
+    ]);
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    expect(profileFinished, isTrue, reason: 'the explicit profile budget starts before secure storage');
+    await profile;
+    await queued;
+    expect(storage.reads, 1, reason: 'caller timeouts must not release the underlying state lock');
+    expect(requests, isEmpty);
+    expect(jsonDecode(await file.readAsString()), originalState);
+    final recovery = bootstrapper.recoverEmailSession(
+      hostPlatform: platform, email: 'synthetic@example.test', code: '123456');
+    await pumpEventQueue();
+    expect(storage.reads, 1);
+    expect(requests, isEmpty, reason: 'the later account operation must wait for the original read');
+    storage.releaseRead.complete();
+    expect((await recovery.timeout(const Duration(seconds: 2))).ok, isTrue);
+    expect(requests, ['POST /api/auth/email/otp/finish']);
+    final saved = jsonDecode(await file.readAsString()) as Map;
+    expect(saved['account_id'], 'new-account');
+    expect(saved['install_id'], installId);
+    expect(saved['profile_revision'], isEmpty);
+    expect(saved.containsKey('session_token'), isFalse);
+    expect(saved.containsKey('refresh_token'), isFalse);
+    expect(jsonDecode(values[secretKey]!), {
+      'version': 1, 'access_token': 'new-access', 'refresh_token': 'new-refresh',
+    });
   });
 
   test('serializes overlapping app-first state writes without leaking secrets',

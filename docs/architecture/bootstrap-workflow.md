@@ -17,6 +17,12 @@ first-session events. Delayed best-effort telemetry therefore cannot hold the
 subscription/authentication refresh or leave the access label unresolved.
 The existing session refresh, identity and entitlement rules remain unchanged.
 
+Session/state reads use the caller's existing preparation or request timeout,
+including time spent waiting for the local state queue before any HTTP request.
+A timeout reports local storage failure (`APP-BOOT-004`) without an HTTP status
+or network fallback. The original read keeps its file lock and singleflight
+until it settles, so later account writes cannot race a timed-out caller's IO.
+
 An acknowledged, trusted explicit Windows Stop retires its unchanged profile
 intent only for clean `initialized` or `config_staged` without a running or
 effective profile, retained guard or failure. It does not adopt staged identity:

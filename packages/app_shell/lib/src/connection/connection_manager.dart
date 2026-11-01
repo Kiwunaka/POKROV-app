@@ -3743,7 +3743,7 @@ class ConnectionManager extends ChangeNotifier {
   }
 
   bool _isTransientProfileFailure(BootstrapFailure error) {
-    if (error.operation == 'routing_catalog' || error.code.startsWith('candidate_') ||
+    if (error.operation == 'routing_catalog' || error.operation == 'local_state' || error.code.startsWith('candidate_') ||
         error.code == 'managed_profile_superseded') return false;
     final statusCode = error.statusCode;
     return statusCode == null ||
