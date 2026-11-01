@@ -646,6 +646,17 @@ class MemoryAppFirstSessionSecretStore implements AppFirstSessionSecretStore {
 }
 
 abstract interface class AppFirstAccountActionService {
+  Future<void> requestEmailLoginCode({
+    required HostPlatform hostPlatform,
+    required String email,
+  });
+
+  Future<DevicePairingClaimResult> recoverEmailSession({
+    required HostPlatform hostPlatform,
+    required String email,
+    required String code,
+  });
+
   Future<DevicePairingClaimResult> claimDevicePairingCode({
     required HostPlatform hostPlatform,
     required String code,
@@ -4078,6 +4089,99 @@ class AppFirstRuntimeBootstrapper
   }
 
   @override
+  Future<void> requestEmailLoginCode({
+    required HostPlatform hostPlatform,
+    required String email,
+  }) async {
+    final client = _createHttpClient(hostPlatform);
+    try {
+      await _requestJson(
+        method: 'POST', path: '/api/auth/email/otp/start',
+        hostPlatform: hostPlatform, client: client,
+        body: <String, Object?>{'email': email.trim()},
+      );
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  Future<DevicePairingClaimResult> recoverEmailSession({
+    required HostPlatform hostPlatform,
+    required String email,
+    required String code,
+  }) async {
+    final file = await _stateFile(hostPlatform);
+    final state = await _withAppFirstStateFileLock(file,
+        () => _loadStateFromFile(hostPlatform, file, allowMissingSession: true));
+    if (state == null || state.installId.trim().isEmpty) {
+      throw const BootstrapFailure(
+        'Данные этого устройства не найдены. Обратитесь в поддержку.',
+      );
+    }
+    final client = _createHttpClient(hostPlatform);
+    try {
+      // Email OTP is fresh account proof. An old bearer/refresh is not needed.
+      final response = await _requestJson(
+        method: 'POST', path: '/api/auth/email/otp/finish',
+        hostPlatform: hostPlatform, client: client,
+        body: <String, Object?>{
+          'email': email.trim(), 'code': code.trim(),
+          'install_id': state.installId,
+          'device_name': await _deviceName(hostPlatform),
+          'platform': hostPlatform.name,
+          'os_version': _trim(Platform.operatingSystemVersion, 64),
+          'app_version': pokrovClientVersion,
+          'locale': _trim(Platform.localeName, 32),
+          'time_zone': _trim(DateTime.now().timeZoneName, 64),
+        },
+      );
+      final session = _readMap(response['session']);
+      final pair = _sessionPairFromResponse(response);
+      final accountId = _readText(session['canonical_account_id'] ?? session['account_id']);
+      if (pair == null || pair.refreshToken.isEmpty || accountId.isEmpty ||
+          session['scope'] != 'client') {
+        throw const BootstrapFailure('Не удалось подтвердить вход на этом устройстве.');
+      }
+      return await _withAppFirstStateFileLock(file, () async {
+        final current = await _loadStateFromFile(hostPlatform, file, allowMissingSession: true);
+        if (current == null || current.installId != state.installId ||
+            current.accountId != state.accountId ||
+            current.sessionToken != state.sessionToken ||
+            current.refreshToken != state.refreshToken ||
+            current.expectsSecureSessionToken != state.expectsSecureSessionToken) {
+          throw const BootstrapFailure('Сессия изменилась. Повторите вход.', code: 'session_changed');
+        }
+        final nextState = current.copyWith(
+          sessionToken: pair.accessToken, refreshToken: pair.refreshToken,
+          accountId: accountId, expectsSecureSessionToken: true,
+          managedManifestPath: _defaultManagedManifestPath, profileRevision: '',
+        );
+        // Keep metadata and the previous secret until the replacement is saved.
+        await _sessionSecretStore.writeSessionPair(
+          hostPlatform: hostPlatform, installId: current.installId, pair: pair);
+        try {
+          await _stateFileWriter(file, jsonEncode(nextState.toJson()));
+        } on Object {
+          if (current.hasSession) {
+            await _sessionSecretStore.writeSessionPair(hostPlatform: hostPlatform,
+              installId: current.installId, pair: AppFirstSessionCredentials(
+                accessToken: current.sessionToken, refreshToken: current.refreshToken));
+          } else {
+            await _sessionSecretStore.deleteSessionToken(
+              hostPlatform: hostPlatform, installId: current.installId);
+          }
+          rethrow;
+        }
+        _rememberRuntimeStatsBinding(hostPlatform, nextState);
+        _notifyTransportSelectionSessionWrite(file, nextState);
+        return DevicePairingClaimResult(ok: true, accountId: accountId,
+          installId: nextState.installId, existingDevice: true);
+      });
+    } finally {
+      client.close(force: true);
+    }
+  }
+
   Future<DevicePairingClaimResult> claimDevicePairingCode({
     required HostPlatform hostPlatform,
     required String code,
@@ -6821,8 +6925,9 @@ class AppFirstRuntimeBootstrapper
 
   Future<_StoredBootstrapState?> _loadStateFromFile(
     HostPlatform hostPlatform,
-    File file,
-  ) async {
+    File file, {
+    bool allowMissingSession = false,
+  }) async {
     final backupFile = File('${file.path}.bak');
     if (!await file.exists() && await backupFile.exists()) {
       await backupFile.rename(file.path);
@@ -6872,6 +6977,13 @@ class AppFirstRuntimeBootstrapper
     _traceBootstrap('pair_persist', 'readback', reason: 'secure_read',
       pairPresent: securePair != null && securePair.hasAccessToken &&
         securePair.refreshToken.trim().isNotEmpty);
+    if (allowMissingSession) {
+      // Recovery reads the saved install without provisioning or repairing it.
+      return parsed.copyWith(
+        sessionToken: securePair?.accessToken ?? parsed.sessionToken,
+        refreshToken: securePair?.refreshToken ?? '',
+      );
+    }
     if (securePair != null && securePair.hasAccessToken) {
       if (parsed.sessionToken.isNotEmpty || parsed.requiresSchemaMigration) {
         await _persistStateToFile(
@@ -11730,11 +11842,13 @@ class AppFirstSupportTicketService
     );
     VerifiedSupportRecipient? recipient;
     Object? onlineFailure;
+    final client = _bootstrapper._createHttpClient(hostPlatform);
     try {
-      final envelope = await _requestJsonWithSession(
+      final envelope = await _bootstrapper._requestJson(
         method: 'GET',
         path: '/api/client/support/bundles/key-set',
         hostPlatform: hostPlatform,
+        client: client,
       );
       final normalized = envelope.map<String, Object?>(
         (key, value) => MapEntry(key, value),
@@ -11753,6 +11867,8 @@ class AppFirstSupportTicketService
           recipient = null;
         }
       }
+    } finally {
+      client.close(force: true);
     }
     return (
       recipient: recipient,

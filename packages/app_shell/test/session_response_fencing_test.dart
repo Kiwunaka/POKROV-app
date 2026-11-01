@@ -30,6 +30,8 @@ class _Fixture {
   bool rejectRefresh = false;
   int starts = 0;
   int refreshes = 0;
+  final emailRequests = <String>[];
+  final recoveryInstalls = <String>[];
   static const install = 'synthetic-install';
   File get file => File('${directory.path}/app-first-session-windows.json');
   late final bootstrapper = AppFirstRuntimeBootstrapper(
@@ -82,7 +84,7 @@ class _Fixture {
   }
 
   Future<void> handle(HttpRequest request) async {
-    await utf8.decoder.bind(request).join();
+    final body = await utf8.decoder.bind(request).join();
     final path = request.uri.path;
     final authorization =
         request.headers.value(HttpHeaders.authorizationHeader) ?? '';
@@ -92,7 +94,21 @@ class _Fixture {
       await release.future;
     }
     request.response.headers.contentType = ContentType.json;
-    if (path == '/api/client/session/start-trial') {
+    if (path == '/api/auth/email/otp/start') {
+      expect(authorization, isEmpty);
+      emailRequests.add((jsonDecode(body) as Map)['email'] as String);
+      request.response.write('{"ok":true,"otp_requested":true}');
+    } else if (path == '/api/auth/email/otp/finish') {
+      expect(authorization, isEmpty);
+      final payload = jsonDecode(body) as Map;
+      expect(payload['email'], 'account@example.invalid');
+      expect(payload['code'], '123456');
+      recoveryInstalls.add(payload['install_id'] as String);
+      request.response.write(jsonEncode({'ok': true, 'session': {
+        'access_token': 'recovered-access', 'refresh_token': 'recovered-refresh',
+        'account_id': 'A', 'canonical_account_id': 'A', 'scope': 'client',
+      }}));
+    } else if (path == '/api/client/session/start-trial') {
       starts += 1;
       request.response.write(jsonEncode({
         'session': {
@@ -156,6 +172,32 @@ void main() {
   });
   final changed =
       isA<BootstrapFailure>().having((e) => e.code, 'code', 'session_changed');
+
+  test('email OTP restores missing secure pair on the same install and fences old refresh', () async {
+    final f = await _Fixture.create();
+    f.pausedPath = '/api/client/session/refresh';
+    f.rejectInitialAccess = true;
+    await f.state('A', 'old-access');
+    final pending = f.fetch();
+    final assertion = expectLater(pending, throwsA(changed));
+    await f.wait();
+    await f.secrets.deleteSessionToken(
+      hostPlatform: HostPlatform.windows, installId: _Fixture.install);
+
+    await f.bootstrapper.requestEmailLoginCode(
+      hostPlatform: HostPlatform.windows, email: 'account@example.invalid');
+    final recovered = await f.bootstrapper.recoverEmailSession(
+      hostPlatform: HostPlatform.windows, email: 'account@example.invalid', code: '123456');
+    expect(recovered.installId, _Fixture.install);
+    expect(f.emailRequests, ['account@example.invalid']);
+    expect(f.recoveryInstalls, [_Fixture.install]);
+    await f.expectState('A', 'recovered-access');
+    f.release.complete();
+    await assertion;
+    await f.expectState('A', 'recovered-access');
+    expect(f.starts, 0);
+    expect((await f.fetch()).lane, 'paid');
+  });
 
   test('late trial cannot replace a newer account', () async {
     final f = await _Fixture.create();

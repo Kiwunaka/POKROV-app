@@ -4,6 +4,7 @@ Future<void> _showRedeemSheet(
   BuildContext context, {
   required String hintCode,
   required ValueChanged<String> onRedeem,
+  VoidCallback? onEmailRecovery,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -25,7 +26,7 @@ Future<void> _showRedeemSheet(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Код активации',
+                'Код входа или активации',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 8),
@@ -44,11 +45,118 @@ Future<void> _showRedeemSheet(
                   onRedeem(code);
                 },
               ),
+              if (onEmailRecovery != null) TextButton.icon(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  onEmailRecovery();
+                },
+                icon: const Icon(Icons.alternate_email_rounded),
+                label: const Text('Восстановить по почте'),
+              ),
             ],
           ),
         ),
       ),
     ),
+  );
+}
+
+Future<bool?> _showEmailSessionRecoverySheet(BuildContext context, {
+  required Future<void> Function(String) onRequestCode,
+  required Future<void> Function(String, String) onRecover,
+}) => showModalBottomSheet<bool>(
+  context: context, isScrollControlled: true,
+  isDismissible: false, enableDrag: false,
+  showDragHandle: true, sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
+  builder: (_) => _EmailSessionRecoverySheet(onRequestCode: onRequestCode, onRecover: onRecover),
+);
+
+class _EmailSessionRecoverySheet extends StatefulWidget {
+  const _EmailSessionRecoverySheet({required this.onRequestCode, required this.onRecover});
+  final Future<void> Function(String) onRequestCode;
+  final Future<void> Function(String, String) onRecover;
+
+  @override
+  State<_EmailSessionRecoverySheet> createState() => _EmailSessionRecoverySheetState();
+}
+
+class _EmailSessionRecoverySheetState extends State<_EmailSessionRecoverySheet> {
+  final _email = TextEditingController();
+  final _code = TextEditingController();
+  bool _requested = false;
+  bool _busy = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _email.dispose();
+    _code.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_busy) return;
+    if (_email.text.trim().isEmpty || (_requested && _code.text.trim().length != 6)) {
+      setState(() => _error = _requested ? 'Введите 6 цифр из письма.' : 'Введите почту аккаунта.');
+      return;
+    }
+    setState(() { _busy = true; _error = null; });
+    try {
+      if (_requested) {
+        await widget.onRecover(_email.text.trim(), _code.text.trim());
+        if (mounted) Navigator.of(context).pop(true);
+      } else {
+        await widget.onRequestCode(_email.text.trim());
+        if (mounted) setState(() => _requested = true);
+      }
+    } on Object catch (error) {
+      if (mounted) setState(() => _error = error is BootstrapFailure
+          ? error.message
+          : 'Не удалось восстановить вход. Сохранённые данные устройства не удалены. Попробуйте ещё раз.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => PopScope(
+    canPop: !_busy,
+    child: SafeArea(top: false, child: SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(20, 12, 20, 24 + MediaQuery.viewInsetsOf(context).bottom),
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Text('Восстановить доступ', style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: 12),
+        Text(_requested
+            ? 'Если почта привязана к аккаунту, на неё отправлен одноразовый код. Введите его ниже.'
+            : 'Введите почту, уже привязанную к аккаунту. Пришлём одноразовый код для входа на этом устройстве.'),
+        const SizedBox(height: 16),
+        TextField(key: const ValueKey('email-recovery-address'), controller: _email,
+          enabled: !_busy && !_requested, keyboardType: TextInputType.emailAddress,
+          autocorrect: false, textInputAction: TextInputAction.done,
+          onSubmitted: (_) => unawaited(_submit()),
+          decoration: const InputDecoration(labelText: 'Почта аккаунта')),
+        if (_requested) ...[
+          const SizedBox(height: 12),
+          TextField(key: const ValueKey('email-recovery-code'), controller: _code,
+            enabled: !_busy, keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly], maxLength: 6,
+            textInputAction: TextInputAction.done, onSubmitted: (_) => unawaited(_submit()),
+            decoration: const InputDecoration(labelText: 'Код из письма')),
+        ],
+        if (_error != null) Padding(padding: const EdgeInsets.only(top: 12),
+          child: Text(_error!, key: const ValueKey('email-recovery-error'),
+            style: TextStyle(color: Theme.of(context).colorScheme.error))),
+        const SizedBox(height: 16),
+        FilledButton(key: const ValueKey('email-recovery-submit'),
+          onPressed: _busy ? null : () => unawaited(_submit()),
+          child: Text(_busy ? 'Подождите…' : _requested ? 'Восстановить доступ' : 'Отправить код')),
+        if (_requested) TextButton(onPressed: _busy ? null : () => setState(() {
+          _requested = false; _code.clear(); _error = null;
+        }), child: const Text('Получить новый код')),
+        TextButton(onPressed: _busy ? null : () => Navigator.of(context).pop(false),
+          child: const Text('Отмена')),
+      ]),
+    )),
   );
 }
 

@@ -8,6 +8,24 @@ import 'package:pokrov_core_domain/core_domain.dart';
 class _PairingActions implements ManagedProfileBootstrapper, AppFirstAccountActionService {
   int claims = 0;
   bool reuseCurrentDevice = false;
+  String? requestedEmail;
+  String? recoveredEmail;
+  String? recoveryCode;
+
+  @override
+  Future<void> requestEmailLoginCode({required HostPlatform hostPlatform, required String email}) async {
+    requestedEmail = email;
+  }
+
+  @override
+  Future<DevicePairingClaimResult> recoverEmailSession({
+    required HostPlatform hostPlatform, required String email, required String code,
+  }) async {
+    recoveredEmail = email;
+    recoveryCode = code;
+    return const DevicePairingClaimResult(ok: true, accountId: 'fixture-account',
+      installId: 'fixture-install', existingDevice: true);
+  }
 
   @override
   Future<DevicePairingClaimResult> claimDevicePairingCode({
@@ -52,6 +70,44 @@ class _MemoryFirstLaunchStore implements PokrovFirstLaunchStore {
 }
 
 void main() {
+  testWidgets('email recovery sheet completes the existing restore flow', (tester) async {
+    final actions = _PairingActions();
+    final store = _MemoryFirstLaunchStore();
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: actions, firstLaunchStore: store,
+    ));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.tap(find.text('У меня есть код'));
+    await tester.pump();
+    final emailAction = find.text('Восстановить по почте');
+    await tester.ensureVisible(emailAction);
+    await tester.tap(emailAction);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.enterText(find.byKey(const ValueKey('email-recovery-address')), 'account@example.invalid');
+    final submit = find.byKey(const ValueKey('email-recovery-submit'));
+    await tester.ensureVisible(submit);
+    await tester.tap(submit);
+    await tester.pump();
+    expect(actions.requestedEmail, 'account@example.invalid');
+    expect(actions.recoveredEmail, isNull);
+    await tester.enterText(find.byKey(const ValueKey('email-recovery-code')), '123456');
+    await tester.ensureVisible(submit);
+    await tester.tap(submit);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(actions.recoveredEmail, 'account@example.invalid');
+    expect(actions.recoveryCode, '123456');
+    expect(store.completed, isTrue);
+    expect(find.byKey(const ValueKey('first-launch-restore-screen')), findsNothing);
+    expect(find.byKey(const ValueKey('email-recovery-code')), findsNothing);
+    expect(find.byKey(const ValueKey('first-launch-gate-exited')), findsOneWidget);
+    expect(actions.claims, 0);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('cold and running pairing links wait for explicit code submission', (tester) async {
     final actions = _PairingActions();
     final links = StreamController<Uri>.broadcast();

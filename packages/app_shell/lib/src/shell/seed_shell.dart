@@ -1850,6 +1850,35 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
+  Future<void> _openEmailSessionRecovery() async {
+    final actions = _accountActionService;
+    if (actions == null || _firstSessionCoordinator.busy) return;
+    final recovered = await _showEmailSessionRecoverySheet(context,
+      onRequestCode: (email) => actions.requestEmailLoginCode(
+        hostPlatform: widget.appContext.hostPlatform, email: email),
+      onRecover: (email, code) async {
+        await actions.recoverEmailSession(
+          hostPlatform: widget.appContext.hostPlatform, email: email, code: code);
+      },
+    );
+    if (recovered != true || !mounted) return;
+    setState(() {
+      _firstSessionCoordinator.finishRestore(succeeded: true);
+      _subscriptionInfo = null;
+      _connectionManager.markProfileDirty();
+    });
+    unawaited(_firstSessionCoordinator.persistCompletion());
+    final updated = await _refreshSubscriptionInfo();
+    unawaited(_loadBonusSummary(force: true));
+    unawaited(_refreshNotifications());
+    unawaited(_refreshLocationsCatalog());
+    if (!mounted) return;
+    showPokrovSnack(context, updated
+        ? 'Вход восстановлен. Статус подписки обновлён.'
+        : 'Вход восстановлен, но статус подписки не загрузился. Проверьте соединение и обновите профиль.',
+      tone: updated ? PokrovSnackTone.success : PokrovSnackTone.danger);
+  }
+
   bool _looksLikeDevicePairingCode(String value) {
     final normalized =
         value.trim().toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
@@ -2306,6 +2335,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         return;
       case 'redeem':
         unawaited(_redeemCodeInApp(value));
+        return;
+      case 'email-recovery':
+        unawaited(_openEmailSessionRecovery());
         return;
       case 'cabinet':
         unawaited(_openCabinetWithHandoff(value));
@@ -3622,6 +3654,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                                     onBack: _backToFirstLaunchChoice,
                                     onRedeemCode: _redeemFirstLaunchRestoreCode,
                                     onOpenTelegram: _openDevicePairingBot,
+                                    onEmailRecovery: _accountActionService == null
+                                        ? null : _openEmailSessionRecovery,
                                     onOpenCabinet: () =>
                                         _openCabinetWithHandoff(
                                       widget.appContext.cabinetUrl,

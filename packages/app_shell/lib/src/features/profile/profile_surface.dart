@@ -224,7 +224,8 @@ class _ProfileSection extends StatelessWidget {
         onDevices: () => _devices(context),
         onLoginCode: () => _devices(context),
         onActivate: () => _showRedeemSheet(context, hintCode: appContext.redeemHint,
-          onRedeem: (code) => onOpenHandoff('redeem', code)),
+          onRedeem: (code) => onOpenHandoff('redeem', code),
+          onEmailRecovery: () => onOpenHandoff('email-recovery', '')),
         onTheme: () => _showThemeModeSheet(context, selected: themeMode, onChanged: onThemeModeChanged),
         onNotifications: () {
           onOpenNotifications();

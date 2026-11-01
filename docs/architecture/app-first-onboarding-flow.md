@@ -241,6 +241,15 @@ restored cache, cannot mask that status. The original managed-profile access
 still governs its capabilities; this presentation rule does not authorize paid
 routing or connection material.
 
+The existing restore screens also offer native email OTP recovery. The server
+verifies the linked email and reissues a client session for the saved install;
+an expired refresh or missing secure pair does not require another device or a
+trial account. The client fences the response against the source session and
+keeps prior metadata until secure storage succeeds, then refreshes the account.
+Signed public support encryption keys are fetched without an app session so
+diagnostic export can also explain a broken login; signature verification remains
+mandatory.
+
 The shell passes its app-first bootstrapper to the support ticket service.
 Support and account requests therefore share the same in-flight session refresh:
 concurrent expired-session responses rotate the refresh credential once, then

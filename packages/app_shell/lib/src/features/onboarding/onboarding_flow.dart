@@ -246,6 +246,7 @@ class _FirstLaunchGate extends StatelessWidget {
     required this.onRedeemCode,
     required this.onOpenTelegram,
     required this.onOpenCabinet,
+    required this.onEmailRecovery,
   });
 
   final SeedAppContext appContext;
@@ -259,6 +260,7 @@ class _FirstLaunchGate extends StatelessWidget {
   final VoidCallback onRedeemCode;
   final VoidCallback onOpenTelegram;
   final VoidCallback onOpenCabinet;
+  final VoidCallback? onEmailRecovery;
 
   @override
   Widget build(BuildContext context) {
@@ -332,6 +334,7 @@ class _FirstLaunchGate extends StatelessWidget {
                               onRedeemCode: onRedeemCode,
                               onOpenTelegram: onOpenTelegram,
                               onOpenCabinet: onOpenCabinet,
+                              onEmailRecovery: onEmailRecovery,
                             )
                           : _FirstLaunchChoiceScreen(
                               appContext: appContext,
@@ -446,6 +449,7 @@ class _FirstLaunchRestoreScreen extends StatelessWidget {
     required this.onRedeemCode,
     required this.onOpenTelegram,
     required this.onOpenCabinet,
+    required this.onEmailRecovery,
   });
 
   final TextEditingController codeController;
@@ -454,6 +458,7 @@ class _FirstLaunchRestoreScreen extends StatelessWidget {
   final VoidCallback onRedeemCode;
   final VoidCallback onOpenTelegram;
   final VoidCallback onOpenCabinet;
+  final VoidCallback? onEmailRecovery;
 
   @override
   Widget build(BuildContext context) {
@@ -629,6 +634,11 @@ class _FirstLaunchRestoreScreen extends StatelessWidget {
                     ],
                   );
                 },
+              ),
+              if (onEmailRecovery != null) TextButton.icon(
+                onPressed: busy ? null : onEmailRecovery,
+                icon: const Icon(Icons.alternate_email_rounded),
+                label: const Text('Восстановить по почте'),
               ),
             ],
           ),
