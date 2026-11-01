@@ -2302,6 +2302,12 @@ staging is pending, the old profile stays dirty and cannot start. The user
 retries with the current settings. Host content-digest checks remain separate
 from this local intent fence.
 
+Rules and the Profile bypass control wait for the managed-profile apply result.
+A failed protected replacement keeps the edited preferences available for retry;
+only a successful apply (or a stopped/trusted-Wi-Fi-paused connection, where the
+saved rules apply at the next connection) clears the pending UI state. Edits made
+while an apply is in progress remain pending.
+
 ### Runtime failure observations
 
 Runtime `connect_requested` is recorded when the local attempt begins, before

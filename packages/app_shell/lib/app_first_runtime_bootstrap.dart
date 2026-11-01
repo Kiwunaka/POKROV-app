@@ -2377,7 +2377,7 @@ class AppFirstBonusRewardResult {
   final int rewardDays;
   final String rewardKey;
   final String expiryAt;
-  final AppFirstBonusSummary summary;
+  final AppFirstBonusSummary? summary;
   final String rewardKind;
   final int rewardValue;
   final int discountPct;
@@ -4218,39 +4218,14 @@ class AppFirstRuntimeBootstrapper
       Map<String, dynamic>? response;
       var requestAccountId = state.accountId;
       for (var attempt = 0; attempt < 2; attempt += 1) {
-        var legacySession = false;
-        requestAccountId = state.accountId;
-        // This only classifies the old stateless envelope and binds the reply
-        // to the request. The server remains responsible for authentication.
-        try {
-          final parts = state.sessionToken.split('.');
-          if (parts.length == 2) {
-            final claims = jsonDecode(
-              utf8.decode(base64Url.decode(base64Url.normalize(parts.first))),
-            );
-            if (claims is Map) {
-              legacySession =
-                  state.refreshToken.isEmpty &&
-                  claims['id'] is num &&
-                  claims['exp'] is num &&
-                  claims['session_id'] == null &&
-                  claims['device_id'] == null;
-              if (claims['session_id'] is String &&
-                  claims['device_id'] is String &&
-                  _readText(claims['account_id']).isNotEmpty) {
-                requestAccountId = _readText(claims['account_id']);
-              }
-            }
-          }
-        } on FormatException {
-          // Unknown/malformed credentials must be rejected as supplied proof.
-        }
+        final proof = _sessionAccountProof(state);
+        requestAccountId = proof.accountId;
         try {
           response = await _requestJson(
             method: 'POST',
             path: '/api/client/device-pairing/claim',
             client: client,
-            bearerToken: legacySession ? '' : state.sessionToken,
+            bearerToken: proof.legacySession ? '' : state.sessionToken,
             hostPlatform: hostPlatform,
             body: <String, Object?>{
               'code': normalized,
@@ -4319,20 +4294,24 @@ class AppFirstRuntimeBootstrapper
           profileRevision: '',
           expectsSecureSessionToken: true,
         );
-        if (state.installId != pairedInstallId) {
-          // Pairing removes the old secret before _saveState. Fence selection
-          // before this first identity mutation as well as the later state write.
-          _notifyTransportSelectionSessionWrite(file, nextState);
-          await _sessionSecretStore.deleteSessionToken(
-            hostPlatform: hostPlatform,
-            installId: state.installId,
-          );
-        }
         await _persistStateToFile(
           hostPlatform: hostPlatform,
           file: file,
           state: nextState,
         );
+        if (state.installId != pairedInstallId) {
+          // Retain the previous pair until the replacement metadata is durable.
+          // A failed write must leave the previous account usable.
+          try {
+            await _sessionSecretStore.deleteSessionToken(
+              hostPlatform: hostPlatform,
+              installId: state.installId,
+            );
+          } on Object {
+            // The replacement is already authoritative. Obsolete-pair cleanup
+            // cannot turn a completed account switch into a reported failure.
+          }
+        }
         return DevicePairingClaimResult(
           ok: receipt['ok'] != false,
           accountId: accountId,
@@ -4348,68 +4327,32 @@ class AppFirstRuntimeBootstrapper
     required HostPlatform hostPlatform,
     String targetPath = '/',
   }) async {
-    var state = await _loadOrCreateState(hostPlatform);
-    final client = _createHttpClient(hostPlatform);
-    try {
-      for (var attempt = 0; attempt < 2; attempt += 1) {
-        if (!state.hasSession) {
-          state = await _startTrial(
-            state: state,
-            hostPlatform: hostPlatform,
-            client: client,
-          );
-        }
-
-        try {
-          final response = await _requestJson(
-            method: 'POST',
-            path: '/api/client/cabinet-token',
-            client: client,
-            bearerToken: state.sessionToken,
-            hostPlatform: hostPlatform,
-            body: <String, Object?>{
-              'target_path': targetPath.trim().isEmpty ? '/' : targetPath,
-            },
-          );
-          final token = _readText(response['token']);
-          final handoffUrlText = _readText(response['handoff_url']);
-          if (token.isEmpty || handoffUrlText.isEmpty) {
-            throw const BootstrapFailure(
-              'POKROV could not create a cabinet handoff.',
-            );
-          }
-          return CabinetHandoff(
-            token: token,
-            handoffUrl: Uri.parse(handoffUrlText),
-            expiresIn: Duration(
-              seconds: max(0, _readInt(response['expires_in'])),
-            ),
-            targetPath: _readText(response['target_path']).isEmpty
-                ? '/'
-                : _readText(response['target_path']),
-            scope: _readText(response['scope']),
-          );
-        } on BootstrapFailure catch (error) {
-          if (attempt == 0 && _isSessionFailure(error.statusCode)) {
-            state = await _startTrial(
-              state: state.copyWith(
-                sessionToken: '',
-              ),
-              hostPlatform: hostPlatform,
-              client: client,
-            );
-            continue;
-          }
-          rethrow;
-        }
-      }
-
+    final response = await _requestClientJsonWithSession(
+      method: 'POST',
+      path: '/api/client/cabinet-token',
+      hostPlatform: hostPlatform,
+      body: <String, Object?>{
+        'target_path': targetPath.trim().isEmpty ? '/' : targetPath,
+      },
+    );
+    final token = _readText(response['token']);
+    final handoffUrlText = _readText(response['handoff_url']);
+    if (token.isEmpty || handoffUrlText.isEmpty) {
       throw const BootstrapFailure(
         'POKROV could not create a cabinet handoff.',
       );
-    } finally {
-      client.close(force: true);
     }
+    return CabinetHandoff(
+      token: token,
+      handoffUrl: Uri.parse(handoffUrlText),
+      expiresIn: Duration(
+        seconds: max(0, _readInt(response['expires_in'])),
+      ),
+      targetPath: _readText(response['target_path']).isEmpty
+          ? '/'
+          : _readText(response['target_path']),
+      scope: _readText(response['scope']),
+    );
   }
 
   @override
@@ -5946,63 +5889,27 @@ class AppFirstRuntimeBootstrapper
   Future<TelegramLinkResult> createTelegramLink({
     required HostPlatform hostPlatform,
   }) async {
-    var state = await _loadOrCreateState(hostPlatform);
-    final client = _createHttpClient(hostPlatform);
-    try {
-      for (var attempt = 0; attempt < 2; attempt += 1) {
-        if (!state.hasSession) {
-          state = await _startTrial(
-            state: state,
-            hostPlatform: hostPlatform,
-            client: client,
-          );
-        }
-
-        try {
-          final response = await _requestJson(
-            method: 'POST',
-            path: '/api/client/telegram/link',
-            client: client,
-            bearerToken: state.sessionToken,
-            hostPlatform: hostPlatform,
-          );
-          final botUrlText = _readText(response['bot_url']);
-          if (botUrlText.isEmpty) {
-            throw const BootstrapFailure(
-              'POKROV could not create a Telegram link.',
-            );
-          }
-          return TelegramLinkResult(
-            ok: response['ok'] == true,
-            linked: response['linked'] == true,
-            linkedTelegramId: _readNullableInt(response['linked_telegram_id']),
-            linkedTelegramUsername:
-                _readText(response['linked_telegram_username']),
-            startCode: _readText(response['start_code']),
-            botUrl: Uri.parse(botUrlText),
-            channelUrl: _readOptionalUri(response['channel_url']),
-          );
-        } on BootstrapFailure catch (error) {
-          if (attempt == 0 && _isSessionFailure(error.statusCode)) {
-            state = await _startTrial(
-              state: state.copyWith(
-                sessionToken: '',
-              ),
-              hostPlatform: hostPlatform,
-              client: client,
-            );
-            continue;
-          }
-          rethrow;
-        }
-      }
-
+    final response = await _requestClientJsonWithSession(
+      method: 'POST',
+      path: '/api/client/telegram/link',
+      hostPlatform: hostPlatform,
+    );
+    final botUrlText = _readText(response['bot_url']);
+    if (botUrlText.isEmpty) {
       throw const BootstrapFailure(
         'POKROV could not create a Telegram link.',
       );
-    } finally {
-      client.close(force: true);
     }
+    return TelegramLinkResult(
+      ok: response['ok'] == true,
+      linked: response['linked'] == true,
+      linkedTelegramId: _readNullableInt(response['linked_telegram_id']),
+      linkedTelegramUsername:
+          _readText(response['linked_telegram_username']),
+      startCode: _readText(response['start_code']),
+      botUrl: Uri.parse(botUrlText),
+      channelUrl: _readOptionalUri(response['channel_url']),
+    );
   }
 
   @override
@@ -6367,6 +6274,15 @@ class AppFirstRuntimeBootstrapper
             client: client,
             bearerToken: state.sessionToken,
           );
+          final current = await _loadState(hostPlatform);
+          if (current == null || !current.hasSession ||
+              current.installId != state.installId ||
+              current.accountId != state.accountId ||
+              current.refreshToken != state.refreshToken ||
+              current.sessionToken != state.sessionToken) {
+            throw const BootstrapFailure(
+              'Сессия изменилась. Повторите вход.', code: 'session_changed');
+          }
           return AppFirstBonusSummary(
             referralCount: referralCount,
             referralCode: referralCode,
@@ -6502,6 +6418,8 @@ class AppFirstRuntimeBootstrapper
   }) async {
     var state = await _loadOrCreateState(hostPlatform);
     final client = _createHttpClient(hostPlatform);
+    Map<String, dynamic>? rewardResponse;
+    var rewardAccountId = state.accountId;
     try {
       for (var attempt = 0; attempt < 2; attempt += 1) {
         if (!state.hasSession) {
@@ -6520,21 +6438,9 @@ class AppFirstRuntimeBootstrapper
             bearerToken: state.sessionToken,
             hostPlatform: hostPlatform,
           );
-          final summary = await fetchBonusSummary(
-            hostPlatform: hostPlatform,
-          );
-          return AppFirstBonusRewardResult(
-            ok: response['ok'] == true,
-            rewardDays: _readInt(response['reward_days']),
-            rewardKey: _readText(response['reward_key']),
-            expiryAt: _readText(response['expiry_at']),
-            summary: summary,
-            rewardKind: _readText(response['reward_kind']).isEmpty
-                ? 'days'
-                : _readText(response['reward_kind']),
-            rewardValue: _readInt(response['reward_value']),
-            discountPct: _readInt(response['discount_pct']),
-          );
+          rewardResponse = response;
+          rewardAccountId = _sessionAccountProof(state).accountId;
+          break;
         } on BootstrapFailure catch (error) {
           if (attempt == 0 && _isSessionFailure(error.statusCode)) {
             state = await _startTrial(
@@ -6550,7 +6456,46 @@ class AppFirstRuntimeBootstrapper
         }
       }
 
-      throw BootstrapFailure(failureMessage);
+      if (rewardResponse == null) throw BootstrapFailure(failureMessage);
+      final current = await _loadState(hostPlatform);
+      if (current == null || !current.hasSession ||
+          current.installId != state.installId ||
+          current.accountId != state.accountId ||
+          current.refreshToken != state.refreshToken ||
+          current.sessionToken != state.sessionToken) {
+        throw const BootstrapFailure(
+          'Сессия изменилась. Повторите вход.', code: 'session_changed');
+      }
+      // The mutation already succeeded. A summary read/refresh failure must
+      // not enter the POST retry loop and claim the same reward again.
+      AppFirstBonusSummary? summary;
+      try {
+        summary = await fetchBonusSummary(hostPlatform: hostPlatform);
+      } on Object {
+        if (rewardResponse['ok'] != true) rethrow;
+        // Preserve the server acknowledgement without borrowing a cached
+        // summary. The account binding is checked again before publication.
+      }
+      final afterSummary = await _loadState(hostPlatform);
+      if (afterSummary == null || !afterSummary.hasSession ||
+          afterSummary.installId != state.installId ||
+          (afterSummary.accountId != state.accountId &&
+              afterSummary.accountId != rewardAccountId)) {
+        throw const BootstrapFailure(
+          'Сессия изменилась. Повторите вход.', code: 'session_changed');
+      }
+      return AppFirstBonusRewardResult(
+        ok: rewardResponse['ok'] == true,
+        rewardDays: _readInt(rewardResponse['reward_days']),
+        rewardKey: _readText(rewardResponse['reward_key']),
+        expiryAt: _readText(rewardResponse['expiry_at']),
+        summary: summary,
+        rewardKind: _readText(rewardResponse['reward_kind']).isEmpty
+            ? 'days'
+            : _readText(rewardResponse['reward_kind']),
+        rewardValue: _readInt(rewardResponse['reward_value']),
+        discountPct: _readInt(rewardResponse['discount_pct']),
+      );
     } finally {
       client.close(force: true);
     }
@@ -7307,6 +7252,35 @@ class AppFirstRuntimeBootstrapper
         session['refresh_token'] ?? response['refresh_token'],
       ),
     );
+  }
+
+  ({bool legacySession, String accountId}) _sessionAccountProof(
+    _StoredBootstrapState state,
+  ) {
+    var legacySession = false;
+    var accountId = state.accountId;
+    // This only classifies the envelope and binds an authenticated reply to
+    // its request. The server remains responsible for authentication.
+    try {
+      final parts = state.sessionToken.split('.');
+      if (parts.length == 2) {
+        final claims = jsonDecode(
+          utf8.decode(base64Url.decode(base64Url.normalize(parts.first))),
+        );
+        if (claims is Map) {
+          legacySession = state.refreshToken.isEmpty &&
+              claims['id'] is num && claims['exp'] is num &&
+              claims['session_id'] == null && claims['device_id'] == null;
+          if (claims['session_id'] is String && claims['device_id'] is String &&
+              _readText(claims['account_id']).isNotEmpty) {
+            accountId = _readText(claims['account_id']);
+          }
+        }
+      }
+    } on FormatException {
+      // Unknown/malformed credentials must be rejected as supplied proof.
+    }
+    return (legacySession: legacySession, accountId: accountId);
   }
 
   Future<_StoredBootstrapState> _refreshSession({

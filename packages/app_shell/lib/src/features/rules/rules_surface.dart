@@ -45,7 +45,7 @@ class _RulesSection extends StatefulWidget {
   final bool catalogServicesBusy;
   final bool smartDnsActive;
   final ValueChanged<PokrovRoutingPreferences> onRoutingPreferencesChanged;
-  final ValueChanged<PokrovRoutingPreferences> onRoutingPreferencesApply;
+  final Future<bool> Function(PokrovRoutingPreferences) onRoutingPreferencesApply;
   final bool connectionActive;
   final bool windowsLocalDpiReady;
   final PokrovWifiProbe onReadCurrentWifi;
@@ -167,7 +167,7 @@ class _RulesAdvancedSection extends StatefulWidget {
   final PokrovRoutingPreferences preferences;
   final RouteMode fallbackMode;
   final ValueChanged<PokrovRoutingPreferences> onChanged;
-  final ValueChanged<PokrovRoutingPreferences> onApply;
+  final Future<bool> Function(PokrovRoutingPreferences) onApply;
   final bool connectionActive;
   final bool windowsLocalDpiReady;
   final PokrovWifiProbe onReadCurrentWifi;
@@ -181,6 +181,7 @@ class _RulesAdvancedSection extends StatefulWidget {
 
 class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
   bool _expanded = false;
+  bool _applying = false;
   late PokrovRoutingPreferences _appliedPreferences;
   late PokrovRoutingPreferences _draftPreferences;
 
@@ -222,16 +223,33 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
     widget.onChanged(merged);
   }
 
-  void _apply() {
-    if (_sameRoutingPreferences(_draftPreferences, _appliedPreferences)) {
+  Future<void> _apply() async {
+    if (_applying || _sameRoutingPreferences(_draftPreferences, _appliedPreferences)) {
       return;
     }
     PokrovHaptics.tap();
     final next = _draftPreferences;
-    setState(() {
-      _appliedPreferences = next;
-    });
-    widget.onApply(next);
+    setState(() => _applying = true);
+    var applied = false;
+    try {
+      applied = await widget.onApply(next);
+    } on Object {
+      if (mounted) {
+        showPokrovSnack(context, 'Не удалось применить правила. Повторите попытку.',
+          tone: PokrovSnackTone.danger);
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _applying = false;
+          if (applied) {
+            _appliedPreferences = next.copyWith(
+              autoConnectOnUntrustedWifi: _draftPreferences.autoConnectOnUntrustedWifi,
+            );
+          }
+        });
+      }
+    }
   }
 
   @override
@@ -315,7 +333,7 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
             ],
             child: FilledButton.icon(
               key: const ValueKey('rules-apply-changes'),
-              onPressed: _apply,
+              onPressed: _applying ? null : _apply,
               icon: Icon(
                 widget.connectionActive
                     ? Icons.sync_rounded

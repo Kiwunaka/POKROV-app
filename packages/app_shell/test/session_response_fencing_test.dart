@@ -28,6 +28,10 @@ class _Fixture {
   bool expiredReply = false;
   bool rejectInitialAccess = false;
   bool rejectRefresh = false;
+  bool rejectInitialBonusAccess = false;
+  String initialBonusAccess = 'A-access';
+  int rejectRefreshCount = 0;
+  int rewards = 0;
   int starts = 0;
   int refreshes = 0;
   final emailRequests = <String>[];
@@ -120,7 +124,7 @@ class _Fixture {
       }));
     } else if (path == '/api/client/session/refresh') {
       refreshes += 1;
-      if (rejectRefresh) {
+      if (rejectRefresh || refreshes <= rejectRefreshCount) {
         request.response.statusCode = HttpStatus.unauthorized;
         request.response.write('{"detail":"synthetic_expired"}');
       } else {
@@ -132,6 +136,40 @@ class _Fixture {
           }
         }));
       }
+    } else if (path == '/api/client/cabinet-token') {
+      request.response.write(jsonEncode({
+        'token': 'synthetic-A-handoff',
+        'handoff_url': 'https://app.pokrov.space/?handoff=synthetic-A-handoff',
+        'expires_in': 60,
+        'target_path': '/',
+        'scope': 'cabinet',
+      }));
+    } else if (path == '/api/client/device-pairing/claim') {
+      request.response.write(jsonEncode({
+        'ok': true,
+        'canonical_account_id': 'B',
+        'session': {
+          'account_id': 'B',
+          'access_token': 'B-paired-access',
+          'refresh_token': 'B-paired-refresh',
+        },
+      }));
+    } else if (path == '/api/client/telegram/link') {
+      request.response.write(jsonEncode({
+        'ok': true,
+        'start_code': 'synthetic-A-link',
+        'bot_url': 'https://t.me/pokrov_bot?start=synthetic-A-link',
+      }));
+    } else if (path == '/api/bonuses/summary') {
+      if (rejectInitialBonusAccess && authorization == 'Bearer $initialBonusAccess') {
+        request.response.statusCode = HttpStatus.unauthorized;
+        request.response.write('{"detail":"synthetic_expired"}');
+      } else {
+        request.response.write('{"referral_code":"synthetic-A-bonus"}');
+      }
+    } else if (path == '/api/bonuses/wheel/spin') {
+      rewards += 1;
+      request.response.write('{"ok":true,"reward_days":1}');
     } else if (path == '/api/client/subscription') {
       if (rejectInitialAccess && authorization == 'Bearer old-access') {
         request.response.statusCode = HttpStatus.unauthorized;
@@ -172,6 +210,139 @@ void main() {
   });
   final changed =
       isA<BootstrapFailure>().having((e) => e.code, 'code', 'session_changed');
+
+  test('late cabinet handoff cannot open the previous account', () async {
+    final f = await _Fixture.create();
+    f.pausedPath = '/api/client/cabinet-token';
+    await f.state('A', 'A-access');
+    final pending = f.bootstrapper.createCabinetHandoff(
+      hostPlatform: HostPlatform.windows);
+    final assertion = expectLater(pending, throwsA(changed));
+    await f.wait();
+    await f.state('B', 'B-access');
+    f.release.complete();
+    await assertion;
+    await f.expectState('B', 'B-access');
+  });
+
+  test('late Telegram link cannot link the previous account', () async {
+    final f = await _Fixture.create();
+    f.pausedPath = '/api/client/telegram/link';
+    await f.state('A', 'A-access');
+    final pending = f.bootstrapper.createTelegramLink(
+      hostPlatform: HostPlatform.windows);
+    final assertion = expectLater(pending, throwsA(changed));
+    await f.wait();
+    await f.state('B', 'B-access');
+    f.release.complete();
+    await assertion;
+    await f.expectState('B', 'B-access');
+  });
+
+  test('late bonus history cannot publish the previous account summary', () async {
+    final f = await _Fixture.create();
+    f.pausedPath = '/api/bonuses/history';
+    await f.state('A', 'A-access');
+    final pending = f.bootstrapper.fetchBonusSummary(
+      hostPlatform: HostPlatform.windows);
+    final assertion = expectLater(pending, throwsA(changed));
+    await f.wait();
+    await f.state('B', 'B-access');
+    f.release.complete();
+    await assertion;
+    await f.expectState('B', 'B-access');
+  });
+
+  test('accepted reward is not repeated when its summary rejects refresh', () async {
+    final f = await _Fixture.create();
+    await f.state('A', 'A-access');
+    f.rejectInitialBonusAccess = true;
+    f.rejectRefreshCount = 1;
+
+    final result = await f.bootstrapper.spinBonusWheel(hostPlatform: HostPlatform.windows);
+    expect(f.rewards, 1);
+    expect(f.refreshes, 1);
+    expect(result.ok, isTrue);
+    expect(result.rewardDays, 1);
+    expect(result.summary, isNull);
+  });
+
+  test('current account links and reward survive a same-account summary refresh', () async {
+    final f = await _Fixture.create();
+    await f.state('A', 'A-access');
+    final cabinet = await f.bootstrapper.createCabinetHandoff(
+      hostPlatform: HostPlatform.windows);
+    expect(cabinet.handoffUrl.queryParameters['handoff'], 'synthetic-A-handoff');
+    final telegram = await f.bootstrapper.createTelegramLink(
+      hostPlatform: HostPlatform.windows);
+    expect(telegram.startCode, 'synthetic-A-link');
+
+    f.rejectInitialBonusAccess = true;
+    final reward = await f.bootstrapper.spinBonusWheel(
+      hostPlatform: HostPlatform.windows);
+    expect(reward.rewardDays, 1);
+    expect(reward.summary?.referralCode, 'synthetic-A-bonus');
+    expect(f.rewards, 1);
+    expect(f.refreshes, 1);
+    await f.expectState('A', 'renewed-access');
+  });
+
+  test('acknowledged reward permits authenticated canonical account migration', () async {
+    final f = await _Fixture.create();
+    final access = '${base64Url.encode(utf8.encode(jsonEncode({
+      'id': 42, 'account_id': 'A',
+      'session_id': 'synthetic-session', 'device_id': 'synthetic-device',
+    })))}.fixture-signature';
+    await f.state('42', access);
+    f.initialBonusAccess = access;
+    f.rejectInitialBonusAccess = true;
+
+    final result = await f.bootstrapper.spinBonusWheel(
+      hostPlatform: HostPlatform.windows);
+    expect(result.ok, isTrue);
+    expect(result.summary?.referralCode, 'synthetic-A-bonus');
+    expect(f.rewards, 1);
+    await f.expectState('A', 'renewed-access');
+  });
+
+  test('acknowledged reward cannot publish after another account signs in', () async {
+    final f = await _Fixture.create();
+    f.pausedPath = '/api/bonuses/history';
+    await f.state('A', 'A-access');
+    final pending = f.bootstrapper.spinBonusWheel(
+      hostPlatform: HostPlatform.windows);
+    final assertion = expectLater(pending, throwsA(changed));
+    await f.wait();
+    await f.state('B', 'B-access');
+    f.release.complete();
+    await assertion;
+    expect(f.rewards, 1);
+    await f.expectState('B', 'B-access');
+  });
+
+  test('failed pairing state write preserves the previous account session', () async {
+    final f = await _Fixture.create();
+    await f.state('A', 'A-access');
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${f.server.port}/',
+      supportDirectoryResolver: () async => f.directory,
+      sessionSecretStore: f.secrets,
+      deviceNameResolver: (_) async => 'Synthetic device',
+      stateFileWriter: (file, contents) async {
+        if ((jsonDecode(contents) as Map)['account_id'] == 'B') {
+          throw const FileSystemException('Synthetic state write failure');
+        }
+        await file.writeAsString(contents);
+      },
+      maxRequestAttempts: 1,
+    );
+
+    await expectLater(bootstrapper.claimDevicePairingCode(
+      hostPlatform: HostPlatform.windows, code: 'ABCD-2345'),
+      throwsA(isA<FileSystemException>()));
+    await f.expectState('A', 'A-access');
+    expect((await f.fetch()).lane, 'paid');
+  });
 
   test('email OTP restores missing secure pair on the same install and fences old refresh', () async {
     final f = await _Fixture.create();

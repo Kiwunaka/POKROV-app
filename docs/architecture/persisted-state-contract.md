@@ -96,6 +96,14 @@ top-level value. Legacy `account_id` is used only when neither canonical field
 is present. An existing installation receives the canonical binding on its next
 ordinary session refresh while retaining its `install_id` and storage schema.
 
+Cabinet and Telegram handoffs and bonus summaries reject a session change before
+publishing their result, including a change during the bonus child reads. Device
+pairing retains the previous secure pair until the replacement metadata is saved;
+a failed write leaves the previous account usable, and obsolete-pair cleanup
+cannot undo a committed switch. Once a reward POST succeeds, a failure while
+refreshing its summary cannot repeat that POST: a confirmed reward remains
+confirmed, with a separate summary-refresh warning and no substituted summary.
+
 When POST12 catalog support is enabled, cached managed-profile restoration
 recompiles from the original authorized profile and a separately reverified
 catalog. `cacheOnly` does not renew either original lifetime or request network

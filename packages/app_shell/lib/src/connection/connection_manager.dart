@@ -5976,9 +5976,15 @@ class ConnectionManager extends ChangeNotifier {
     _queueClientExperienceWrite();
   }
 
-  void applyRoutingPreferences(PokrovRoutingPreferences preferences) {
+  Future<bool> applyRoutingPreferences(PokrovRoutingPreferences preferences) async {
     final wasConnected = _runtimeSnapshot?.phase == RuntimePhase.running;
     if (!wasConnected) {
+      if (_runtimeBusy) {
+        _update(() {
+          _runtimeHeadline = 'Настройки сохранены. Повторите применение после текущего действия.';
+        });
+        return false;
+      }
       _update(() {
         _runtimeHeadline =
             'Правила сохранены. Они применятся при следующем подключении.';
@@ -5987,21 +5993,24 @@ class ConnectionManager extends ChangeNotifier {
         'Правила сохранены. Подключите POKROV, чтобы применить.',
         tone: PokrovSnackTone.success,
       );
-      return;
+      return true;
     }
-    unawaited(_applyRoutingPreferencesToRunningTunnel(preferences));
+    return _applyRoutingPreferencesToRunningTunnel(preferences);
   }
 
-  Future<void> _applyRoutingPreferencesToRunningTunnel(
+  Future<bool> _applyRoutingPreferencesToRunningTunnel(
     PokrovRoutingPreferences preferences,
   ) async {
     if (preferences.pauseOnTrustedWifi) {
       await _pauseRunningTunnelOnTrustedWifi();
     }
-    if (_disposed || _runtimeSnapshot?.phase != RuntimePhase.running) {
-      return;
+    if (_disposed) {
+      return false;
     }
-    await _reconnectAfterManagedProfileChange(
+    if (_runtimeSnapshot?.phase != RuntimePhase.running) {
+      return true;
+    }
+    return _reconnectAfterManagedProfileChange(
       progressMessage: 'Применяем правила подключения…',
       successMessage: 'Правила подключения применены.',
     );

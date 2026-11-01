@@ -273,7 +273,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
   void _selectRouteMode(RouteMode mode) { PokrovHaptics.tap(); _connectionManager.selectRouteMode(mode); }
   void _setRoutingPreferences(PokrovRoutingPreferences value) { PokrovHaptics.tap(); _connectionManager.setRoutingPreferences(value); }
-  void _applyRoutingPreferences(PokrovRoutingPreferences value) => _connectionManager.applyRoutingPreferences(value);
+  Future<bool> _applyRoutingPreferences(PokrovRoutingPreferences value) => _connectionManager.applyRoutingPreferences(value);
   Future<void> _setPreferredLocation(String node, String variant) { PokrovHaptics.tap(); return _connectionManager.setPreferredLocation(node, variant); }
   void _addSelectedAppId(String value) => _connectionManager.addSelectedAppId(value);
   void _applyRuAppPreset(RouteMode mode, List<String> apps, bool verified) { PokrovHaptics.tap(); _connectionManager.applyRuAppPreset(mode, apps, verified); }
@@ -336,6 +336,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   int _selectedIndex = 0;
+  bool _localDpiApplying = false;
   late final ManagedProfileBootstrapper _bootstrapper;
   late final AccountSessionCoordinator _accountSessionCoordinator;
   late final Future<void> _clientExperienceRestore;
@@ -801,8 +802,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   void _openLocalDpiControl() {
+    if (_localDpiApplying) return;
     PokrovHaptics.tap();
-    final savedEnabled = _clientExperience.routingPreferences.localDpiEnabled;
+    var savedEnabled = _clientExperience.routingPreferences.localDpiEnabled;
     ui.showPokrovSheet<void>(context, (sheetContext) => StatefulBuilder(
       builder: (context, setSheetState) {
         final preferences = _clientExperience.routingPreferences;
@@ -817,12 +819,32 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                 _setRoutingPreferences(_clientExperience.routingPreferences.copyWith(localDpiEnabled: next.localDpiEnabled));
                 setSheetState(() {});
               }),
-            if (preferences.localDpiEnabled != savedEnabled)
+            if (preferences.localDpiEnabled != savedEnabled || (connected && _managedProfileDirty))
               FilledButton.icon(
                 key: const ValueKey('profile-local-dpi-apply'),
-                onPressed: () {
-                  Navigator.of(sheetContext).pop();
-                  _applyRoutingPreferences(_clientExperience.routingPreferences);
+                onPressed: _localDpiApplying ? null : () async {
+                  final next = _clientExperience.routingPreferences;
+                  setSheetState(() => _localDpiApplying = true);
+                  var applied = false;
+                  try {
+                    applied = await _applyRoutingPreferences(next);
+                  } on Object {
+                    if (sheetContext.mounted) {
+                      showPokrovSnack(sheetContext, 'Не удалось применить правила. Повторите попытку.',
+                        tone: PokrovSnackTone.danger);
+                    }
+                  } finally {
+                    _localDpiApplying = false;
+                  }
+                  if (!sheetContext.mounted) return;
+                  if (applied) {
+                    savedEnabled = next.localDpiEnabled;
+                    if (_clientExperience.routingPreferences.localDpiEnabled == savedEnabled) {
+                      Navigator.of(sheetContext).pop();
+                      return;
+                    }
+                  }
+                  setSheetState(() {});
                 },
                 icon: Icon(connected ? Icons.sync_rounded : Icons.check_rounded),
                 label: Text(connected ? 'Применить и переподключить' : 'Сохранить изменения'),
@@ -2264,20 +2286,24 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
       setState(() {
         _bonusRewardBusy = false;
-        _bonusSummary = result.summary;
+        if (result.summary != null) _bonusSummary = result.summary;
+        _bonusSummaryError = result.summary == null
+            ? 'Награда начислена, но сводка бонусов не обновилась. Обновите её позже.'
+            : null;
         _connectionManager.markProfileDirty();
         _runtimeHeadline = '$actionName: награда активирована.';
       });
       final days = result.rewardDays;
       final discountPct = result.discountPct;
+      final confirmation = result.rewardKind == 'discount' && discountPct > 0
+          ? '$actionName: скидка −$discountPct% сохранена для одного продления.'
+          : days > 0
+              ? '$actionName: +${ruDays(days)} к доступу.'
+              : '$actionName: отметка сохранена.';
       showPokrovSnack(
         context,
-        result.rewardKind == 'discount' && discountPct > 0
-            ? '$actionName: скидка −$discountPct% сохранена для одного продления.'
-            : days > 0
-                ? '$actionName: +${ruDays(days)} к доступу.'
-                : '$actionName: отметка сохранена.',
-        tone: PokrovSnackTone.success,
+        result.summary == null ? '$confirmation $_bonusSummaryError' : confirmation,
+        tone: result.summary == null ? PokrovSnackTone.info : PokrovSnackTone.success,
       );
       return result;
     } catch (error) {

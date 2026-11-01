@@ -1947,6 +1947,132 @@ void main() {
     await tester.pump();
   });
 
+  testWidgets('Rules keeps failed apply and later edits available for retry', (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(channel, (_) async => {
+      'phase': 'running', 'supportsLiveConnect': true, 'canInitialize': false,
+      'canConnect': true, 'coreEgressValidated': true,
+    });
+    tester.view.physicalSize = const Size(1280, 1200);
+    tester.view.devicePixelRatio = 1;
+    final bootstrapper = _Bootstrapper();
+    addTearDown(() async {
+      if (bootstrapper.gate?.isCompleted == false) bootstrapper.gate!.complete();
+      await tester.pumpWidget(const SizedBox.shrink());
+      messenger.setMockMethodCallHandler(channel, null);
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+      bootstrapper: bootstrapper, firstLaunchStore: _FirstLaunchStore(),
+      clientExperienceStore: _CatalogPickerExperience(), themeMode: ThemeMode.light,
+      onThemeModeChanged: (_) {},
+    )));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Правила'));
+    await tester.pumpAndSettle();
+    final advanced = find.byKey(const ValueKey('rules-advanced-toggle'));
+    await tester.scrollUntilVisible(advanced, 400, scrollable: find.descendant(
+      of: find.byWidgetPredicate((widget) => widget.runtimeType.toString() == '_RulesSection'),
+      matching: find.byType(Scrollable)).first);
+    await tester.tap(advanced);
+    await tester.pumpAndSettle();
+    dynamic dns() => tester.widget(find.byWidgetPredicate((widget) => widget.runtimeType.toString() == '_DnsAndLanCard'));
+    dns().onChanged((dns().preferences as PokrovRoutingPreferences).copyWith(dnsPreset: PokrovDnsPreset.cloudflare));
+    await tester.pumpAndSettle();
+    bootstrapper.gate = Completer<void>();
+    bootstrapper.failure = const BootstrapFailure('test profile failure');
+    final apply = find.byKey(const ValueKey('rules-apply-changes'));
+    await tester.ensureVisible(apply);
+    await tester.pumpAndSettle();
+    await tester.tap(apply);
+    await tester.pump();
+    expect(tester.widget<FilledButton>(apply).onPressed, isNull);
+    expect(bootstrapper.resolutions, isNotEmpty);
+    dns().onChanged((dns().preferences as PokrovRoutingPreferences).copyWith(allowLan: true));
+    await tester.pump();
+    bootstrapper.gate!.complete();
+    await tester.pumpAndSettle();
+    expect(tester.widget<FilledButton>(apply).onPressed, isNotNull);
+    expect((dns().preferences as PokrovRoutingPreferences).dnsPreset, PokrovDnsPreset.cloudflare);
+    expect((dns().preferences as PokrovRoutingPreferences).allowLan, isTrue);
+    final previousAttempts = bootstrapper.resolutions.length;
+    await tester.tap(apply);
+    await tester.pumpAndSettle();
+    expect(bootstrapper.resolutions.length, previousAttempts + 1);
+    expect(apply, findsOneWidget);
+  });
+
+  testWidgets('Rules clears saved changes while stopped', (tester) async {
+    await _openDnsSettings(tester);
+    final dynamic dns = tester.widget(find.byWidgetPredicate((widget) => widget.runtimeType.toString() == '_DnsAndLanCard'));
+    dns.onChanged((dns.preferences as PokrovRoutingPreferences).copyWith(dnsPreset: PokrovDnsPreset.cloudflare));
+    await tester.pumpAndSettle();
+    final apply = find.byKey(const ValueKey('rules-apply-changes'));
+    await tester.ensureVisible(apply);
+    await tester.pumpAndSettle();
+    await tester.tap(apply);
+    await tester.pumpAndSettle();
+    expect(apply, findsNothing);
+  });
+
+  testWidgets('Profile bypass can retry a failed apply after reopening', (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(channel, (_) async => {
+      'phase': 'running', 'supportsLiveConnect': true, 'canInitialize': false,
+      'canConnect': true, 'coreEgressValidated': true,
+    });
+    tester.view.physicalSize = const Size(1280, 1200);
+    tester.view.devicePixelRatio = 1;
+    final bootstrapper = _Bootstrapper();
+    addTearDown(() async {
+      if (bootstrapper.gate?.isCompleted == false) bootstrapper.gate!.complete();
+      await tester.pumpWidget(const SizedBox.shrink());
+      messenger.setMockMethodCallHandler(channel, null);
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: bootstrapper, firstLaunchStore: _FirstLaunchStore(),
+      clientExperienceStore: _CatalogPickerExperience(routeMode: RouteMode.allExceptRu,
+        interfaceMode: PokrovInterfaceMode.simple,
+        preferences: const PokrovRoutingPreferences.defaults().copyWith(localDpiEnabled: false)),
+      themeMode: ThemeMode.light, onThemeModeChanged: (_) {},
+    )));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Профиль'));
+    await tester.pumpAndSettle();
+    final entry = find.byKey(const ValueKey('profile-local-dpi'));
+    await tester.scrollUntilVisible(entry, 300, scrollable: find.descendant(
+      of: find.byType(ui.ProfileScreen), matching: find.byType(Scrollable)).first);
+    await tester.pumpAndSettle();
+    await tester.tap(entry);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('rules-local-dpi')));
+    await tester.pumpAndSettle();
+    bootstrapper.gate = Completer<void>();
+    bootstrapper.failure = const BootstrapFailure('test profile failure');
+    final apply = find.byKey(const ValueKey('profile-local-dpi-apply'));
+    await tester.ensureVisible(apply);
+    await tester.pumpAndSettle();
+    await tester.tap(apply);
+    await tester.pump();
+    expect(tester.widget<FilledButton>(apply).onPressed, isNull);
+    bootstrapper.gate!.complete();
+    await tester.pumpAndSettle();
+    expect(tester.widget<FilledButton>(apply).onPressed, isNotNull);
+    expect((tester.widget(find.byKey(const ValueKey('rules-local-dpi'))) as dynamic).value, isTrue);
+    Navigator.of(tester.element(apply)).pop();
+    await tester.pumpAndSettle();
+    await tester.tap(entry);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('profile-local-dpi-apply')), findsOneWidget);
+  });
+
   testWidgets('Windows bypass entry explains missing native readiness and enables only an admitted installation', (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
@@ -5160,6 +5286,64 @@ void main() {
     expect(manager.status.phase, ConnectionPhase.connected);
     expect(runtime.calls, isNot(contains('disconnect')));
     expect(runtime.overlappingMutation, isFalse);
+  });
+
+  test('routing apply reports failed protected replacement and allows retry', () async {
+    final runtime = _Runtime()..supportsCandidates = true;
+    final manager = _manager(runtime, _Bootstrapper(catalog: true));
+    addTearDown(manager.dispose);
+    await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.connected);
+
+    final preferences = const PokrovRoutingPreferences.defaults()
+        .copyWith(localDpiEnabled: true);
+    manager.setRoutingPreferences(preferences);
+    runtime.failHandoff = true;
+    final failedApply = manager.applyRoutingPreferences(preferences);
+    await runtime.handoffStarted.future;
+    while (manager.busy) { await Future<void>.delayed(Duration.zero); }
+    expect(await failedApply, isFalse);
+    expect(manager.snapshot?.phase, RuntimePhase.running);
+    expect(manager.status.routes.profileDirty, isTrue);
+    expect(runtime.calls, isNot(contains('disconnect')));
+
+    runtime.failHandoff = false;
+    runtime.warpEgressFailure = false;
+    expect(await manager.applyRoutingPreferences(preferences), isTrue);
+    expect(manager.status.routes.profileDirty, isFalse);
+  });
+
+  test('routing apply stays pending during an in-flight connection', () async {
+    final runtime = _Runtime(heldOperation: 'initialize');
+    final manager = _manager(runtime, _Bootstrapper());
+    addTearDown(manager.dispose);
+    final connecting = manager.connect();
+    await runtime.operationEntered.future;
+    final preferences = const PokrovRoutingPreferences.defaults().copyWith(allowLan: true);
+    manager.setRoutingPreferences(preferences);
+    expect(await manager.applyRoutingPreferences(preferences), isFalse);
+    runtime.releaseOperation.complete();
+    await connecting;
+    expect(manager.status.routes.profileDirty, isTrue);
+  });
+
+  test('routing apply saves while stopped or paused on trusted Wi-Fi', () async {
+    final runtime = _Runtime();
+    final manager = _manager(runtime, _Bootstrapper(),
+      currentWifiProbe: () async => _foregroundWifi(runtime, name: 'Home'));
+    addTearDown(manager.dispose);
+    await manager.connect();
+    final preferences = const PokrovRoutingPreferences.defaults()
+        .copyWith(pauseOnTrustedWifi: true, trustedWifiNames: ['Home']);
+    manager.setRoutingPreferences(preferences);
+    expect(await manager.applyRoutingPreferences(preferences), isTrue);
+    expect(runtime.phase, RuntimePhase.configStaged);
+    expect(runtime.handoffCalls, 0);
+
+    final stoppedPreferences = preferences.copyWith(allowLan: true);
+    manager.setRoutingPreferences(stoppedPreferences);
+    expect(await manager.applyRoutingPreferences(stoppedPreferences), isTrue);
+    expect(runtime.handoffCalls, 0);
   });
 
   test('declined protected replacement retires retention after a fresh stopped snapshot', () async {
