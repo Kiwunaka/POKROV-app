@@ -1,12 +1,14 @@
 # Windows acceptance
 
-Private **1.5.0+4251**, App `59f821ff`, passed the new manual update check under
-Profile/About and explicit Locations refresh on the Windows VM: a visible
-no-update response, a completed refresh with retry enabled, and the selected
-country retained. It reuses Core 1.2.15/ABI2 and the v1 shadow model; setup and its
-single-installer ZIP are unsigned. The preceding 4250 upgrade retained login
-and opened email recovery without submitting an OTP. Unchanged transport tests
-were not repeated; no public release or updater handoff was made.
+Private **1.5.0+4252**, App `1b9dd3e0`, passed stopped-client Rules Save and
+Profile LocalDPI Save on the Windows VM, with visible confirmation and no TUN
+start. The changed LocalDPI preference was restored to false through the UI;
+country, mode and login were retained. Full-file byte restoration was not
+completed because the encoded command exceeded the guest limit. Normal tray
+exit and shutdown left the VM PoweredOff/Unlocked. Core 1.2.15/ABI2 and the v1
+shadow model were reused; setup and its single-installer ZIP are unsigned.
+The accepted 4250 login/email and 4251 manual-update/catalog checks were not
+repeated. No public release or updater handoff was made.
 
 Private Windows/Android **1.5.0+4247**, App `9aa5f5f5`, has all six packages in
 `E:/POKROV-tools/temp/release-1.5.0-4247`, reusing Core **1.2.15 / ABI2** and the

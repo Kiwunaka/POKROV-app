@@ -5,15 +5,17 @@ is the only current release queue; [Execution section 0](C:/Users/kiwun/Download
 explains how to continue. Dated results below retain their original scope and do
 not create new tasks or permission to repeat accepted checks.
 
-Private **1.5.0+4251** contains the six packages from App `59f821ff`, with the
-selected Core 1.2.15/ABI2 and bundled v1 shadow model unchanged. The Windows VM
-passed the new About/manual-update action and explicit country/catalog refresh;
-the latter finished with the refresh button enabled and Iceland still selected.
-The preceding 4250 check retained login and opened native email recovery without
-sending a code. Android 4251 installed over 4249 on the owner's phone, but ADB
-became unavailable before the changed mobile flows were accepted. This does not
-establish Beeline Gemini, DNS-tunnel or direct YouTube readiness. Public metadata
-and update manifests remain unchanged.
+Private **1.5.0+4252** contains the six packages from App `1b9dd3e0`, with Core
+1.2.15/ABI2 and the bundled v1 shadow model unchanged. The Windows VM passed the
+new stopped-client Rules Save and Profile LocalDPI Save. Only LocalDPI was
+intentionally changed, false/true/false; country, mode and login were retained.
+The full preferences file was not replayed because the encoded command exceeded
+the guest limit; byte equality is not claimed. Normal tray exit left no app or
+TUN, and normal VM shutdown completed. The preceding 4250 email recovery and
+4251 About/catalog checks remain accepted and were not repeated. The phone still
+has 4251 installed with ADB unavailable; 4252 has no physical mobile acceptance.
+Beeline Gemini, DNS-tunnel and direct YouTube remain pending. Public metadata
+and update manifests are unchanged.
 
 Public metadata remains **1.4.5 / schema 0 / min-supported 1.3.0**.
 **1.5.0+4175 is a draft with seven assets**, not a public release. The
