@@ -1,6 +1,15 @@
 # Smart Access DNS routing
 
-## Current delivery — 29 October 2026
+## Current delivery
+
+Opt-in clients receive signed provider policy **9 / security 1 / state 5**;
+legacy policy **5** and catalog **32** remain available. Windows 4246 passed
+ordinary Premium lease and Connect through Bezmezhau. Physical Beeline
+Gemini/RPC, Slipstream/DNSTT via Auto/TUN, and direct ByeDPI YouTube 1080p
+remain unaccepted. See [Windows acceptance](../operations/windows-release-readiness.md)
+and the [current release queue](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md).
+
+## Delivery snapshot — 29 October 2026
 
 The owner approved commercial embedded use of Shecan, Astra/Astracat, GeoHide,
 Bezmezhau, WLrus, DNS-AI and Zapret DNS. For these agreements, an eligible paid
@@ -38,15 +47,15 @@ supersedes the earlier missing-permission notes for COMSS, Malw, Mafioznik and
 Xbox; do not request those permissions again. Endpoint availability, a signed
 scoped policy and real native feature acceptance are still separate requirements.
 
-In the current client, open **«Правила» → «Для опытных» → «Блокировка и DNS» →
-«SmartDNS-провайдер»**. The choices display the resolver hostname: Windows has
-`dns.wlrus.cfd` and `dns.dns-ai.ru`; Android has `dns.wlrus.cfd`. Select Gemini
+At the 29 October checkpoint, **«Правила» → «Для опытных» → «Блокировка и DNS» →
+«SmartDNS-провайдер»** displayed the resolver hostname: Windows had
+`dns.wlrus.cfd` and `dns.dns-ai.ru`; Android had `dns.wlrus.cfd`. Select Gemini
 through **«Выбрать сервисы и режим»**, apply the selection and connect. The
 server issues a scoped lease for the selected service. Ordinary DNS/AdGuard and
 custom DoH settings are separate. An owner's commercial permission alone does
 not add a provider to this signed policy. Shecan, Astra/Astracat, GeoHide,
-Bezmezhau and Zapret are currently absent; Android DNS-AI also has no admitted
-capability. These are delivery gaps, not hidden picker entries.
+Bezmezhau and Zapret were absent at that checkpoint; Android DNS-AI also had no
+admitted capability. These were delivery gaps, not hidden picker entries.
 
 Windows 4239 native QA returned **433** for 146 + 287. Fresh RPC responses from
 both exact hosts used WLrus `191.217.212.16` over HTTP/2; the secondary host used
