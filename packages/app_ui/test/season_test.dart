@@ -4,12 +4,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_ui/pokrov_app_ui.dart';
 import '../example/lib/sample_data.dart';
 
-Future<void> _loadGolos() async {
+Future<void> _loadFonts() async {
   final loader = FontLoader(pokrovFontFamily);
   for (final weight in ['Regular', 'Medium', 'SemiBold', 'Bold', 'ExtraBold']) {
-    loader.addFont(rootBundle.load('assets/fonts/GolosText-$weight.ttf'));
+    loader.addFont(rootBundle.load('assets/fonts/Onest-$weight.ttf'));
   }
   await loader.load();
+  final display = FontLoader(pokrovDisplayFontFamily);
+  for (final weight in ['SemiBold', 'Bold', 'ExtraBold']) {
+    display.addFont(rootBundle.load('assets/fonts/Unbounded-$weight.ttf'));
+  }
+  await display.load();
 }
 
 Future<void> _pumpHome(WidgetTester tester, {
@@ -45,7 +50,7 @@ double _contrast(Color a, Color b) {
 }
 
 void main() {
-  setUpAll(_loadGolos);
+  setUpAll(_loadFonts);
 
   for (final season in PokrovSeason.values) {
     for (final brightness in Brightness.values) {

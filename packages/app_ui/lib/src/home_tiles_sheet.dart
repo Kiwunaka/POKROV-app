@@ -67,7 +67,7 @@ class _HomeTilesSheetState extends State<HomeTilesSheet> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Виджеты на главной', style: pokrovTextStyle(context, PokrovText.heading)),
+            Text('Виджеты на главной', style: pokrovTextStyle(context, PokrovText.heading), textScaler: pokrovTitleScaler(context)),
             SizedBox(height: 6),
             Text('Выбери, что видно на экране «Защита». Всё остальное по-прежнему в Доступе, Помощи и Настройках.', style: pokrovTextStyle(context, PokrovText.body)),
             SectionLabel('На главной'),

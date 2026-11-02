@@ -36,7 +36,7 @@ class FirstConnectSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Что пускать через POKROV?', style: pokrovTextStyle(context, PokrovText.heading)),
+            Text('Что пускать через POKROV?', style: pokrovTextStyle(context, PokrovText.heading), textScaler: pokrovTitleScaler(context)),
             SizedBox(height: 6),
             Text('Выбери один раз. Поменять можно в Настройках.', style: pokrovTextStyle(context, PokrovText.body)),
             SizedBox(height: 16),

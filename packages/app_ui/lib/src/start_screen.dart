@@ -89,7 +89,7 @@ class _StartScreenState extends State<StartScreen> with SingleTickerProviderStat
                     ),
                   ),
                   SizedBox(height: 12),
-                  Text('Привет! Это POKROV', textAlign: TextAlign.center, style: pokrovTextStyle(context, PokrovText.title)),
+                  Text('Привет! Это POKROV', textAlign: TextAlign.center, style: pokrovTextStyle(context, PokrovText.title), textScaler: pokrovTitleScaler(context)),
                   SizedBox(height: 6),
                   Text(widget.offer, textAlign: TextAlign.center, style: TextStyle(fontSize: 16, height: 1.45, color: pokrovColor(context, PokrovColors.soft))),
                   if (widget.notice != null) widget.notice!,

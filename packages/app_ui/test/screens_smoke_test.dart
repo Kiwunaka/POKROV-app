@@ -7,13 +7,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_ui/pokrov_app_ui.dart';
 import '../example/lib/sample_data.dart';
 
-/// Loads the real Golos Text so layout checks match the device.
-Future<void> _loadGolos() async {
+/// Loads the real Onest and Unbounded so layout checks match the device.
+Future<void> _loadFonts() async {
   final loader = FontLoader(pokrovFontFamily);
   for (final weight in ['Regular', 'Medium', 'SemiBold', 'Bold', 'ExtraBold']) {
-    loader.addFont(rootBundle.load('assets/fonts/GolosText-$weight.ttf'));
+    loader.addFont(rootBundle.load('assets/fonts/Onest-$weight.ttf'));
   }
   await loader.load();
+  final display = FontLoader(pokrovDisplayFontFamily);
+  for (final weight in ['SemiBold', 'Bold', 'ExtraBold']) {
+    display.addFont(rootBundle.load('assets/fonts/Unbounded-$weight.ttf'));
+  }
+  await display.load();
 }
 
 Future<void> _pump(WidgetTester tester, Widget child, {double textScale = 1}) async {
@@ -34,7 +39,7 @@ List<HomeTile> _tiles({bool warp = false, VoidCallback? onWarp}) => [
 ];
 
 void main() {
-  setUpAll(_loadGolos);
+  setUpAll(_loadFonts);
 
   for (final phase in ConnectionPhase.values) {
     testWidgets('home ${phase.name} shows the chosen widgets', (tester) async {
@@ -246,6 +251,13 @@ void main() {
     await tester.pump();
     expect(find.textContaining('Ничего не нашли'), findsOneWidget);
     expect(opened, ['warp', 'wifi']);
+  });
+
+  testWidgets('display titles stay whole words at 200% text', (tester) async {
+    await _pump(tester, SettingsScreen(entries: const []), textScale: 2);
+    final title = tester.renderObject<RenderParagraph>(find.text('Настройки'));
+    final lastLetter = title.getOffsetForCaret(const TextPosition(offset: 8), Rect.zero);
+    expect(lastLetter.dy, lessThan(4), reason: 'Unbounded must not split «Настройки» across lines');
   });
 
   testWidgets('home widgets can be added, moved up, removed and reset', (tester) async {

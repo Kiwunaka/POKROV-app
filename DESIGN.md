@@ -6,8 +6,10 @@ updated: 2026-11-02
 
 # POKROV Client Design System
 
-The approved 18 October screens, plain «ты» copy, Golos Text font, colors and
-motion live in `packages/app_ui`. Feature-local adapters in `app_shell` supply
+The approved 18 October screens, plain «ты» copy, colors and motion live in
+`packages/app_ui`. Fonts are shared with the cabinet and site: Onest for text
+and Unbounded for titles and the wordmark; titles grow with system text up to
+140% so single words stay whole. Feature-local adapters in `app_shell` supply
 real view data and existing callbacks. The UI package has no runtime, network
 or storage access; fake data and simulated connections belong to its example
 and tests only. Android and Windows share a centered column up to 480 logical

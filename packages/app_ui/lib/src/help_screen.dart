@@ -50,7 +50,7 @@ class HelpScreen extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.fromLTRB(16, 12, 16, 112),
         children: [
-          Text('Помощь', style: pokrovTextStyle(context, PokrovText.title)),
+          Text('Помощь', style: pokrovTextStyle(context, PokrovText.title), textScaler: pokrovTitleScaler(context)),
           SizedBox(height: 4),
           Text('Сначала ответит ИИ-помощник. Если не поможет, позови человека.', style: pokrovTextStyle(context, PokrovText.body)),
           SizedBox(height: 14),

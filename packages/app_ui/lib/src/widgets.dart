@@ -216,7 +216,7 @@ class ScreenHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: onBack != null ? pokrovTextStyle(context, PokrovText.heading) : pokrovTextStyle(context, PokrovText.title)),
+              Text(title, style: onBack != null ? pokrovTextStyle(context, PokrovText.heading) : pokrovTextStyle(context, PokrovText.title), textScaler: pokrovTitleScaler(context)),
               if (subtitle != null) Text(subtitle!, style: pokrovTextStyle(context, PokrovText.caption)),
             ],
           ),

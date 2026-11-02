@@ -37,8 +37,12 @@ abstract final class PokrovRadii {
   static const small = 12.0;
 }
 
-/// Font family declared by this package.
-const String pokrovFontFamily = 'packages/pokrov_app_ui/Golos Text';
+/// Body font declared by this package; the app, cabinet and site share
+/// Onest for text and Unbounded for titles.
+const String pokrovFontFamily = 'packages/pokrov_app_ui/Onest';
+
+/// Display font for screen titles, headings and the wordmark.
+const String pokrovDisplayFontFamily = 'packages/pokrov_app_ui/Unbounded';
 
 /// Motion: springy for selection, calm for state colors.
 abstract final class PokrovMotion {
@@ -115,13 +119,18 @@ Color pokrovColor(BuildContext context, Color color) {
 Color pokrovOnAccent(BuildContext context) =>
     Theme.of(context).brightness == Brightness.dark ? const Color(0xFF101713) : Colors.white;
 
+/// Unbounded titles grow with the system text size up to 140%: wider growth
+/// would break single words such as «Настройки» across lines.
+TextScaler pokrovTitleScaler(BuildContext context) =>
+    MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.4);
+
 TextStyle pokrovTextStyle(BuildContext context, TextStyle style) =>
     style.color == null ? style : style.copyWith(color: pokrovColor(context, style.color!));
 
 /// Text styles used across the frame.
 abstract final class PokrovText {
-  static const title = TextStyle(fontSize: 28, height: 1.15, fontWeight: FontWeight.w800, color: PokrovColors.ink);
-  static const heading = TextStyle(fontSize: 22, height: 1.2, fontWeight: FontWeight.w800, color: PokrovColors.ink);
+  static const title = TextStyle(fontFamily: pokrovDisplayFontFamily, fontSize: 26, height: 1.2, fontWeight: FontWeight.w700, color: PokrovColors.ink);
+  static const heading = TextStyle(fontFamily: pokrovDisplayFontFamily, fontSize: 20, height: 1.25, fontWeight: FontWeight.w700, color: PokrovColors.ink);
   static const rowTitle = TextStyle(fontSize: 16, height: 1.3, fontWeight: FontWeight.w600, color: PokrovColors.ink);
   static const rowStrong = TextStyle(fontSize: 16, height: 1.3, fontWeight: FontWeight.w800, color: PokrovColors.ink);
   static const body = TextStyle(fontSize: 15, height: 1.45, color: PokrovColors.soft);

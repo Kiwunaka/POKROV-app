@@ -67,7 +67,7 @@ class AccessScreen extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.fromLTRB(16, 12, 16, 112),
         children: [
-          Text('Доступ', style: pokrovTextStyle(context, PokrovText.title)),
+          Text('Доступ', style: pokrovTextStyle(context, PokrovText.title), textScaler: pokrovTitleScaler(context)),
           SizedBox(height: 12),
           _AccessCard(data: data, onRenew: onRenew, actionLabel: accessActionLabel),
           if (adSlot != null) Padding(padding: const EdgeInsets.only(top: 12), child: adSlot!),

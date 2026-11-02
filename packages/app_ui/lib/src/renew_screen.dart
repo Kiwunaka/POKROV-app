@@ -32,7 +32,7 @@ class RenewScreen extends StatelessWidget {
                 children: [
               BackCircle(onPressed: onBack),
               SizedBox(height: 12),
-              Text('Продлить доступ', style: pokrovTextStyle(context, PokrovText.title)),
+              Text('Продлить доступ', style: pokrovTextStyle(context, PokrovText.title), textScaler: pokrovTitleScaler(context)),
               Text(data.current, style: pokrovTextStyle(context, PokrovText.body)),
               SizedBox(height: 16),
               if (data.plans.isNotEmpty) LayoutBuilder(builder: (context, constraints) {

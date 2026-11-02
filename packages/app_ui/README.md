@@ -1,6 +1,6 @@
 # pokrov_app_ui
 
-Screens of the redesign the owner approved on 2026-10-18. The frame was built from the 1.5.0 screens: same circle button, chips, tabs, emerald and Golos Text, with plain «ты» texts, technical detail moved to a second layer, and live motion.
+Screens of the redesign the owner approved on 2026-10-18. The frame was built from the 1.5.0 screens: same circle button, chips, tabs, emerald, with plain «ты» texts, technical detail moved to a second layer, and live motion.
 
 On 2026-11-02 the owner chose direction D: four task tabs (Защита, Доступ, Помощь, Настройки) instead of the Simple/Advanced split, widgets on the main screen that the person picks and orders, and one search over Settings.
 
@@ -40,6 +40,6 @@ Feature filenames below belong to the existing
 
 Notes for the integration:
 
-- Font family is `packages/pokrov_app_ui/Golos Text`; this package owns the bundled font files used by the shell.
+- Fonts are shared with the cabinet and site: Onest for text (`pokrovFontFamily`) and Unbounded for titles and the wordmark (`pokrovDisplayFontFamily`). The static TTF weights were cut from the OFL variable fonts; licenses are in `assets/fonts/OFL-*.txt`.
 - The connected state repeats soft waves around the button (reduced motion stops them). The same motion rule is documented in [DESIGN.md](../../DESIGN.md).
 - The support code must already be masked when it reaches `DiagnosticsViewData`.

@@ -43,7 +43,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: ListView(
         padding: EdgeInsets.fromLTRB(16, 12, 16, 112),
         children: [
-          Text('Настройки', style: pokrovTextStyle(context, PokrovText.title)),
+          Text('Настройки', style: pokrovTextStyle(context, PokrovText.title), textScaler: pokrovTitleScaler(context)),
           SizedBox(height: 12),
           TextField(
             key: const ValueKey('settings-search'),
