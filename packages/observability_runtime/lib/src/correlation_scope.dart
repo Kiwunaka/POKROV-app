@@ -16,6 +16,8 @@ abstract final class PortalCorrelationScope {
   static String currentOrCreate([OperationalIdFactory? ids]) =>
       current ?? (ids ?? OperationalIdFactory()).uuidV4();
 
+  static bool isValid(String? value) => value != null && _uuidV4.hasMatch(value);
+
   static Future<T> run<T>(String correlationId, Future<T> Function() body) {
     if (!_uuidV4.hasMatch(correlationId)) {
       throw ArgumentError.value(correlationId, 'correlationId');

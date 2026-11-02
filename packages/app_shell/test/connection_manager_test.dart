@@ -19,7 +19,7 @@ import 'package:pokrov_app_shell/src/shell/managed_profile_cache.dart';
 import 'package:pokrov_app_shell/src/shell/runtime_connectivity_report.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_diagnostics_collectors/diagnostics_collectors.dart';
-import 'package:pokrov_observability_contracts/observability_contracts.dart' show ObservabilityPrivacyClass;
+import 'package:pokrov_observability_contracts/observability_contracts.dart' show ObservabilityPrivacyClass, PortalFailureReason;
 import 'package:pokrov_observability_runtime/observability_runtime.dart'
     show OperationalAttributePolicy, OperationalBreadcrumb, OperationalFailureMapper;
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
@@ -285,6 +285,8 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
     required bool connected, String errorCode = '', String failureKind = '',
     String? failureOperation,
     int? failureHttpStatus,
+    PortalFailureReason? failureReason,
+    String? failureRequestId,
     String selectedNodeCode = '', String routeMode = '', int? durationMs,
     int? attemptNumber, bool? retryable, String networkClass = '',
     String carrierMccMnc = '', String carrierName = '', String candidateTransport = '',
@@ -301,6 +303,8 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
       'failure_kind': failureKind, 'connectivity': runtimeConnectivityReport(connectivitySnapshot),
       'failure_operation': failureOperation,
       'failure_http_status': failureHttpStatus,
+      'failure_reason': failureReason?.wireValue,
+      'failure_request_id': failureRequestId,
       'egress_probe': egressProbeObservation,
       'native_kind': connectivitySnapshot?.lastFailureKind,
       'candidate_ref': candidateRef, 'candidate_variant': candidateVariant,
@@ -414,6 +418,8 @@ class _QaProfileFailureBootstrapper extends AppFirstRuntimeBootstrapper {
     required HostPlatform hostPlatform, required String runtimePhase, required bool connected,
     String errorCode = '', String failureKind = '', String? failureOperation,
     int? failureHttpStatus,
+    PortalFailureReason? failureReason,
+    String? failureRequestId,
     String selectedNodeCode = '', String routeMode = '', int? durationMs, int? attemptNumber,
     bool? retryable, String networkClass = '', String carrierMccMnc = '', String carrierName = '',
     String candidateTransport = '', String candidateRef = '', String candidateVariant = '',
@@ -618,11 +624,13 @@ Future<VerifiedSmartAccessLease> _smartDnsLease({required VerifiedRoutingCatalog
 class _StartupAccountBootstrapper extends _StatsBootstrapper implements AppFirstClientDataService {
   int subscriptionReads = 0;
   ClientSubscriptionInfo? subscription;
+  BootstrapFailure? subscriptionFailure;
 
   @override
   Future<ClientSubscriptionInfo> fetchClientSubscription({required HostPlatform hostPlatform,
     Duration? requestTimeout, Future<void>? cancelled}) async {
     subscriptionReads++;
+    if (subscriptionFailure case final failure?) throw failure;
     return subscription ?? const ClientSubscriptionInfo(lane: 'trialPremium', accessState: 'trial_premium',
       expiresAt: '', daysLeft: 1, autoRenew: false, renewUrl: null,
       plans: [], trafficPolicy: {});
@@ -1780,6 +1788,32 @@ void main() {
     telemetry.complete();
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('subscription failure diagnostics distinguish local denial from an HTTP response', (tester) async {
+    for (final failure in const [
+      BootstrapFailure('local session unavailable', statusCode: 401),
+      BootstrapFailure('service unavailable', statusCode: 503, operation: 'GET /api/client/subscription'),
+    ]) {
+      final bootstrapper = _StartupAccountBootstrapper()..subscriptionFailure = failure;
+      await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper, firstLaunchStore: _FirstLaunchStore(),
+        clientExperienceStore: _CatalogPickerExperience(), themeMode: ThemeMode.light,
+        onThemeModeChanged: (_) {},
+      )));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      final report = bootstrapper.actualReports.singleWhere(
+        (value) => value['error_code'] == 'subscription_refresh_failed');
+      final isHttpResponse = failure.operation != null;
+      expect(report['failure_operation'], isHttpResponse ? 'subscription_refresh' : null);
+      expect(report['failure_http_status'], isHttpResponse ? 503 : null);
+      expect(PokrovAuthRequestDiagnostic.finished(errorCode: failure.operationalErrorCode,
+        failure: failure).httpStatus, isHttpResponse ? 503 : null);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    }
   });
 
   test('retired Xbox DNS preference returns to automatic without direct AI routing', () async {
@@ -2986,6 +3020,17 @@ void main() {
     expect(jsonEncode(unavailableReport), isNot(contains('synthetic-private-message')));
     expect(jsonEncode(unavailableReport), isNot(contains('/api/client/')));
     expect(unavailableRuntime.connectCalls, 0);
+
+    final local = _StatsBootstrapper()..failure = const BootstrapFailure(
+      'local session unavailable', statusCode: 401);
+    final localRuntime = _Runtime();
+    final localManager = _manager(localRuntime, local);
+    addTearDown(localManager.dispose);
+    await localManager.connect();
+    final localReport = local.actualReports.singleWhere((value) => value['runtime_phase'] == 'failed');
+    expect(localReport['failure_operation'], isNull);
+    expect(localReport['failure_http_status'], isNull);
+    expect(localRuntime.connectCalls, 0);
 
     final catalog = _CatalogFailureBootstrapper();
     final catalogRuntime = _Runtime();

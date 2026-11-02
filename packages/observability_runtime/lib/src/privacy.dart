@@ -112,7 +112,7 @@ abstract final class OperationalAttributePolicy {
     'retry_count',
     'error_count',
   };
-  static const _enums = <String, Set<String>>{
+  static final _enums = <String, Set<String>>{
     'api_failure_kind': <String>{
       'origin_socket', 'origin_http', 'origin_tls', 'origin_timeout',
       'origin_content_type', 'origin_http_status', 'origin_json_syntax',
@@ -364,6 +364,7 @@ abstract final class OperationalAttributePolicy {
     'http_64k_failure': candidateHTTP64KFailures,
     'failure_kind': {...candidateProbeFailureKinds, ...connectionClosedGuardCodes},
     'failure_operation': connectionFailureOperations,
+    'failure_reason': {for (final reason in PortalFailureReason.values) reason.wireValue},
   };
 
   static final _versionPattern = RegExp(
@@ -379,8 +380,10 @@ abstract final class OperationalAttributePolicy {
     int? httpStatus,
     String? apiFailureKind,
     int? osErrorCode,
+    PortalFailureReason? failureReason,
   }) =>
       <String, Object?>{
+        if (failureReason != null) 'failure_reason': failureReason.wireValue,
         if (reason != null && _enums['prepare_reason']!.contains(reason))
           'prepare_reason': reason,
         if (httpStatus != null && httpStatus >= 100 && httpStatus <= 599)

@@ -513,10 +513,10 @@ final class PokrovClientObservability {
         errorCode: errorCode,
         errorOrigin: errorOrigin,
         prepareReason: preparationFailure.code,
-        httpStatus: preparationFailure.apiFailureKind == null
-            ? preparationFailure.statusCode : preparationFailure.observedHttpStatus,
+        httpStatus: preparationFailure.httpStatusForDiagnostics,
         apiFailureKind: preparationFailure.apiFailureKind,
         osErrorCode: preparationFailure.osErrorCode,
+        failureReason: preparationFailure.reason,
       );
     }
     attempt.finish(
@@ -525,6 +525,7 @@ final class PokrovClientObservability {
       errorOrigin: errorOrigin,
       failureKind: failureKind,
       failureOperation: failureOperation,
+      failureReason: preparationFailure?.reason,
     );
   }
 
@@ -666,8 +667,9 @@ final class PokrovClientObservability {
         'status_class': errorCode == null ? 'success' : 'client_error',
         ...OperationalAttributePolicy.prepareFailureAttributes(
           apiFailureKind: failure?.apiFailureKind,
-          httpStatus: failure?.apiFailureKind == null ? failure?.statusCode : failure?.observedHttpStatus,
+          httpStatus: failure?.httpStatusForDiagnostics,
           osErrorCode: failure?.osErrorCode,
+          failureReason: failure?.reason,
         ),
       },
     );
@@ -698,8 +700,9 @@ final class PokrovClientObservability {
         'status_class': errorCode == null ? 'success' : 'server_error',
         ...OperationalAttributePolicy.prepareFailureAttributes(
           apiFailureKind: failure?.apiFailureKind,
-          httpStatus: failure?.apiFailureKind == null ? failure?.statusCode : failure?.observedHttpStatus,
+          httpStatus: failure?.httpStatusForDiagnostics,
           osErrorCode: failure?.osErrorCode,
+          failureReason: failure?.reason,
         ),
       },
     );

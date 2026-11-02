@@ -12,7 +12,7 @@ import 'package:pokrov_runtime_engine/runtime_engine.dart';
 import 'package:pokrov_support_bundle/support_bundle.dart';
 
 import '../../../app_first_runtime_bootstrap.dart'
-    show BootstrapFailure, SupportBundleTransferFailure, RuntimeStatsDeliveryReceipt;
+    show BootstrapFailure, SupportBundleTransferFailure, RuntimeStatsDeliveryReceipt, portalFailureUserMessage;
 import '../../observability/release_health_baseline.dart';
 import 'support_mode.dart';
 
@@ -206,6 +206,7 @@ final class PokrovDiagnosticTimelineAttempt {
     this.probeError,
     this.failureKind,
     this.failureOperation,
+    this.failureReason,
   }) : entries = List<PokrovDiagnosticTimelineEntry>.unmodifiable(entries);
 
   final int generation;
@@ -216,6 +217,7 @@ final class PokrovDiagnosticTimelineAttempt {
   final Map<String, Object>? probeError;
   final String? failureKind;
   final String? failureOperation;
+  final PortalFailureReason? failureReason;
   final bool isReconnect;
   final List<PokrovDiagnosticTimelineEntry> entries;
 }
@@ -282,7 +284,9 @@ final class PokrovAuthRequestDiagnostic {
         errorCode = null,
         apiFailureKind = null,
         httpStatus = null,
-        osErrorCode = null;
+        osErrorCode = null,
+        failureReason = null,
+        requestId = null;
 
   const PokrovAuthRequestDiagnostic._({
     required this.outcome,
@@ -290,6 +294,8 @@ final class PokrovAuthRequestDiagnostic {
     this.apiFailureKind,
     this.httpStatus,
     this.osErrorCode,
+    this.failureReason,
+    this.requestId,
   });
 
   factory PokrovAuthRequestDiagnostic.finished({
@@ -298,8 +304,7 @@ final class PokrovAuthRequestDiagnostic {
   }) {
     final attributes = OperationalAttributePolicy.prepareFailureAttributes(
       apiFailureKind: failure?.apiFailureKind,
-      httpStatus: failure?.apiFailureKind == null
-          ? failure?.statusCode : failure?.observedHttpStatus,
+      httpStatus: failure?.httpStatusForDiagnostics,
       osErrorCode: failure?.osErrorCode,
     );
     return PokrovAuthRequestDiagnostic._(
@@ -310,6 +315,8 @@ final class PokrovAuthRequestDiagnostic {
       apiFailureKind: attributes['api_failure_kind'] as String?,
       httpStatus: attributes['http_status'] as int?,
       osErrorCode: attributes['os_error_code'] as int?,
+      failureReason: failure?.reason,
+      requestId: PortalCorrelationScope.isValid(failure?.requestId) ? failure?.requestId : null,
     );
   }
 
@@ -318,6 +325,8 @@ final class PokrovAuthRequestDiagnostic {
   final String? apiFailureKind;
   final int? httpStatus;
   final int? osErrorCode;
+  final PortalFailureReason? failureReason;
+  final String? requestId;
 }
 
 String _authRequestSummary(PokrovAuthRequestDiagnostic? request) {
@@ -332,6 +341,8 @@ String _authRequestSummary(PokrovAuthRequestDiagnostic? request) {
     if (request?.apiFailureKind case final kind?) kind,
     if (request?.httpStatus case final status?) 'HTTP $status',
     if (request?.osErrorCode case final code?) 'IO $code',
+    if (portalFailureUserMessage(request?.failureReason) case final message?) message,
+    if (request?.requestId case final requestId?) 'Код обращения: $requestId',
   ];
   return 'Запрос доступа: $state.${details.isEmpty ? '' : ' ${details.join(' · ')}'}';
 }
@@ -811,6 +822,7 @@ abstract final class PokrovDiagnosticsPresenter {
           probeError: currentProbe?.probeError,
           failureKind: connectionClosedGuardCodes.contains(terminal?.failureKind) ? terminal?.failureKind : null,
           failureOperation: terminal?.failureOperation,
+          failureReason: terminal?.failureReason,
         ),
       );
     }
@@ -2197,6 +2209,8 @@ class _TimelineAttemptView extends StatelessWidget {
           Text('Операция отказа: ${attempt.failureOperation}', style: theme.textTheme.bodySmall),
         if (attempt.failureKind != null)
           Text('Код отказа: ${attempt.failureKind}', style: theme.textTheme.bodySmall),
+        if (portalFailureUserMessage(attempt.failureReason) case final message?)
+          Text('Причина отказа: $message', style: theme.textTheme.bodySmall),
         if (attempt.probeStage != null)
           Text(
             'Этап проверки кандидата: ${attempt.probeStage}',

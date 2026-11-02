@@ -17,6 +17,7 @@ class _PairingActions implements ManagedProfileBootstrapper, AppFirstAccountActi
   String? requestedEmail;
   String? recoveredEmail;
   String? recoveryCode;
+  BootstrapFailure? emailFailure;
 
   @override
   Future<void> requestEmailLoginCode({required HostPlatform hostPlatform, required String email}) async {
@@ -27,6 +28,7 @@ class _PairingActions implements ManagedProfileBootstrapper, AppFirstAccountActi
   Future<DevicePairingClaimResult> recoverEmailSession({
     required HostPlatform hostPlatform, required String email, required String code,
   }) async {
+    if (emailFailure case final failure?) throw failure;
     recoveredEmail = email;
     recoveryCode = code;
     return const DevicePairingClaimResult(ok: true, accountId: 'fixture-account',
@@ -112,6 +114,20 @@ void main() {
     expect(actions.requestedEmail, 'account@example.invalid');
     expect(actions.recoveredEmail, isNull);
     await tester.enterText(find.byKey(const ValueKey('email-recovery-code')), '123456');
+    const requestId = '11111111-1111-4111-8111-111111111111';
+    actions.emailFailure = const BootstrapFailure('Код из письма не подошёл. Запросите новый код.',
+      statusCode: 401, code: 'email_otp_invalid', operation: 'POST /api/auth/email/otp/finish', requestId: requestId);
+    await tester.ensureVisible(submit);
+    await tester.tap(submit);
+    await tester.pump();
+    expect(find.text('Код из письма не подошёл. Запросите новый код.'), findsOneWidget);
+    final failed = actions.reports.lastWhere((args) => args[#errorCode] == 'email_login_failed');
+    expect(failed[#failureOperation], 'email_otp_finish');
+    expect(failed[#failureReason], PortalFailureReason.emailOtpInvalid);
+    expect(failed[#failureRequestId], requestId);
+    expect(failed.toString(), isNot(contains('account@example.invalid')));
+    expect(failed.toString(), isNot(contains('123456')));
+    actions.emailFailure = null;
     await tester.ensureVisible(submit);
     await tester.tap(submit);
     await tester.pump();
@@ -185,6 +201,7 @@ void main() {
     expect(actions.redeems, 1);
     expect(redeemReport[#failureOperation], 'redeem');
     expect(redeemReport[#failureHttpStatus], 410);
+    expect(redeemReport[#failureReason], isNull);
     expect(redeemReport.toString(), isNot(contains('private_server_reason')));
     expect(redeemReport.toString(), isNot(contains('private response text')));
     ScaffoldMessenger.of(tester.element(find.byType(Scaffold).first)).clearSnackBars();

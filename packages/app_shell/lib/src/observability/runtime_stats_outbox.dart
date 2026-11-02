@@ -53,6 +53,8 @@ final class _RuntimeStatsRecord {
       'failure_kind',
       'failure_operation',
       'failure_http_status',
+      'failure_reason',
+      'failure_request_id',
       'selected_node_code',
       'route_mode',
       'duration_ms',
@@ -93,7 +95,15 @@ final class _RuntimeStatsRecord {
     if (body.containsKey('failure_operation') && !connectionFailureOperations.contains(body['failure_operation'])) {
       throw const FormatException('runtime_stats_body_invalid');
     }
+    if (body.containsKey('failure_reason') &&
+        (body['failure_reason'] is! String || PortalFailureReason.fromCode(body['failure_reason'] as String) == null)) {
+      throw const FormatException('runtime_stats_body_invalid');
+    }
     final failureHttpStatus = body['failure_http_status'];
+    if (body.containsKey('failure_request_id') &&
+        (body['failure_request_id'] is! String || !PortalCorrelationScope.isValid(body['failure_request_id'] as String))) {
+      throw const FormatException('runtime_stats_body_invalid');
+    }
     if (body.containsKey('failure_http_status') &&
         (failureHttpStatus is! int || failureHttpStatus < 100 || failureHttpStatus > 599)) {
       throw const FormatException('runtime_stats_body_invalid');

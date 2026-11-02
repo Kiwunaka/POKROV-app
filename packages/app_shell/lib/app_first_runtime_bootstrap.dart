@@ -14,7 +14,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_observability_contracts/observability_contracts.dart'
-    show KnownOperationalErrorCodes, connectionClosedGuardCodes, connectionFailureOperations;
+    show KnownOperationalErrorCodes, PortalFailureReason, connectionClosedGuardCodes, connectionFailureOperations;
 import 'package:pokrov_observability_runtime/observability_runtime.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 import 'package:pokrov_support_bundle/support_bundle.dart';
@@ -792,6 +792,8 @@ abstract interface class AppFirstExperienceService {
     String failureKind = '',
     String? failureOperation,
     int? failureHttpStatus,
+    PortalFailureReason? failureReason,
+    String? failureRequestId,
     String selectedNodeCode = '',
     String routeMode = '',
     int? durationMs,
@@ -1102,6 +1104,89 @@ abstract interface class AppFirstSmartAccessService {
   });
 }
 
+String? portalFailureUserMessage(PortalFailureReason? reason) => switch (reason) {
+  PortalFailureReason.deviceLimitReached || PortalFailureReason.deviceLimitExceeded =>
+    'Лимит устройств исчерпан. Откройте кабинет и отвяжите старое устройство.',
+  PortalFailureReason.pairingNotFound || PortalFailureReason.pairingCodeInvalid =>
+    'Код входа не найден или введён неверно. Проверьте восемь символов или получите новый код в Telegram либо кабинете.',
+  PortalFailureReason.pairingCodeExpired =>
+    'Код входа истёк. Получите новый код в Telegram или кабинете.',
+  PortalFailureReason.pairingCodeUsed =>
+    'Код входа уже использован или отменён. Получите новый код в Telegram или кабинете.',
+  PortalFailureReason.deviceAlreadyRegistered =>
+    'Устройство уже связано с аккаунтом. Восстановите вход по почте или обратитесь в поддержку.',
+  PortalFailureReason.deviceIdentityConflict =>
+    'Устройство связано с другим аккаунтом. Войдите в нужный аккаунт или обратитесь в поддержку.',
+  PortalFailureReason.deviceInvalid =>
+    'Не удалось определить устройство. Перезапустите приложение; если ошибка повторится, обратитесь в поддержку.',
+  PortalFailureReason.pairingNotConfigured =>
+    'Вход по коду временно недоступен. Попробуйте восстановить вход по почте или обратитесь в поддержку.',
+  PortalFailureReason.deviceRevoked =>
+    'Доступ этого устройства отозван. Откройте «Восстановить вход» в профиле. Если код не помогает, используйте привязанную почту или обратитесь в поддержку.',
+  PortalFailureReason.authSessionExpired || PortalFailureReason.freshAuthRequired ||
+  PortalFailureReason.deviceRecoveryRequired || PortalFailureReason.accessExpired ||
+  PortalFailureReason.refreshTokenInvalid || PortalFailureReason.refreshReuseDetected ||
+  PortalFailureReason.refreshExpired || PortalFailureReason.sessionRevoked ||
+  PortalFailureReason.deviceCredentialChanged || PortalFailureReason.sessionEpochChanged =>
+    'Сессия устройства больше не действует. Откройте «Восстановить вход» в профиле. Если код не помогает, используйте привязанную почту или обратитесь в поддержку.',
+  PortalFailureReason.accountNotFound || PortalFailureReason.accountUnavailable ||
+  PortalFailureReason.accountRestricted =>
+    'Аккаунт недоступен. Обратитесь в поддержку через Telegram или кабинет.',
+  PortalFailureReason.rateLimited =>
+    'Слишком много попыток. Подождите немного и повторите.',
+  PortalFailureReason.serviceUnavailable =>
+    'Сервис временно недоступен. Попробуйте ещё раз позже.',
+  PortalFailureReason.nodeCapacityExhausted =>
+    'В выбранной локации нет свободных подключений. Выберите другую локацию.',
+  PortalFailureReason.emailOtpInvalid =>
+    'Код из письма не подошёл или уже использован. Запросите новый код.',
+  PortalFailureReason.emailOtpExpired =>
+    'Код из письма истёк. Запросите новый код.',
+  PortalFailureReason.redeemCodeRequired => 'Введите код входа или активации.',
+  PortalFailureReason.subscriptionLinkNotRedeemCode =>
+    'Ссылка подключения не является кодом. Получите код входа в Telegram или кабинете.',
+  PortalFailureReason.redeemCodeNotSupported =>
+    'Код не найден или не поддерживается. Проверьте код либо обратитесь в поддержку.',
+  PortalFailureReason.accessKeyNotFound || PortalFailureReason.promoNotFound ||
+  PortalFailureReason.giftCodeInvalid || PortalFailureReason.giftCodeNotFound =>
+    'Код активации не найден. Проверьте код или обратитесь к тому, кто его выдал.',
+  PortalFailureReason.accessKeyRevoked || PortalFailureReason.giftCodeRevoked =>
+    'Код активации отозван. Обратитесь к тому, кто его выдал, или в поддержку.',
+  PortalFailureReason.accessKeyAlreadyRedeemed || PortalFailureReason.promoAlreadyRedeemed ||
+  PortalFailureReason.giftCodeAlreadyRedeemed =>
+    'Этот код активации уже использован. Проверьте подписку или запросите другой код.',
+  PortalFailureReason.accessKeySelfRedeem || PortalFailureReason.giftCodeSelfRedeem =>
+    'Нельзя активировать собственный подарочный код. Передайте его другому человеку.',
+  PortalFailureReason.accessKeyTypeUnsupported || PortalFailureReason.giftCodeTypeUnsupported ||
+  PortalFailureReason.promoInvalid =>
+    'Этот код не поддерживается. Обратитесь к тому, кто его выдал, или в поддержку.',
+  PortalFailureReason.termsRequired =>
+    'Перед активацией кода примите условия сервиса в кабинете.',
+  PortalFailureReason.promoExhausted =>
+    'Лимит активаций промокода исчерпан. Используйте другой код.',
+  PortalFailureReason.promoExpired =>
+    'Промокод истёк. Используйте действующий код.',
+  PortalFailureReason.promoCampaignRestricted =>
+    'Промокод недоступен для этого аккаунта. Проверьте условия акции или обратитесь в поддержку.',
+  PortalFailureReason.paymentPending =>
+    'Оплата ещё обрабатывается. Подождите и обновите подписку в профиле.',
+  PortalFailureReason.paymentClaimReversed =>
+    'Платёж отменён или возвращён. Проверьте платёж в кабинете или обратитесь в поддержку.',
+  PortalFailureReason.paymentManualReview =>
+    'Платёж требует проверки. Обратитесь в поддержку через Telegram или кабинет.',
+  PortalFailureReason.paymentAccountConflict =>
+    'Этот платёж связан с другим аккаунтом. Войдите в нужный аккаунт или обратитесь в поддержку.',
+  PortalFailureReason.activeAccessRequired =>
+    'Для подключения нужен действующий доступ. Проверьте подписку в профиле или обратитесь в поддержку.',
+  PortalFailureReason.sessionNotConfigured =>
+    'Сервис входа временно недоступен. Попробуйте позже или обратитесь в поддержку.',
+  PortalFailureReason.paymentNotRedeemable =>
+    'Не удалось активировать доступ по этому платежу. Проверьте платёж в кабинете или обратитесь в поддержку.',
+  PortalFailureReason.giftCampaignRestricted =>
+    'Подарочный код недоступен для этого аккаунта. Проверьте условия акции или обратитесь в поддержку.',
+  null => null,
+};
+
 class BootstrapFailure implements Exception {
   const BootstrapFailure(
     this.message, {
@@ -1113,6 +1198,7 @@ class BootstrapFailure implements Exception {
     this.observedHttpStatus,
     this.osErrorCode,
     this.preparation,
+    this.requestId,
   });
 
   final String message;
@@ -1124,6 +1210,16 @@ class BootstrapFailure implements Exception {
   final int? observedHttpStatus;
   final int? osErrorCode;
   final Map<String, Object>? preparation;
+  final String? requestId;
+
+  PortalFailureReason? get reason => PortalFailureReason.fromCode(code);
+
+  int? get httpStatusForDiagnostics {
+    if (apiFailureKind != null) return observedHttpStatus;
+    final requestOperation = operation ?? '';
+    return RegExp(r'^(GET|POST|PUT|PATCH|DELETE) /api/').hasMatch(requestOperation)
+        ? statusCode : null;
+  }
 
   String get operationalErrorCode =>
       operationalCode ??
@@ -4018,6 +4114,7 @@ class AppFirstRuntimeBootstrapper
       if (error is BootstrapFailure) {
         throw BootstrapFailure(error.message, statusCode: error.statusCode,
           operation: error.operation, code: error.code, operationalCode: error.operationalCode,
+          requestId: error.requestId,
           apiFailureKind: error.apiFailureKind, observedHttpStatus: error.observedHttpStatus,
           osErrorCode: error.osErrorCode, preparation: preparation());
       }
@@ -4464,6 +4561,8 @@ class AppFirstRuntimeBootstrapper
     String failureKind = '',
     String? failureOperation,
     int? failureHttpStatus,
+    PortalFailureReason? failureReason,
+    String? failureRequestId,
     String selectedNodeCode = '',
     String routeMode = '',
     int? durationMs,
@@ -4610,6 +4709,9 @@ class AppFirstRuntimeBootstrapper
           'failure_kind': safeFailureKind,
         if (connectionFailureOperations.contains(failureOperation)) 'failure_operation': failureOperation,
         if (phase == 'failed' && safeFailureHttpStatus != null) 'failure_http_status': safeFailureHttpStatus,
+        if (phase == 'failed' && failureReason != null) 'failure_reason': failureReason.wireValue,
+        if (phase == 'failed' && PortalCorrelationScope.isValid(failureRequestId))
+          'failure_request_id': failureRequestId,
         if (RegExp(r'^[a-z0-9_.-]{1,32}$').hasMatch(safeNodeCode))
           'selected_node_code': safeNodeCode,
         if (RegExp(r'^[a-z][a-z0-9_]{0,31}$').hasMatch(safeRouteMode))
@@ -7346,10 +7448,12 @@ class AppFirstRuntimeBootstrapper
           return _loadRefreshSuccessor(hostPlatform, state);
         }
         throw BootstrapFailure(
-          'Сессия устройства истекла. Используйте почту или код, чтобы восстановить доступ.',
+          error.reason != null ? error.message
+              : 'Сессия устройства истекла. Используйте почту или код, чтобы восстановить доступ.',
           statusCode: HttpStatus.unauthorized,
           operation: error.operation,
           code: error.code,
+          requestId: error.requestId,
         );
       }
       rethrow;
@@ -10382,11 +10486,17 @@ class AppFirstRuntimeBootstrapper
             (method == 'POST' && path == '/api/client/runtime/stats' &&
                 response.statusCode != HttpStatus.ok)) {
           traceReason = _bootstrapHttpReason(response);
+          final responseCode = _platformErrorCode(response, body: text);
+          final responseRequestId = response.headers.value('X-Request-ID');
+          final requestId = PortalCorrelationScope.isValid(responseRequestId) ? responseRequestId : null;
+          final message = _errorMessageForResponse(text, response.statusCode, code: responseCode);
           final failure = BootstrapFailure(
-            _errorMessageForResponse(text, response.statusCode),
+            PortalFailureReason.fromCode(responseCode) == null && requestId != null
+                ? '$message Код обращения: $requestId.' : message,
             statusCode: response.statusCode,
             operation: operation,
-            code: _platformErrorCode(response),
+            code: responseCode,
+            requestId: requestId,
           );
           if (!retryable ||
               !_shouldRetryStatus(response.statusCode) ||
@@ -10754,12 +10864,24 @@ class AppFirstRuntimeBootstrapper
       statusCode == HttpStatus.serviceUnavailable ||
       statusCode == HttpStatus.gatewayTimeout;
 
-  String _platformErrorCode(HttpClientResponse response) {
+  String _platformErrorCode(HttpClientResponse response, {String body = ''}) {
     final normalized = (response.headers.value('X-POKROV-Error') ??
             response.headers.value(_platformErrorCodeHeader) ?? '')
         .trim()
         .toLowerCase();
-    return _platformErrorCodePattern.hasMatch(normalized) ? normalized : '';
+    if (_platformErrorCodePattern.hasMatch(normalized)) return normalized;
+    try {
+      final decoded = jsonDecode(body);
+      final detail = decoded is Map ? decoded['detail'] : null;
+      final code = detail is Map ? detail['code'] : null;
+      if (code is String) {
+        final normalizedCode = code.trim().toLowerCase();
+        if (_platformErrorCodePattern.hasMatch(normalizedCode)) return normalizedCode;
+      }
+    } on FormatException {
+      // Error pages without a JSON reason keep their original HTTP status.
+    }
+    return '';
   }
 
   String _bootstrapHttpReason(HttpClientResponse response) {
@@ -10947,7 +11069,9 @@ class AppFirstRuntimeBootstrapper
     }
   }
 
-  String _errorMessageForResponse(String text, int statusCode) {
+  String _errorMessageForResponse(String text, int statusCode, {String code = ''}) {
+    final knownMessage = portalFailureUserMessage(PortalFailureReason.fromCode(code));
+    if (knownMessage != null) return knownMessage;
     if (statusCode >= HttpStatus.internalServerError && statusCode < 600) {
       return 'Сервис подготовки временно недоступен. Попробуйте ещё раз.';
     }
