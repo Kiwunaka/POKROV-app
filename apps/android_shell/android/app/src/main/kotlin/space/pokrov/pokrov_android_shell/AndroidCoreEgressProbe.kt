@@ -138,6 +138,7 @@ internal data class AndroidCoreEgressProbeTarget(
     val keepRuntimeOnFailure: Boolean = false,
     val captureSafeFailureCategory: Boolean = false,
     val protocol: String = "unknown",
+    val periodicTimeoutMillis: Int = AndroidCoreEgressProbe.PERIODIC_TIMEOUT_MILLIS,
 )
 
 /** A nonrenewable QA Connect owner dispatches service proof only once. */
@@ -214,13 +215,15 @@ internal object AndroidCoreEgressProbe {
             val tag = protectedTargetTag(config) ?: return@runCatching null
             val outbounds = config.optJSONArray("outbounds") ?: return@runCatching null
             val outboundTypes = mutableMapOf<String, String>()
+            val outboundDetours = mutableMapOf<String, String>()
             val selectorMembers = mutableMapOf<String, List<String>>()
             for (index in 0 until outbounds.length()) {
                 val outbound = outbounds.optJSONObject(index) ?: continue
                 val outboundTag = outbound.optString("tag").trim()
                 if (outboundTag.isNotEmpty()) {
                     outboundTypes[outboundTag] = outbound.optString("type")
-                    if (outbound.optString("type") == "selector") {
+                    outboundDetours[outboundTag] = outbound.optString("detour")
+                    if (isSelectableGroupType(outbound.optString("type"))) {
                         val members = outbound.optJSONArray("outbounds")
                         selectorMembers[outboundTag] = List(members?.length() ?: 0) {
                             members!!.optString(it)
@@ -241,7 +244,10 @@ internal object AndroidCoreEgressProbe {
                 finalTag = tag,
                 outboundTypes = outboundTypes,
                 endpointTypes = endpointTypes,
-            )?.copy(protocol = unambiguousProtocol(tag, outboundTypes, endpointTypes, selectorMembers))
+            )?.copy(
+                protocol = unambiguousProtocol(tag, outboundTypes, endpointTypes, selectorMembers),
+                periodicTimeoutMillis = periodicTimeoutMillis(tag, outboundTypes, outboundDetours, selectorMembers),
+            )
         }.getOrNull()
     }
 
@@ -525,7 +531,7 @@ internal object AndroidCoreEgressProbe {
             val result = if (periodicCancellation != null) {
                 server.javaClass.getMethod("probeRuntimeEgress", String::class.java,
                     Int::class.javaPrimitiveType, RuntimeProbeCancellation::class.java)
-                    .invoke(server, target.tag, PERIODIC_TIMEOUT_MILLIS, periodicCancellation)
+                    .invoke(server, target.tag, target.periodicTimeoutMillis, periodicCancellation)
             } else {
                 val methodName = if (target.kind == AndroidCoreEgressProbeTargetKind.ENDPOINT) {
                     "probeEndpoint"
@@ -585,6 +591,25 @@ internal object AndroidCoreEgressProbe {
             }
         }
         return "unknown"
+    }
+
+    internal fun periodicTimeoutMillis(targetTag: String, outboundTypes: Map<String, String>,
+        outboundDetours: Map<String, String>, selectorMembers: Map<String, List<String>>,
+    ): Int {
+        var tag = targetTag
+        val visited = mutableSetOf<String>()
+        while (visited.add(tag)) {
+            when (outboundTypes[tag]) {
+                "selector", "urltest" -> tag = selectorMembers[tag]?.singleOrNull() ?: return PERIODIC_TIMEOUT_MILLIS
+                "vless" -> {
+                    val carrier = outboundDetours[tag]?.let { outboundTypes[it] }
+                    return if (carrier == "dnstt" || carrier == "slipstream") DNS_PERIODIC_TIMEOUT_MILLIS
+                    else PERIODIC_TIMEOUT_MILLIS
+                }
+                else -> return PERIODIC_TIMEOUT_MILLIS
+            }
+        }
+        return PERIODIC_TIMEOUT_MILLIS
     }
 
     /** Exact Core strings and standard class categories only; never raw error text. */
@@ -765,6 +790,7 @@ internal object AndroidCoreEgressProbe {
         if (unixSeconds in 1..Long.MAX_VALUE / 1_000L) unixSeconds * 1_000L else 0L
 
     internal const val PERIODIC_TIMEOUT_MILLIS = 3_000
+    internal const val DNS_PERIODIC_TIMEOUT_MILLIS = 15_000
     private const val MAX_TAG_LENGTH = 128
     private const val URL_TEST_TIMEOUT_DELAY = 65_535
     private const val INITIAL_LOG_BATCH_TIMEOUT_MILLIS = 2_500L

@@ -30,6 +30,7 @@ Current responsibility:
   identity results, with one bounded previous file and no free-form payload
 - treating Android `running` as healthy only when uplink/bootstrap-DNS prerequisites and the core URL test for the selected outbound are healthy; the core timeout sentinel (`65535`) is a failed probe, and a failed startup selected-outbound probe stops the core, TUN, and foreground service; Android DNS transport failures retain the TUN while the existing network reset and egress recheck recover the route; ordinary DNS response codes and canceled requests remain non-terminal; Android VPN validation remains a supporting signal because emulators can retain it after egress fails
 - keeping all redacted request-scoped core events advisory because they do not identify the selected outbound; the bounded selected-outbound probe owns global egress health
+- using a 15-second periodic egress budget for an unambiguous selected VLESS-over-DNSTT or VLESS-over-Slipstream path; other paths retain 3 seconds. A periodic failure retains the TUN, and cancelled stale probes cannot update health.
 - refreshing runtime truth again when the app returns to the foreground and reconciling a live TUN back to `running`, so relaunches do not leave the shared shell stuck on a stale staged state as easily
 - exposing a direct `Disconnect` action from the Android foreground notification
 - carrying the Android 14 `specialUse` foreground-service permission contract required by `PokrovRuntimeVpnService`

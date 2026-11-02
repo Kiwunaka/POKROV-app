@@ -3466,6 +3466,8 @@ class ConnectionManager extends ChangeNotifier {
               }
 
               bool authorityUnavailable(BootstrapFailure error) =>
+                  (error.statusCode == HttpStatus.internalServerError &&
+                      localSmartAccessState == null) ||
                   error.code == 'smart_access_admission_paused' ||
                   error.code == 'smart_access_access_denied' ||
                   error.code == 'smart_access_policy_changed' ||

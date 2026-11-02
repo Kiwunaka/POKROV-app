@@ -54,15 +54,18 @@ class AndroidCoreEgressProbeTest {
         assertEquals("A failed active check can retry when traffic continues", 3, started.size)
     }
 
-    class BoundedCore {
+    class BoundedCore(private val expectedTag: String = "proxy") {
         var calls = 0
         var timeout = false
+        var simulatedLatencyMs = 0
+        var lastTimeoutMs = 0
         fun probeRuntimeEgress(tag: String, timeoutMs: Int, cancellation: RuntimeProbeCancellation): Boolean {
-            assertEquals("proxy", tag)
-            assertEquals(3_000, timeoutMs)
+            assertEquals(expectedTag, tag)
             calls++
-            if (timeout) throw Exception("context deadline exceeded")
-            return !cancellation.isCancelled()
+            lastTimeoutMs = timeoutMs
+            if (timeout || simulatedLatencyMs > timeoutMs) throw Exception("context deadline exceeded")
+            if (cancellation.isCancelled()) throw Exception("context canceled")
+            return true
         }
     }
 
@@ -77,8 +80,9 @@ class AndroidCoreEgressProbeTest {
             val target = AndroidCoreEgressProbeTarget("proxy", kind, captureSafeFailureCategory = true)
             assertEquals(AndroidCoreEgressProbeResult.HEALTHY,
                 AndroidCoreEgressProbe.probe(target, core, cancellation))
+            assertEquals(3_000, core.lastTimeoutMs)
             cancelled.set(true)
-            assertEquals(AndroidCoreEgressProbeResult.FAILED,
+            assertEquals(AndroidCoreEgressProbeResult.UNAVAILABLE,
                 AndroidCoreEgressProbe.probe(target, core, cancellation))
             cancelled.set(false)
             core.timeout = true
@@ -92,6 +96,38 @@ class AndroidCoreEgressProbeTest {
                 ReachableCore(), cancellation))
         assertEquals("core_egress_timeout", AndroidCoreEgressProbeResult.TIMED_OUT.failureKind(periodic = true))
         assertEquals("core_egress_probe_unavailable", AndroidCoreEgressProbeResult.TIMED_OUT.failureKind())
+    }
+
+    @Test
+    fun periodicDnsCarrierAllowsSlowSuccessWhileDefaultRemainsBounded() {
+        val cancelled = java.util.concurrent.atomic.AtomicBoolean(false)
+        val cancellation = object : RuntimeProbeCancellation {
+            override fun isCancelled(): Boolean = cancelled.get()
+        }
+        val core = BoundedCore("root").apply { simulatedLatencyMs = 4_000 }
+        val defaultTarget = AndroidCoreEgressProbeTarget("root", AndroidCoreEgressProbeTargetKind.GROUP)
+        assertEquals(AndroidCoreEgressProbeResult.TIMED_OUT, AndroidCoreEgressProbe.probe(defaultTarget, core, cancellation))
+        assertEquals(3_000, core.lastTimeoutMs)
+
+        val members = mapOf("root" to listOf("proxy"))
+        for (carrier in listOf("dnstt", "slipstream")) {
+            val types = mapOf("root" to "selector", "proxy" to "vless", "dns-tunnel" to carrier)
+            val detours = mapOf("proxy" to "dns-tunnel")
+            val timeout = AndroidCoreEgressProbe.periodicTimeoutMillis("root", types, detours, members)
+            assertEquals(15_000, timeout)
+            val target = defaultTarget.copy(periodicTimeoutMillis = timeout)
+            assertEquals(AndroidCoreEgressProbeResult.HEALTHY, AndroidCoreEgressProbe.probe(target, core, cancellation))
+            assertEquals(15_000, core.lastTimeoutMs)
+            core.timeout = true
+            assertEquals(AndroidCoreEgressProbeResult.TIMED_OUT, AndroidCoreEgressProbe.probe(target, core, cancellation))
+            core.timeout = false
+            cancelled.set(true)
+            assertEquals(AndroidCoreEgressProbeResult.UNAVAILABLE, AndroidCoreEgressProbe.probe(target, core, cancellation))
+            cancelled.set(false)
+            assertEquals(3_000, AndroidCoreEgressProbe.periodicTimeoutMillis("root", types, emptyMap(), members))
+            assertEquals(3_000, AndroidCoreEgressProbe.periodicTimeoutMillis("root", types, detours,
+                mapOf("root" to listOf("proxy", "other"))))
+        }
     }
 
     @Test

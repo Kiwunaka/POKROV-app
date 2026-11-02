@@ -1733,7 +1733,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         }
         mainHandler.postAtTime(watchdog, monitor,
             android.os.SystemClock.uptimeMillis() + if (periodic) {
-                AndroidCoreEgressProbe.PERIODIC_TIMEOUT_MILLIS + 500L
+                target.periodicTimeoutMillis + 500L
             } else CORE_EGRESS_HARD_TIMEOUT_MILLIS)
         if (!session.execute {
             try {

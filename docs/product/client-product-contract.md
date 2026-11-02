@@ -112,7 +112,7 @@ Browser continuation currently starts from app handoff, Telegram, and the eviden
   first payment. Wheel, calendar, and referral rewards remain paid-only. Already-issued
   `+10 days` grants remain grandfathered and must render with their
   backend-returned value
-- public user-facing version line: `1.4.5`; private Android/Windows `1.5.0+4227`
+- public user-facing version line: `1.4.5`; private Android/Windows `1.5.0+4255`
   and the `1.5.0+4175` draft remain separate. Beta/prerelease candidates never
   replace stable metadata implicitly
 - recommended public routing mode: `All except RU`
@@ -149,7 +149,7 @@ accurate even when the static platform mode list omits it. This presentation
 does not grant runtime catalog capability or change the active connection.
 
 Profile offers “Обход блокировок” in both interface modes; Rules also exposes
-the same control outside “Для опытных”: Flowseal / zapret on Windows and ByeDPI
+the same control outside “Для опытных”: Zapret2 on Windows and ByeDPI
 on Android. Its switch saves the existing local-DPI setting;
 the usual Save or Apply-and-reconnect action and normal Connect apply it.
 “Россия напрямую” tries YouTube directly before VPN fallback; Selective uses
@@ -924,6 +924,11 @@ subscription's `smart_access_eligible` flag, absent/false on older responses.
 The server projects any active Premium access, including trial, bonus, gift,
 promotion, manual and family access; Free and expired/blocked access are excluded.
 An access-denied provider/lease response keeps the declared VPN fallback.
+With an ordinary VPN-backed profile, HTTP 500 during optional SmartDNS
+preparation uses the catalog's existing per-service VPN fallback. The same
+failure during local DNS-only preparation does not stage an incomplete profile
+or introduce a VPN substitute. Generic session/authentication denials retain
+their existing failure path.
 External providers continue through the same signed permission, catalog scope,
 lease and runtime expiry/revocation checks as the owned provider. No local DNS
 setting grants that authority, and the existing Smart Access build gate remains.
