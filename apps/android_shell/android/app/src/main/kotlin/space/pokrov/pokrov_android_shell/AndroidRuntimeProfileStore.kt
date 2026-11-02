@@ -171,10 +171,10 @@ internal object AndroidRuntimeProfileStore {
 
     @Synchronized
     fun clear(context: Context) {
-        context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+        check(context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
             .edit()
             .clear()
-            .commit()
+            .commit()) { "profile_invalidation_failed" }
     }
 
     /**

@@ -188,10 +188,33 @@ void main() {
     coordinator.recordSessionFailure(const BootstrapFailure('Superseded', code: 'session_changed'));
     expect(coordinator.loginRecoveryRequired, isFalse);
     coordinator.recordSessionFailure(const BootstrapFailure('Session expired', statusCode: 401));
+    expect(coordinator.loginRecoveryRequired, isFalse,
+        reason: 'an access rejection still has a session refresh path');
+    coordinator.recordSessionFailure(const BootstrapFailure('Session expired',
+        statusCode: 401, sessionRejected: true));
     expect(coordinator.loginRecoveryRequired, isTrue);
     expect(coordinator.subscriptionInfo, same(subscription));
     expect(coordinator.freeProfileAccess, same(access));
     coordinator.updateSubscriptionInfo(subscription);
     expect(coordinator.loginRecoveryRequired, isFalse);
+  });
+
+  test('terminal session rejection stops the remaining summary reads', () async {
+    final coordinator = AccountSessionCoordinator(accountActions: null);
+    final reads = <String>[];
+    Future<void> refresh() => coordinator.refreshSummary(
+      refreshSubscription: () async {
+        reads.add('subscription');
+        coordinator.recordSessionFailure(const BootstrapFailure(
+          'Recovery required', code: 'device_recovery_required'));
+        return false;
+      },
+      refreshBonus: () async => reads.add('bonus'),
+      refreshInbox: () async => reads.add('inbox'),
+      isActive: () => true,
+    );
+    await refresh();
+    await refresh();
+    expect(reads, ['subscription']);
   });
 }

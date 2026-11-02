@@ -175,6 +175,7 @@ class _CachedBootstrapper extends _Bootstrapper implements CachedManagedProfileB
   Future<void>? cacheRefreshGate;
   Object? nextCacheRefreshFailure;
   final cacheRefreshEntered = Completer<void>();
+  bool cacheRefreshCancelled = false;
   final refreshedCoreReleases = <String?>[];
   final refreshedInputs = <ManagedProfileCacheInputs>[];
   final refreshedFeatures = <Set<RuntimeTransportFeature>>[];
@@ -218,6 +219,7 @@ class _CachedBootstrapper extends _Bootstrapper implements CachedManagedProfileB
     String selectedCandidateRef = '', bool alternativesOnly = false,
   }) async {
     refreshedCoreReleases.add(coreRelease);
+    unawaited(cancelled?.then((_) => cacheRefreshCancelled = true));
     refreshedInputs.add(inputs);
     refreshedFeatures.add(runtimeFeatures);
     if (!cacheRefreshEntered.isCompleted) cacheRefreshEntered.complete();
@@ -657,6 +659,32 @@ class _SmartDnsAccountBootstrapper extends _StartupAccountBootstrapper
   }) => providerLoader!();
 }
 
+class _SwitchingAccountBootstrapper extends _StartupAccountBootstrapper
+    implements AppFirstAccountActionService {
+  final previousSubscription = Completer<ClientSubscriptionInfo>();
+  final pairingStarted = Completer<void>();
+  final pairingRelease = Completer<void>();
+  bool switched = false;
+
+  @override
+  Future<ClientSubscriptionInfo> fetchClientSubscription({required HostPlatform hostPlatform,
+      Duration? requestTimeout, Future<void>? cancelled}) async {
+    subscriptionReads++;
+    if (!switched) return previousSubscription.future;
+    return const ClientSubscriptionInfo(lane: 'trialPremium', accessState: 'trial_premium',
+      expiresAt: '', daysLeft: 7, autoRenew: false, renewUrl: null, plans: [], trafficPolicy: {});
+  }
+
+  @override
+  Future<DevicePairingClaimResult> claimDevicePairingCode({required HostPlatform hostPlatform,
+      required String code}) async {
+    pairingStarted.complete();
+    await pairingRelease.future;
+    switched = true;
+    return const DevicePairingClaimResult(ok: true, accountId: 'account-B', installId: 'install-B');
+  }
+}
+
 class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, RuntimeConnectProgress, RuntimeCandidateProbing, RuntimeProtectedHandoff, RuntimeNetworkAvailability {
   _Runtime({this.heldOperation, this.hostPlatform = HostPlatform.android});
   final String? heldOperation;
@@ -671,9 +699,12 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   final probeTimeouts = <Duration>[];
   String? coreVersion;
   bool holdProbes = false;
+  bool honorProbeDeadline = false;
   bool failProbeCancellation = false;
   bool failHandoff = false;
   bool failedHandoffKeepsRunning = false;
+  bool omitUnverifiedEffectiveDigest = false;
+  String? nativeHandoffFailureKind;
   final failedProbeProtocols = <String>{};
   final failedProbeProfiles = <String>{};
   final failedProbeCandidates = <String>{};
@@ -759,7 +790,14 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
       else { await cancelled.future; }
     }
     if (heldProbeProtocols.contains(protocol)) await cancelled.future;
-    if (heldProbeProfiles.contains(payload.profileName)) await cancelled.future;
+    var nativeDeadlineExpired = false;
+    if (heldProbeProfiles.contains(payload.profileName)) {
+      await Future.any<void>([
+        cancelled.future,
+        if (honorProbeDeadline)
+          Future<void>.delayed(timeout, () => nativeDeadlineExpired = true),
+      ]);
+    }
     if (heldProbeCandidates.contains(payload.materialCandidate?.candidateRef)) {
       await Future.any([probeRelease.future, cancelled.future]);
     }
@@ -767,11 +805,12 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
       await Future.any([alternateProbeGate!, cancelled.future]);
     }
     activeProbes.remove(probeId);
-    final success = !cancelled.isCompleted && !failedProbeProtocols.contains(protocol) &&
+    final success = !cancelled.isCompleted && !nativeDeadlineExpired && !failedProbeProtocols.contains(protocol) &&
         !failedProbeCandidates.contains(payload.materialCandidate?.candidateRef) &&
         !failedProbeProfiles.contains(payload.profileName);
     return RuntimeCandidateProbeResult(success: success,
-        failureKind: success ? '' : probeFailureKinds[payload.profileName] ?? 'cancelled',
+        failureKind: success ? '' : probeFailureKinds[payload.profileName] ??
+            (nativeDeadlineExpired ? 'timeout' : 'cancelled'),
         duration: probeDuration, probeStage: probeStages[payload.profileName],
         http64kFailure: probeHTTP64KFailures[payload.profileName],
         http64kObservation: probeHTTP64KObservations[payload.profileName], probeError: probeErrors[payload.profileName]);
@@ -823,8 +862,11 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   RuntimePhase phase = RuntimePhase.artifactReady;
   int connectCalls = 0;
   bool mutationPending = false;
+  bool releaseConnectOnCancel = false;
   bool overlappingMutation = false;
   bool pendingFirstEgress = false;
+  bool connectionPending = false;
+  String statusMessage = '';
   bool warpEgressFailure = false;
   String? _request;
 
@@ -847,14 +889,17 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
         protectionRetained: restoredHandoffGuard,
         canInitialize: phase == RuntimePhase.artifactReady || coreInitializationPending,
         canConnect: phase.index >= RuntimePhase.configStaged.index,
-        message: '',
+        message: statusMessage,
+        connectionPending: connectionPending,
         lastStopReason: lastStopReason,
         fetchedProfileSource: profileSource,
         stagedProfileSource: profileSource,
         effectiveProfileSource: profileDigest != null && phase == RuntimePhase.running &&
             !warpEgressFailure && !pendingFirstEgress ? profileSource : null,
         stagedProfileDigest: stagedProfile == null ? null : profileDigest,
-        effectiveProfileDigest: phase == RuntimePhase.running ? profileDigest : null,
+        effectiveProfileDigest: phase == RuntimePhase.running &&
+            (!omitUnverifiedEffectiveDigest || !warpEgressFailure && !pendingFirstEgress)
+            ? profileDigest : null,
         profileIdentityOrigin: profileDigest == null ? null : hostPlatform == HostPlatform.android
             ? 'android_private_stage_request_sha256' : 'windows_service_stage_request_sha256',
         proofObservedAt: phase == RuntimePhase.running && !warpEgressFailure ? proofObservedAt : null,
@@ -881,7 +926,8 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
                 ? !warpEgressFailure
                 : null,
         coreEgressValidationRequired: true,
-        lastFailureKind: failedHandoffProfile != null && warpEgressFailure && phase == RuntimePhase.configStaged
+        lastFailureKind: handoffCalls > 0 && warpEgressFailure && nativeHandoffFailureKind != null
+            ? nativeHandoffFailureKind : failedHandoffProfile != null && warpEgressFailure && phase == RuntimePhase.configStaged
             ? 'core_egress_dns_failed' : failFirstActivation && connectCalls == 1 && phase == RuntimePhase.configStaged
             ? activationFailureKind : restoredHandoffGuard ? 'protected_handoff_failed' : phase == RuntimePhase.running &&
                 warpEgressFailure &&
@@ -909,6 +955,10 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   @override
   Future<RuntimeSnapshot> snapshot() async {
     calls.add('snapshot');
+    if (heldOperation == 'snapshot' && !operationEntered.isCompleted) {
+      operationEntered.complete();
+      await releaseOperation.future;
+    }
     if (phase == RuntimePhase.running) pendingFirstEgress = false;
     if (cancelled.isNotEmpty && releaseStopRead != null) {
       if (!stopReadEntered.isCompleted) stopReadEntered.complete();
@@ -978,6 +1028,9 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   Future<void> cancelConnectRequest(String requestId) async {
     calls.add('cancel:$requestId');
     cancelled.add(requestId);
+    if (releaseConnectOnCancel && heldOperation == 'connect' && !releaseOperation.isCompleted) {
+      releaseOperation.complete();
+    }
   }
 }
 
@@ -1276,6 +1329,227 @@ Future<void> _openTechnicalDiagnostics(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets('aggregate Connect deadline cancels and joins a hung native phase and allows a fresh attempt', (tester) async {
+    final runtime = _Runtime(heldOperation: 'connect', hostPlatform: HostPlatform.windows)
+      ..releaseConnectOnCancel = true;
+    final bootstrapper = _StatsBootstrapper();
+    final manager = _manager(runtime, bootstrapper,
+        authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    try {
+    final connecting = manager.connect();
+    await runtime.operationEntered.future;
+    expect(runtime.mutationPending, isTrue);
+    await tester.pump(const Duration(minutes: 5));
+    await connecting;
+    expect(runtime.calls, contains('cancel:request-1'));
+    expect(runtime.mutationPending, isFalse, reason: 'the aggregate deadline joins the owned native action');
+    expect(runtime.overlappingMutation, isFalse);
+    expect(manager.busy, isFalse);
+    expect(manager.snapshot?.phase, RuntimePhase.configStaged);
+    expect(manager.status.phase, ConnectionPhase.actionRequired);
+    final failure = bootstrapper.actualReports.singleWhere((report) => report['runtime_phase'] == 'failed');
+    expect(failure['error_code'], 'CONN-008');
+    expect(failure['failure_kind'], 'connect_deadline');
+    expect(failure['failure_operation'], 'core_connect');
+    await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(runtime.connectCalls, 2);
+    expect(runtime.overlappingMutation, isFalse);
+    expect(bootstrapper.actualReports.where((report) => report['runtime_phase'] == 'failed'), hasLength(1));
+    } finally {
+      manager.dispose();
+    }
+  });
+
+  testWidgets('a late rejected account A subscription cannot deny account B during pairing', (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    var disconnects = 0;
+    var invalidations = 0;
+    var phase = 'running';
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'runtimeEngine.disconnect') { disconnects++; phase = 'configStaged'; }
+      if (call.method == 'runtimeEngine.invalidateManagedProfile') invalidations++;
+      return {'phase': phase, 'supportsLiveConnect': true, 'canInitialize': false, 'canConnect': true};
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    final bootstrapper = _SwitchingAccountBootstrapper();
+    await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: bootstrapper, firstLaunchStore: _FirstLaunchStore(),
+      clientExperienceStore: _CatalogPickerExperience(), themeMode: ThemeMode.light,
+      onThemeModeChanged: (_) {},
+    )));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('nav-profile')));
+    await tester.pumpAndSettle();
+    dynamic profile() => tester.widget(find.byWidgetPredicate(
+        (widget) => widget.runtimeType.toString() == '_ProfileSection'));
+    profile().onOpenHandoff('redeem', 'ABCD-EFGH');
+    await tester.pump();
+    expect(bootstrapper.pairingStarted.isCompleted, isTrue);
+    bootstrapper.previousSubscription.completeError(const BootstrapFailure(
+      'Session A rejected', code: 'auth_session_expired', statusCode: 401, sessionRejected: true));
+    await tester.pumpAndSettle();
+    expect(profile().loginRecoveryRequired, isFalse);
+    expect(disconnects, 0, reason: 'the old rejection cannot acquire a new runtime stop owner');
+    bootstrapper.pairingRelease.complete();
+    await tester.pumpAndSettle();
+    expect(profile().loginRecoveryRequired, isFalse);
+    expect((profile().subscriptionInfo as ClientSubscriptionInfo?)?.daysLeft, 7);
+    expect(disconnects, 1, reason: 'account replacement explicitly stops the old TUN');
+    expect(invalidations, 2, reason: 'tile/widget/always-on cannot reuse the old profile');
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+  });
+
+  test('refresh and resume preserve an in-flight background cache refresh', () async {
+    final gate = Completer<void>();
+    final bootstrapper = _CachedBootstrapper()
+      ..cacheRefreshGate = gate.future
+      ..refreshedCatalog = TransportCandidateCatalog(revision: 'fresh-observation',
+          selectedCandidateRef: _candidates.first.candidateRef, candidates: _candidates);
+    final runtime = _Runtime()..phase = RuntimePhase.initialized..supportsCandidates = true;
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+    addTearDown(() { if (!gate.isCompleted) gate.complete(); });
+    await manager.refresh();
+    final refreshing = manager.refreshTransportCatalog(force: true);
+    await bootstrapper.cacheRefreshEntered.future;
+    await manager.resume();
+    await manager.refresh();
+    expect(bootstrapper.cacheRefreshCancelled, isFalse);
+    gate.complete();
+    expect(await refreshing, isTrue);
+    expect(manager.transportCatalog?.revision, 'fresh-observation');
+  });
+
+  test('a hanging runtime snapshot is bounded by the existing action timeout', () async {
+    final runtime = _Runtime(heldOperation: 'snapshot');
+    final manager = _manager(runtime, _Bootstrapper(), actionTimeout: const Duration(milliseconds: 20));
+    addTearDown(manager.dispose);
+    final refresh = manager.refresh();
+    await runtime.operationEntered.future;
+    await expectLater(refresh, throwsA(isA<TimeoutException>()));
+    expect(manager.busy, isFalse);
+    runtime.releaseOperation.complete();
+    await manager.refresh();
+    expect(manager.snapshot?.phase, RuntimePhase.initialized);
+  });
+
+  test('explicit disconnect never connects a pending attempt that has already stopped', () async {
+    final runtime = _Runtime()..phase = RuntimePhase.configStaged..connectionPending = true;
+    final manager = _manager(runtime, _Bootstrapper());
+    addTearDown(manager.dispose);
+    await manager.refresh();
+    expect(manager.snapshot?.connectionPending, isTrue);
+    runtime.connectionPending = false;
+    await manager.disconnect();
+    expect(runtime.connectCalls, 0);
+    expect(runtime.calls, contains('disconnect'));
+    expect(manager.status.phase, ConnectionPhase.disconnected);
+  });
+
+  test('cancel bounds a hung native Connect without releasing its mutation owner', () async {
+    final runtime = _Runtime(heldOperation: 'connect', hostPlatform: HostPlatform.windows);
+    final manager = _manager(runtime, _Bootstrapper(),
+      actionTimeout: const Duration(milliseconds: 20),
+      authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    addTearDown(manager.dispose);
+    final connecting = manager.connect();
+    await runtime.operationEntered.future;
+    await manager.cancel().timeout(const Duration(seconds: 1));
+    expect(manager.busy, isFalse);
+    expect(manager.status.phase, ConnectionPhase.actionRequired);
+    expect(runtime.mutationPending, isTrue);
+    await manager.connect().timeout(const Duration(seconds: 1));
+    expect(runtime.connectCalls, 1, reason: 'a timed-out cleanup cannot authorize another native mutation');
+    expect(runtime.overlappingMutation, isFalse);
+    runtime.releaseOperation.complete();
+    await connecting;
+    await manager.disconnect();
+    expect(runtime.calls, contains('disconnect'), reason: 'explicit Stop resolves the unconfirmed cancellation');
+    expect(runtime.overlappingMutation, isFalse);
+  });
+
+  test('resume settles typed pending state regardless of localized message words', () async {
+    final runtime = _Runtime()
+      ..phase = RuntimePhase.configStaged
+      ..connectionPending = true
+      ..statusMessage = 'Ошибок нет, ожидается подключение.';
+    final manager = _manager(runtime, _Bootstrapper());
+    addTearDown(manager.dispose);
+    await manager.refresh();
+    final resume = manager.resume();
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    runtime..phase = RuntimePhase.running..connectionPending = false;
+    await resume;
+    expect(manager.snapshot?.phase, RuntimePhase.running);
+    expect(runtime.connectCalls, 0);
+  });
+
+  test('account replacement stops the old TUN and invalidates its reusable native profile', () async {
+    final runtime = _Runtime()..supportsCandidates = true;
+    final bootstrapper = _Bootstrapper(catalog: true);
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+    await manager.connect();
+    final oldProfile = runtime.stagedPayloads.single.profileName;
+    await manager.invalidateAccountSession();
+    expect(runtime.calls.where((call) => call == 'invalidate'), hasLength(2));
+    expect(runtime.calls, contains('disconnect'));
+    expect(manager.snapshot?.phase, RuntimePhase.configStaged);
+    expect(manager.transportCatalog, isNull);
+    expect(manager.status.routes.profileDirty, isTrue);
+    bootstrapper.candidates = [_candidates[1]];
+    await manager.connect();
+    expect(runtime.stagedPayloads.last.profileName, _candidates[1].candidateRef);
+    expect(runtime.stagedPayloads.last.profileName, isNot(oldProfile));
+    expect(runtime.connectCalls, 2);
+  });
+
+  test('access denial received during protected recovery stops its retained TUN', () async {
+    final runtime = _Runtime()..supportsCandidates = true;
+    final manager = _manager(runtime, _Bootstrapper(catalog: true));
+    addTearDown(manager.dispose);
+    await manager.connect();
+    runtime.failHandoff = true;
+    runtime.handoffRelease = Completer<void>();
+    final reconnecting = manager.reconnect();
+    await runtime.handoffStarted.future;
+    expect(manager.retainsProtection, isTrue);
+    await manager.denyAccess();
+    runtime.handoffRelease!.complete();
+    await reconnecting;
+    expect(runtime.calls, contains('disconnect'));
+    expect(manager.retainsProtection, isFalse);
+    expect(manager.snapshot?.phase, RuntimePhase.configStaged);
+  });
+
+  for (final platform in [HostPlatform.android, HostPlatform.windows]) {
+  test('${platform.name} recovers an unexpected clean native stop and preserves explicit Stop', () async {
+    final runtime = _Runtime(hostPlatform: platform)..supportsCandidates = true;
+    final manager = _manager(runtime, _Bootstrapper(catalog: true),
+        authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    addTearDown(manager.dispose);
+    await manager.connect();
+    runtime..phase = RuntimePhase.configStaged..lastStopReason = 'service_destroyed';
+    await manager.refresh();
+    final deadline = DateTime.now().add(const Duration(seconds: 3));
+    while ((runtime.connectCalls < 2 || manager.busy) && DateTime.now().isBefore(deadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(runtime.connectCalls, 2);
+    expect(manager.snapshot?.phase, RuntimePhase.running);
+    expect(runtime.handoffCalls, 0, reason: 'a stopped native runtime needs stage/connect');
+    runtime..phase = RuntimePhase.configStaged..lastStopReason = 'user_requested';
+    await manager.refresh();
+    await Future<void>.delayed(Duration.zero);
+    expect(runtime.connectCalls, 2);
+    expect(manager.snapshot?.phase, RuntimePhase.configStaged);
+  });
+  }
+
   testWidgets('Diagnostics separates current native receipt from platform failure and clears prior attempt', (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
@@ -1954,6 +2228,22 @@ void main() {
     expect(find.text('Не применяется в режиме «Всё через POKROV».'), findsOneWidget);
     expect(find.text('В режиме «Всё через POKROV» правила «напрямую» не применяются.'), findsOneWidget);
     expect(store.preferences.dnsTransport, PokrovDnsTransport.direct);
+  });
+
+  testWidgets('Windows app scope explains shared DNS and permits disabling saved direct DNS', (tester) async {
+    final store = await _openDnsSettings(tester, routeMode: RouteMode.selectedApps,
+      preferences: const PokrovRoutingPreferences.defaults().copyWith(
+        dnsPreset: PokrovDnsPreset.cloudflare, dnsTransport: PokrovDnsTransport.direct));
+    expect(find.text('Системный DNS всех приложений идёт через VPN, включая приложения с прямым маршрутом. Собственный DoH приложения следует маршруту его данных.'), findsOneWidget);
+    final toggle = find.byKey(const ValueKey('rules-dns-direct-toggle'));
+    final control = find.descendant(of: toggle, matching: find.byType(Switch));
+    tester.widget<Switch>(control).onChanged!(false);
+    await tester.pumpAndSettle();
+    expect(store.saved.routingPreferences.dnsTransport, PokrovDnsTransport.vpn);
+    final dynamic disabledToggle = tester.widget(toggle);
+    expect(disabledToggle.enabled, isFalse);
+    expect(tester.widget<Switch>(control).onChanged, isNull);
+    expect(store.saved.routingPreferences.dnsTransport, PokrovDnsTransport.vpn);
   });
 
   testWidgets('Android profile bypass entry works in simple mode and saves without connecting', (tester) async {
@@ -4836,7 +5126,7 @@ void main() {
       warpMode: 'proxy_over_warp'));
     final bootstrapper = _StatsBootstrapper(warpEnabled: true)
       ..candidates = [base, ...chains];
-    final runtime = _Runtime()..supportsCandidates = true
+    final runtime = _Runtime()..supportsCandidates = true..honorProbeDeadline = true
       ..probeFailureKinds[chains.first.candidateRef] = 'cancelled_before_dispatch'
       ..probeFailureKinds[chains[1].candidateRef] = 'probe_channel_rejected'
       ..probeFailureKinds[chains[2].candidateRef] = 'probe_reply_invalid'
@@ -4870,7 +5160,7 @@ void main() {
       expect(adapter.containsKey('probe_stage'), isFalse);
     }
     final started = probes.singleWhere((probe) => probe['candidate_ref'] == chains[4].candidateRef);
-    expect(started['failure_kind'], 'probe_budget_expired');
+    expect(started['failure_kind'], 'timeout');
 
     await manager.disconnect();
     runtime.heldProbeProfiles.clear();
@@ -5354,8 +5644,8 @@ void main() {
       expect(runtime.handoffCalls, 0);
       expect(runtime.activeProbes, isEmpty);
       expect(bootstrapper.resolutions, hasLength(resolutionsBefore));
-      expect(runtime.calls, isNot(contains('disconnect')));
-      expect(manager.retainsProtection, isTrue);
+      expect(runtime.calls, interrupt == 'deny' ? contains('disconnect') : isNot(contains('disconnect')));
+      expect(manager.retainsProtection, interrupt == 'cancel');
     });
   }
 
@@ -5422,10 +5712,12 @@ void main() {
     expect(manager.retainsProtection, isFalse);
   });
 
-  test('fresh native proof retires a preparation-only recovery failure', () async {
+  for (final platform in [HostPlatform.android, HostPlatform.windows]) {
+  test('fresh ${platform.name} native proof retires a preparation-only recovery failure', () async {
     final recoveryExperience = _ExperienceStore();
-    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+    final runtime = _Runtime(hostPlatform: platform)
       ..supportsCandidates = true
+      ..omitUnverifiedEffectiveDigest = platform == HostPlatform.android
       ..profileDigest = 'a' * 64
       ..proofObservedAt = DateTime.utc(2026, 10, 8)
       ..profileSource = RuntimeProfileSource(revision: 'current-owner',
@@ -5434,6 +5726,10 @@ void main() {
     final manager = _manager(runtime, bootstrapper,
         experienceStore: recoveryExperience,
         authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    if (platform == HostPlatform.android) {
+      manager.updateExperience(const PokrovClientExperienceState.empty().copyWith(
+        routingPreferences: const PokrovRoutingPreferences.defaults().copyWith(autoConnectOnUntrustedWifi: true)));
+    }
     addTearDown(manager.dispose);
     Future<void> waitForDesktopPoll() async {
       final reads = runtime.calls.where((call) => call == 'snapshot').length;
@@ -5503,7 +5799,7 @@ void main() {
     final rf2 = TransportCandidate(candidateRef: 'de:rf2', profileRef: 'rf2', nodeCode: 'de',
       countryCode: 'DE', protocol: 'vless', transport: 'tcp', protection: 'reality',
       priority: 1, network: 'tcp', flow: '', minimumClientRelease: '1.5.0',
-      minimumCoreRelease: null, platforms: {HostPlatform.windows}, requiredFeatures: const {}, bridgeId: 'rf2');
+      minimumCoreRelease: null, platforms: {HostPlatform.android, HostPlatform.windows}, requiredFeatures: const {}, bridgeId: 'rf2');
     bootstrapper.candidates = [_candidates.first, rf2];
     runtime.failedProbeProfiles..clear()..add(_candidates.first.candidateRef);
     bootstrapper.catalogFailure = const RoutingCatalogFailure('catalog_response_invalid');
@@ -5532,6 +5828,7 @@ void main() {
 
     runtime.failedHandoffKeepsRunning = true;
     runtime.failedHandoffProfile = rf2.candidateRef;
+    if (platform == HostPlatform.android) runtime.nativeHandoffFailureKind = 'protected_handoff_failed';
     runtime.profileDigest = 'b' * 64;
     runtime.profileSource = const RuntimeProfileSource(revision: 'rf2-owner',
       origin: RuntimeProfileSourceOrigin.managedManifest, protocol: 'vless');
@@ -5574,6 +5871,41 @@ void main() {
     expect(manager.materialCandidate?.candidateRef, rf2.candidateRef);
     expect(runtime.connectCalls, 1);
     expect(runtime.handoffCalls, 1);
+    expect(runtime.calls, isNot(contains('disconnect')));
+  });
+  }
+
+  test('fresh Android proof clears a network handoff whose preparation failed before replacement', () async {
+    final experience = _ExperienceStore();
+    final runtime = _Runtime()
+      ..supportsCandidates = true..captivePortal = false
+      ..omitUnverifiedEffectiveDigest = true
+      ..profileDigest = 'a' * 64
+      ..proofObservedAt = DateTime.utc(2026, 10, 8)
+      ..profileSource = const RuntimeProfileSource(revision: 'healthy-current-owner',
+          origin: RuntimeProfileSourceOrigin.managedManifest, protocol: 'vless');
+    final bootstrapper = _Bootstrapper(catalog: true);
+    final manager = _manager(runtime, bootstrapper, experienceStore: experience,
+        currentWifiProbe: () async => _foregroundWifi(runtime));
+    addTearDown(manager.dispose);
+    await manager.connect();
+    bootstrapper.failure = const BootstrapFailure('profile API unavailable', code: 'managed_profile_unavailable');
+    runtime..candidateKey = 'network-b'..candidateContext = 'context-b';
+    await manager.resume();
+    expect(manager.status.phase, ConnectionPhase.actionRequired);
+    expect(manager.retainsProtection, isTrue);
+    expect(runtime.handoffCalls, 0);
+    await manager.refresh();
+    expect(manager.retainsProtection, isTrue, reason: 'the previous network proof cannot acknowledge this recovery');
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    runtime.proofObservedAt = DateTime.now().toUtc();
+    await manager.refresh();
+    expect(manager.status.phase, ConnectionPhase.connected,
+        reason: experience.saved.protectionEvents.where((event) => event.kind == 'native_recovery_blocked')
+            .map((event) => event.detail).join(' '));
+    expect(manager.retainsProtection, isFalse);
+    expect(runtime.connectCalls, 1);
+    expect(runtime.handoffCalls, 0);
     expect(runtime.calls, isNot(contains('disconnect')));
   });
 

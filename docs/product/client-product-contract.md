@@ -112,7 +112,7 @@ Browser continuation currently starts from app handoff, Telegram, and the eviden
   first payment. Wheel, calendar, and referral rewards remain paid-only. Already-issued
   `+10 days` grants remain grandfathered and must render with their
   backend-returned value
-- public user-facing version line: `1.4.5`; private Android/Windows `1.5.0+4255`
+- public user-facing version line: `1.4.5`; private Android/Windows `1.5.0+4256`
   and the `1.5.0+4175` draft remain separate. Beta/prerelease candidates never
   replace stable metadata implicitly
 - recommended public routing mode: `All except RU`
@@ -261,10 +261,9 @@ the owner's separate verification stage.
 - `Android + Windows` remain the only public release pair for this wave
 - the published `1.0.0-beta` handoff and `2026-05-15` decision pack are retained
   historical exact-candidate evidence; neither is reusable approval for a rebuild
-- Public stable remains `1.4.5`; the private Android/Windows `1.5.0+4227`
-  pair and retained Windows 4216 acceptance are documented in
-  [cutover readiness](../operations/cutover-readiness.md). Publication requires
-  the owner's explicit approval
+- Public stable remains `1.4.5`; private `1.5.0+4256` and acceptance are in
+  [cutover readiness](../operations/cutover-readiness.md). Publication is prohibited;
+  F82 stays in shadow and Decider manual, with no active-ML release gate.
 - Android release builds require the operator-provided production signing
   inputs by default; debug signing is an explicit non-public smoke path only
 - An unsigned Windows installer is accepted for the outside-store beta lane
@@ -989,7 +988,17 @@ it must not keep showing the abandoned local trial profile.
 If saved device metadata survives but its secure session pair is missing, a fresh
 one-time code can still claim a new device session under the normal device limit.
 The replacement is saved only while the previous account/install/credentials
-remain unchanged. Email recovery instead restores the saved installation.
+remain unchanged. Email recovery reuses the saved installation for the same
+account; `device_identity_conflict` rolls back OTP consumption and permits one
+retry with a fresh installation for another account. Neither request sends the
+previous bearer, and a late refresh cannot replace or invalidate the new login.
+
+Session refresh runs outside the caller's cancellation and completes its guarded
+secure-storage write. A lost response gets one retry with the same refresh
+credential. Initial access-token expiry and transient refresh failures preserve
+the accepted offline profile; only a final rejection of the still-current session
+removes its pair and cache. Runtime stats and release-health use this shared
+refresh path, then stop sending after terminal rejection until a fresh login.
 The profile's `Восстановить вход` action opens the existing code-entry sheet
 with `Код из Telegram` and `Восстановить по почте` actions; email is optional
 for users who sign in through Telegram.

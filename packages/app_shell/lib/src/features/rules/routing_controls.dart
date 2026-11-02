@@ -268,12 +268,20 @@ class _DnsAndLanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final customDnsError = preferences.customDnsError;
+    final windowsAppScope = hostPlatform == HostPlatform.windows &&
+        const {RouteMode.selectedApps, RouteMode.excludedApps}.contains(fallbackMode);
     return _SectionCard(
       key: const ValueKey('rules-dns-lan'),
       title: 'Блокировка и DNS',
       lines: [
+        if (windowsAppScope)
+          'Системный DNS всех приложений идёт через VPN, включая приложения с прямым маршрутом. Собственный DoH приложения следует маршруту его данных.',
         customDnsError != null
             ? 'Сохранённый адрес DNS не поддерживается. Используется DNS профиля POKROV; исправьте адрес в настройке DNS.'
+            : windowsAppScope
+                ? preferences.effectiveDnsTransport == PokrovDnsTransport.direct
+                    ? 'В режиме выбора приложений DNS напрямую недоступен. Для подключения выключите эту настройку.'
+                    : 'В режиме выбора приложений DNS напрямую недоступен.'
             : preferences.effectiveDnsTransport == PokrovDnsTransport.direct &&
                     fallbackMode == RouteMode.fullTunnel
                 ? 'DNS напрямую сохранён, но в режиме «Всё через POKROV» DNS идёт через VPN.'
@@ -312,7 +320,10 @@ class _DnsAndLanCard extends StatelessWidget {
             _RoutingToggleRow(
               key: const ValueKey('rules-dns-direct-toggle'),
               title: 'DNS напрямую · лаборатория',
-              subtitle: preferences.dnsTransport == PokrovDnsTransport.direct &&
+              enabled: !windowsAppScope || preferences.dnsTransport == PokrovDnsTransport.direct,
+              subtitle: windowsAppScope
+                  ? 'Недоступно в режиме выбора приложений. Сохранённую настройку можно выключить.'
+                  : preferences.dnsTransport == PokrovDnsTransport.direct &&
                       fallbackMode == RouteMode.fullTunnel
                   ? 'Настройка сохранена. В режиме «Всё через POKROV» DoH идёт через VPN.'
                   : preferences.dnsTransport == PokrovDnsTransport.direct

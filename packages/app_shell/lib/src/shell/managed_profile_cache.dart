@@ -93,7 +93,8 @@ class ManagedProfileCache {
         final previousAt = previous is Map
             ? DateTime.tryParse(previous['verified_at']?.toString() ?? '')
             : null;
-        if (previousAt != null && previousAt.isAfter(verifiedAt)) return;
+        if (previousAt != null && previousAt.isAfter(verifiedAt) &&
+            !previousAt.isAfter(_now().toUtc())) return;
         value['version'] = 1;
         final entry = <String, Object?>{
           'binding': binding,
@@ -112,6 +113,9 @@ class ManagedProfileCache {
                   item is Map && item['candidate_ref'] == candidateRef)) return;
         } else {
           value['downloaded'] = entry;
+          // A completed authorized fetch replaces the clock observation of an
+          // older download, including one recorded before the clock was fixed.
+          value['last_observed_at'] = verifiedAt.toUtc().toIso8601String();
           final allowed = catalog is Map && catalog['candidates'] is List
               ? (catalog['candidates'] as List).whereType<Map>()
                   .map((item) => item['candidate_ref']).toSet() : null;
@@ -162,10 +166,15 @@ class ManagedProfileCache {
           (observedAt != null && now.isBefore(observedAt))) {
         return const ManagedProfileCacheRead();
       }
-      // Persist even an expired read, so a later clock rollback cannot revive it.
-      value['last_observed_at'] = now.toIso8601String();
-      await _write(platform, value);
       var accessEnded = false;
+      var expired = false;
+      Future<void> rememberExpiry() async {
+        if (!expired) return;
+        // Only an observed expiry needs a durable rollback fence. A normal
+        // offline read must not encrypt and rewrite the entire profile block.
+        value['last_observed_at'] = now.toIso8601String();
+        await _write(platform, value);
+      }
       final latest = value['downloaded'];
       final latestPayload = latest is Map && latest['binding'] == binding ? latest['payload'] : null;
       final latestAccess = latestPayload is Map ? latestPayload['access'] : null;
@@ -215,13 +224,16 @@ class ManagedProfileCache {
             if (expiry == null) continue;
             if (now.isAfter(expiry.add(offlineWindow))) {
               accessEnded = true;
+              expired = true;
               continue;
             }
           }
         } else if (age > offlineWindow) {
           // Actual older records did not carry an access expiry.
+          expired = true;
           continue;
         }
+        await rememberExpiry();
         return ManagedProfileCacheRead(payload: {
           ...payload,
           if (catalog is Map) 'transport_catalog': catalog,
@@ -230,6 +242,7 @@ class ManagedProfileCache {
             'proven_network_selection_key': entry['network_selection_key'],
         });
       }
+      await rememberExpiry();
       return ManagedProfileCacheRead(accessEnded: accessEnded);
     } on Object {
       // Unreadable/future state is unavailable and preserved, never guessed.

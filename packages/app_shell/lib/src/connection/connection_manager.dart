@@ -122,6 +122,34 @@ class ConnectionManager extends ChangeNotifier {
     _managedProfileDirty = true;
   }
 
+  Future<void> invalidateAccountSession() async {
+    _managedProfileDirty = true;
+    _confirmedCandidate = null;
+    _transportCatalog = null;
+    _candidateRef = null;
+    _stagedCacheInputs = null;
+    _stagedProfileCacheEntryId = '';
+    _invalidateQuickSettingsProfile();
+    try {
+      await _replaceCommand(() async {
+        await _disconnectProtectedHandoff();
+        // An old native stage may have completed while cancellation settled.
+        // Clear its reusable profile again before admitting the new account.
+        _invalidateQuickSettingsProfile();
+        if (!await _waitForQuickSettingsInvalidation(_managedProfileRevision)) {
+          throw const BootstrapFailure(
+            'Не удалось удалить настройки прежнего аккаунта. Повторите отключение POKROV.',
+            code: 'account_profile_invalidation_unconfirmed');
+        }
+      });
+    } on Object {
+      _activePhase = ConnectionPhase.actionRequired;
+      _runtimeHeadline = _connectionFailureMessage =
+          'Остановка прежнего аккаунта не подтверждена. Повторите отключение POKROV.';
+      _publish();
+    }
+  }
+
   void selectCatalogServices(Set<String> selection) {
     _update(() {
       _selectedRouteMode = RouteMode.selectiveServices;
@@ -338,6 +366,8 @@ class ConnectionManager extends ChangeNotifier {
   final PokrovFileConnectHintStore _connectHintStore;
   final PokrovClientObservability? _observability;
   final Duration _actionTimeout;
+  Duration get _candidateWorkTimeout => _actionTimeout < const Duration(seconds: 6)
+      ? _actionTimeout : const Duration(seconds: 6);
   final PokrovWifiProbe? _currentWifiProbe;
   final PokrovForegroundConnectPolicy _foregroundConnectPolicy;
   RuntimeCandidateNetwork? _candidatePhysicalNetwork;
@@ -362,6 +392,11 @@ class ConnectionManager extends ChangeNotifier {
   Future<void>? _cancellation;
   final Set<Future<Object?>> _runtimeActionsInFlight = {};
   ConnectionPhase? _activePhase;
+  static const _initialProfilePreparationTimeout = Duration(seconds: 40);
+  static const _dnsCandidateSelectionTimeout = Duration(seconds: 30);
+  static const _nativeConnectSettlementTimeout = Duration(seconds: 81);
+  ({int command, Stopwatch clock, Duration timeout, Completer<void> expired,
+    void Function() expire, void Function() close})? _connectDeadline;
 
   static const _automaticNodeQuarantineTtl = Duration(minutes: 15);
   static const _maxAutomaticNodeQuarantineEntries = 8;
@@ -420,6 +455,14 @@ class ConnectionManager extends ChangeNotifier {
   RuntimeSnapshot? get _runtimeSnapshot => _connectionCoordinator.snapshot;
   set _runtimeSnapshot(RuntimeSnapshot? value) {
     final hadCapabilities = _runtimeSnapshot?.transportCapabilities?.features.isNotEmpty == true;
+    final qa = _activeFirstProviderQa;
+    final engine = _runtimeEngine;
+    if (qa?.requestId != null && engine is RuntimeConnectCancellation &&
+        (engine as RuntimeConnectCancellation).activeConnectRequestId != qa!.requestId) {
+      // An observation preserves connection/cache generation, but a different
+      // native Connect cannot inherit this exact signed QA request owner.
+      _activeFirstProviderQa = null;
+    }
     if (value != null && _runtimeStopConfirmed(value)) {
       _protectedHandoffActive = false;
       _activeCandidateRef = null;
@@ -446,7 +489,8 @@ class ConnectionManager extends ChangeNotifier {
   }
 
   bool _reconcileHealthyNativeRecovery(RuntimeSnapshot current) {
-    if (_appContext.hostPlatform != HostPlatform.windows || _disposed || !_protectedHandoffActive) return false;
+    if (!const {HostPlatform.android, HostPlatform.windows}.contains(_appContext.hostPlatform) ||
+        _disposed || !_protectedHandoffActive) return false;
     bool blocked(_NativeRecoveryBlockReason reason) => _recordNativeRecoveryBlock(current, reason);
     if (_activePhase != ConnectionPhase.actionRequired) return blocked(_NativeRecoveryBlockReason.phaseMismatch);
     if (_runtimeIntent != ConnectionTransitionIntent.none || _runtimeActionsInFlight.isNotEmpty)
@@ -469,12 +513,17 @@ class ConnectionManager extends ChangeNotifier {
     // Preparation keeps the old owner; a failed native replacement instead
     // binds recovery to the acknowledged target and unchanged profile inputs.
     final failed = pending.snapshot;
-    if (failed.phase != RuntimePhase.running || !failed.hasCoreEgressProbeFailure || failed.proofObservedAt != null)
+    if (!_canBindNativeRecoverySnapshot(failed, replaced: pending.replaced) ||
+        !failed.isCleanlyHealthy && failed.proofObservedAt != null)
       return blocked(_NativeRecoveryBlockReason.failedSnapshotInvalid);
     if (!pending.replaced && failed.protectionRetained) return blocked(_NativeRecoveryBlockReason.failedGuardRetained);
     if (failed.transportProofPending == true || failed.transportLeaseActive == true)
       return blocked(_NativeRecoveryBlockReason.failedBoundTransport);
-    final digest = failed.effectiveProfileDigest;
+    // Android publishes effective identity only with a valid egress proof.
+    // Its failed snapshot retains the exact staged identity; the new healthy
+    // observation must prove that same staged input as the effective owner.
+    final digest = _appContext.hostPlatform == HostPlatform.android
+        ? failed.stagedProfileDigest : failed.effectiveProfileDigest;
     final source = failed.stagedProfileSource;
     final currentSource = current.effectiveProfileSource;
     if (digest == null || digest != failed.stagedProfileDigest ||
@@ -494,6 +543,12 @@ class ConnectionManager extends ChangeNotifier {
     _pendingNativeRecovery = null;
     return true;
   }
+
+  bool _canBindNativeRecoverySnapshot(RuntimeSnapshot snapshot, {bool replaced = false}) =>
+      snapshot.phase == RuntimePhase.running &&
+      (snapshot.hasCoreEgressProbeFailure || _appContext.hostPlatform == HostPlatform.android &&
+          (const {'protected_handoff_failed', 'connect_cancelled'}.contains(snapshot.lastFailureKind) ||
+              !replaced && snapshot.isCleanlyHealthy));
 
   bool _recordNativeRecoveryBlock(RuntimeSnapshot current, _NativeRecoveryBlockReason reason) {
     if (current.isCleanlyHealthy) {
@@ -663,7 +718,7 @@ class ConnectionManager extends ChangeNotifier {
     return _replaceCommand(() {
       _smartAccessRouteProfile = null;
       return _toggleRuntime(reconnectAfterDisconnect: reconnectAfterDisconnect);
-    });
+    }, connectBudget: _runtimeSnapshot?.phase != RuntimePhase.running || reconnectAfterDisconnect);
   }
 
   Future<void> connect() {
@@ -677,7 +732,7 @@ class ConnectionManager extends ChangeNotifier {
       return retainsProtection
           ? _recoverCandidateConnection(_runtimeSnapshot, _activeCandidateRef ?? _candidateRef ?? '')
           : _toggleRuntime(reconnectAfterDisconnect: _runtimeSnapshot?.phase == RuntimePhase.running);
-    });
+    }, connectBudget: true);
   }
   Future<void> disconnect() {
     _suppressAutomaticAndroidNetwork();
@@ -692,13 +747,18 @@ class ConnectionManager extends ChangeNotifier {
           // A negative Connect can retain its owner while the UI still has the
           // staged snapshot. Only the exact settlement receipt releases it.
           await _disconnectProtectedHandoff(requestId: requestId);
-          return;
+        } else {
+          // Stop is an explicit command. A pending native attempt can settle
+          // between observations; toggling that newer stopped state would start it.
+          if (retainsProtection || _activePhase == ConnectionPhase.actionRequired ||
+              _runtimeSnapshot?.phase == RuntimePhase.running ||
+              _runtimeSnapshot?.connectionPending == true) {
+            await _disconnectProtectedHandoff();
+          } else {
+            return;
+          }
         }
-        if (retainsProtection) { await _disconnectProtectedHandoff(); return; }
-        if (_runtimeSnapshot?.phase == RuntimePhase.running ||
-            _runtimeSnapshot?.connectionPending == true) {
-          await _toggleRuntime();
-        }
+        unawaited(_reportClientLifecycle('runtime_observed'));
       });
   }
 
@@ -792,7 +852,7 @@ class ConnectionManager extends ChangeNotifier {
       return retainsProtection
           ? _recoverCandidateConnection(_runtimeSnapshot, _activeCandidateRef ?? _candidateRef ?? '')
           : _toggleRuntime(reconnectAfterDisconnect: true);
-    });
+    }, connectBudget: true);
   }
   Future<void> cancel() {
     _suppressAutomaticAndroidNetwork();
@@ -838,8 +898,91 @@ class ConnectionManager extends ChangeNotifier {
     }
   }
 
+  Future<void> _withAggregateConnectBudget(Future<void> Function() action,
+      {({Stopwatch clock, Duration timeout})? inherited}) async {
+    final command = _commandNumber;
+    final clock = inherited?.clock ?? (Stopwatch()..start());
+    // One largest candidate group, not a fresh allowance for each candidate or
+    // fallback. The existing pending-connect window is also a lower bound.
+    final phases = _initialProfilePreparationTimeout + _dnsCandidateSelectionTimeout + _actionTimeout * 2;
+    final timeout = inherited?.timeout ??
+        (phases > _nativeConnectSettlementTimeout ? phases : _nativeConnectSettlementTimeout);
+    final expired = Completer<void>();
+    final cleanup = Completer<void>();
+    late final Timer timer;
+    void close() {
+      timer.cancel();
+      if (!expired.isCompleted) expired.complete();
+      if (!cleanup.isCompleted) cleanup.complete();
+    }
+    void expire() {
+      if (expired.isCompleted) return;
+      expired.complete();
+      if (_disposed || command != _commandNumber) {
+        cleanup.complete();
+        return;
+      }
+      final errorCode = OperationalFailureMapper.connection('connect_deadline', timedOut: true);
+      _observability?.recordConnectionFailure(stage: _connectionExperience.stage,
+          errorCode: errorCode, failureKind: 'connect_deadline', failureOperation: 'core_connect');
+      unawaited(_reportClientRuntimeError(errorCode,
+          failureKind: 'connect_deadline', failureOperation: 'core_connect'));
+      // Use the same cancellation barrier as a user command. A new command
+      // cannot skip this cleanup, and an unconfirmed native owner stays tracked.
+      final cancellation = _cancellation ??= _supersedeCurrentAction()
+          .whenComplete(() => _cancellation = null);
+      unawaited(() async {
+        try { await cancellation; } on Object {
+          // The cancellation owner has already retained its failure state.
+        }
+        if (!_disposed && command == _commandNumber) {
+          final healthy = _runtimeSnapshot?.isCleanlyHealthy == true && !retainsProtection;
+          _activePhase = healthy ? null : ConnectionPhase.actionRequired;
+          _runtimeHeadline = healthy
+              ? 'Прежнее подключение работает. Повторите смену подключения.'
+              : 'Подключение заняло слишком долго. Повторите попытку или отключите POKROV.';
+          _connectionFailureMessage = healthy ? null : _runtimeHeadline;
+          _notify(_runtimeHeadline!, tone: PokrovSnackTone.danger);
+          _publish();
+        }
+        if (!cleanup.isCompleted) cleanup.complete();
+      }());
+    }
+    timer = Timer(timeout - clock.elapsed, expire);
+    final deadline = (command: command, clock: clock, timeout: timeout,
+        expired: expired, expire: expire, close: close);
+    _connectDeadline = deadline;
+    try {
+      if (clock.elapsed >= timeout) expire();
+      if (!expired.isCompleted) await Future.any<void>([action(), expired.future]);
+      if (expired.isCompleted) await cleanup.future;
+    } finally {
+      timer.cancel();
+      if (identical(_connectDeadline?.expired, expired)) _connectDeadline = null;
+    }
+  }
+
+  Duration _withinConnectBudget(Duration timeout) {
+    final deadline = _connectDeadline;
+    // Cleanup has its existing independent stop/confirmation budgets.
+    if (deadline == null || deadline.command != _commandNumber || deadline.expired.isCompleted) return timeout;
+    final remaining = deadline.timeout - deadline.clock.elapsed;
+    if (remaining <= Duration.zero) {
+      deadline.expire();
+      throw const ConnectionOperationSuperseded();
+    }
+    return remaining < timeout ? remaining : timeout;
+  }
+
+  ({Stopwatch clock, Duration timeout})? get _currentConnectBudget {
+    final deadline = _connectDeadline;
+    return deadline == null ? null : (clock: deadline.clock, timeout: deadline.timeout);
+  }
+
   Future<void> _replaceCommand(Future<void> Function() action,
-      {bool automatic = false}) {
+      {bool automatic = false, bool connectBudget = false,
+        ({Stopwatch clock, Duration timeout})? inheritedConnectBudget}) {
+    final inherited = inheritedConnectBudget ?? (automatic ? _currentConnectBudget : null);
     final number = ++_commandNumber;
     if (!automatic) {
       _cancelAutomaticFailover();
@@ -857,10 +1000,24 @@ class ConnectionManager extends ChangeNotifier {
             : null);
     _publish();
     final next = () async {
-      if (cancellation != null) await cancellation;
-      if (previous != null) await previous;
+      try {
+        if (cancellation != null) await cancellation;
+        if (previous != null) await previous.timeout(_actionTimeout);
+      } on TimeoutException {
+        if (!_disposed && number == _commandNumber) {
+          _activePhase = ConnectionPhase.actionRequired;
+          _runtimeHeadline = _connectionFailureMessage =
+              'Остановка подключения ещё не подтверждена. Повторите отключение POKROV.';
+          _publish();
+        }
+        return;
+      }
       if (_disposed || number != _commandNumber) return;
-      await action();
+      if (connectBudget) {
+        await _withAggregateConnectBudget(action, inherited: inherited);
+      } else {
+        await action();
+      }
     }();
     // A failed repair is returned to its caller; later commands remain usable.
     late final Future<void> tail;
@@ -938,7 +1095,8 @@ class ConnectionManager extends ChangeNotifier {
     while (_runtimeActionsInFlight.isNotEmpty) {
       await Future.wait(_runtimeActionsInFlight
           .toList()
-          .map((action) => action.then<void>((_) {}, onError: (Object _) {})));
+          .map((action) => action.then<void>((_) {}, onError: (Object _) {})))
+          .timeout(_actionTimeout);
     }
   }
 
@@ -954,12 +1112,15 @@ class ConnectionManager extends ChangeNotifier {
   Future<void> resume() => _resumeRuntimeAndTrustedWifiChecks();
   Future<RuntimeSnapshot> readSnapshot() async {
     final generation = _connectionCoordinator.operationGeneration;
+    final previous = _runtimeSnapshot;
+    final previousCandidateRef = _activeCandidateRef;
     final current = await _withRuntimeActionTimeout(
         'protectionSnapshot', _runtimeEngine.snapshot,
         ownerGeneration: generation);
     if (_disposed || !_connectionCoordinator.ownsOperation(generation))
       throw const ConnectionOperationSuperseded();
     _update(() => _runtimeSnapshot = current);
+    _recoverUnexpectedNativeStop(previous, current, previousCandidateRef);
     return current;
   }
 
@@ -990,6 +1151,7 @@ class ConnectionManager extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    _connectDeadline?.close();
     _cacheRefreshTimer?.cancel();
     _networkContextTimer?.cancel();
     _stopTransportPolicyRefresh();
@@ -1372,6 +1534,8 @@ class ConnectionManager extends ChangeNotifier {
 
       final confirmedBeforeResume = confirmedConnectionForDiagnostics(_runtimeSnapshot) != null
           ? _confirmedCandidate : null;
+      final previous = _runtimeSnapshot;
+      final previousCandidateRef = _activeCandidateRef;
       var snapshot =
           await _runRuntimeAction(_snapshotWithTransportReconciliation);
       final generation = _connectionCoordinator.operationGeneration;
@@ -1380,7 +1544,7 @@ class ConnectionManager extends ChangeNotifier {
       }
       if (snapshot.phase == RuntimePhase.configStaged &&
           snapshot.supportsLiveConnect &&
-          !_isTerminalConnectMessage(snapshot.message)) {
+          !_isTerminalConnectSnapshot(snapshot)) {
         snapshot = await _settleRuntimeTransition(
           snapshot,
           ownerGeneration: generation,
@@ -1398,10 +1562,10 @@ class ConnectionManager extends ChangeNotifier {
       await _pauseRunningTunnelOnTrustedWifi();
       await _observeAndroidNetwork(_runtimeSnapshot ?? snapshot);
       await _refreshSmartAccessLeases();
+      _recoverUnexpectedNativeStop(previous, _runtimeSnapshot ?? snapshot, previousCandidateRef);
       if (confirmedBeforeResume != null && _confirmedCandidate == confirmedBeforeResume &&
           _connectionCoordinator.ownsOperation(generation) &&
           _confirmedCandidateHasCurrentBinding(_runtimeSnapshot)) {
-        // Resume owns a new observation generation, not a new connection.
         // Carry the unchanged native proof without repeating success side effects.
         _confirmedCandidate = (generation: generation, digest: confirmedBeforeResume.digest,
             candidate: confirmedBeforeResume.candidate);
@@ -1488,9 +1652,10 @@ class ConnectionManager extends ChangeNotifier {
         // One attempt per native context, including failed handoff. Network
         // movement does not disprove or quarantine the old candidate.
         _activePhysicalNetwork = network;
+        _candidatePhysicalNetwork = network;
         final reference = _activeCandidateRef!;
         await _replaceCommand(() => _recoverCandidateConnection(latest, reference,
-            confirmedFailure: false, preferCachedProfile: true), automatic: true);
+            confirmedFailure: false, preferCachedProfile: true), automatic: true, connectBudget: true);
         return true;
       }
       if (!preferences.autoConnectOnUntrustedWifi || !_clientExperienceLoaded ||
@@ -1515,7 +1680,7 @@ class ConnectionManager extends ChangeNotifier {
           _foregroundAutoConnect = false;
           await _foregroundConnectPolicy(context, epoch, false);
         }
-      }, automatic: true);
+      }, automatic: true, connectBudget: true);
       return true;
     } on ConnectionOperationSuperseded {
       return false;
@@ -1969,10 +2134,10 @@ class ConnectionManager extends ChangeNotifier {
   }
 
   Future<void> _enforceKnownAccessDenial() async {
-    if (_protectedHandoffActive) return;
     if (_disposed || !_accessDenialPending || _runtimeBusy) return;
     _accessDenialPending = false;
-    if (_runtimeSnapshot?.phase != RuntimePhase.running) {
+    if (_runtimeSnapshot?.phase != RuntimePhase.running &&
+        _runtimeSnapshot?.connectionPending != true && !retainsProtection) {
       _invalidateQuickSettingsProfile();
       return;
     }
@@ -2026,21 +2191,10 @@ class ConnectionManager extends ChangeNotifier {
     Future<RuntimeSnapshot> Function() action,
   ) async {
     if (_runtimeBusy) throw const ConnectionOperationSuperseded();
-    final qa = _activeFirstProviderQa;
-    final engine = _runtimeEngine;
-    // Observing the same native QA Connect must not cancel its first control
-    // response or discard its proof. Connection commands still advance ownership.
-    final observingQa = qa != null && qa.requestId != null && engine is RuntimeConnectCancellation &&
-        (engine as RuntimeConnectCancellation).activeConnectRequestId == qa.requestId &&
-        _connectionCoordinator.ownsOperation(qa.generation) && qa.profileRevision == _managedProfileRevision &&
-        (_activeCandidateRef ?? _candidateRef) == qa.transportCandidateRef &&
-        _runtimeSnapshot?.isCleanlyHealthy == true && _runtimeSnapshot?.protectionRetained == false &&
-        qa.profileDigest != null && _runtimeSnapshot?.effectiveProfileDigest == qa.profileDigest &&
-        _runtimeSnapshot?.coreModuleSha256 == qa.permit.payload['core_module_sha256'] &&
-        !_accessDenialPending && !_cachedProfileFallbackGate.authorizationDenied &&
-        DateTime.now().toUtc().isBefore(qa.permit.expiresAt);
+    // A read observes the existing connection and background cache owner.
+    // Commands and account/profile changes still replace their generations.
     _update(() {
-      _connectionCoordinator.updateActionInFlight(true, preserveOperation: observingQa);
+      _connectionCoordinator.updateActionInFlight(true, preserveOperation: true);
     });
     final generation = _connectionCoordinator.operationGeneration;
 
@@ -2079,7 +2233,8 @@ class ConnectionManager extends ChangeNotifier {
 
   Future<RuntimeSnapshot> _snapshotWithTransportReconciliation() async {
     final generation = _connectionCoordinator.operationGeneration;
-    final snapshot = await _runtimeEngine.snapshot();
+    final snapshot = await _withRuntimeActionTimeout('snapshot', _runtimeEngine.snapshot,
+        ownerGeneration: generation);
     if (_disposed || !_connectionCoordinator.ownsOperation(generation))
       throw const ConnectionOperationSuperseded();
     if (!_requiresTransportReconciliation(snapshot)) return snapshot;
@@ -2106,6 +2261,8 @@ class ConnectionManager extends ChangeNotifier {
               !_connectionCoordinator.hasActiveTransportLease));
 
   Future<void> _refreshRuntimeSnapshot() async {
+    final previous = _runtimeSnapshot;
+    final previousCandidateRef = _activeCandidateRef;
     RuntimeSnapshot snapshot;
     try {
       snapshot = await _runRuntimeAction(() async {
@@ -2135,12 +2292,14 @@ class ConnectionManager extends ChangeNotifier {
       }
     }
     await _refreshSmartAccessLeases();
+    _recoverUnexpectedNativeStop(previous, _runtimeSnapshot ?? snapshot, previousCandidateRef);
   }
 
   Future<void> _refreshDesktopRuntimeSnapshot() async {
     if (_disposed || _runtimeBusy) return;
     final generation = _connectionCoordinator.operationGeneration;
     final observed = _runtimeSnapshot;
+    final previousCandidateRef = _activeCandidateRef;
     RuntimeSnapshot? refreshed;
     try {
       refreshed = await _withRuntimeActionTimeout(
@@ -2196,14 +2355,14 @@ class ConnectionManager extends ChangeNotifier {
     // A UI/resume read may already have adopted this failure. Recovery belongs
     // to the active candidate, not to which observer first saw the snapshot.
     if (refreshed != null && (_isLocalSmartAccessFailure(refreshed) ||
-        _transportCatalog != null && _activeCandidateRef != null &&
-        (refreshed.hasCoreEgressProbeFailure ||
-            observed?.phase == RuntimePhase.running && refreshed.phase != RuntimePhase.running))) {
-      _scheduleCandidateRecovery(refreshed);
+        _transportCatalog != null && previousCandidateRef != null &&
+        refreshed.hasCoreEgressProbeFailure)) {
+      _scheduleCandidateRecovery(refreshed, previousCandidateRef: previousCandidateRef);
     } else if (_isCurrentSmartAccessVpnFallback(refreshed) &&
         refreshed!.hasCoreEgressProbeFailure) {
       _handleFailedManagedProfile(refreshed);
     }
+    if (refreshed != null) _recoverUnexpectedNativeStop(observed, refreshed, previousCandidateRef);
     if (!unchanged) unawaited(_reportClientLifecycle("runtime_observed"));
   }
 
@@ -2272,15 +2431,20 @@ class ConnectionManager extends ChangeNotifier {
                   .bindCancellableConnect(current, generation: generation));
             }
           }
-          return pending;
+          return _nativeMutationOperations.contains(operation) ? pending : Future.any<T>([
+            pending,
+            _connectionCoordinator.whenOperationChanges(generation).then<T>(
+                (_) => throw const ConnectionOperationSuperseded()),
+          ]);
         },
         ownerGeneration: generation,
-        timeout: _appContext.hostPlatform == HostPlatform.android &&
+        timeout: _withinConnectBudget(_appContext.hostPlatform == HostPlatform.android &&
                 const {'initialize', 'repairInitialize'}.contains(operation)
             ? const Duration(seconds: 90)
-            : null,
-        hostOwnsTimeout: _appContext.hostPlatform == HostPlatform.linux ||
-            _appContext.hostPlatform == HostPlatform.windows,
+            : _actionTimeout),
+        hostOwnsTimeout: _nativeMutationOperations.contains(operation) &&
+            (_appContext.hostPlatform == HostPlatform.linux ||
+                _appContext.hostPlatform == HostPlatform.windows),
       );
       if (_nativeMutationOperations.contains(operation) &&
           !const {'initialize', 'repairInitialize'}.contains(operation) &&
@@ -2655,7 +2819,7 @@ class ConnectionManager extends ChangeNotifier {
       final service = _bootstrapper as AppFirstRuntimeBootstrapper;
       final subscription = await service.fetchClientSubscription(
           hostPlatform: _appContext.hostPlatform,
-          requestTimeout: _actionTimeout, cancelled: cancelled);
+          requestTimeout: _withinConnectBudget(_actionTimeout), cancelled: cancelled);
       requireCurrent();
       if (subscription.lane == 'expiredOrBlocked') {
         throw const BootstrapFailure('Доступ не активен. Продлите доступ, чтобы подключиться.',
@@ -2707,7 +2871,9 @@ class ConnectionManager extends ChangeNotifier {
     final useCandidateProbes = discoverCandidates && _connectionCoordinator.actionInFlight;
     Future<ManagedProfilePayload> resolve({String candidateRef = '', bool select = true,
         bool cache = true, Future<void>? stop, Duration? preparationTimeout}) => _bootstrapper.resolveManagedProfile(
-      timeout: preparationTimeout ?? deadline,
+      timeout: _connectDeadline?.command == _commandNumber
+          ? _withinConnectBudget(preparationTimeout ?? deadline ?? _actionTimeout)
+          : preparationTimeout ?? deadline,
       cancelled: stop ?? cancelled,
       hostPlatform: inputs.hostPlatform,
       routeMode: inputs.routeMode,
@@ -2826,7 +2992,7 @@ class ConnectionManager extends ChangeNotifier {
             identical(group, warpCandidates) && group.length > 3;
         // DNS handshakes plus the unchanged 64 KiB proof need their own budget.
         final selectionTimeout = identical(group, dnsCandidates)
-            ? const Duration(seconds: 30)
+            ? _dnsCandidateSelectionTimeout
             : identical(group, directWarpCandidates)
             ? const Duration(seconds: 4)
             : identical(group, warpCandidates)
@@ -2848,13 +3014,14 @@ class ConnectionManager extends ChangeNotifier {
             recoveryCandidateRef: recoveryCandidateRef,
             excludedCandidateRefs: excludedCandidateRefs,
             probeTimeout: identical(group, dnsCandidates)
-                ? const Duration(seconds: 30)
+                ? _dnsCandidateSelectionTimeout
                 : initialProfilePreparation &&
                     _appContext.hostPlatform == HostPlatform.android &&
                     identical(group, ordinaryCandidates)
                 ? const Duration(seconds: 12)
                 : const Duration(seconds: 4),
-            selectionTimeout: selectionTimeout,
+            selectionTimeout: _withinConnectBudget(selectionTimeout),
+            probeSettlementTimeout: _candidateWorkTimeout,
             excludeProbeCleanupFromBudget: twoWaveWarp,
             onProbeResult: (candidate, result) {
               if (_disposed || !_connectionCoordinator.ownsOperation(generation) ||
@@ -2870,8 +3037,7 @@ class ConnectionManager extends ChangeNotifier {
               unawaited(stop.then((_) => stopped = true));
               final exact = materialized[candidate.candidateRef] ??
                   await resolve(candidateRef: candidate.candidateRef, select: false, cache: false, stop: stop,
-                      preparationTimeout: _actionTimeout < const Duration(seconds: 6)
-                          ? _actionTimeout : const Duration(seconds: 6));
+                      preparationTimeout: _candidateWorkTimeout);
               requireCurrent();
               if (!stopped) materialized[candidate.candidateRef] = exact;
             },
@@ -2995,7 +3161,7 @@ class ConnectionManager extends ChangeNotifier {
       required Duration timeout, required int generation, required void Function() requireCurrent}) async {
     final probeId = 'candidate_${generation}_${math.Random.secure().nextInt(1 << 32)}';
     final result = probing.probeCandidate(probeId: probeId, payload: payload,
-        timeout: timeout, expectedNetworkContext: context);
+        timeout: _withinConnectBudget(timeout), expectedNetworkContext: context);
     var settled = false;
     var stopped = false;
     Future<void>? cleanup;
@@ -3109,18 +3275,19 @@ class ConnectionManager extends ChangeNotifier {
               contextGeneration: context,
               cancelled: _connectionCoordinator.whenOperationEnds(generation),
               recoveryCandidateRef: recoveryCandidateRef, excludedCandidateRefs: excludedCandidateRefs,
-              selectionTimeout: identical(group, dnsCandidates)
-                  ? const Duration(seconds: 30)
+              selectionTimeout: _withinConnectBudget(identical(group, dnsCandidates)
+                  ? _dnsCandidateSelectionTimeout
                   : identical(group, directWarpCandidates)
                   ? const Duration(seconds: 4)
                   : identical(group, warpCandidates)
                       ? Duration(seconds: twoWaveWarp ? 8 : 5)
                       : warpCandidates.isNotEmpty
                           ? const Duration(seconds: 7)
-                          : const Duration(seconds: 12),
+                          : const Duration(seconds: 12)),
               excludeProbeCleanupFromBudget: twoWaveWarp,
+              probeSettlementTimeout: _candidateWorkTimeout,
               probeTimeout: identical(group, dnsCandidates)
-                  ? const Duration(seconds: 30)
+                  ? _dnsCandidateSelectionTimeout
                   : coldConnect && inputs.hostPlatform == HostPlatform.android &&
                       group.every((candidate) => candidate.warpMode == null)
                   ? const Duration(seconds: 12)
@@ -3223,6 +3390,7 @@ class ConnectionManager extends ChangeNotifier {
     }
     final profileRevision = _managedProfileRevision;
     final preparationClock = Stopwatch()..start();
+    final preparationBudget = _withinConnectBudget(_actionTimeout);
     final catalogAppScopeRequired = _routingCatalogEnabled &&
         _appContext.hostPlatform == HostPlatform.android &&
         _clientExperience.catalogVerifiedRuPreset &&
@@ -3419,12 +3587,12 @@ class ConnectionManager extends ChangeNotifier {
             }
             bool qaCurrent() => !_disposed && _connectionCoordinator.ownsOperation(generation) &&
                 profileRevision == _managedProfileRevision && _pendingFirstProviderQaAdmissionId == qaAdmissionId &&
-                preparationClock.elapsed < _actionTimeout;
+                preparationClock.elapsed < preparationBudget;
             final permit = await qaService.claimFirstProviderQa(admissionId: qaAdmissionId,
               hostPlatform: _appContext.hostPlatform,
               baseProfile: runtimePayload.configPayload, catalog: result.catalog,
               coreVersion: native.coreVersion!, coreModuleSha256: actualCore, operationIsCurrent: qaCurrent,
-              remainingBudget: _actionTimeout - preparationClock.elapsed, cancelled: cancelled);
+              remainingBudget: preparationBudget - preparationClock.elapsed, cancelled: cancelled);
             if (!qaCurrent()) throw const ConnectionOperationSuperseded();
             final bound = await SmartAccessProfileLeases.bind(baseProfile: runtimePayload.configPayload, leases: [permit.grant]);
             if (!qaCurrent()) throw const ConnectionOperationSuperseded();
@@ -3455,14 +3623,14 @@ class ConnectionManager extends ChangeNotifier {
                   !_disposed &&
                   _connectionCoordinator.ownsOperation(generation) &&
                   profileRevision == _managedProfileRevision &&
-                  preparationClock.elapsed < _actionTimeout;
+                  preparationClock.elapsed < preparationBudget;
               Duration remaining() {
-                if (preparationClock.elapsed >= _actionTimeout) {
+                if (preparationClock.elapsed >= preparationBudget) {
                   throw const RoutingCatalogFailure(
                       'smart_access_budget_exhausted');
                 }
                 if (!current()) throw const ConnectionOperationSuperseded();
-                return _actionTimeout - preparationClock.elapsed;
+                return preparationBudget - preparationClock.elapsed;
               }
 
               bool authorityUnavailable(BootstrapFailure error) =>
@@ -4345,7 +4513,7 @@ class ConnectionManager extends ChangeNotifier {
             deadline: cachedProfileFallbackAllowed
                 ? _cachedProfileRefreshDeadline
                 : initialProfilePreparation
-                    ? const Duration(seconds: 40) : _actionTimeout,
+                    ? _initialProfilePreparationTimeout : _actionTimeout,
           );
         } on TimeoutException {
           if (!cachedProfileFallbackAllowed ||
@@ -4474,7 +4642,7 @@ class ConnectionManager extends ChangeNotifier {
           connectAction = () => (engine as RuntimeCoreIdentityConnect).connectWithCoreIdentity(
             expectedCoreModuleSha256: current.coreModuleSha256!, expectedProfileDigest: qa.profileDigest!,
             expectedNetworkContextRef: networkRef, budgetStartedAt: startedAt,
-            budget: permitRemaining < _actionTimeout ? permitRemaining : _actionTimeout,
+            budget: _withinConnectBudget(permitRemaining < _actionTimeout ? permitRemaining : _actionTimeout),
             onRequestCreated: (requestId) {
               if (!qaCurrent()) throw const ConnectionOperationSuperseded();
               _activeFirstProviderQa = (permit: qa.permit, generation: qa.generation,
@@ -4769,7 +4937,7 @@ class ConnectionManager extends ChangeNotifier {
       }
       // Acknowledging the request is not proof that the host stopped. Do not
       // release the action owner while its old connect pipeline can still run.
-      await completion.future;
+      await completion.future.timeout(_actionTimeout);
       await _joinRuntimeActions();
       if (_disposed || !_connectionCoordinator.ownsOperation(generation))
         return;
@@ -4802,12 +4970,17 @@ class ConnectionManager extends ChangeNotifier {
       final message = error is BootstrapFailure
           ? error.message
           : 'Отмена подключения не подтверждена. Проверьте состояние POKROV.';
-      _update(() => _runtimeHeadline = message);
+      _update(() {
+        _activePhase = ConnectionPhase.actionRequired;
+        _runtimeHeadline = message;
+      });
       _notify(message, tone: PokrovSnackTone.danger);
     } finally {
       if (!_disposed && _connectionCoordinator.ownsOperation(generation)) {
         _update(() {
-          _activePhase = _protectedHandoffActive ? ConnectionPhase.actionRequired : null;
+          if (_activePhase != ConnectionPhase.actionRequired) {
+            _activePhase = _protectedHandoffActive ? ConnectionPhase.actionRequired : null;
+          }
           _connectionCoordinator.finishAction(
               clearAttempt: _runtimeSnapshot?.phase != RuntimePhase.running);
         });
@@ -5324,20 +5497,33 @@ class ConnectionManager extends ChangeNotifier {
             .contains(failed.lastFailureKind);
   }
 
-  bool _scheduleCandidateRecovery(RuntimeSnapshot failed) {
+  void _recoverUnexpectedNativeStop(RuntimeSnapshot? previous, RuntimeSnapshot current,
+      String? previousCandidateRef) {
+    if (_disposed || _runtimeBusy || _runtimeActionsInFlight.isNotEmpty ||
+        previous?.phase != RuntimePhase.running || !_runtimeStopConfirmed(current) ||
+        _transportCatalog == null || previousCandidateRef == null ||
+        const {'user_requested', 'quick_settings', 'vpn_permission_revoked',
+            'command_server_requested'}.contains(current.lastStopReason)) return;
+    _scheduleCandidateRecovery(current, previousCandidateRef: previousCandidateRef);
+  }
+
+  bool _scheduleCandidateRecovery(RuntimeSnapshot failed, {String? previousCandidateRef}) {
+    if (_accessDenialPending || _cachedProfileFallbackGate.authorizationDenied) return false;
     if (_candidateRecoveryPending || _activePhase == ConnectionPhase.actionRequired) return false;
     final localFailure = _isLocalSmartAccessFailure(failed) ? _smartAccessRouteProfile : null;
-    final currentRef = localFailure != null ? '' : _activeCandidateRef ?? _candidateRef;
+    final currentRef = localFailure != null ? '' : previousCandidateRef ?? _activeCandidateRef ?? _candidateRef;
     if (currentRef == null) return false;
     _candidateRecoveryPending = true;
     final command = _commandNumber;
+    final budget = _currentConnectBudget;
     final completing = _primaryConnectCompletion?.future;
     unawaited(() async {
       if (completing != null) await completing;
       try {
         if (_disposed || command != _commandNumber) return;
         await _replaceCommand(() => _recoverCandidateConnection(failed, currentRef,
-            confirmedFailure: true, smartAccessFallback: localFailure), automatic: true);
+            confirmedFailure: true, smartAccessFallback: localFailure), automatic: true,
+            connectBudget: true, inheritedConnectBudget: budget);
       } finally { _candidateRecoveryPending = false; }
     }());
     return true;
@@ -5368,8 +5554,7 @@ class ConnectionManager extends ChangeNotifier {
     String? terminalCode;
     try {
       final retryInitialActivation = _activeCandidateRef == null &&
-          !retainsProtection && failed != null &&
-          failed.hasCoreEgressProbeFailure && _runtimeStopConfirmed(failed);
+          !retainsProtection && failed != null && _runtimeStopConfirmed(failed);
       if (!retryInitialActivation && engine is! RuntimeProtectedHandoff) {
         throw const BootstrapFailure('Для восстановления соединения обновите POKROV.', code: 'protected_handoff_unavailable');
       }
@@ -5378,8 +5563,8 @@ class ConnectionManager extends ChangeNotifier {
       if (failed?.phase == RuntimePhase.running) _protectedHandoffActive = true;
       // Keep the failed owner's binding across healthy diagnostic reads made
       // while profile preparation is still in flight.
-      _pendingNativeRecovery = _appContext.hostPlatform == HostPlatform.windows &&
-              failed?.phase == RuntimePhase.running && failed!.hasCoreEgressProbeFailure &&
+      _pendingNativeRecovery = const {HostPlatform.android, HostPlatform.windows}.contains(_appContext.hostPlatform) &&
+              failed != null && _canBindNativeRecoverySnapshot(failed) &&
               _activeCandidateRef != null && _activeCandidateRef == _candidateRef
           ? (command: _commandNumber, profileRevision: _managedProfileRevision,
               candidateRef: _activeCandidateRef!, failedAt: DateTime.now().toUtc(),
@@ -5500,8 +5685,8 @@ class ConnectionManager extends ChangeNotifier {
       }
       RuntimeSnapshot current;
       if (retryInitialActivation) {
-        // The first activation stopped before proof: there is no prior healthy
-        // owner to replace. Stage/connect retains any native transition guard.
+        // A stopped runtime has no live owner to replace. Stage/connect retains
+        // any native transition guard, both on initial failure and recovery.
         current = await _withRuntimeActionTimeout('stageManagedProfile',
             () => _stageManagedProfileWithLeaseBinding(prepared), ownerGeneration: generation);
         if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
@@ -5548,8 +5733,8 @@ class ConnectionManager extends ChangeNotifier {
         _stagedNodeCode = _resolvedProfileNodeCode;
         _stagedVariantId = _resolvedProfileVariantId;
         _rememberStagedCandidateVariant(prepared, generation);
-        _pendingNativeRecovery = _appContext.hostPlatform == HostPlatform.windows && !retryInitialActivation &&
-                current.phase == RuntimePhase.running && current.hasCoreEgressProbeFailure &&
+        _pendingNativeRecovery = const {HostPlatform.android, HostPlatform.windows}.contains(_appContext.hostPlatform) && !retryInitialActivation &&
+                _canBindNativeRecoverySnapshot(current, replaced: true) &&
                 _candidateRef != null && prepared.materialCandidate?.candidateRef == _candidateRef
             ? (command: _commandNumber, profileRevision: profileRevision, candidateRef: _candidateRef!,
                 failedAt: DateTime.now().toUtc(), replaced: true, snapshot: current) : null;
@@ -5599,6 +5784,7 @@ class ConnectionManager extends ChangeNotifier {
       }
       if (ownsAction && !_disposed && _connectionCoordinator.ownsOperation(generation)) {
         _connectionCoordinator.finishAction();
+        await _enforceKnownAccessDenial();
         _publish();
       }
       if (completion != null) {
@@ -5665,6 +5851,7 @@ class ConnectionManager extends ChangeNotifier {
   Future<void> _retryAutomaticLocationAfterEgressFailure(
     int ownerGeneration,
   ) async {
+    final budget = _currentConnectBudget;
     final retryIndex = (_automaticFailoverAttempts - 1).clamp(0, 1);
     final retryDelay = Duration(
       milliseconds: (250 << retryIndex) + math.Random().nextInt(251),
@@ -5679,7 +5866,7 @@ class ConnectionManager extends ChangeNotifier {
       }
       await _replaceCommand(
           () => _toggleRuntime(reconnectAfterDisconnect: true),
-          automatic: true);
+          automatic: true, connectBudget: true, inheritedConnectBudget: budget);
     } finally {
       if (ownerGeneration == _automaticFailoverGeneration) {
         _automaticFailoverInFlight = false;
@@ -5781,8 +5968,8 @@ class ConnectionManager extends ChangeNotifier {
           waitForEgressProof: waitForEgressProof,
           deadline: requestId == null
               ? null
-              : Duration(
-                  milliseconds: snapshot.connectionPending || waitForEgressProof ? 81000 : 4500));
+              : _withinConnectBudget(snapshot.connectionPending || waitForEgressProof
+                  ? _nativeConnectSettlementTimeout : const Duration(milliseconds: 4500)));
     } on Object catch (error) {
       if (error is TimeoutException || error is ConnectionOperationSuperseded) {
         await _cancelOwnedConnect(cancellation, requestId);
@@ -5812,7 +5999,7 @@ class ConnectionManager extends ChangeNotifier {
             value.phase == RuntimePhase.running && value.isCoreEgressValidationPending);
     if (snapshot.phase == RuntimePhase.running && !proofPending(snapshot) ||
         !snapshot.supportsLiveConnect ||
-        _isTerminalConnectMessage(snapshot.message)) {
+        _isTerminalConnectSnapshot(snapshot)) {
       return snapshot;
     }
 
@@ -5855,7 +6042,7 @@ class ConnectionManager extends ChangeNotifier {
       if (current.phase == RuntimePhase.running && !proofPending(current)) {
         return current;
       }
-      if (_isTerminalConnectMessage(current.message) ||
+      if (_isTerminalConnectSnapshot(current) ||
           !current.connectionPending && !proofPending(current)) {
         return current;
       }
@@ -5911,17 +6098,10 @@ class ConnectionManager extends ChangeNotifier {
     return current;
   }
 
-  bool _isTerminalConnectMessage(String message) {
-    final normalized = message.toLowerCase();
-    return normalized.contains('failed') ||
-        normalized.contains('denied') ||
-        normalized.contains('error') ||
-        normalized.contains('stopped') ||
-        normalized.contains('не удалось') ||
-        normalized.contains('отказ') ||
-        normalized.contains('ошиб') ||
-        normalized.contains('останов');
-  }
+  bool _isTerminalConnectSnapshot(RuntimeSnapshot snapshot) =>
+      !snapshot.connectionPending &&
+      snapshot.lastFailureKind != null &&
+      snapshot.lastFailureKind != 'notification_permission_denied';
 
   bool _canPrimaryConnect(RuntimeSnapshot? snapshot) {
     if (snapshot == null) {

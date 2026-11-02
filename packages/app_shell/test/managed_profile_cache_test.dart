@@ -218,6 +218,35 @@ void main() {
     expect(await read(), isNull);
   });
 
+  test('ordinary cache reads neither rewrite storage nor poison a corrected clock', () async {
+    await cache.saveDownloaded(platform: 'android', binding: 'account-A/install-A/route-A',
+      revision: 'a', verifiedAt: now, payload: {
+        'cache_entry_id': 'a', 'access': {'expiry_at': now.add(const Duration(days: 30)).toIso8601String()},
+      });
+    final raw = values.values.single;
+    final correctTime = now;
+    now = now.add(const Duration(days: 2));
+    expect((await read())?['cache_entry_id'], 'a');
+    expect(values.values.single, raw);
+    now = correctTime;
+    cache = ManagedProfileCache(now: () => now);
+    expect((await read())?['cache_entry_id'], 'a');
+    expect(values.values.single, raw);
+  });
+
+  test('authorized download after clock correction replaces a future observation', () async {
+    final correctTime = now;
+    now = now.add(const Duration(days: 3));
+    await save('future');
+    now = now.add(const Duration(hours: 25));
+    expect(await read(), isNull);
+    now = correctTime;
+    await save('corrected');
+    cache = ManagedProfileCache(now: () => now);
+    expect((await read())?['cache_entry_id'], 'corrected');
+    expect((await read())?['cache_verified_at'], correctTime.toIso8601String());
+  });
+
   test('future cache schema is preserved on both read and write', () async {
     const storage = FlutterSecureStorage();
     await storage.write(key: 'pokrov-managed-profile-android-v1', value: jsonEncode({'version': 2}));

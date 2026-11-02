@@ -154,6 +154,7 @@ class SmartConnectCandidateSelector {
     Set<String> excludedCandidateRefs = const {},
     Duration probeTimeout = const Duration(seconds: 4),
     Duration selectionTimeout = const Duration(seconds: 12),
+    Duration probeSettlementTimeout = Duration.zero,
     bool excludeProbeCleanupFromBudget = false,
   }) async {
     if (network.isEmpty) throw StateError('smart_connect_network_unavailable');
@@ -348,7 +349,9 @@ class SmartConnectCandidateSelector {
           familyClocks[candidate.candidateRef] = probeClock;
           familyStart.complete();
         }
-        timeout = Timer(nativeTimeout, () {
+        // Core owns its network deadline. Allow the existing host work budget
+        // to return that typed outcome before cancelling an unresponsive host.
+        timeout = Timer(nativeTimeout + probeSettlementTimeout, () {
           timedOut = true;
           if (!cancellation.isCompleted) cancellation.complete();
         });

@@ -464,6 +464,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       const PokrovWindowsShellPreferences();
   ClientNotificationInbox? _notificationsInbox;
   int _accountUiRevision = 0;
+  bool _accountSessionChanging = false;
   bool _notificationsBusy = false;
   Future<void>? _notificationsRequest;
   bool _notificationsInboxOpen = false;
@@ -1091,7 +1092,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   Future<bool> _refreshSubscriptionInfo({bool showFailure = false}) async {
     final accountRevision = _accountUiRevision;
     final service = _clientDataService;
-    if (service == null) {
+    if (service == null || _accountSessionChanging) {
       return false;
     }
     final observability = widget.observability;
@@ -1167,8 +1168,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   void _stopNotificationsOnSessionFailure(Object error) {
-    if (_accountSessionCoordinator.recordSessionFailure(error) && mounted) {
-      setState(() {});
+    if (_accountSessionCoordinator.recordSessionFailure(error)) {
+      unawaited(_connectionManager.denyAccess());
+      if (mounted) setState(() {});
     }
     if (error is BootstrapFailure &&
         (error.statusCode == 401 || error.statusCode == 403)) {
@@ -1206,6 +1208,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     final accountRevision = _accountUiRevision;
     final service = _clientDataService;
     if (service == null ||
+        _accountSessionChanging ||
         _notificationsBusy ||
         !_notificationsForeground ||
         !_firstSessionCoordinator.isReady) {
@@ -1983,6 +1986,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   Future<bool> _redeemCodeInApp(String value) async {
+    if (_accountSessionChanging) return false;
     final code = value.trim();
     if (code.isEmpty) {
       showPokrovSnack(context, 'Введите код активации.');
@@ -2006,17 +2010,25 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     try {
       PokrovHaptics.tap();
       if (isPairingCode) {
-        final paired = await accountActions.claimDevicePairingCode(
-          hostPlatform: widget.appContext.hostPlatform,
-          code: code,
-        );
+        late final DevicePairingClaimResult paired;
+        _accountSessionChanging = true;
+        _accountUiRevision += 1;
+        try {
+          paired = await accountActions.claimDevicePairingCode(
+            hostPlatform: widget.appContext.hostPlatform,
+            code: code,
+          );
+          if (!paired.existingDevice) await _connectionManager.invalidateAccountSession();
+        } finally {
+          _accountSessionChanging = false;
+          _accountUiRevision += 1;
+        }
         if (!mounted) {
           return paired.ok;
         }
         setState(() {
           if (!paired.existingDevice) {
             _clearAccountExperience();
-            _connectionManager.markProfileDirty();
             _subscriptionInfo = null;
           }
           _runtimeHeadline = paired.existingDevice
@@ -2093,7 +2105,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
   Future<void> _openEmailSessionRecovery() async {
     final actions = _accountActionService;
-    if (actions == null || _firstSessionCoordinator.busy) return;
+    if (actions == null || _firstSessionCoordinator.busy || _accountSessionChanging) return;
     final recovered = await _showEmailSessionRecoverySheet(context,
       onRequestCode: (email) async {
         try {
@@ -2104,12 +2116,24 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         }
       },
       onRecover: (email, code) async {
+        _accountSessionChanging = true;
+        _accountUiRevision += 1;
         try {
+          final previousOwner = await _currentNotificationsOwner();
           await actions.recoverEmailSession(
             hostPlatform: widget.appContext.hostPlatform, email: email, code: code);
+          final currentOwner = await _currentNotificationsOwner();
+          if (previousOwner == null || previousOwner != currentOwner) {
+            await _connectionManager.invalidateAccountSession();
+          } else {
+            _connectionManager.markProfileDirty();
+          }
         } on Object catch (error) {
           _reportAccountActionFailure('email_login_failed', error is BootstrapFailure ? error : null);
           rethrow;
+        } finally {
+          _accountSessionChanging = false;
+          _accountUiRevision += 1;
         }
       },
     );
@@ -2118,7 +2142,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       _clearAccountExperience();
       _firstSessionCoordinator.finishRestore(succeeded: true);
       _subscriptionInfo = null;
-      _connectionManager.markProfileDirty();
     });
     _queueClientExperienceWrite();
     Navigator.of(context).popUntil((route) => route.isFirst);
@@ -2417,7 +2440,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
   Future<void> _loadBonusSummary({bool force = false}) async {
     final accountRevision = _accountUiRevision;
-    if (_bonusSummaryBusy) {
+    if (_bonusSummaryBusy || _accountSessionChanging) {
       return;
     }
     if (!force && _bonusSummaryRequested) {
