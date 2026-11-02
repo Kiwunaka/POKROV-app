@@ -1332,7 +1332,7 @@ void main() {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 1200));
-    await tester.tap(find.text('Профиль'));
+    await tester.tap(find.text('Настройки'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 1200));
     await tester.tap(find.text('Защита'));
@@ -1340,18 +1340,14 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1200));
     expect(homeOpacity(), greaterThan(0.9), reason: 'returning Home must stay painted');
     expect(initialOpacity, greaterThan(0.9), reason: 'an inactive first frame must not hide ready Home');
-    await tester.tap(find.byKey(const ValueKey('nav-profile')));
+    await tester.tap(find.byKey(const ValueKey('nav-settings')));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Просто'));
-    await tester.tap(find.text('Просто'));
+    expect(find.text('Просто'), findsNothing, reason: 'the simple/advanced switch is gone');
+    for (final tab in ['nav-protection', 'nav-access', 'nav-help', 'nav-settings']) {
+      expect(find.byKey(ValueKey(tab)), findsOneWidget);
+    }
+    await Scrollable.ensureVisible(tester.element(find.text('Тема')), alignment: 0.3);
     await tester.pumpAndSettle();
-    expect(experience.saved.interfaceMode, PokrovInterfaceMode.simple);
-    expect(find.byKey(const ValueKey('nav-rules')), findsNothing);
-    await tester.tap(find.text('Продвинутый'));
-    await tester.pumpAndSettle();
-    expect(experience.saved.interfaceMode, PokrovInterfaceMode.advanced);
-    expect(find.byKey(const ValueKey('nav-rules')), findsOneWidget);
-    await tester.ensureVisible(find.text('Тема'));
     await tester.tap(find.text('Тема'));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('profile-theme-dark')));
@@ -1368,9 +1364,9 @@ void main() {
     expect(season(), isNull);
     await tester.tapAt(const Offset(10, 10));
     await tester.pumpAndSettle();
-    tester.state<ScrollableState>(find.descendant(of: find.byType(ui.ProfileScreen), matching: find.byType(Scrollable)).first).position.jumpTo(0);
+    tester.state<ScrollableState>(find.descendant(of: find.byType(ui.SettingsScreen), matching: find.byType(Scrollable)).first).position.jumpTo(0);
     await tester.pumpAndSettle();
-    final profileTitle = find.descendant(of: find.byType(ui.ProfileScreen), matching: find.text('Профиль'));
+    final profileTitle = find.descendant(of: find.byType(ui.SettingsScreen), matching: find.text('Настройки'));
     expect(Theme.of(tester.element(profileTitle)).brightness, Brightness.dark);
     expect((tester.widget(profileTitle) as Text).style!.color!.computeLuminance(), greaterThan(0.5));
   }, variant: TargetPlatformVariant.only(TargetPlatform.windows));

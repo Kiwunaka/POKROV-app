@@ -1137,7 +1137,7 @@ Future<_CatalogPickerExperience> _openDnsSettings(WidgetTester tester, {
     onThemeModeChanged: (_) {},
   )));
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Правила'));
+  await _openRules(tester);
   await tester.pumpAndSettle();
   final advanced = find.byKey(const ValueKey('rules-advanced-toggle'));
   await tester.scrollUntilVisible(advanced, 400, scrollable: find.descendant(
@@ -1210,7 +1210,7 @@ Future<void> _openPicker(WidgetTester tester, _CatalogPickerBootstrapper bootstr
     onThemeModeChanged: (_) {}, runtimeActionTimeout: const Duration(seconds: 2),
   )));
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Правила'));
+  await _openRules(tester);
   await tester.pumpAndSettle();
   final action = find.text('Выбрать сервисы и режим');
   await tester.ensureVisible(action);
@@ -1716,7 +1716,7 @@ void main() {
       onThemeModeChanged: (_) {},
     )));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Профиль'));
+    await tester.tap(find.text('Доступ'));
     await tester.pumpAndSettle();
     await Scrollable.ensureVisible(tester.element(find.text('Бонусы и друзья')), alignment: 0.5);
     await tester.pumpAndSettle();
@@ -1777,7 +1777,7 @@ void main() {
     expect(telemetry.isCompleted, isFalse);
     expect(bootstrapper.runtimeCalls.any((call) => call['runtime_phase'] == 'app_opened'), isTrue);
     expect(find.text('Статус доступа уточняется'), findsNothing);
-    await tester.tap(find.byKey(const ValueKey('nav-profile')));
+    await tester.tap(find.byKey(const ValueKey('nav-access')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Продлить'));
     await tester.pumpAndSettle();
@@ -1981,12 +1981,12 @@ void main() {
       clientExperienceStore: store, themeMode: ThemeMode.light, onThemeModeChanged: (_) {},
     )));
     await tester.pumpAndSettle();
-    expect(find.text('Правила'), findsNothing);
-    await tester.tap(find.text('Профиль'));
+    expect(find.byKey(const ValueKey('nav-rules')), findsNothing);
+    await tester.tap(find.text('Настройки'));
     await tester.pumpAndSettle();
-    final entry = find.byKey(const ValueKey('profile-local-dpi'));
+    final entry = find.byKey(const ValueKey('settings-Обход блокировок'));
     await tester.scrollUntilVisible(entry, 300, scrollable: find.descendant(
-      of: find.byType(ui.ProfileScreen), matching: find.byType(Scrollable)).first);
+      of: find.byType(ui.SettingsScreen), matching: find.byType(Scrollable)).first);
     await tester.pumpAndSettle();
     await tester.tap(entry);
     await tester.pumpAndSettle();
@@ -2036,7 +2036,7 @@ void main() {
       onThemeModeChanged: (_) {},
     )));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Правила'));
+    await _openRules(tester);
     await tester.pumpAndSettle();
     final advanced = find.byKey(const ValueKey('rules-advanced-toggle'));
     await tester.scrollUntilVisible(advanced, 400, scrollable: find.descendant(
@@ -2109,11 +2109,11 @@ void main() {
       themeMode: ThemeMode.light, onThemeModeChanged: (_) {},
     )));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Профиль'));
+    await tester.tap(find.text('Настройки'));
     await tester.pumpAndSettle();
-    final entry = find.byKey(const ValueKey('profile-local-dpi'));
+    final entry = find.byKey(const ValueKey('settings-Обход блокировок'));
     await tester.scrollUntilVisible(entry, 300, scrollable: find.descendant(
-      of: find.byType(ui.ProfileScreen), matching: find.byType(Scrollable)).first);
+      of: find.byType(ui.SettingsScreen), matching: find.byType(Scrollable)).first);
     await tester.pumpAndSettle();
     await tester.tap(entry);
     await tester.pumpAndSettle();
@@ -2160,7 +2160,7 @@ void main() {
         themeMode: ThemeMode.light, onThemeModeChanged: (_) {},
       )));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Правила'));
+      await _openRules(tester);
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('rules-advanced-open')), findsNothing);
       expect(find.text('Windows: Zapret2.'), findsOneWidget);
@@ -2227,7 +2227,7 @@ void main() {
         onThemeModeChanged: (_) {},
       )));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Правила'));
+      await _openRules(tester);
       await tester.pumpAndSettle();
       final advanced = find.byKey(const ValueKey('rules-advanced-toggle'));
       await tester.scrollUntilVisible(advanced, 400, scrollable: find.descendant(
@@ -2282,7 +2282,7 @@ void main() {
       onThemeModeChanged: (_) {},
     )));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Правила'));
+    await _openRules(tester);
     await tester.pumpAndSettle();
     final advanced = find.byKey(const ValueKey('rules-advanced-toggle'));
     await tester.scrollUntilVisible(advanced, 400, scrollable: find.descendant(
@@ -2456,7 +2456,7 @@ void main() {
         connected: true, name: currentWifiName, permissionRequired: false, reason: null),
     )));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Правила'));
+    await _openRules(tester);
     await tester.pumpAndSettle();
     final advanced = find.byKey(const ValueKey('rules-advanced-toggle'));
     dynamic rules() => tester.widget(find.byWidgetPredicate((widget) => widget.runtimeType.toString() == '_RulesSection'));
@@ -4586,7 +4586,7 @@ void main() {
     expect(bootstrapper.refreshedInputs, hasLength(1), reason: 'unchanged capabilities do not retry metadata');
 
     bootstrapper.cacheAvailable = true;
-    await tester.tap(find.text('Локации'));
+    await _openLocations(tester);
     await tester.pumpAndSettle();
     final dynamic locations = tester.widget(find.byWidgetPredicate(
         (widget) => widget.runtimeType.toString() == '_LocationsSection'));
@@ -4623,9 +4623,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Защита'));
     await tester.pumpAndSettle();
-    expect(find.descendant(of: find.byKey(const ValueKey('home-location-chip')),
+    expect(find.descendant(of: find.byKey(const ValueKey('home-tile-country')),
         matching: find.text('Швейцария')), findsOneWidget);
-    await tester.tap(find.text('Локации'));
+    await _openLocations(tester);
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('locations-select-connection')));
     await tester.pumpAndSettle();
@@ -4643,11 +4643,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Защита'));
     await tester.pumpAndSettle();
-    expect(find.descendant(of: find.byKey(const ValueKey('home-location-chip')),
+    expect(find.descendant(of: find.byKey(const ValueKey('home-tile-country')),
         matching: find.text('Исландия')), findsOneWidget);
     expect(nativeMutations, isEmpty);
 
-    await tester.tap(find.text('Локации'));
+    await _openLocations(tester);
     await tester.pumpAndSettle();
     final stalled = Completer<ClientLocationsCatalog>();
     bootstrapper.locationsGate = stalled.future;
@@ -6655,4 +6655,24 @@ void main() {
     expect(manager.status.phase, ConnectionPhase.disconnected);
     expect(manager.busy, isFalse);
   });
+}
+
+/// Settings → «Что идёт через POKROV» is where the route page opens now.
+Future<void> _openRules(WidgetTester tester) async {
+  await tester.tap(find.text('Настройки').last);
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 400));
+  await tester.tap(find.text('Что идёт через POKROV').last);
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 400));
+}
+
+/// Settings → «Страна» opens the country page.
+Future<void> _openLocations(WidgetTester tester) async {
+  await tester.tap(find.text('Настройки').last);
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 400));
+  await tester.tap(find.text('Страна').last);
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 400));
 }

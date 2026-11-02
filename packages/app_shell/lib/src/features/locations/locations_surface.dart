@@ -4,6 +4,8 @@ class _LocationsSection extends StatefulWidget {
   const _LocationsSection({
     required this.appContext,
     required this.interfaceMode,
+    required this.onEnableManualConnection,
+    required this.onBack,
     required this.preferredCountryCode,
     required this.preferredCandidateRef,
     required this.transportCatalog,
@@ -31,6 +33,11 @@ class _LocationsSection extends StatefulWidget {
 
   final SeedAppContext appContext;
   final PokrovInterfaceMode interfaceMode;
+
+  /// Manual connection choice is honoured by the runtime only with this
+  /// stored flag on; picking a connection turns it on first.
+  final Future<void> Function() onEnableManualConnection;
+  final VoidCallback onBack;
   final String preferredCountryCode;
   final String preferredCandidateRef;
   final TransportCandidateCatalog? transportCatalog;
@@ -78,6 +85,10 @@ class _LocationsSectionState extends State<_LocationsSection> {
 
   Future<void> _selectConnection() async {
     if (widget.nodePreferenceBusy) return;
+    if (widget.interfaceMode != PokrovInterfaceMode.advanced) {
+      await widget.onEnableManualConnection();
+      if (!mounted) return;
+    }
     final catalog = widget.transportCatalog!;
     final countryCode = _selectedCountryCode;
     final countries = <String, List<domain.TransportCandidate>>{};
@@ -170,8 +181,6 @@ class _LocationsSectionState extends State<_LocationsSection> {
         widget.preferredNodeCode.isEmpty && widget.preferredCandidateRef.isEmpty;
     return ui.LocationsScreen(
       data: ui.LocationsViewData(
-        mode: widget.interfaceMode == PokrovInterfaceMode.advanced
-            ? ui.InterfaceMode.advanced : ui.InterfaceMode.simple,
         selectedCode: automatic ? null : _selectedCountryCode,
         countries: [for (final country in countries.entries) ui.CountryOption(
           code: country.key, name: country.value.$1,
@@ -186,8 +195,8 @@ class _LocationsSectionState extends State<_LocationsSection> {
       onSelect: widget.onPreferredCountrySelected,
       onRefresh: widget.onRefreshLocationsCatalog,
       refreshing: widget.locationsCatalogBusy,
-      onSelectConnection: widget.interfaceMode == PokrovInterfaceMode.advanced &&
-              (widget.transportCatalog?.candidates.isNotEmpty ?? false) ? _selectConnection : null,
+      onSelectConnection: (widget.transportCatalog?.candidates.isNotEmpty ?? false) ? _selectConnection : null,
+      onBack: widget.onBack,
       selectedConnectionLabel: _preferredCandidate == null ? null : _locationCandidateLabel(_preferredCandidate!),
     );
   }

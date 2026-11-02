@@ -1,7 +1,12 @@
 part of pokrov_app_shell;
 
+/// The old Profile is split: account things live on «Доступ», settings on
+/// «Настройки». Both tabs share the sheets below.
+enum _ProfilePart { access, settings }
+
 class _ProfileSection extends StatelessWidget {
   const _ProfileSection({
+    required this.part,
     required this.appContext,
     required this.freeProfileAccess,
     required this.loginRecoveryRequired,
@@ -38,8 +43,11 @@ class _ProfileSection extends StatelessWidget {
     required this.onThemeModeChanged,
     this.seasonalTheme = true,
     this.onSeasonalThemeChanged,
-    required this.interfaceMode,
-    required this.onInterfaceModeChanged,
+    required this.onOpenRules,
+    required this.onOpenLocations,
+    required this.onOpenHomeTiles,
+    this.onWarpConsentChanged,
+    this.bypassEnabled = false,
     required this.subscriptionInfo,
     required this.systemSurfacePreferences,
     required this.onSystemSurfacePreferencesChanged,
@@ -99,8 +107,12 @@ class _ProfileSection extends StatelessWidget {
   final ValueChanged<ThemeMode> onThemeModeChanged;
   final bool seasonalTheme;
   final ValueChanged<bool>? onSeasonalThemeChanged;
-  final PokrovInterfaceMode interfaceMode;
-  final ValueChanged<PokrovInterfaceMode> onInterfaceModeChanged;
+  final _ProfilePart part;
+  final void Function({bool expert}) onOpenRules;
+  final VoidCallback onOpenLocations;
+  final VoidCallback onOpenHomeTiles;
+  final ValueChanged<bool>? onWarpConsentChanged;
+  final bool bypassEnabled;
   final ClientSubscriptionInfo? subscriptionInfo;
   final PokrovSystemSurfacePreferences systemSurfacePreferences;
   final Future<bool> Function(PokrovSystemSurfacePreferences preferences)
@@ -206,74 +218,129 @@ class _ProfileSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final summary = bonusSummary();
-    final accountPromo = (summary?.promoSlots.visibleForPlacement('account') ?? const <AppFirstPromoSlot>[])
-        .where(_isRenderableHomePromoSlot).firstOrNull;
     final linked = <String>[
       if (subscriptionInfo?.telegramLinked == true) 'Telegram',
       if (subscriptionInfo?.emailVerified == true) 'почта',
     ];
-    final expires = _formatClientDate(subscriptionInfo?.expiresAt ?? '');
     return RefreshIndicator(
       onRefresh: () async => Future.wait<void>([onRefreshBonusSummary(), onRefreshNotifications()]),
-      child: ui.ProfileScreen(
-        data: ui.ProfileViewData(
-          mode: interfaceMode == PokrovInterfaceMode.advanced ? ui.InterfaceMode.advanced : ui.InterfaceMode.simple,
-          accessBadge: 'Доступ',
-          accessTitle: loginRecoveryRequired ? 'Нужно восстановить вход'
-              : _accessMainLabel(appContext, summary, freeProfileAccess, subscriptionInfo),
-          accessDetail: loginRecoveryRequired ? 'Войдите по коду из Telegram или почты аккаунта.'
-              : _freeProfileAccessNotice(freeProfileAccess) ??
-              (expires.isEmpty ? '' : 'До ' + expires),
-          accountLinked: linked.isEmpty ? 'Добавить' : linked.join(' · '),
-          devices: 'Управлять',
-          theme: _themeModeLabel(themeMode),
-          bonuses: _bonusHubValue(),
-          version: pokrovClientVersion,
-        ),
-        adSlot: accountPromo == null ? null : _HomeAdminPromoCard(slot: accountPromo, compact: false,
-          keyPrefix: 'profile-promo', onOpenHandoff: onOpenHandoff, onPromoEvent: onPromoEvent),
-        accessActionLabel: loginRecoveryRequired ? 'Восстановить вход' : 'Продлить',
-        onRenew: loginRecoveryRequired ? () => _showLoginOptions(context)
-            : () => _showSubscriptionSheet(context, appContext: appContext,
-          hasProvisionedAccess: hasProvisionedAccess, subscriptionInfo: subscriptionInfo,
-          onOpenHandoff: onOpenHandoff),
-        onModeChanged: (mode) => onInterfaceModeChanged(mode == ui.InterfaceMode.simple
-            ? PokrovInterfaceMode.simple : PokrovInterfaceMode.advanced),
-        onAccount: () => _account(context),
-        onTelegramProxy: () => onOpenHandoff('cabinet',
-          Uri.parse(appContext.cabinetUrl).resolve('/telegram/').toString()),
-        onDevices: () => _devices(context),
-        onLoginCode: () => _devices(context),
-        onActivate: () => _showLoginOptions(context),
-        onTheme: () => _showThemeModeSheet(context, selected: themeMode, onChanged: onThemeModeChanged,
-          seasonal: seasonalTheme, onSeasonalChanged: onSeasonalThemeChanged),
-        onNotifications: () {
+      child: part == _ProfilePart.access
+          ? _buildAccess(context, summary, linked)
+          : ui.SettingsScreen(entries: _settingsEntries(context)),
+    );
+  }
+
+  Widget _buildAccess(BuildContext context, AppFirstBonusSummary? summary, List<String> linked) {
+    final accountPromo = (summary?.promoSlots.visibleForPlacement('account') ?? const <AppFirstPromoSlot>[])
+        .where(_isRenderableHomePromoSlot).firstOrNull;
+    final expires = _formatClientDate(subscriptionInfo?.expiresAt ?? '');
+    final channelStep = summary?.channelBonusEligible == true && summary?.channelBonusClaimed != true;
+    final emailStep = subscriptionInfo != null && subscriptionInfo?.emailVerified != true;
+    final steps = <(ui.NextStepTip, VoidCallback)>[
+      if (channelStep) (ui.NextStepTip(title: 'Подпишись на канал', text: _telegramBonusHomeLabel(summary),
+          icon: Icons.send_rounded), telegramBonusCanClaim ? onClaimTelegramBonus : onCheckTelegramBonus),
+      if (emailStep) (const ui.NextStepTip(title: 'Добавь почту', text: 'Чтобы не потерять доступ',
+          icon: Icons.alternate_email_rounded), () => _account(context)),
+    ];
+    return ui.AccessScreen(
+      data: ui.AccessViewData(
+        accessBadge: 'Доступ',
+        accessTitle: loginRecoveryRequired ? 'Нужно восстановить вход'
+            : _accessMainLabel(appContext, summary, freeProfileAccess, subscriptionInfo),
+        accessDetail: loginRecoveryRequired ? 'Войди по коду из Telegram или почты аккаунта.'
+            : _freeProfileAccessNotice(freeProfileAccess) ??
+            (expires.isEmpty ? '' : 'До ' + expires),
+        accountLinked: linked.isEmpty ? 'Добавить' : linked.join(' · '),
+        bonuses: _bonusHubValue(),
+      ),
+      adSlot: accountPromo == null ? null : _HomeAdminPromoCard(slot: accountPromo, compact: false,
+        keyPrefix: 'profile-promo', onOpenHandoff: onOpenHandoff, onPromoEvent: onPromoEvent),
+      accessActionLabel: loginRecoveryRequired ? 'Восстановить вход' : 'Продлить',
+      onRenew: loginRecoveryRequired ? () => _showLoginOptions(context)
+          : () => _showSubscriptionSheet(context, appContext: appContext,
+        hasProvisionedAccess: hasProvisionedAccess, subscriptionInfo: subscriptionInfo,
+        onOpenHandoff: onOpenHandoff),
+      steps: [for (final step in steps) step.$1],
+      onStep: telegramBonusBusy ? null : (index) => steps[index].$2(),
+      onDevices: () => _devices(context),
+      onAddDevice: () => _devices(context),
+      onActivate: () => _showLoginOptions(context),
+      onAccount: () => _account(context),
+      onBonuses: () => _showRewardsHubSheet(context, summary: bonusSummary,
+        rewardBusy: bonusRewardBusy, paidRequired: _bonusPaidRequired(summary),
+        onRefreshBonusSummary: onRefreshBonusSummary, onSpinWheel: onSpinWheel,
+        onTelegramBonus: telegramBonusBusy ? null
+            : telegramBonusCanClaim ? onClaimTelegramBonus : onCheckTelegramBonus,
+        onCheckInCalendar: onCheckInCalendar, onOpenHandoff: onOpenHandoff, onPromoEvent: onPromoEvent),
+      onTelegramProxy: () => onOpenHandoff('cabinet',
+        Uri.parse(appContext.cabinetUrl).resolve('/telegram/').toString()),
+      onShare: appShareBusy ? null : () => unawaited(onShareApp()),
+    );
+  }
+
+  /// Every setting in one list; the screen's search runs over the same
+  /// entries, so expert settings are found without opening their section.
+  List<ui.SettingsEntry> _settingsEntries(BuildContext context) {
+    const connection = 'Подключение';
+    const app = 'Приложение';
+    const expert = ui.pokrovExpertGroup;
+    final windows = appContext.hostPlatform == HostPlatform.windows;
+    final appSettings = windows
+        ? () => _showWindowsShellPreferencesSheet(context, preferences: windowsShellPreferences,
+            onChanged: onWindowsShellPreferencesChanged)
+        : appContext.hostPlatform == HostPlatform.android
+            ? () => _showSystemSurfacePreferencesSheet(context, onOpenNotificationSettings: onOpenNotificationSettings)
+            : null;
+    void rulesExpert() => onOpenRules(expert: true);
+    return [
+      ui.SettingsEntry(group: connection, title: 'Что идёт через POKROV', hint: 'Режим, приложения и сервисы',
+        value: _routeModeShortLabel(selectedRouteMode), keywords: 'маршрут правила россия напрямую приложения сервисы',
+        icon: Icons.alt_route_rounded, onTap: () => onOpenRules()),
+      ui.SettingsEntry(group: connection, title: 'Страна', hint: 'Авто или конкретная страна',
+        keywords: 'локация сервер соединение вручную мост', icon: Icons.public_rounded, onTap: onOpenLocations),
+      ui.SettingsEntry(group: connection, title: 'WARP', hint: 'Запасной путь, если сайты не открываются',
+        keywords: 'cloudflare', icon: Icons.cloud_outlined, toggled: warpRuntimeConsent,
+        onTap: warpPolicy.canOfferRuntime && onWarpConsentChanged != null
+            ? () => onWarpConsentChanged!(!warpRuntimeConsent) : () => unawaited(onOpenWarp())),
+      ui.SettingsEntry(group: connection, title: 'Подробнее о WARP', hint: 'Что меняется и как выключить',
+        keywords: 'warp cloudflare', icon: Icons.info_outline_rounded, onTap: () => unawaited(onOpenWarp())),
+      if (onOpenBypass != null) ui.SettingsEntry(group: connection, title: 'Обход блокировок',
+        hint: 'YouTube и похожее сначала напрямую, при сбое через VPN', value: bypassEnabled ? 'Включён' : 'Выключен',
+        keywords: 'dpi youtube zapret byedpi', icon: Icons.turn_right_rounded, onTap: onOpenBypass),
+      ui.SettingsEntry(group: app, title: 'Виджеты на главной', hint: 'Что показывать на экране «Защита»',
+        keywords: 'главная плитки', icon: Icons.dashboard_customize_outlined, onTap: onOpenHomeTiles),
+      ui.SettingsEntry(group: app, title: 'Тема', hint: 'Светлая, тёмная, праздничное оформление',
+        value: _themeModeLabel(themeMode), keywords: 'тёмная светлая праздник оформление', icon: Icons.palette_outlined,
+        onTap: () => _showThemeModeSheet(context, selected: themeMode, onChanged: onThemeModeChanged,
+          seasonal: seasonalTheme, onSeasonalChanged: onSeasonalThemeChanged)),
+      ui.SettingsEntry(group: app, title: 'Уведомления', hint: 'Новости POKROV и ответы поддержки',
+        value: notificationsUnread > 0 ? 'Новых: $notificationsUnread' : null, icon: Icons.notifications_none_rounded,
+        onTap: () {
           onOpenNotifications();
           _showNotificationsSheet(context, notifications: notifications,
             usingCache: notificationsUsingCache, cachedAt: notificationsCachedAt,
             onRefresh: onRefreshNotifications, onDismiss: onDismissNotifications,
             onOpenHandoff: onOpenHandoff);
-        },
-        onHelp: onOpenSupportHub,
-        onDiagnostics: onOpenDiagnostics,
-        onBonuses: () => _showRewardsHubSheet(context, summary: bonusSummary,
-          rewardBusy: bonusRewardBusy, paidRequired: _bonusPaidRequired(summary),
-          onRefreshBonusSummary: onRefreshBonusSummary, onSpinWheel: onSpinWheel,
-          onTelegramBonus: telegramBonusBusy ? null
-              : telegramBonusCanClaim ? onClaimTelegramBonus : onCheckTelegramBonus,
-          onCheckInCalendar: onCheckInCalendar, onOpenHandoff: onOpenHandoff, onPromoEvent: onPromoEvent),
-        onAbout: () => _about(context),
-        onShare: appShareBusy ? null : () => unawaited(onShareApp()),
-        onWarp: interfaceMode == PokrovInterfaceMode.advanced ? () => unawaited(onOpenWarp()) : null,
-        onBypass: onOpenBypass,
-        onAppSettings: appContext.hostPlatform == HostPlatform.windows
-            ? () => _showWindowsShellPreferencesSheet(context, preferences: windowsShellPreferences,
-                onChanged: onWindowsShellPreferencesChanged)
-            : appContext.hostPlatform == HostPlatform.android
-                ? () => _showSystemSurfacePreferencesSheet(context, onOpenNotificationSettings: onOpenNotificationSettings)
-                : null,
-      ),
-    );
+        }),
+      if (appSettings != null) ui.SettingsEntry(group: app, title: 'Работа приложения',
+        hint: windows ? 'Автозапуск и сворачивание в трей' : 'Плитка в шторке и уведомление о VPN',
+        keywords: 'автозапуск трей шторка плитка', icon: Icons.tune_rounded, onTap: appSettings),
+      ui.SettingsEntry(group: app, title: 'О приложении', hint: 'Обновление, оферта и конфиденциальность',
+        value: pokrovClientVersion, keywords: 'обновление версия оферта релизы', icon: Icons.info_outline_rounded,
+        onTap: () => _about(context)),
+      ui.SettingsEntry(group: expert, title: 'DNS', hint: 'Защищённый DNS, SmartDNS, DNS напрямую',
+        keywords: 'doh adguard cloudflare google comss smartdns', icon: Icons.dns_outlined, onTap: rulesExpert),
+      ui.SettingsEntry(group: expert, title: 'Локальная сеть', hint: 'Принтер, NAS и телевизор напрямую',
+        keywords: 'lan подсети принтер', icon: Icons.lan_outlined, onTap: rulesExpert),
+      ui.SettingsEntry(group: expert, title: 'Готовые маршруты и свои правила', hint: 'Сайт через VPN или напрямую',
+        keywords: 'правило домен ip адрес видео ии соцсети игры', icon: Icons.rule_rounded, onTap: rulesExpert),
+      ui.SettingsEntry(group: expert, title: 'Доверенный Wi-Fi', hint: 'Пауза дома, защита в чужих сетях',
+        keywords: 'wifi сеть', icon: Icons.wifi_rounded, onTap: rulesExpert),
+      ui.SettingsEntry(group: expert, title: 'Защита при запуске', hint: windows ? 'Подключение при запуске Windows' : 'Always-on и блокировка без VPN',
+        keywords: 'always-on постоянная автозапуск', icon: Icons.shield_outlined, onTap: rulesExpert),
+      if (windows) ui.SettingsEntry(group: expert, title: 'Сетевой стек', hint: 'Совместимость, по совету поддержки',
+        keywords: 'tun gvisor system mixed', icon: Icons.settings_ethernet_rounded, onTap: rulesExpert),
+    ];
   }
 }
 

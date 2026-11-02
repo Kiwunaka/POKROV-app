@@ -14,7 +14,7 @@ void main() {
     ));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
-    await tester.tap(find.text('Профиль').last);
+    await tester.tap(find.text('Доступ').last);
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     await tester.tap(find.text('Устройства'));

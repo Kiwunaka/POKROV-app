@@ -9,7 +9,7 @@ abstract final class PokrovColors {
   static const surface = Color(0xFFFFFFFF);
   static const ink = Color(0xFF16181D);
   static const soft = Color(0xFF5E6772);
-  static const muted = Color(0xFF6B737C);
+  static const muted = Color(0xFF646C75);
   static const faint = Color(0xFF9AA1A9);
   static const line = Color(0x0F111814);
   static const chip = Color(0xFFEEF1F0);

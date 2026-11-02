@@ -5,24 +5,21 @@ import 'package:flutter/widgets.dart';
 
 enum ConnectionPhase { off, connecting, on, error }
 
-enum InterfaceMode { simple, advanced }
+enum PokrovTab { protection, access, help, settings }
 
-enum PokrovTab { protection, locations, rules, profile }
+/// One widget on the main screen. The person chooses which widgets are
+/// shown and in what order; a widget with [toggled] acts as a switch.
+class HomeTile {
+  const HomeTile({required this.id, required this.title, required this.value, required this.icon, this.onTap, this.toggled});
 
-class ConnectionStats {
-  const ConnectionStats({this.ping = '—', this.uptime = '—', this.download = '—', this.upload = '—'});
+  final String id;
+  final String title;
+  final String value;
+  final IconData icon;
+  final VoidCallback? onTap;
 
-  final String ping;
-  final String uptime;
-  final String download;
-  final String upload;
-}
-
-class HealthCheck {
-  const HealthCheck(this.label, {required this.ok});
-
-  final String label;
-  final bool ok;
+  /// Non-null for switch widgets such as WARP; [onTap] flips it.
+  final bool? toggled;
 }
 
 class NextStepTip {
@@ -36,17 +33,9 @@ class NextStepTip {
 class HomeViewData {
   const HomeViewData({
     required this.phase,
-    required this.mode,
     this.accessBadge = 'Доступ',
-    this.countryCaption = 'Страна',
-    this.countryLabel = 'Авто',
-    this.countryCode,
     this.connectedCountry = '',
-    this.uptime = '',
-    this.routeValue = 'напрямую',
-    this.warpEnabled = false,
-    this.stats = const ConnectionStats(),
-    this.checks = const <HealthCheck>[],
+    this.tiles = const <HomeTile>[],
     this.tip,
     this.showAdSlot = false,
     this.notificationsUnread = 0,
@@ -57,25 +46,9 @@ class HomeViewData {
   });
 
   final ConnectionPhase phase;
-  final InterfaceMode mode;
   final String accessBadge;
-
-  /// Small caption above the country: «Страна» or «Страна · авто».
-  final String countryCaption;
-
-  /// Country value: «Авто», «Германия», «Польша».
-  final String countryLabel;
-
-  /// ISO code for the flag; null shows the auto badge.
-  final String? countryCode;
   final String connectedCountry;
-  final String uptime;
-
-  /// Short value under «Российские сайты».
-  final String routeValue;
-  final bool warpEnabled;
-  final ConnectionStats stats;
-  final List<HealthCheck> checks;
+  final List<HomeTile> tiles;
   final NextStepTip? tip;
   final bool showAdSlot;
   final int notificationsUnread;
@@ -113,13 +86,11 @@ class CountryOption {
 
 class LocationsViewData {
   const LocationsViewData({
-    required this.mode,
     required this.countries,
     this.selectedCode,
     this.notice,
   });
 
-  final InterfaceMode mode;
   final List<CountryOption> countries;
 
   /// null means «Авто».
@@ -160,30 +131,38 @@ class RulesViewData {
   bool get hasPendingChange => selectedId != appliedId;
 }
 
-class ProfileViewData {
-  const ProfileViewData({
-    required this.mode,
+class AccessViewData {
+  const AccessViewData({
     this.accessBadge = 'Доступ',
     this.accessTitle = 'Нет сведений о доступе',
     this.accessDetail = '',
     this.accessProgress,
     this.accountLinked = '',
-    this.devices = '',
-    this.theme = 'как в системе',
     this.bonuses = '',
-    this.version = '1.5.0',
   });
 
-  final InterfaceMode mode;
   final String accessBadge;
   final String accessTitle;
   final String accessDetail;
   final double? accessProgress;
   final String accountLinked;
-  final String devices;
-  final String theme;
   final String bonuses;
-  final String version;
+}
+
+/// One entry of the Settings list; the same entries feed the search.
+class SettingsEntry {
+  const SettingsEntry({required this.group, required this.title, this.hint = '', this.value, this.keywords = '', required this.icon, this.onTap, this.toggled});
+
+  final String group;
+  final String title;
+  final String hint;
+  final String? value;
+  final String keywords;
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  /// Non-null for an inline switch; [onTap] flips it.
+  final bool? toggled;
 }
 
 class PlanOption {

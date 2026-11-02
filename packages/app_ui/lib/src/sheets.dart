@@ -38,7 +38,7 @@ class FirstConnectSheet extends StatelessWidget {
           children: [
             Text('Что пускать через POKROV?', style: pokrovTextStyle(context, PokrovText.heading)),
             SizedBox(height: 6),
-            Text('Выбери один раз. Поменять можно в Правилах.', style: pokrovTextStyle(context, PokrovText.body)),
+            Text('Выбери один раз. Поменять можно в Настройках.', style: pokrovTextStyle(context, PokrovText.body)),
             SizedBox(height: 16),
             _ChoiceCard(
               selected: choice == FirstRouteChoice.wholePhone,

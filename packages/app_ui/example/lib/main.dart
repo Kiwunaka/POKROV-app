@@ -71,14 +71,14 @@ class _Preview extends StatefulWidget {
 
 class _PreviewState extends State<_Preview> {
   bool _started = false;
-  bool _firstConnectDone = false;
   ConnectionPhase _phase = ConnectionPhase.off;
-  InterfaceMode _mode = InterfaceMode.simple;
   PokrovTab _tab = PokrovTab.protection;
   String? _country;
   String _route = 'ru';
   String _appliedRoute = 'ru';
   bool _warp = false;
+  bool _bypass = true;
+  List<String> _tiles = PokrovSampleData.defaultTiles;
   int _attempts = 0;
   Timer? _timer;
 
@@ -98,11 +98,7 @@ class _PreviewState extends State<_Preview> {
         setState(() => _phase = ConnectionPhase.off);
       case ConnectionPhase.off:
       case ConnectionPhase.error:
-        if (!_firstConnectDone) {
-          _askFirstConnect();
-        } else {
-          _connect();
-        }
+        _connect();
     }
   }
 
@@ -117,24 +113,6 @@ class _PreviewState extends State<_Preview> {
     });
   }
 
-  Future<void> _askFirstConnect() async {
-    var choice = FirstRouteChoice.wholePhone;
-    final go = await showPokrovSheet<bool>(
-      context,
-      (context) => StatefulBuilder(
-        builder: (context, setSheet) => FirstConnectSheet(
-          choice: choice,
-          onChanged: (c) => setSheet(() => choice = c),
-          onContinue: () => Navigator.pop(context, true),
-        ),
-      ),
-    );
-    if (go == true) {
-      _firstConnectDone = true;
-      _connect();
-    }
-  }
-
   void _openStatus() {
     showPokrovSheet<void>(
       context,
@@ -146,17 +124,19 @@ class _PreviewState extends State<_Preview> {
         },
         onDetails: () {
           Navigator.pop(sheetContext);
-          _push((context) => DiagnosticsScreen(
-                data: PokrovSampleData.diagnostics(on: _phase == ConnectionPhase.on),
-                onBack: () => Navigator.pop(context),
-                onSend: () => _toast(context, 'Отчёт отправлен (макет)'),
-                onCopyCode: () => _toast(context, 'Код скопирован (макет)'),
-                onTechnical: () => _toast(context, 'Здесь будут технические детали (макет)'),
-              ));
+          _openDiagnostics();
         },
       ),
     );
   }
+
+  void _openDiagnostics() => _push((context) => DiagnosticsScreen(
+        data: PokrovSampleData.diagnostics(on: _phase == ConnectionPhase.on),
+        onBack: () => Navigator.pop(context),
+        onSend: () => _toast(context, 'Отчёт отправлен (макет)'),
+        onCopyCode: () => _toast(context, 'Код скопирован (макет)'),
+        onTechnical: () => _toast(context, 'Здесь будут технические детали (макет)'),
+      ));
 
   void _push(WidgetBuilder builder) => Navigator.of(context).push(MaterialPageRoute<void>(builder: builder));
 
@@ -174,6 +154,39 @@ class _PreviewState extends State<_Preview> {
 
   void _openBonuses() {
     _push((context) => BonusesScreen(data: PokrovSampleData.bonuses, onBack: () => Navigator.pop(context)));
+  }
+
+  void _openLocations() {
+    _push((context) => StatefulBuilder(builder: (context, setPage) => Scaffold(body: LocationsScreen(
+      data: LocationsViewData(countries: PokrovSampleData.countries, selectedCode: _country),
+      onAuto: () { setState(() => _country = null); setPage(() {}); },
+      onSelect: (code) { setState(() => _country = code); setPage(() {}); },
+      onRefresh: () => _toast(context, 'Список обновлён (макет)'),
+      onBack: () => Navigator.pop(context),
+    ))));
+  }
+
+  void _openRules() {
+    _push((context) => StatefulBuilder(builder: (context, setPage) => Scaffold(body: RulesScreen(
+      data: PokrovSampleData.rules(selected: _route, applied: _appliedRoute),
+      onSelect: (id) { setState(() => _route = id); setPage(() {}); },
+      onApply: () {
+        setState(() => _appliedRoute = _route);
+        setPage(() {});
+        if (_phase == ConnectionPhase.on) _connect();
+      },
+      onWarning: () => _toast(context, 'Обновляем список… (макет)'),
+      onBack: () => Navigator.pop(context),
+    ))));
+  }
+
+  void _openTiles() {
+    showPokrovSheet<void>(context, (context) => HomeTilesSheet(
+      options: PokrovSampleData.tileOptions,
+      selected: _tiles,
+      defaults: PokrovSampleData.defaultTiles,
+      onChanged: (tiles) => setState(() => _tiles = tiles),
+    ));
   }
 
   void _openLook() {
@@ -207,62 +220,70 @@ class _PreviewState extends State<_Preview> {
     ));
   }
 
-  void _setMode(InterfaceMode mode) {
-    setState(() {
-      _mode = mode;
-      if (mode == InterfaceMode.simple && _tab == PokrovTab.rules) _tab = PokrovTab.protection;
-    });
+  HomeTile _tile(String id) {
+    final option = PokrovSampleData.tileOptions.firstWhere((o) => o.id == id);
+    return switch (id) {
+      'country' => HomeTile(id: id, title: option.title, value: _country == null ? 'Авто' : _countryName, icon: option.icon, onTap: _openLocations),
+      'route' => HomeTile(id: id, title: option.title, value: PokrovSampleData.routeModes.firstWhere((m) => m.id == _appliedRoute).title, icon: option.icon, onTap: _openRules),
+      'warp' => HomeTile(id: id, title: option.title, value: option.hint, icon: option.icon, toggled: _warp, onTap: () => setState(() => _warp = !_warp)),
+      'bypass' => HomeTile(id: id, title: option.title, value: _bypass ? 'Включён' : 'Выключен', icon: option.icon, onTap: () => setState(() => _bypass = !_bypass)),
+      'access' => HomeTile(id: id, title: option.title, value: 'Ещё 29 дней', icon: option.icon, onTap: () => setState(() => _tab = PokrovTab.access)),
+      'help' => HomeTile(id: id, title: option.title, value: option.hint, icon: option.icon, onTap: () => setState(() => _tab = PokrovTab.help)),
+      _ => HomeTile(id: id, title: option.title, value: option.hint, icon: option.icon, onTap: () => _toast(context, '${option.title} (макет)')),
+    };
   }
 
   Widget _body() {
     switch (_tab) {
       case PokrovTab.protection:
         return HomeScreen(
-          data: PokrovSampleData.home(
-            phase: _phase,
-            mode: _mode,
-            countryCode: _country,
-            warp: _warp,
-            routeValue: switch (_appliedRoute) { 'ru' => 'напрямую', 'all' => 'через POKROV', _ => 'по выбору' },
-          ),
-          adSlot: AdSlot(compact: _mode == InterfaceMode.advanced,
+          data: PokrovSampleData.home(phase: _phase, country: _countryName, tiles: [for (final id in _tiles) _tile(id)]),
+          adSlot: AdSlot(compact: true,
             child: const ColoredBox(color: Color(0xFFEAF0EC), child: Center(child: Text('Пример рекламного места')))),
           onNotifications: () => _toast(context, 'Уведомления (макет)'),
           onToggle: _toggle,
           onOpenStatus: _openStatus,
-          onOpenCountry: () => setState(() => _tab = PokrovTab.locations),
-          onOpenRoute: () => _mode == InterfaceMode.advanced ? setState(() => _tab = PokrovTab.rules) : _askFirstConnect(),
-          onOpenAccess: _openRenew,
-          onWarpChanged: (v) => setState(() => _warp = v),
+          onOpenAccess: () => setState(() => _tab = PokrovTab.access),
+          onEditTiles: _openTiles,
           onTip: () => _toast(context, 'Откроется Telegram-канал (макет)'),
-          onHelp: _openSupport,
+          onHelp: () => setState(() => _tab = PokrovTab.help),
         );
-      case PokrovTab.locations:
-        return LocationsScreen(
-          data: LocationsViewData(mode: _mode, countries: PokrovSampleData.countries, selectedCode: _country),
-          onAuto: () => setState(() => _country = null),
-          onSelect: (code) => setState(() => _country = code),
-          onRefresh: () => _toast(context, 'Список обновлён (макет)'),
-        );
-      case PokrovTab.rules:
-        return RulesScreen(
-          data: PokrovSampleData.rules(selected: _route, applied: _appliedRoute),
-          onSelect: (id) => setState(() => _route = id),
-          onApply: () {
-            setState(() => _appliedRoute = _route);
-            if (_phase == ConnectionPhase.on) _connect();
-          },
-          onWarning: () => _toast(context, 'Обновляем список… (макет)'),
-        );
-      case PokrovTab.profile:
-        return ProfileScreen(
-          data: PokrovSampleData.profile(_mode),
+      case PokrovTab.access:
+        return AccessScreen(
+          data: PokrovSampleData.access,
           onRenew: _openRenew,
-          onModeChanged: _setMode,
-          onTheme: _openLook,
-          onHelp: _openSupport,
+          steps: PokrovSampleData.accessSteps,
+          onStep: (_) => _toast(context, 'Следующий шаг (макет)'),
+          onDevices: () => _toast(context, 'Устройства (макет)'),
+          onAddDevice: () => _toast(context, '«Код для входа» (макет)'),
+          onActivate: () => _toast(context, 'Ввод кода (макет)'),
+          onAccount: () => _toast(context, 'Telegram и почта (макет)'),
           onBonuses: _openBonuses,
+          onTelegramProxy: () => _toast(context, 'Telegram-прокси (макет)'),
+          onShare: () => _toast(context, 'Поделиться (макет)'),
         );
+      case PokrovTab.help:
+        return HelpScreen(
+          phase: _phase,
+          onCheck: _openStatus,
+          onTopic: (_) => _openSupport(),
+          onAssistant: _openSupport,
+          onHuman: _openSupport,
+          onReport: _openDiagnostics,
+          onHistory: () => _toast(context, 'История и скорость (макет)'),
+          onFeedback: () => _toast(context, 'Предложить идею (макет)'),
+        );
+      case PokrovTab.settings:
+        return SettingsScreen(entries: [
+          SettingsEntry(group: 'Подключение', title: 'Что идёт через POKROV', hint: 'Режим, приложения, сервисы', icon: Icons.alt_route_rounded, keywords: 'маршрут', onTap: _openRules),
+          SettingsEntry(group: 'Подключение', title: 'Страна', hint: 'Авто или конкретная страна', icon: Icons.public_rounded, onTap: _openLocations),
+          SettingsEntry(group: 'Подключение', title: 'WARP', hint: 'Запасной путь, если сайты не открываются', icon: Icons.cloud_outlined, toggled: _warp, onTap: () => setState(() => _warp = !_warp)),
+          SettingsEntry(group: 'Подключение', title: 'Обход блокировок', hint: 'YouTube и похожее сначала напрямую', icon: Icons.turn_right_rounded, value: _bypass ? 'Включён' : 'Выключен', onTap: () => setState(() => _bypass = !_bypass)),
+          SettingsEntry(group: 'Приложение', title: 'Виджеты на главной', hint: 'Что показывать на экране «Защита»', icon: Icons.dashboard_customize_outlined, onTap: _openTiles),
+          SettingsEntry(group: 'Приложение', title: 'Тема', hint: 'Светлая, тёмная, праздники', icon: Icons.palette_outlined, onTap: _openLook),
+          SettingsEntry(group: pokrovExpertGroup, title: 'DNS', hint: 'Защищённый DNS, SmartDNS', icon: Icons.dns_outlined, keywords: 'doh adguard', onTap: _openRules),
+          SettingsEntry(group: pokrovExpertGroup, title: 'Доверенный Wi-Fi', hint: 'Пауза дома, защита в чужих сетях', icon: Icons.wifi_rounded, keywords: 'wifi сеть', onTap: _openRules),
+        ]);
     }
   }
 
@@ -283,7 +304,6 @@ class _PreviewState extends State<_Preview> {
         child: KeyedSubtree(key: ValueKey(_tab), child: _body()),
       ),
       bottomNavigationBar: PokrovTabBar(
-        mode: _mode,
         current: _tab,
         onSelect: (tab) => setState(() => _tab = tab),
       ),

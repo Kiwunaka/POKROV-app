@@ -3,6 +3,8 @@ part of pokrov_app_shell;
 class _RulesSection extends StatefulWidget {
   const _RulesSection({
     required this.appContext,
+    required this.onBack,
+    this.expertRequest = 0,
     required this.selectedRouteMode,
     required this.selectedAppIds,
     required this.routingPreferences,
@@ -28,6 +30,10 @@ class _RulesSection extends StatefulWidget {
     required this.onRoutingLessonCompleted,
   });
 
+  final VoidCallback onBack;
+
+  /// Bumped when Settings asks for an expert entry; opens «Для опытных».
+  final int expertRequest;
   final SeedAppContext appContext;
   final RouteMode selectedRouteMode;
   final List<String> selectedAppIds;
@@ -131,7 +137,9 @@ class _RulesSectionState extends State<_RulesSection> {
       onApps: choices.contains(RouteMode.selectedApps) || choices.contains(RouteMode.excludedApps) ? _apps : null,
       onPresets: widget.loadCatalogPreview != null || widget.loadVerifiedCatalogApps != null ? _presets : null,
       onServices: widget.catalogServicesBusy ? null : widget.onEditCatalogServices,
+      onBack: widget.onBack,
       expertContent: _RulesAdvancedSection(
+        expertRequest: widget.expertRequest,
         hostPlatform: widget.appContext.hostPlatform, loadSmartDnsProviders: widget.loadSmartDnsProviders,
         smartDnsEligible: widget.smartDnsEligible,
         preferences: widget.routingPreferences, fallbackMode: widget.selectedRouteMode,
@@ -146,6 +154,7 @@ class _RulesSectionState extends State<_RulesSection> {
 
 class _RulesAdvancedSection extends StatefulWidget {
   const _RulesAdvancedSection({
+    this.expertRequest = 0,
     required this.hostPlatform,
     this.loadSmartDnsProviders,
     this.smartDnsEligible = false,
@@ -161,6 +170,7 @@ class _RulesAdvancedSection extends StatefulWidget {
     required this.onRoutingLessonCompleted,
   });
 
+  final int expertRequest;
   final HostPlatform hostPlatform;
   final Future<VerifiedSmartAccessProviderPolicy> Function()? loadSmartDnsProviders;
   final bool smartDnsEligible;
@@ -180,7 +190,7 @@ class _RulesAdvancedSection extends StatefulWidget {
 }
 
 class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
-  bool _expanded = false;
+  late bool _expanded = widget.expertRequest > 0;
   bool _applying = false;
   late PokrovRoutingPreferences _appliedPreferences;
   late PokrovRoutingPreferences _draftPreferences;
@@ -195,6 +205,7 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
   @override
   void didUpdateWidget(covariant _RulesAdvancedSection oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.expertRequest != oldWidget.expertRequest) _expanded = true;
     // This policy applies immediately, independently of pending routing edits.
     final autoConnect = widget.preferences.autoConnectOnUntrustedWifi;
     _appliedPreferences = _appliedPreferences.copyWith(autoConnectOnUntrustedWifi: autoConnect);

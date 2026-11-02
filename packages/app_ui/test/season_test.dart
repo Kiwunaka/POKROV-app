@@ -30,9 +30,9 @@ Future<void> _pumpHome(WidgetTester tester, {
     home: MediaQuery(
       data: MediaQueryData(disableAnimations: reduceMotion, textScaler: TextScaler.linear(textScale)),
       child: Scaffold(body: HomeScreen(
-        data: PokrovSampleData.home(phase: phase, mode: InterfaceMode.simple),
+        data: PokrovSampleData.home(phase: phase),
         onToggle: onToggle ?? () {}, onOpenStatus: onStatus ?? () {},
-        onOpenCountry: () {}, onOpenRoute: () {}, onOpenAccess: () {},
+        onOpenAccess: () {},
       )),
     ),
   ));
@@ -57,7 +57,7 @@ void main() {
           expect(tester.widget<CustomPaint>(find.byKey(const ValueKey('season-decor'))).painter, isNotNull);
         }
         expect(find.text('Защищено'), findsOneWidget);
-        expect(find.text('Германия · 00:12:48'), findsOneWidget);
+        expect(find.text('Защищено · Германия'), findsOneWidget);
       });
     }
   }
@@ -127,7 +127,7 @@ void main() {
       for (final phase in [ConnectionPhase.off]) {
         await _pumpHome(tester, season: season, phase: phase, textScale: 2);
         expect(tester.takeException(), isNull, reason: '${season.name} ${phase.name}');
-        expect(find.text(phase == ConnectionPhase.off ? 'Защита выключена' : 'Германия · 00:12:48'), findsOneWidget);
+        expect(find.text(phase == ConnectionPhase.off ? 'Защита выключена' : 'Защищено · Германия'), findsOneWidget);
       }
     }
   });

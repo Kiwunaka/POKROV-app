@@ -1,33 +1,41 @@
 part of pokrov_app_shell;
 
 class _MobileShell extends StatelessWidget {
-  const _MobileShell({required this.advanced, required this.selectedIndex,
-    required this.sectionBuilders, required this.onSelected});
+  const _MobileShell({required this.selectedIndex, required this.tabIndex,
+    required this.sectionBuilders, required this.onSelected, required this.onClosePage});
 
-  final bool advanced;
   final int selectedIndex;
+
+  /// Highlighted tab; a page (country, route) keeps the tab it came from.
+  final int tabIndex;
   final List<WidgetBuilder> sectionBuilders;
   final ValueChanged<int> onSelected;
+  final VoidCallback onClosePage;
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 480),
-      child: Stack(children: [
-        Positioned.fill(child: _TabTransition(
-          index: selectedIndex,
-          child: _LazyIndexedStack(index: selectedIndex, builders: sectionBuilders),
-        )),
-        Align(alignment: Alignment.bottomCenter, child: ui.PokrovTabBar(
-          mode: advanced ? ui.InterfaceMode.advanced : ui.InterfaceMode.simple,
-          current: ui.PokrovTab.values[selectedIndex],
-          onSelect: (tab) {
-            if (tab.index == selectedIndex) return;
-            PokrovHaptics.tap();
-            onSelected(tab.index);
-          },
-        )),
-      ]),
+  Widget build(BuildContext context) => PopScope(
+    canPop: selectedIndex < SeedTab.locations.index,
+    onPopInvokedWithResult: (didPop, _) {
+      if (!didPop) onClosePage();
+    },
+    child: Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: Stack(children: [
+          Positioned.fill(child: _TabTransition(
+            index: selectedIndex,
+            child: _LazyIndexedStack(index: selectedIndex, builders: sectionBuilders),
+          )),
+          Align(alignment: Alignment.bottomCenter, child: ui.PokrovTabBar(
+            current: ui.PokrovTab.values[tabIndex],
+            onSelect: (tab) {
+              if (tab.index == selectedIndex) return;
+              PokrovHaptics.tap();
+              onSelected(tab.index);
+            },
+          )),
+        ]),
+      ),
     ),
   );
 }

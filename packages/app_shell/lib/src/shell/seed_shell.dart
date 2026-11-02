@@ -249,6 +249,7 @@ class PokrovSeedShell extends StatefulWidget {
     this.windowsShellPreferencesUpdater,
     this.initialAcquisitionUri,
     this.acquisitionUriStream,
+    this.homeTilesStore = const PokrovFileHomeTilesStore(),
   });
 
   final SeedAppContext appContext;
@@ -260,6 +261,7 @@ class PokrovSeedShell extends StatefulWidget {
   final PokrovClientUpdateInstaller? clientUpdateInstaller;
   final PokrovClientUpdateProgressReader? clientUpdateProgressReader;
   final PokrovFirstLaunchStore? firstLaunchStore;
+  final PokrovFileHomeTilesStore homeTilesStore;
   final PokrovFileConnectHintStore connectHintStore;
   final Duration runtimeActionTimeout;
   final PokrovProtectionProbe? protectionProbe;
@@ -378,6 +380,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       await _connectionManager.setInterfaceMode(PokrovInterfaceMode.advanced);
       if (!mounted) return;
       setState(() {
+        if (_selectedIndex < SeedTab.locations.index) _pageReturnIndex = _selectedIndex;
         _selectedIndex = SeedTab.rules.index;
         _runtimeHeadline = _selectiveServicesAvailable
             ? 'Выберите хотя бы один поддерживаемый сервис в разделе «Правила».'
@@ -392,17 +395,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             confirmedRouteMode == null ||
             !(confirmedRouteMode == RouteMode.selectiveServices && _selectiveServicesAvailable) &&
               !widget.appContext.runtimeProfile.supportedRouteModes.contains(confirmedRouteMode))) {
-      final routeMode = _clientExperience.interfaceMode == PokrovInterfaceMode.simple
-          ? _selectedRouteMode
-          : await _showFirstConnectRouteScopeSheet(
-              context,
-              canSelectApps: widget.appContext.runtimeProfile.supportedRouteModes
-                  .contains(RouteMode.selectedApps),
-            );
-      if (!mounted || routeMode == null) {
-        return;
-      }
-      _selectRouteMode(routeMode);
+      // The route is changed in Settings; the first connection confirms the
+      // saved one instead of asking.
+      _selectRouteMode(_selectedRouteMode);
     }
 
     if (_runtimeSnapshot?.phase != RuntimePhase.running &&
@@ -416,6 +411,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   int _selectedIndex = 0;
+
+  /// Tab that a full-screen page (country, route) returns to.
+  int _pageReturnIndex = 0;
+  int _rulesExpertRequest = 0;
+  List<String>? _homeTiles;
   bool _localDpiApplying = false;
   late final ManagedProfileBootstrapper _bootstrapper;
   late final AccountSessionCoordinator _accountSessionCoordinator;
@@ -618,6 +618,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
     _firstSessionLoadFuture = _loadFirstLaunchState();
     unawaited(_loadConnectHintState());
+    unawaited(_restoreHomeTiles());
     _clientExperienceRestore = _restoreClientExperience();
     unawaited(_clientExperienceRestore);
     _refreshRuntimeSnapshot();
@@ -961,6 +962,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   void _openRulesForSelectedApps() {
     unawaited(_connectionManager.setInterfaceMode(PokrovInterfaceMode.advanced));
     setState(() {
+      if (_selectedIndex < SeedTab.locations.index) _pageReturnIndex = _selectedIndex;
       _selectedIndex = SeedTab.rules.index;
       _runtimeHeadline =
           'Выберите хотя бы одно приложение в разделе «Правила».';
@@ -972,19 +974,36 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     );
   }
 
+  Future<void> _restoreHomeTiles() async {
+    final saved = await widget.homeTilesStore.read();
+    if (!mounted || saved == null) return;
+    setState(() => _homeTiles = saved.where(_homeTileIds.contains).toList(growable: false));
+  }
+
+  void _setHomeTiles(List<String> tiles) {
+    unawaited(widget.homeTilesStore.write(tiles));
+    setState(() => _homeTiles = tiles);
+  }
+
+  void _closePage() => _selectTab(SeedTab.values[_pageReturnIndex]);
+
+  void _openRulesPage({bool expert = false}) {
+    if (expert) _rulesExpertRequest++;
+    _selectTab(SeedTab.rules);
+  }
+
   void _selectTab(SeedTab tab) {
-    if (tab == SeedTab.rules &&
-        _clientExperience.interfaceMode == PokrovInterfaceMode.simple) {
-      tab = SeedTab.profile;
-    }
     setState(() {
+      if (tab.index >= SeedTab.locations.index && _selectedIndex < SeedTab.locations.index) {
+        _pageReturnIndex = _selectedIndex;
+      }
       _selectedIndex = tab.index;
     });
     if (tab == SeedTab.locations) {
       unawaited(_connectionManager.refreshTransportCatalog());
       unawaited(_refreshLocationsCatalog());
     }
-    if (tab == SeedTab.profile && widget.bootstrapper != null) {
+    if (tab == SeedTab.access && widget.bootstrapper != null) {
       unawaited(_refreshAccountSummary());
     }
   }
@@ -3218,7 +3237,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     await _reportClientLifecycle('app_opened');
   }
 
-  Future<void> _showSupportHub({int? initialTicketId}) {
+  Future<void> _showSupportHub({int? initialTicketId, String? initialQuestion, bool human = false, bool feedback = false}) {
     PokrovHaptics.tap();
     return Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
@@ -3241,6 +3260,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             extraDiagnostics: _extendedProtectionDiagnostics(),
             supportTicketService: _supportTicketService,
             initialTicketId: initialTicketId,
+            initialQuestion: initialQuestion,
+            startWithHuman: human,
+            openFeedback: feedback,
             observability: widget.observability,
             askAssistant:
                 _clientDataService == null ? null : _askSupportAssistant,
@@ -3486,19 +3508,19 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       SingleActivator(LogicalKeyboardKey.digit1, control: true):
           _SelectSeedTabIntent(SeedTab.protection),
       SingleActivator(LogicalKeyboardKey.digit2, control: true):
-          _SelectSeedTabIntent(SeedTab.locations),
+          _SelectSeedTabIntent(SeedTab.access),
       SingleActivator(LogicalKeyboardKey.digit3, control: true):
-          _SelectSeedTabIntent(SeedTab.rules),
+          _SelectSeedTabIntent(SeedTab.help),
       SingleActivator(LogicalKeyboardKey.digit4, control: true):
-          _SelectSeedTabIntent(SeedTab.profile),
+          _SelectSeedTabIntent(SeedTab.settings),
       SingleActivator(LogicalKeyboardKey.numpad1, control: true):
           _SelectSeedTabIntent(SeedTab.protection),
       SingleActivator(LogicalKeyboardKey.numpad2, control: true):
-          _SelectSeedTabIntent(SeedTab.locations),
+          _SelectSeedTabIntent(SeedTab.access),
       SingleActivator(LogicalKeyboardKey.numpad3, control: true):
-          _SelectSeedTabIntent(SeedTab.rules),
+          _SelectSeedTabIntent(SeedTab.help),
       SingleActivator(LogicalKeyboardKey.numpad4, control: true):
-          _SelectSeedTabIntent(SeedTab.profile),
+          _SelectSeedTabIntent(SeedTab.settings),
     };
   }
 
@@ -3635,8 +3657,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         ?? _clientExperience.preferredCountryCode;
     final sectionBuilders = <WidgetBuilder>[
       (context) => _QuickConnectSection(
-            advanced: _clientExperience.interfaceMode == PokrovInterfaceMode.advanced,
-            preferredCountryCode: selectedCountry,
+            tiles: _homeTileViews(context, selectedCountry),
+            onEditTiles: () => _openHomeTilesSheet(context),
             actionRequired: _connectionManager._activePhase == ConnectionPhase.actionRequired,
             connectionFailureMessage: _connectionManager._connectionFailureMessage,
             retainsProtection: _connectionManager.retainsProtection,
@@ -3650,10 +3672,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             bonusSummary: _bonusSummary,
             subscriptionInfo: _subscriptionInfo,
             telegramBonusBusy: _telegramBonusBusy,
-            warpPolicy: _managedWarpPolicy,
-            warpRuntimeConsent: _warpRuntimeConsent,
-            warpRuntimeActive: _warpRuntimeIsActive,
-            warpBusy: _warpPolicyBusy,
             onTelegramBonus: _telegramBonusBusy
                 ? null
                 : () {
@@ -3663,86 +3681,16 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                       unawaited(_createTelegramLinkInApp());
                     }
                   },
-            onOpenWarp: _openWarpControl,
-            onWarpConsentChanged: _setWarpRuntimeConsent,
             notificationsUnread: _notificationsUnread,
             onOpenNotifications: _openNotificationsInbox,
             onOpenProfile: _accountSessionCoordinator.loginRecoveryRequired
                 ? () => unawaited(_openEmailSessionRecovery())
-                : () => _selectTab(SeedTab.profile),
+                : () => _selectTab(SeedTab.access),
             onOpenPromoHandoff: _showSeedHandoff,
             onPromoEvent: _reportPromoEvent,
           ),
-      (context) => _LocationsSection(
-            appContext: widget.appContext,
-            interfaceMode: _clientExperience.interfaceMode,
-            preferredCountryCode: _clientExperience.preferredCountryCode,
-            preferredCandidateRef: _clientExperience.preferredCandidateRef,
-            transportCatalog: _connectionManager.transportCatalog,
-            onPreferredCountrySelected: _connectionManager.setPreferredCountry,
-            onPreferredCandidateSelected: _connectionManager.setPreferredCandidate,
-            selectedRouteMode: _selectedRouteMode,
-            hasProvisionedAccess: hasProvisionedAccess,
-            smartConnectProfile: _smartConnectProfile,
-            hasOrdinaryTransportCatalog:
-                _connectionManager.transportCatalog != null,
-            locationsCatalog: _locationsCatalog,
-            locationsCatalogBusy: _locationsCatalogBusy,
-            locationsCatalogError: _locationsCatalogError,
-            locationsUsingCache: _locationsUsingCache,
-            locationsCachedAt: _clientExperience.locationsCachedAt,
-            onRefreshLocationsCatalog: () {
-              unawaited(_refreshLocationsCatalog(measureDevice: true, forceTransportCatalog: true));
-            },
-            preferredNodeCode: _preferredNodeCode,
-            preferredVariantId: _preferredVariantId,
-            nodePreferenceBusy: _nodePreferenceBusy,
-            onAutomaticLocationSelected: _setAutomaticLocation,
-            onPreferredNodeSelected: _setPreferredLocation,
-            favoriteNodeCodes: _clientExperience.favoriteNodeCodes,
-            recentNodeCodes: _clientExperience.recentNodeCodes,
-            onFavoriteNodeToggle: _toggleFavoriteLocation,
-          ),
-      (context) => _RulesSection(
-            appContext: widget.appContext,
-            selectedRouteMode: _selectedRouteMode,
-            selectedAppIds: _selectedAppIds,
-            routingPreferences: _clientExperience.routingPreferences,
-            onRouteModeSelected: (mode) {
-              _selectRouteMode(mode);
-            },
-            onSelectedAppAdded: _addSelectedAppId,
-            onSelectedAppRemoved: _removeSelectedAppId,
-            onRuAppPresetApplied: _applyRuAppPreset,
-            loadVerifiedCatalogApps: _routingCatalogEnabled && widget.appContext.hostPlatform == HostPlatform.android
-                ? _loadVerifiedCatalogDirectApps : null,
-            loadCatalogPreview: _routingCatalogEnabled ? _loadRoutingCatalogPreview : null,
-            loadSmartDnsProviders: _bootstrapper is AppFirstSmartAccessService &&
-                (_bootstrapper as AppFirstSmartAccessService).smartAccessEnabled
-                ? _loadSmartDnsProviders : null,
-            smartDnsEligible: _connectionManager._smartAccessEligible,
-            catalogPreviewIdentity: (
-              _selectedRouteMode, _managedProfileRevision, _freeProfileAccess?.accessState,
-              _runtimeSnapshot?.routingCatalogWindowVersion, identityHashCode(_bootstrapper),
-              _connectionManager._subscriptionInfo?.smartAccessEligible,
-            ),
-            onEditCatalogServices: _selectiveServicesAvailable ? _editCatalogServices : null,
-            catalogServicesBusy: _runtimeBusy,
-            smartDnsActive: _selectedRouteMode == RouteMode.selectiveServices &&
-                !_managedProfileDirty && _runtimeSnapshot?.phase == RuntimePhase.running &&
-                (_connectionManager._connectionCoordinator.activeSmartAccessLeases?.leases.isNotEmpty ?? false),
-            onRoutingPreferencesChanged: _setRoutingPreferences,
-            onRoutingPreferencesApply: _applyRoutingPreferences,
-            connectionActive: _runtimeSnapshot?.phase == RuntimePhase.running,
-            windowsLocalDpiReady: _runtimeSnapshot?.windowsLocalDpiAdmissionVersion == 1,
-            onReadCurrentWifi: _readCurrentWifi,
-            onRequestWifiPermission: _requestCurrentWifiPermission,
-            onOpenVpnSettings: _openSystemVpnSettings,
-            onRoutingLessonCompleted: () {
-              unawaited(_reportRoutingLessonCompleted());
-            },
-          ),
       (context) => _ProfileSection(
+            part: _ProfilePart.access,
             appContext: widget.appContext,
             freeProfileAccess: _accountSessionCoordinator.freeProfileAccessForDisplay,
             loginRecoveryRequired: _accountSessionCoordinator.loginRecoveryRequired,
@@ -3780,8 +3728,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             onThemeModeChanged: widget.onThemeModeChanged,
             seasonalTheme: widget.seasonalTheme,
             onSeasonalThemeChanged: widget.onSeasonalThemeChanged,
-            interfaceMode: _clientExperience.interfaceMode,
-            onInterfaceModeChanged: _connectionManager.setInterfaceMode,
+            onOpenRules: ({bool expert = false}) => _openRulesPage(expert: expert),
+            onOpenLocations: () => _selectTab(SeedTab.locations),
+            onOpenHomeTiles: () => _openHomeTilesSheet(context),
+            onWarpConsentChanged: _warpPolicyBusy ? null : (value) => unawaited(_setWarpRuntimeConsent(value)),
+            bypassEnabled: _clientExperience.routingPreferences.localDpiEnabled,
             subscriptionInfo: _subscriptionInfo,
             systemSurfacePreferences: _systemSurfacePreferences,
             onSystemSurfacePreferencesChanged: _updateSystemSurfacePreferences,
@@ -3804,6 +3755,155 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             onIssuePairingCode: _issueDevicePairingCode,
             onCancelPairingCode: _cancelDevicePairingCode,
           ),
+      (context) => _HelpSection(
+            phase: _homeUiPhase(connectionPresentation),
+            onCheck: _openProtectionCenter,
+            onAssistant: () => unawaited(_showSupportHub()),
+            onTopic: (topic) => unawaited(_showSupportHub(initialQuestion: topic)),
+            onHuman: () => unawaited(_showSupportHub(human: true)),
+            onReport: _openDiagnostics,
+            onHistory: () => _openProtectionCenter(technical: true),
+            onFeedback: () => unawaited(_showSupportHub(human: true, feedback: true)),
+          ),
+      (context) => _ProfileSection(
+            part: _ProfilePart.settings,
+            appContext: widget.appContext,
+            freeProfileAccess: _accountSessionCoordinator.freeProfileAccessForDisplay,
+            loginRecoveryRequired: _accountSessionCoordinator.loginRecoveryRequired,
+            selectedRouteMode: _selectedRouteMode,
+            hasProvisionedAccess: hasProvisionedAccess,
+            onOpenHandoff: _showSeedHandoff,
+            onPromoEvent: _reportPromoEvent,
+            onOpenSupportHub: _showSupportHub,
+            onOpenDiagnostics: _openDiagnostics,
+            onShareApp: _shareApp,
+            appShareBusy: _appShareBusy,
+            onCreateTelegramLink: _createTelegramLinkInApp,
+            onCheckTelegramBonus: _checkTelegramBonusInApp,
+            onClaimTelegramBonus: _claimTelegramBonusInApp,
+            telegramBonusStatus: _telegramBonusStatus,
+            telegramBonusBusy: _telegramBonusBusy,
+            telegramBonusCanClaim: _telegramBonusCanClaim,
+            telegramBonusError: _telegramBonusError,
+            bonusSummary: () => _bonusSummary,
+            bonusSummaryBusy: _bonusSummaryBusy,
+            bonusSummaryError: _bonusSummaryError,
+            bonusRewardBusy: () => _bonusRewardBusy,
+            onRefreshBonusSummary: () => _loadBonusSummary(force: true),
+            onSpinWheel: _spinBonusWheelInApp,
+            onCheckInCalendar: _checkInBonusCalendarInApp,
+            warpPolicy: _managedWarpPolicy,
+            warpRuntimeConsent: _warpRuntimeConsent,
+            warpBusy: _warpPolicyBusy,
+            connectionPresentation: connectionPresentation,
+            runtimeHeadline: _runtimeHeadline,
+            onOpenWarp: _openWarpControl,
+            onOpenBypass: const {HostPlatform.android, HostPlatform.windows}.contains(widget.appContext.hostPlatform)
+                ? _openLocalDpiControl : null,
+            themeMode: widget.themeMode,
+            onThemeModeChanged: widget.onThemeModeChanged,
+            seasonalTheme: widget.seasonalTheme,
+            onSeasonalThemeChanged: widget.onSeasonalThemeChanged,
+            onOpenRules: ({bool expert = false}) => _openRulesPage(expert: expert),
+            onOpenLocations: () => _selectTab(SeedTab.locations),
+            onOpenHomeTiles: () => _openHomeTilesSheet(context),
+            onWarpConsentChanged: _warpPolicyBusy ? null : (value) => unawaited(_setWarpRuntimeConsent(value)),
+            bypassEnabled: _clientExperience.routingPreferences.localDpiEnabled,
+            subscriptionInfo: _subscriptionInfo,
+            systemSurfacePreferences: _systemSurfacePreferences,
+            onSystemSurfacePreferencesChanged: _updateSystemSurfacePreferences,
+            windowsShellPreferences: _windowsShellPreferences,
+            onWindowsShellPreferencesChanged: _updateWindowsShellPreferences,
+            onOpenNotificationSettings: () => openPokrovNotificationSettings(
+              widget.appContext.hostPlatform,
+            ),
+            notifications:
+                _notificationsInbox?.items ?? const <ClientNotificationItem>[],
+            notificationsUnread: _notificationsUnread,
+            notificationsBusy: _notificationsBusy,
+            notificationsUsingCache: _notificationsUsingCache,
+            notificationsCachedAt: _clientExperience.notificationsCachedAt,
+            onOpenNotifications: _markNotificationsRead,
+            onRefreshNotifications: _refreshNotifications,
+            onDismissNotifications: _dismissNotifications,
+            onFetchDevices: _fetchClientDevices,
+            onRevokeDevice: _revokeClientDevice,
+            onIssuePairingCode: _issueDevicePairingCode,
+            onCancelPairingCode: _cancelDevicePairingCode,
+          ),
+      (context) => _LocationsSection(
+            appContext: widget.appContext,
+            interfaceMode: _clientExperience.interfaceMode,
+            onEnableManualConnection: () => _connectionManager.setInterfaceMode(PokrovInterfaceMode.advanced),
+            onBack: _closePage,
+            preferredCountryCode: _clientExperience.preferredCountryCode,
+            preferredCandidateRef: _clientExperience.preferredCandidateRef,
+            transportCatalog: _connectionManager.transportCatalog,
+            onPreferredCountrySelected: _connectionManager.setPreferredCountry,
+            onPreferredCandidateSelected: _connectionManager.setPreferredCandidate,
+            selectedRouteMode: _selectedRouteMode,
+            hasProvisionedAccess: hasProvisionedAccess,
+            smartConnectProfile: _smartConnectProfile,
+            hasOrdinaryTransportCatalog:
+                _connectionManager.transportCatalog != null,
+            locationsCatalog: _locationsCatalog,
+            locationsCatalogBusy: _locationsCatalogBusy,
+            locationsCatalogError: _locationsCatalogError,
+            locationsUsingCache: _locationsUsingCache,
+            locationsCachedAt: _clientExperience.locationsCachedAt,
+            onRefreshLocationsCatalog: () {
+              unawaited(_refreshLocationsCatalog(measureDevice: true, forceTransportCatalog: true));
+            },
+            preferredNodeCode: _preferredNodeCode,
+            preferredVariantId: _preferredVariantId,
+            nodePreferenceBusy: _nodePreferenceBusy,
+            onAutomaticLocationSelected: _setAutomaticLocation,
+            onPreferredNodeSelected: _setPreferredLocation,
+            favoriteNodeCodes: _clientExperience.favoriteNodeCodes,
+            recentNodeCodes: _clientExperience.recentNodeCodes,
+            onFavoriteNodeToggle: _toggleFavoriteLocation,
+          ),
+      (context) => _RulesSection(
+            appContext: widget.appContext,
+            onBack: _closePage,
+            expertRequest: _rulesExpertRequest,
+            selectedRouteMode: _selectedRouteMode,
+            selectedAppIds: _selectedAppIds,
+            routingPreferences: _clientExperience.routingPreferences,
+            onRouteModeSelected: (mode) {
+              _selectRouteMode(mode);
+            },
+            onSelectedAppAdded: _addSelectedAppId,
+            onSelectedAppRemoved: _removeSelectedAppId,
+            onRuAppPresetApplied: _applyRuAppPreset,
+            loadVerifiedCatalogApps: _routingCatalogEnabled && widget.appContext.hostPlatform == HostPlatform.android
+                ? _loadVerifiedCatalogDirectApps : null,
+            loadCatalogPreview: _routingCatalogEnabled ? _loadRoutingCatalogPreview : null,
+            loadSmartDnsProviders: _bootstrapper is AppFirstSmartAccessService &&
+                (_bootstrapper as AppFirstSmartAccessService).smartAccessEnabled
+                ? _loadSmartDnsProviders : null,
+            smartDnsEligible: _connectionManager._smartAccessEligible,
+            catalogPreviewIdentity: (
+              _selectedRouteMode, _managedProfileRevision, _freeProfileAccess?.accessState,
+              _runtimeSnapshot?.routingCatalogWindowVersion, identityHashCode(_bootstrapper),
+              _connectionManager._subscriptionInfo?.smartAccessEligible,
+            ),
+            onEditCatalogServices: _selectiveServicesAvailable ? _editCatalogServices : null,
+            catalogServicesBusy: _runtimeBusy,
+            smartDnsActive: _selectedRouteMode == RouteMode.selectiveServices &&
+                !_managedProfileDirty && _runtimeSnapshot?.phase == RuntimePhase.running &&
+                (_connectionManager._connectionCoordinator.activeSmartAccessLeases?.leases.isNotEmpty ?? false),
+            onRoutingPreferencesChanged: _setRoutingPreferences,
+            onRoutingPreferencesApply: _applyRoutingPreferences,
+            connectionActive: _runtimeSnapshot?.phase == RuntimePhase.running,
+            windowsLocalDpiReady: _runtimeSnapshot?.windowsLocalDpiAdmissionVersion == 1,
+            onReadCurrentWifi: _readCurrentWifi,
+            onRequestWifiPermission: _requestCurrentWifiPermission,
+            onOpenVpnSettings: _openSystemVpnSettings,
+            onRoutingLessonCompleted: () {
+              unawaited(_reportRoutingLessonCompleted());
+            },
+          ),
     ];
 
     final isDesktopShell = switch (widget.appContext.hostPlatform) {
@@ -3815,10 +3915,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         WidgetsBinding.instance.platformDispatcher.accessibilityFeatures
             .disableAnimations;
     final shell = _MobileShell(
-      advanced: _clientExperience.interfaceMode == PokrovInterfaceMode.advanced,
       selectedIndex: _selectedIndex,
+      tabIndex: _selectedIndex < SeedTab.locations.index ? _selectedIndex : _pageReturnIndex,
       sectionBuilders: sectionBuilders,
       onSelected: (index) => _selectTab(SeedTab.values[index]),
+      onClosePage: _closePage,
     );
     final supportModeView = _supportModeController.view;
     final shellWithSupportMode = supportModeView.active
@@ -3940,33 +4041,3 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 /// Advanced mode asks about device scope before the first live connection.
 /// The selected [RouteMode] continues through the existing managed-profile
 /// resolution path, which persists the device policy server-side.
-Future<RouteMode?> _showFirstConnectRouteScopeSheet(
-  BuildContext context, {
-  required bool canSelectApps,
-}) {
-  var choice = ui.FirstRouteChoice.wholePhone;
-  return showModalBottomSheet<RouteMode>(
-    context: context,
-    isDismissible: false,
-    enableDrag: false,
-    isScrollControlled: true,
-    sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
-    builder: (sheetContext) => PopScope(
-      canPop: false,
-      child: SingleChildScrollView(
-        key: const ValueKey('first-connect-route-scope-sheet'),
-        child: StatefulBuilder(builder: (context, setState) => ui.FirstConnectSheet(
-          choice: choice,
-          canSelectApps: canSelectApps,
-          wholeDeviceLabel: Theme.of(context).platform == TargetPlatform.windows
-              ? 'Всё устройство' : 'Весь телефон',
-          onChanged: (value) => setState(() => choice = value),
-          onContinue: () => Navigator.of(sheetContext).pop(
-            choice == ui.FirstRouteChoice.wholePhone
-                ? RouteMode.allExceptRu : RouteMode.selectedApps,
-          ),
-        )),
-      ),
-    ),
-  );
-}

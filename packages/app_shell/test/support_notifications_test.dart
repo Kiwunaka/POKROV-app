@@ -86,7 +86,7 @@ void main() {
     expect(client.accountChanged, isTrue);
     await tester.pump(const Duration(seconds: 10));
     await tester.pump(const Duration(seconds: 1));
-    await tester.tap(find.text('Профиль').last);
+    await tester.tap(find.text('Доступ').last);
     await tester.pump();
     await tester.drag(find.byType(Scrollable).first, const Offset(0, -600));
     await tester.pump();

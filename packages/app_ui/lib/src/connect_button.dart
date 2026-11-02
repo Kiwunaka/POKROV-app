@@ -168,7 +168,12 @@ class _PokrovConnectButtonState extends State<PokrovConnectButton> with TickerPr
                               fontWeight: FontWeight.w800,
                               color: on ? pokrovOnAccent(context) : pokrovColor(context, PokrovColors.ink),
                             ),
-                            child: Text(label),
+                            // Large text shrinks the label to fit the circle
+                            // instead of breaking the word.
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(maxWidth: widget.diameter * 0.8),
+                              child: FittedBox(fit: BoxFit.scaleDown, child: Text(label, maxLines: 1)),
+                            ),
                           ),
                         ],
                       ),

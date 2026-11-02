@@ -4,11 +4,11 @@ import 'models.dart';
 import 'tokens.dart';
 import 'widgets.dart';
 
-/// «Страна» (simple) / «Локации» (advanced): Auto first, then the list.
-/// Simple mode shows «быстро / далеко», advanced shows milliseconds.
+/// «Страна»: Auto first, then the list. A measured delay is shown in
+/// milliseconds; nothing is shown without a measurement.
 class LocationsScreen extends StatelessWidget {
   const LocationsScreen({super.key, required this.data, required this.onAuto, required this.onSelect,
-    this.onRefresh, this.refreshing = false, this.onSelectConnection, this.selectedConnectionLabel});
+    this.onRefresh, this.refreshing = false, this.onSelectConnection, this.selectedConnectionLabel, this.onBack});
 
   final LocationsViewData data;
   final VoidCallback? onAuto;
@@ -17,10 +17,10 @@ class LocationsScreen extends StatelessWidget {
   final bool refreshing;
   final VoidCallback? onSelectConnection;
   final String? selectedConnectionLabel;
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
-    final advanced = data.mode == InterfaceMode.advanced;
     final auto = data.selectedCode == null;
     return SafeArea(
       bottom: false,
@@ -29,7 +29,7 @@ class LocationsScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: Text(advanced ? 'Локации' : 'Страна', style: pokrovTextStyle(context, PokrovText.title))),
+              Expanded(child: ScreenHeader(title: 'Страна', onBack: onBack)),
               if (onRefresh != null) IconButton.filledTonal(
                 key: ValueKey('locations-refresh-measurements'),
                 onPressed: refreshing ? null : onRefresh,
@@ -44,8 +44,9 @@ class LocationsScreen extends StatelessWidget {
             key: ValueKey('locations-auto-section'),
             selected: auto,
             button: true,
-            child: GestureDetector(
+            child: InkWell(
               onTap: onAuto,
+              borderRadius: BorderRadius.circular(PokrovRadii.card),
               child: AnimatedContainer(
                 duration: PokrovMotion.quick,
                 padding: EdgeInsets.all(16),
@@ -82,7 +83,6 @@ class LocationsScreen extends StatelessWidget {
                 for (final (i, c) in data.countries.indexed)
                   _CountryRow(
                     country: c,
-                    advanced: advanced,
                     selected: c.code == data.selectedCode,
                     divider: i < data.countries.length - 1,
                     onTap: () => onSelect(c.code),
@@ -90,13 +90,13 @@ class LocationsScreen extends StatelessWidget {
               ],
             ),
           ),
-          if (advanced && onSelectConnection != null) ...[
+          if (onSelectConnection != null) ...[
             SizedBox(height: 12),
             TextButton.icon(
               key: ValueKey('locations-select-connection'),
               onPressed: onSelectConnection,
               icon: Icon(Icons.tune_rounded),
-              label: Text('Выбрать соединение вручную'),
+              label: Text('Соединение вручную'),
             ),
             if (selectedConnectionLabel != null) Text('Выбрано: $selectedConnectionLabel',
               textAlign: TextAlign.center, style: pokrovTextStyle(context, PokrovText.caption)),
@@ -108,10 +108,9 @@ class LocationsScreen extends StatelessWidget {
 }
 
 class _CountryRow extends StatelessWidget {
-  const _CountryRow({required this.country, required this.advanced, required this.selected, required this.divider, required this.onTap});
+  const _CountryRow({required this.country, required this.selected, required this.divider, required this.onTap});
 
   final CountryOption country;
-  final bool advanced;
   final bool selected;
   final bool divider;
   final VoidCallback onTap;
@@ -127,7 +126,8 @@ class _CountryRow extends StatelessWidget {
       child: InkWell(
         onTap: country.available ? onTap : null,
         child: Container(
-          height: 64,
+          constraints: BoxConstraints(minHeight: 64),
+          padding: EdgeInsets.symmetric(vertical: 6),
           decoration: BoxDecoration(border: divider ? Border(bottom: BorderSide(color: pokrovColor(context, PokrovColors.line))) : null),
           child: Row(
             children: [
@@ -137,7 +137,7 @@ class _CountryRow extends StatelessWidget {
               if (ping != null) Container(width: 8, height: 8, decoration: BoxDecoration(color: fast ? pokrovColor(context, PokrovColors.connected) : pokrovColor(context, PokrovColors.warnDot), shape: BoxShape.circle)),
               if (ping != null) SizedBox(width: 6),
               if (ping != null || !country.available) Text(
-                !country.available ? 'Недоступна' : advanced ? '$ping мс' : (fast ? 'быстро' : 'далеко'),
+                !country.available ? 'Недоступна' : '$ping мс',
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: pokrovColor(context, PokrovColors.soft), fontFeatures: [FontFeature.tabularFigures()]),
               ),
               SizedBox(width: 8),

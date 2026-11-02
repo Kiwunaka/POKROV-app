@@ -2,8 +2,8 @@ part of pokrov_app_shell;
 
 class _QuickConnectSection extends StatelessWidget {
   const _QuickConnectSection({
-    required this.advanced,
-    required this.preferredCountryCode,
+    required this.tiles,
+    required this.onEditTiles,
     required this.actionRequired,
     required this.connectionFailureMessage,
     required this.retainsProtection,
@@ -17,13 +17,7 @@ class _QuickConnectSection extends StatelessWidget {
     required this.bonusSummary,
     required this.subscriptionInfo,
     required this.telegramBonusBusy,
-    required this.warpPolicy,
-    required this.warpRuntimeConsent,
-    required this.warpRuntimeActive,
-    required this.warpBusy,
     required this.onTelegramBonus,
-    required this.onOpenWarp,
-    required this.onWarpConsentChanged,
     required this.notificationsUnread,
     required this.onOpenNotifications,
     required this.onOpenProfile,
@@ -32,8 +26,8 @@ class _QuickConnectSection extends StatelessWidget {
   });
 
   final SeedAppContext appContext;
-  final bool advanced;
-  final String preferredCountryCode;
+  final List<ui.HomeTile> tiles;
+  final VoidCallback onEditTiles;
   final bool actionRequired;
   final String? connectionFailureMessage;
   final bool retainsProtection;
@@ -49,13 +43,7 @@ class _QuickConnectSection extends StatelessWidget {
   final AppFirstBonusSummary? bonusSummary;
   final ClientSubscriptionInfo? subscriptionInfo;
   final bool telegramBonusBusy;
-  final WarpRuntimePolicy warpPolicy;
-  final bool warpRuntimeConsent;
-  final bool warpRuntimeActive;
-  final bool warpBusy;
   final VoidCallback? onTelegramBonus;
-  final Future<void> Function() onOpenWarp;
-  final Future<void> Function(bool value) onWarpConsentChanged;
   final int notificationsUnread;
   final VoidCallback onOpenNotifications;
   final VoidCallback onOpenProfile;
@@ -75,37 +63,26 @@ class _QuickConnectSection extends StatelessWidget {
         ? [if (failure != null && failure.isNotEmpty) failure, presentation.subtitle].join(' ')
         : failure ?? (presentation.isDegraded ? presentation.subtitle : null);
     final slots = _homeAdminPromoSlots(bonusSummary);
-    final country = preferredCountryCode.trim();
     final showTip = bonusSummary?.channelBonusEligible == true &&
         bonusSummary?.channelBonusClaimed != true && onTelegramBonus != null;
     return ui.HomeScreen(
       data: ui.HomeViewData(
         phase: stoppedFailure ? ui.ConnectionPhase.error : _homeUiPhase(presentation),
-        mode: advanced ? ui.InterfaceMode.advanced : ui.InterfaceMode.simple,
         accessBadge: loginRecoveryRequired ? 'Восстановить вход'
             : _accessShortValue(appContext, bonusSummary, freeProfileAccess, subscriptionInfo),
-        countryCaption: country.isEmpty ? 'Страна · авто' : 'Страна',
-        countryLabel: country.isEmpty ? 'Авто' : _locationCountryDisplayName(country, country),
-        countryCode: country.isEmpty ? null : country,
         connectedCountry: protectionState.locationLabel.split(' · ').first,
         statusLabel: presentation.isVerified
-            ? protectionState.locationLabel.split(' · ').first
+            ? 'Защищено · ' + protectionState.locationLabel.split(' · ').first
             : presentation.isDegraded ? 'Защита требует внимания'
             : presentation.experience.phase == ConnectionExperiencePhase.disconnecting
                 ? 'Отключаем защиту' : null,
         actionLabel: presentation.isVerified ? null : presentation.primaryActionLabel,
         errorTitle: presentation.isDegraded ? presentation.title : 'Не получилось подключиться',
         errorMessage: errorMessage?.isNotEmpty == true ? errorMessage : null,
-        routeValue: protectionState.routeMode == RouteMode.allExceptRu ? 'напрямую' : 'по правилам',
-        warpEnabled: warpRuntimeConsent,
         notificationsUnread: notificationsUnread,
-        checks: [
-          ui.HealthCheck('Связь', ok: snapshot?.uplinkState == RuntimeDiagnosticState.healthy),
-          ui.HealthCheck('Сайты', ok: snapshot?.dnsState == RuntimeDiagnosticState.healthy),
-          ui.HealthCheck('Защита', ok: snapshot?.coreEgressValidated == true),
-        ],
+        tiles: tiles,
         tip: loginRecoveryRequired ? const ui.NextStepTip(title: 'Нужно восстановить вход',
-          text: 'Подтвердите вход одноразовым кодом из письма.', icon: Icons.alternate_email_rounded)
+          text: 'Войди по коду из Telegram или почты аккаунта.', icon: Icons.alternate_email_rounded)
           : showTip ? ui.NextStepTip(title: 'Подпишись на канал',
           text: _telegramBonusHomeLabel(bonusSummary), icon: Icons.send_rounded) : null,
         showAdSlot: slots.isNotEmpty,
@@ -113,11 +90,9 @@ class _QuickConnectSection extends StatelessWidget {
       onToggle: presentation.primaryActionEnabled
           ? () => unawaited(protectionIntents.activatePrimaryAction(presentation)) : null,
       onOpenStatus: protectionIntents.openConnectionDetails,
-      onOpenCountry: protectionIntents.openLocations,
-      onOpenRoute: protectionIntents.openRules,
       onOpenAccess: onOpenProfile,
       onNotifications: onOpenNotifications,
-      onWarpChanged: warpBusy ? null : (value) => unawaited(onWarpConsentChanged(value)),
+      onEditTiles: onEditTiles,
       onTip: loginRecoveryRequired ? onOpenProfile : onTelegramBonus,
       onHelp: () => unawaited(onHelp()),
       adSlot: slots.isEmpty ? null : Column(children: [
@@ -125,7 +100,7 @@ class _QuickConnectSection extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 10),
           child: _HomeAdminPromoCard(
             key: ValueKey('home-promo-' + slot.slotId + '-' + slot.contentId),
-            slot: slot, compact: advanced,
+            slot: slot, compact: true,
             onOpenHandoff: onOpenPromoHandoff, onPromoEvent: onPromoEvent,
           ),
         ),

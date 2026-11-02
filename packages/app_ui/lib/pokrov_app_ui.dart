@@ -2,17 +2,20 @@
 /// No runtime, network or storage: screens take view data and callbacks.
 library;
 
+export 'src/access_screen.dart';
 export 'src/bonuses_screen.dart';
 export 'src/brand.dart';
 export 'src/connect_button.dart';
 export 'src/diagnostics_screen.dart';
+export 'src/help_screen.dart';
 export 'src/home_screen.dart';
+export 'src/home_tiles_sheet.dart';
 export 'src/locations_screen.dart';
 export 'src/models.dart';
-export 'src/profile_screen.dart';
 export 'src/renew_screen.dart';
 export 'src/rules_screen.dart';
 export 'src/season.dart';
+export 'src/settings_screen.dart';
 export 'src/sheets.dart';
 export 'src/start_screen.dart';
 export 'src/support_screen.dart';

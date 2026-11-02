@@ -28,30 +28,28 @@ abstract final class PokrovSampleData {
     PlanOption(id: 'm12', short: '12 мес', title: '12 месяцев', price: '2 000 ₽', perMonth: '≈ 167 ₽ в месяц', saving: '−33%'),
   ];
 
-  static HomeViewData home({required ConnectionPhase phase, required InterfaceMode mode, String? countryCode, bool warp = false, String routeValue = 'напрямую'}) {
+  static const tileOptions = <HomeTileOption>[
+    HomeTileOption(id: 'country', title: 'Страна', hint: 'Авто или конкретная страна', icon: Icons.public_rounded),
+    HomeTileOption(id: 'route', title: 'Маршрут', hint: 'Что идёт через POKROV', icon: Icons.alt_route_rounded),
+    HomeTileOption(id: 'bypass', title: 'Обход блокировок', hint: 'YouTube сначала напрямую', icon: Icons.turn_right_rounded),
+    HomeTileOption(id: 'warp', title: 'WARP', hint: 'Если сайты не открываются', icon: Icons.cloud_outlined),
+    HomeTileOption(id: 'access', title: 'Доступ', hint: 'Сколько осталось', icon: Icons.vpn_key_outlined),
+    HomeTileOption(id: 'help', title: 'Помощь', hint: 'ИИ и человек', icon: Icons.help_outline_rounded),
+    HomeTileOption(id: 'devices', title: 'Устройства', hint: '«Код для входа»', icon: Icons.devices_rounded),
+  ];
+
+  static const defaultTiles = ['country', 'route', 'bypass', 'warp'];
+
+  static HomeViewData home({required ConnectionPhase phase, String country = 'Германия', List<HomeTile> tiles = const <HomeTile>[]}) {
     final on = phase == ConnectionPhase.on;
-    final name = countryCode == null ? 'Германия' : countries.firstWhere((c) => c.code == countryCode).name;
     return HomeViewData(
       phase: phase,
-      mode: mode,
-      accessBadge: 'Премиум',
+      accessBadge: '29 дней',
       showAdSlot: true,
-      countryCaption: countryCode == null && on ? 'Страна · авто' : 'Страна',
-      countryLabel: countryCode == null && !on ? 'Авто' : name,
-      countryCode: countryCode ?? (on ? 'DE' : null),
-      connectedCountry: name,
-      uptime: '00:12:48',
-      routeValue: routeValue,
-      warpEnabled: warp,
-      stats: on ? const ConnectionStats(ping: '38', uptime: '12:48', download: '12,4', upload: '1,8') : const ConnectionStats(),
-      checks: [
-        HealthCheck('Интернет', ok: on),
-        HealthCheck('Сайты', ok: on),
-        HealthCheck('Telegram', ok: on),
-      ],
-      tip: on
-          ? const NextStepTip(title: 'Подключи второе устройство', text: 'До 5 устройств на одном доступе', icon: Icons.devices_rounded)
-          : const NextStepTip(title: 'Забери +5 дней', text: 'Подпишись на наш Telegram-канал', icon: Icons.send_rounded),
+      connectedCountry: country,
+      statusLabel: on ? 'Защищено · $country' : null,
+      tiles: tiles,
+      tip: const NextStepTip(title: 'Забери +5 дней', text: 'Подпишись на наш Telegram-канал', icon: Icons.send_rounded),
     );
   }
 
@@ -87,11 +85,16 @@ abstract final class PokrovSampleData {
         warning: 'Список приложений не обновился',
       );
 
-  static ProfileViewData profile(InterfaceMode mode) => ProfileViewData(
-    mode: mode, accessBadge: 'Премиум', accessTitle: 'Доступ активен',
+  static const access = AccessViewData(
+    accessBadge: 'Премиум', accessTitle: 'Доступ активен',
     accessDetail: 'Ещё 29 дней · до 5 устройств', accessProgress: 0.72,
-    accountLinked: 'привязаны ✓', devices: '2 из 5', bonuses: '+24 дня',
+    accountLinked: 'Добавить', bonuses: '+5 дней',
   );
+
+  static const accessSteps = <NextStepTip>[
+    NextStepTip(title: 'Подпишись на канал', text: '+5 дней к доступу, оплата не нужна', icon: Icons.send_rounded),
+    NextStepTip(title: 'Добавь почту', text: 'Чтобы не потерять доступ', icon: Icons.alternate_email_rounded),
+  ];
 
   static RenewViewData renew([String selected = 'm12']) => RenewViewData(
         current: 'Сейчас: Премиум, ещё 29 дней',

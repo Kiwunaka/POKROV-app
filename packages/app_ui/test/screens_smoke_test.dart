@@ -1,3 +1,5 @@
+import 'dart:ui' show Tristate;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -24,45 +26,82 @@ Future<void> _pump(WidgetTester tester, Widget child, {double textScale = 1}) as
 
 void _noop() {}
 
+List<HomeTile> _tiles({bool warp = false, VoidCallback? onWarp}) => [
+  HomeTile(id: 'country', title: 'Страна', value: 'Авто', icon: Icons.public_rounded, onTap: _noop),
+  HomeTile(id: 'route', title: 'Маршрут', value: 'Россия напрямую', icon: Icons.alt_route_rounded, onTap: _noop),
+  HomeTile(id: 'bypass', title: 'Обход блокировок', value: 'Включён', icon: Icons.turn_right_rounded, onTap: _noop),
+  HomeTile(id: 'warp', title: 'WARP', value: 'Если сайты не открываются', icon: Icons.cloud_outlined, toggled: warp, onTap: onWarp ?? _noop),
+];
+
 void main() {
   setUpAll(_loadGolos);
 
-  for (final mode in InterfaceMode.values) {
-    for (final phase in ConnectionPhase.values) {
-      testWidgets('home ${mode.name} ${phase.name}', (tester) async {
-        await _pump(
-          tester,
-          HomeScreen(
-            data: PokrovSampleData.home(phase: phase, mode: mode),
-            onToggle: _noop,
-            onOpenStatus: _noop,
-            onOpenCountry: _noop,
-            onOpenRoute: _noop,
-            onOpenAccess: _noop,
-            onWarpChanged: (_) {},
-          ),
-        );
-        expect(find.text('POKROV VPN'), findsOneWidget);
-        expect(find.text('Российские сайты'), findsOneWidget);
-        expect(find.text('WARP'), mode == InterfaceMode.advanced ? findsOneWidget : findsNothing);
-        expect(find.text('Не получилось подключиться'), phase == ConnectionPhase.error ? findsOneWidget : findsNothing);
-      });
-    }
+  for (final phase in ConnectionPhase.values) {
+    testWidgets('home ${phase.name} shows the chosen widgets', (tester) async {
+      await _pump(
+        tester,
+        HomeScreen(
+          data: PokrovSampleData.home(phase: phase, tiles: _tiles()),
+          onToggle: _noop,
+          onOpenStatus: _noop,
+          onOpenAccess: _noop,
+          onEditTiles: _noop,
+        ),
+      );
+      expect(find.text('POKROV VPN'), findsOneWidget);
+      expect(find.text('Маршрут'), findsOneWidget);
+      expect(find.text('Изменить виджеты'), findsOneWidget);
+      expect(find.text('Не получилось подключиться'), phase == ConnectionPhase.error ? findsOneWidget : findsNothing);
+      expect(find.text('Защищено · Германия'), phase == ConnectionPhase.on ? findsOneWidget : findsNothing);
+    });
   }
 
   testWidgets('home shows the observed failure and the available action', (tester) async {
     var actions = 0;
     await _pump(tester, HomeScreen(
-      data: const HomeViewData(phase: ConnectionPhase.error, mode: InterfaceMode.simple,
+      data: const HomeViewData(phase: ConnectionPhase.error,
         errorTitle: 'Трафик заблокирован',
         errorMessage: 'Сервер ещё не подготовил подключение.', actionLabel: 'Отключить'),
-      onToggle: () => actions++, onOpenStatus: _noop,
-      onOpenCountry: _noop, onOpenRoute: _noop, onOpenAccess: _noop,
+      onToggle: () => actions++, onOpenStatus: _noop, onOpenAccess: _noop,
     ));
     expect(find.text('Сервер ещё не подготовил подключение.'), findsOneWidget);
-    expect(find.textContaining('Похоже, сеть мешает'), findsNothing);
     await tester.tap(find.descendant(of: find.byType(WarnCard), matching: find.text('Отключить')));
     expect(actions, 1);
+  });
+
+  testWidgets('a switch widget flips from a tap and announces its state', (tester) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      var flips = 0;
+      await _pump(tester, HomeScreen(
+        data: PokrovSampleData.home(phase: ConnectionPhase.off, tiles: _tiles(warp: true, onWarp: () => flips++)),
+        onToggle: _noop, onOpenStatus: _noop, onOpenAccess: _noop,
+      ));
+      await tester.tap(find.text('WARP'));
+      expect(flips, 1);
+      final node = tester.getSemantics(find.byKey(const ValueKey('home-tile-warp')));
+      expect(node.getSemanticsData().flagsCollection.isToggled, Tristate.isTrue);
+      expect(node.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
+    } finally {
+      semantics.dispose();
+    }
+  });
+
+  testWidgets('home stays readable at 200% text', (tester) async {
+    await _pump(tester, Stack(children: [
+      HomeScreen(
+        data: PokrovSampleData.home(phase: ConnectionPhase.off, tiles: _tiles()),
+        onToggle: _noop, onOpenStatus: _noop, onOpenAccess: _noop, onEditTiles: _noop,
+      ),
+      Align(alignment: Alignment.bottomCenter, child: PokrovTabBar(current: PokrovTab.protection, onSelect: (_) {})),
+    ]), textScale: 2);
+    expect(tester.takeException(), isNull);
+    final label = find.descendant(of: find.byType(PokrovConnectButton), matching: find.text('Подключить'));
+    expect(tester.renderObject<RenderParagraph>(label).didExceedMaxLines, isFalse,
+      reason: 'the connect label must stay one word at 200% text');
+    for (final tab in ['Защита', 'Доступ', 'Помощь', 'Настройки']) {
+      expect(tester.renderObject<RenderParagraph>(find.text(tab)).didExceedMaxLines, isFalse, reason: '$tab must not be clipped');
+    }
   });
 
   testWidgets('status sheet on and off', (tester) async {
@@ -79,9 +118,8 @@ void main() {
       var connects = 0;
       var statuses = 0;
       await _pump(tester, HomeScreen(
-        data: PokrovSampleData.home(phase: ConnectionPhase.off, mode: InterfaceMode.simple),
-        onToggle: () => connects++, onOpenStatus: () => statuses++,
-        onOpenCountry: _noop, onOpenRoute: _noop, onOpenAccess: _noop,
+        data: PokrovSampleData.home(phase: ConnectionPhase.off),
+        onToggle: () => connects++, onOpenStatus: () => statuses++, onOpenAccess: _noop,
       ));
       final connect = tester.getSemantics(find.bySemanticsLabel('Включить защиту'));
       final status = tester.getSemantics(find.bySemanticsLabel(RegExp('^Состояние защиты:')));
@@ -95,11 +133,11 @@ void main() {
       ));
       expect(connects, 1);
       expect(statuses, 1);
+      expect(tester.getSize(find.bySemanticsLabel(RegExp('^Состояние защиты:'))).height, greaterThanOrEqualTo(48));
 
       await _pump(tester, HomeScreen(
-        data: PokrovSampleData.home(phase: ConnectionPhase.off, mode: InterfaceMode.simple),
-        onToggle: null, onOpenStatus: _noop,
-        onOpenCountry: _noop, onOpenRoute: _noop, onOpenAccess: _noop,
+        data: PokrovSampleData.home(phase: ConnectionPhase.off),
+        onToggle: null, onOpenStatus: _noop, onOpenAccess: _noop,
       ));
       final disabled = tester.getSemantics(find.bySemanticsLabel('Включить защиту'));
       expect(disabled.getSemanticsData().hasAction(SemanticsAction.tap), isFalse);
@@ -119,7 +157,7 @@ void main() {
   testWidgets('segmented choices can be reached and activated by keyboard', (tester) async {
     final selected = <int>[];
     await _pump(tester, Center(child: SizedBox(width: 214, child: PokrovSegmented(
-      labels: const ['Просто', 'Продвинутый'], index: 0, onChanged: selected.add,
+      labels: const ['Светлая', 'Тёмная'], index: 0, onChanged: selected.add,
     ))));
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
@@ -134,37 +172,101 @@ void main() {
     expect(find.text('Продолжить и подключить'), findsOneWidget);
   });
 
-  testWidgets('start, locations, rules, profile', (tester) async {
+  testWidgets('start, country and route pages with a way back', (tester) async {
     await _pump(tester, StartScreen(onStart: _noop, onHaveCode: _noop));
     expect(find.text('Начать бесплатно'), findsOneWidget);
-    for (final mode in InterfaceMode.values) {
-      await _pump(tester, LocationsScreen(data: LocationsViewData(mode: mode, countries: PokrovSampleData.countries), onAuto: _noop, onSelect: (_) {}));
-      expect(find.text('Германия'), findsOneWidget);
-      await _pump(tester, ProfileScreen(data: PokrovSampleData.profile(mode), onRenew: _noop, onModeChanged: (_) {}));
-      expect(find.text('Продвинутый'), findsOneWidget);
-    }
-    InterfaceMode? selectedMode;
-    var proxyOpened = false;
-    var bypassOpened = false;
-    await _pump(tester, ProfileScreen(data: PokrovSampleData.profile(InterfaceMode.simple),
-      onRenew: _noop, onModeChanged: (mode) => selectedMode = mode,
-      onTelegramProxy: () => proxyOpened = true, onBypass: () => bypassOpened = true), textScale: 2);
-    await tester.tap(find.text('Telegram-прокси'));
-    expect(proxyOpened, isTrue);
-    final bypass = find.byKey(const ValueKey('profile-local-dpi'));
-    await tester.ensureVisible(bypass);
-    await tester.tap(bypass);
-    expect(bypassOpened, isTrue);
-    expect(tester.takeException(), isNull);
-    final advanced = find.descendant(of: find.byType(PokrovSegmented), matching: find.text('Продвинутый'));
-    expect(tester.renderObject<RenderParagraph>(advanced).didExceedMaxLines, isFalse,
-      reason: 'the interface mode must remain readable at 200% text scale');
-    await tester.drag(find.byType(ProfileScreen), const Offset(0, -300));
-    await tester.pumpAndSettle();
-    await tester.tap(advanced);
-    expect(selectedMode, InterfaceMode.advanced);
-    await _pump(tester, RulesScreen(data: PokrovSampleData.rules(selected: 'all'), onSelect: (_) {}, onApply: _noop));
+    var back = 0;
+    var manual = 0;
+    await _pump(tester, LocationsScreen(data: const LocationsViewData(countries: PokrovSampleData.countries),
+      onAuto: _noop, onSelect: (_) {}, onBack: () => back++, onSelectConnection: () => manual++));
+    expect(find.text('Германия'), findsOneWidget);
+    expect(find.text('38 мс'), findsOneWidget, reason: 'a measured delay is shown as measured');
+    await tester.tap(find.byIcon(Icons.arrow_back_rounded));
+    await tester.tap(find.text('Соединение вручную'));
+    expect((back, manual), (1, 1));
+    await _pump(tester, RulesScreen(data: PokrovSampleData.rules(selected: 'all'), onSelect: (_) {}, onApply: _noop, onBack: () => back++));
+    expect(find.text('Что идёт через POKROV'), findsOneWidget);
     expect(find.text('Применить'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.arrow_back_rounded));
+    expect(back, 2);
+  });
+
+  testWidgets('access tab keeps every account action and stays usable at 200%', (tester) async {
+    final opened = <String>[];
+    Widget screen() => AccessScreen(
+      data: PokrovSampleData.access, onRenew: () => opened.add('renew'),
+      steps: PokrovSampleData.accessSteps, onStep: (i) => opened.add('step$i'),
+      onDevices: () => opened.add('devices'), onAddDevice: () => opened.add('add'),
+      onActivate: () => opened.add('code'), onAccount: () => opened.add('account'),
+      onBonuses: () => opened.add('bonuses'), onTelegramProxy: () => opened.add('proxy'),
+      onShare: () => opened.add('share'),
+    );
+    await _pump(tester, screen());
+    for (final title in ['Продлить', 'Подпишись на канал', 'Устройства', 'Добавить устройство', 'Ввести код', 'Telegram и почта', 'Бонусы и друзья', 'Telegram-прокси', 'Поделиться приложением']) {
+      final target = find.text(title);
+      await tester.ensureVisible(target);
+      await tester.pump();
+      await tester.tap(target);
+    }
+    expect(opened, ['renew', 'step0', 'devices', 'add', 'code', 'account', 'bonuses', 'proxy', 'share']);
+    await _pump(tester, screen(), textScale: 2);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('help tab leads to the check, the helper, a person and the report', (tester) async {
+    final opened = <String>[];
+    await _pump(tester, HelpScreen(
+      phase: ConnectionPhase.error, onCheck: () => opened.add('check'), onTopic: opened.add,
+      onAssistant: () => opened.add('assistant'), onHuman: () => opened.add('human'),
+      onReport: () => opened.add('report'), onHistory: () => opened.add('history'), onFeedback: () => opened.add('idea'),
+    ));
+    for (final title in ['Проверить соединение', 'Медленно', 'Спросить помощника', 'Позвать человека', 'Отправить отчёт', 'История и скорость', 'Предложить идею']) {
+      final target = find.text(title);
+      await tester.ensureVisible(target);
+      await tester.pump();
+      await tester.tap(target);
+    }
+    expect(opened, ['check', 'Медленно', 'assistant', 'human', 'report', 'history', 'idea']);
+  });
+
+  testWidgets('settings search finds expert entries and switches flip in place', (tester) async {
+    final opened = <String>[];
+    await _pump(tester, SettingsScreen(entries: [
+      SettingsEntry(group: 'Подключение', title: 'WARP', hint: 'Запасной путь', icon: Icons.cloud_outlined, toggled: false, onTap: () => opened.add('warp')),
+      SettingsEntry(group: 'Приложение', title: 'Тема', icon: Icons.palette_outlined, onTap: () => opened.add('theme')),
+      SettingsEntry(group: pokrovExpertGroup, title: 'Доверенный Wi-Fi', hint: 'Пауза дома', keywords: 'wifi сеть', icon: Icons.wifi_rounded, onTap: () => opened.add('wifi')),
+    ]));
+    expect(find.textContaining('Если не знаешь, зачем это'), findsOneWidget);
+    await tester.tap(find.text('WARP'));
+    await tester.enterText(find.byKey(const ValueKey('settings-search')), 'wifi');
+    await tester.pump();
+    expect(find.text('Тема'), findsNothing);
+    await tester.tap(find.text('Доверенный Wi-Fi'));
+    await tester.enterText(find.byKey(const ValueKey('settings-search')), 'нет такого');
+    await tester.pump();
+    expect(find.textContaining('Ничего не нашли'), findsOneWidget);
+    expect(opened, ['warp', 'wifi']);
+  });
+
+  testWidgets('home widgets can be added, moved up, removed and reset', (tester) async {
+    final changes = <List<String>>[];
+    await _pump(tester, HomeTilesSheet(options: PokrovSampleData.tileOptions, selected: PokrovSampleData.defaultTiles,
+      defaults: PokrovSampleData.defaultTiles, onChanged: changes.add));
+    final add = find.bySemanticsLabel('Добавить: Устройства');
+    await tester.ensureVisible(add);
+    await tester.tap(add);
+    await tester.pump();
+    expect(changes.last, [...PokrovSampleData.defaultTiles, 'devices']);
+    await tester.tap(find.bySemanticsLabel('Выше: Устройства'));
+    await tester.pump();
+    expect(changes.last, ['country', 'route', 'bypass', 'devices', 'warp']);
+    await tester.tap(find.bySemanticsLabel('Убрать: Страна'));
+    await tester.pump();
+    expect(changes.last.first, 'route');
+    final reset = find.text('Вернуть как было');
+    await tester.ensureVisible(reset);
+    await tester.tap(reset);
+    expect(changes.last, PokrovSampleData.defaultTiles);
   });
 
   testWidgets('renew, support, bonuses, diagnostics', (tester) async {
@@ -193,11 +295,15 @@ void main() {
     }
   });
 
-  testWidgets('tab bar shows Rules only in advanced mode', (tester) async {
-    await _pump(tester, PokrovTabBar(mode: InterfaceMode.simple, current: PokrovTab.protection, onSelect: (_) {}));
-    expect(find.text('Правила'), findsNothing);
-    await _pump(tester, PokrovTabBar(mode: InterfaceMode.advanced, current: PokrovTab.rules, onSelect: (_) {}));
-    expect(find.text('Правила'), findsOneWidget);
+  testWidgets('tab bar always shows the four tabs', (tester) async {
+    PokrovTab? picked;
+    await _pump(tester, PokrovTabBar(current: PokrovTab.protection, onSelect: (tab) => picked = tab));
+    for (final tab in ['Защита', 'Доступ', 'Помощь', 'Настройки']) {
+      expect(find.text(tab), findsOneWidget);
+    }
+    await tester.tap(find.text('Помощь'));
+    expect(picked, PokrovTab.help);
+    expect(tester.getSize(find.byType(PokrovTabBar)).height, lessThan(140), reason: 'the bar must not cover the screen');
   });
 
   testWidgets('support keeps an externally owned draft until accepted and exposes the human action', (tester) async {

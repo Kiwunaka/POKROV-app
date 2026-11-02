@@ -71,6 +71,7 @@ part 'src/shell/seed_shell.dart';
 part 'src/connection/connection_manager.dart';
 part 'src/shell/navigation_shell.dart';
 part 'src/shared/info_sheet.dart';
+part 'src/features/support/help_surface.dart';
 part 'src/features/support/support_chat.dart';
 part 'src/shared/shell_widgets.dart';
 part 'src/shared/platform_product_copy.dart';
@@ -87,6 +88,7 @@ part 'src/features/home/transport_runtime_control.dart';
 part 'src/features/home/transport_shell.dart';
 part 'src/features/home/smart_access_runtime.dart';
 part 'src/features/home/home_surface.dart';
+part 'src/features/home/home_tiles.dart';
 part 'src/features/home/protection_center.dart';
 part 'src/features/locations/locations_surface.dart';
 part 'src/features/locations/location_labels.dart';
@@ -101,11 +103,15 @@ part 'src/features/rules/routing_controls.dart';
 part 'src/features/rules/route_labels.dart';
 part 'src/features/warp/warp_sheet.dart';
 
+/// The first four are the tab bar; locations and rules open as pages over
+/// the tab they were opened from.
 enum SeedTab {
   protection,
+  access,
+  help,
+  settings,
   locations,
   rules,
-  profile,
 }
 
 class _SelectSeedTabIntent extends Intent {
@@ -236,6 +242,40 @@ class PokrovFileSeasonalThemeStore {
     try {
       final file = await _stateFile();
       await file.writeAsString(enabled ? 'on' : 'off', flush: true);
+    } catch (_) {
+      // Best-effort persistence only.
+    }
+  }
+}
+
+/// Persists which widgets the main screen shows and in what order.
+class PokrovFileHomeTilesStore {
+  const PokrovFileHomeTilesStore();
+
+  static const _fileName = 'pokrov-home-tiles.txt';
+
+  Future<File> _stateFile() async {
+    final directory = await getApplicationSupportDirectory();
+    await directory.create(recursive: true);
+    return File('${directory.path}${Platform.pathSeparator}$_fileName');
+  }
+
+  /// `null` until the person changes the set; the shell then shows defaults.
+  Future<List<String>?> read() async {
+    try {
+      final file = await _stateFile();
+      if (!await file.exists()) return null;
+      final text = (await file.readAsString()).trim();
+      return text.isEmpty ? const <String>[] : text.split(',');
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> write(List<String> tiles) async {
+    try {
+      final file = await _stateFile();
+      await file.writeAsString(tiles.join(','), flush: true);
     } catch (_) {
       // Best-effort persistence only.
     }

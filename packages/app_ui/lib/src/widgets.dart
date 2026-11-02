@@ -190,8 +190,8 @@ class BackCircle extends StatelessWidget {
         customBorder: CircleBorder(),
         onTap: onPressed,
         child: SizedBox(
-          width: 44,
-          height: 44,
+          width: 48,
+          height: 48,
           child: Icon(Icons.arrow_back_rounded, size: 22, color: pokrovColor(context, PokrovColors.ink), semanticLabel: 'Назад'),
         ),
       ),
@@ -476,6 +476,64 @@ class WarnCard extends StatelessWidget {
           if (actions.isNotEmpty) ...[SizedBox(height: 12), Row(children: actions)],
         ],
       ),
+    );
+  }
+}
+
+/// Row with an icon, a one-line «what is it for» hint and an optional
+/// value or switch. The whole row is the tap target, so it works from the
+/// keyboard and reads as one control on screen readers.
+class PokrovEntryRow extends StatelessWidget {
+  const PokrovEntryRow({super.key, required this.icon, required this.title, this.hint = '', this.value, this.toggled, this.onTap, this.divider = true});
+
+  final IconData icon;
+  final String title;
+  final String hint;
+  final String? value;
+  final bool? toggled;
+  final VoidCallback? onTap;
+  final bool divider;
+
+  @override
+  Widget build(BuildContext context) {
+    final row = Container(
+      constraints: BoxConstraints(minHeight: 60),
+      padding: EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        border: divider ? Border(bottom: BorderSide(color: pokrovColor(context, PokrovColors.line))) : null,
+      ),
+      child: Row(
+        children: [
+          IconSquare(icon: icon, size: 36),
+          SizedBox(width: 12),
+          // The value sits under the title, so long titles keep the full width.
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: pokrovColor(context, PokrovColors.ink))),
+                if (value != null) Text(value!, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: pokrovColor(context, PokrovColors.accent))),
+                if (hint.isNotEmpty) Text(hint, style: pokrovTextStyle(context, PokrovText.caption)),
+              ],
+            ),
+          ),
+          if (toggled != null) ...[
+            SizedBox(width: 10),
+            IgnorePointer(child: PokrovToggle(value: toggled!, onChanged: (_) {}, semanticLabel: title)),
+          ] else if (onTap != null) ...[
+            SizedBox(width: 4),
+            Icon(Icons.chevron_right_rounded, size: 20, color: pokrovColor(context, PokrovColors.faint)),
+          ],
+        ],
+      ),
+    );
+    return Semantics(
+      button: toggled == null && onTap != null,
+      toggled: toggled,
+      label: [title, if (value != null) value!, if (hint.isNotEmpty) hint].join(', '),
+      excludeSemantics: true,
+      onTap: onTap,
+      child: onTap == null ? row : InkWell(onTap: onTap, child: row),
     );
   }
 }

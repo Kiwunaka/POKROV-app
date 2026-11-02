@@ -4,7 +4,7 @@ import 'models.dart';
 import 'tokens.dart';
 import 'widgets.dart';
 
-/// «Правила»: one list of modes with checkmarks, three entry rows and a
+/// «Что идёт через POKROV»: one list of modes with checkmarks, entry rows and a
 /// one-line warning instead of error cards. The apply bar slides in only
 /// when the selection differs from what is applied.
 class RulesScreen extends StatelessWidget {
@@ -19,6 +19,7 @@ class RulesScreen extends StatelessWidget {
     this.onWarning,
     this.onServices,
     this.expertContent,
+    this.onBack,
   });
 
   final RulesViewData data;
@@ -30,6 +31,7 @@ class RulesScreen extends StatelessWidget {
   final VoidCallback? onWarning;
   final VoidCallback? onServices;
   final Widget? expertContent;
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -41,8 +43,8 @@ class RulesScreen extends StatelessWidget {
           ListView(
             padding: EdgeInsets.fromLTRB(16, 12, 16, 190),
             children: [
-              Text('Правила', style: pokrovTextStyle(context, PokrovText.title)),
-              SectionLabel('Что пускать через POKROV'),
+              ScreenHeader(title: 'Что идёт через POKROV', onBack: onBack),
+              SizedBox(height: 4),
               PokrovCard(
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                 child: Column(

@@ -15,6 +15,9 @@ class _SupportChatScreen extends StatefulWidget {
     required this.onPromoEvent,
     this.initialTicketId,
     this.diagnosticsReport,
+    this.initialQuestion,
+    this.startWithHuman = false,
+    this.openFeedback = false,
   });
 
   final SeedAppContext appContext;
@@ -25,6 +28,11 @@ class _SupportChatScreen extends StatefulWidget {
   final SupportTicketService supportTicketService;
   final int? initialTicketId;
   final PokrovDiagnosticsReport? diagnosticsReport;
+
+  /// A topic picked on the Help tab, asked as the first question.
+  final String? initialQuestion;
+  final bool startWithHuman;
+  final bool openFeedback;
   final PokrovClientObservability? observability;
 
   /// Knowledge-base question -> answer lane for the AI assistant sheet.
@@ -49,7 +57,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
   late final SupportConversationController _conversation;
   bool _attachDiagnosticsToNextMessage = false;
   bool _sendingBundle = false;
-  late bool _humanMode = widget.initialTicketId != null || widget.askAssistant == null;
+  late bool _humanMode = widget.initialTicketId != null || widget.askAssistant == null || widget.startWithHuman;
 
   @override
   void initState() {
@@ -74,6 +82,11 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
       debugLabel: 'support-message-list',
     );
     unawaited(_conversation.loadInitialThread());
+    if (widget.openFeedback) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(_openFeedbackForm());
+      });
+    }
   }
 
   @override
@@ -604,6 +617,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
     if (!_humanMode && widget.askAssistant != null) {
       return _AssistantChatSheet(
         askAssistant: widget.askAssistant!,
+        initialQuestion: widget.initialQuestion,
         onEscalate: () {
           setState(() => _humanMode = true);
           _composerFocusNode.requestFocus();
@@ -902,6 +916,7 @@ class _AssistantChatSheet extends StatefulWidget {
     required this.askAssistant,
     required this.onEscalate,
     required this.onAttachDiagnostics,
+    this.initialQuestion,
   });
 
   final Future<ClientSupportAssistantReply> Function(
@@ -910,6 +925,7 @@ class _AssistantChatSheet extends StatefulWidget {
   ) askAssistant;
   final VoidCallback onEscalate;
   final VoidCallback onAttachDiagnostics;
+  final String? initialQuestion;
 
   @override
   State<_AssistantChatSheet> createState() => _AssistantChatSheetState();
@@ -917,7 +933,7 @@ class _AssistantChatSheet extends StatefulWidget {
 
 class _AssistantChatSheetState extends State<_AssistantChatSheet> {
   static const _noAnswerFallback =
-      'Не нашёл ответа. Напишите в поддержку — ответит человек.';
+      'Не нашёл ответа. Позови человека, он ответит здесь.';
 
   late final TextEditingController _composer;
   late final FocusNode _composerFocusNode;
@@ -937,6 +953,13 @@ class _AssistantChatSheetState extends State<_AssistantChatSheet> {
     _listController = ScrollController(
       debugLabel: 'assistant-sheet-message-list',
     );
+    final question = widget.initialQuestion?.trim() ?? '';
+    if (question.isNotEmpty) {
+      _composer.text = question;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(_send());
+      });
+    }
   }
 
   @override

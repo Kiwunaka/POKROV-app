@@ -61,9 +61,9 @@ class SeedAppContext {
 
   List<SeedTab> get defaultTabs => const [
         SeedTab.protection,
-        SeedTab.locations,
-        SeedTab.rules,
-        SeedTab.profile,
+        SeedTab.access,
+        SeedTab.help,
+        SeedTab.settings,
       ];
 }
 

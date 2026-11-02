@@ -3,29 +3,27 @@ import 'package:flutter/material.dart';
 import 'models.dart';
 import 'tokens.dart';
 
-/// Floating bottom bar: «Защита · Локации · (Правила) · Профиль».
-/// «Правила» appears only in the advanced interface.
+/// Floating bottom bar: «Защита · Доступ · Помощь · Настройки».
 class PokrovTabBar extends StatelessWidget {
-  const PokrovTabBar({super.key, required this.mode, required this.current, required this.onSelect});
+  const PokrovTabBar({super.key, required this.current, required this.onSelect});
 
-  final InterfaceMode mode;
   final PokrovTab current;
   final ValueChanged<PokrovTab> onSelect;
 
   @override
   Widget build(BuildContext context) {
-    final tabs = <(PokrovTab, String, IconData, IconData)>[
+    const tabs = <(PokrovTab, String, IconData, IconData)>[
       (PokrovTab.protection, 'Защита', Icons.shield_outlined, Icons.shield_rounded),
-      (PokrovTab.locations, 'Локации', Icons.public_rounded, Icons.public_rounded),
-      if (mode == InterfaceMode.advanced) (PokrovTab.rules, 'Правила', Icons.alt_route_rounded, Icons.alt_route_rounded),
-      (PokrovTab.profile, 'Профиль', Icons.person_outline_rounded, Icons.person_rounded),
+      (PokrovTab.access, 'Доступ', Icons.vpn_key_outlined, Icons.vpn_key_rounded),
+      (PokrovTab.help, 'Помощь', Icons.help_outline_rounded, Icons.help_rounded),
+      (PokrovTab.settings, 'Настройки', Icons.settings_outlined, Icons.settings_rounded),
     ];
     return SafeArea(
       top: false,
       minimum: EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Container(
-        height: 72,
-        padding: EdgeInsets.symmetric(horizontal: 6),
+        constraints: BoxConstraints(minHeight: 72),
+        padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         decoration: BoxDecoration(
           color: pokrovColor(context, PokrovColors.surface),
           borderRadius: BorderRadius.circular(26),
@@ -45,27 +43,39 @@ class PokrovTabBar extends StatelessWidget {
                   child: InkResponse(
                     onTap: () => onSelect(tab),
                     radius: 36,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        AnimatedScale(
-                          scale: tab == current ? 1.08 : 1,
-                          duration: PokrovMotion.quick,
-                          curve: PokrovMotion.spring,
-                          child: Icon(tab == current ? activeIcon : icon, size: 24, color: tab == current ? pokrovColor(context, PokrovColors.accent) : pokrovColor(context, PokrovColors.muted)),
-                        ),
-                        SizedBox(height: 3),
-                        AnimatedDefaultTextStyle(
-                          duration: PokrovMotion.quick,
-                          style: TextStyle(
-                            fontFamily: pokrovFontFamily,
-                            fontSize: 12,
-                            fontWeight: tab == current ? FontWeight.w800 : FontWeight.w600,
-                            color: tab == current ? pokrovColor(context, PokrovColors.ink) : pokrovColor(context, PokrovColors.muted),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 3),
+                      child: ConstrainedBox(
+                      constraints: BoxConstraints(minHeight: 64),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          AnimatedScale(
+                            scale: tab == current ? 1.08 : 1,
+                            duration: PokrovMotion.quick,
+                            curve: PokrovMotion.spring,
+                            child: Icon(tab == current ? activeIcon : icon, size: 24, color: tab == current ? pokrovColor(context, PokrovColors.accent) : pokrovColor(context, PokrovColors.muted)),
                           ),
-                          child: Text(label),
-                        ),
-                      ],
+                          SizedBox(height: 3),
+                          // Large text shrinks the label instead of clipping it.
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.center,
+                            child: AnimatedDefaultTextStyle(
+                              duration: PokrovMotion.quick,
+                              style: TextStyle(
+                                fontFamily: pokrovFontFamily,
+                                fontSize: 12,
+                                fontWeight: tab == current ? FontWeight.w800 : FontWeight.w600,
+                                color: tab == current ? pokrovColor(context, PokrovColors.ink) : pokrovColor(context, PokrovColors.muted),
+                              ),
+                              child: Text(label, maxLines: 1),
+                            ),
+                          ),
+                        ],
+                      ),
+                      ),
                     ),
                   ),
                 ),
