@@ -154,6 +154,13 @@ class _ProfileSection extends StatelessWidget {
         AccessLane.trialPremium;
   }
 
+  Future<void> _showLoginOptions(BuildContext context) => _showRedeemSheet(
+    context, hintCode: appContext.redeemHint,
+    onRedeem: (code) => onOpenHandoff('redeem', code),
+    onTelegramCode: () => onOpenHandoff('telegram-login-code', ''),
+    onEmailRecovery: () => onOpenHandoff('email-recovery', ''),
+  );
+
   void _devices(BuildContext context) => _showDevicesSheet(
     context, currentPlatformLabel: appContext.hostPlatform.label,
     onFetchDevices: onFetchDevices, onRevokeDevice: onRevokeDevice,
@@ -210,7 +217,7 @@ class _ProfileSection extends StatelessWidget {
           accessBadge: 'Доступ',
           accessTitle: loginRecoveryRequired ? 'Нужно восстановить вход'
               : _accessMainLabel(appContext, summary, freeProfileAccess, subscriptionInfo),
-          accessDetail: loginRecoveryRequired ? 'Подтвердите вход одноразовым кодом из письма.'
+          accessDetail: loginRecoveryRequired ? 'Войдите по коду из Telegram или почты аккаунта.'
               : _freeProfileAccessNotice(freeProfileAccess) ??
               (expires.isEmpty ? '' : 'До ' + expires),
           accountLinked: linked.isEmpty ? 'Добавить' : linked.join(' · '),
@@ -222,7 +229,7 @@ class _ProfileSection extends StatelessWidget {
         adSlot: accountPromo == null ? null : _HomeAdminPromoCard(slot: accountPromo, compact: false,
           keyPrefix: 'profile-promo', onOpenHandoff: onOpenHandoff, onPromoEvent: onPromoEvent),
         accessActionLabel: loginRecoveryRequired ? 'Восстановить вход' : 'Продлить',
-        onRenew: loginRecoveryRequired ? () => onOpenHandoff('email-recovery', '')
+        onRenew: loginRecoveryRequired ? () => _showLoginOptions(context)
             : () => _showSubscriptionSheet(context, appContext: appContext,
           hasProvisionedAccess: hasProvisionedAccess, subscriptionInfo: subscriptionInfo,
           onOpenHandoff: onOpenHandoff),
@@ -233,9 +240,7 @@ class _ProfileSection extends StatelessWidget {
           Uri.parse(appContext.cabinetUrl).resolve('/telegram/').toString()),
         onDevices: () => _devices(context),
         onLoginCode: () => _devices(context),
-        onActivate: () => _showRedeemSheet(context, hintCode: appContext.redeemHint,
-          onRedeem: (code) => onOpenHandoff('redeem', code),
-          onEmailRecovery: () => onOpenHandoff('email-recovery', '')),
+        onActivate: () => _showLoginOptions(context),
         onTheme: () => _showThemeModeSheet(context, selected: themeMode, onChanged: onThemeModeChanged),
         onNotifications: () {
           onOpenNotifications();

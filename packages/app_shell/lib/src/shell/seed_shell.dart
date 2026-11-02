@@ -255,7 +255,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   void _queueClientExperienceWrite() => _connectionManager._queueClientExperienceWrite();
   bool get _selectedAppsRouteNeedsSelection => _connectionManager._selectedAppsRouteNeedsSelection;
   Future<void> _reportClientLifecycle(String phase, {bool connected = false, String errorCode = '', bool? retryable}) => _connectionManager._reportClientLifecycle(phase, connected: connected, errorCode: errorCode, retryable: retryable);
-  Future<void> _reportClientRuntimeError(String code) => _connectionManager._reportClientRuntimeError(code);
+  Future<void> _reportClientRuntimeError(String code, {String failureKind = '', String? failureOperation, int? failureHttpStatus}) =>
+      _connectionManager._reportClientRuntimeError(code, failureKind: failureKind,
+          failureOperation: failureOperation, failureHttpStatus: failureHttpStatus);
   Future<void> _resumeRuntimeAndTrustedWifiChecks() => _connectionManager.resume();
   Future<PokrovWifiNetworkStatus> _readCurrentWifi() => _connectionManager._readCurrentWifi();
   Future<void> _repairRuntime({ValueChanged<_ProtectionRepairStep>? onStep, ValueChanged<Future<void> Function()?>? onCancelAvailable}) => _connectionManager.repair(onStep: onStep, onCancelAvailable: onCancelAvailable);
@@ -1945,9 +1947,24 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       showPokrovSnack(context, confirmationText, tone: PokrovSnackTone.success);
       return true;
     } on BootstrapFailure catch (error) {
+      final failureOperation = switch (error.operation) {
+        'POST /api/redeem' => 'redeem',
+        'POST /api/client/device-pairing/claim' => 'device_pairing_claim',
+        'POST /api/client/session/start-trial' => 'session_start_trial',
+        'POST /api/client/session/refresh' => 'auth_refresh',
+        _ => null,
+      };
+      final attributes = OperationalAttributePolicy.prepareFailureAttributes(
+        apiFailureKind: error.apiFailureKind,
+        httpStatus: error.apiFailureKind != null ? error.observedHttpStatus
+            : failureOperation != null ? error.statusCode : null,
+      );
       unawaited(
         _reportClientRuntimeError(
           isPairingCode ? 'pairing_claim_failed' : 'redeem_failed',
+          failureKind: attributes['api_failure_kind'] as String? ?? 'unknown',
+          failureOperation: failureOperation,
+          failureHttpStatus: attributes['http_status'] as int?,
         ),
       );
       if (!mounted) {
@@ -1963,6 +1980,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       unawaited(
         _reportClientRuntimeError(
           isPairingCode ? 'pairing_claim_failed' : 'redeem_failed',
+          failureKind: 'unknown',
         ),
       );
       if (!mounted) {
@@ -2476,6 +2494,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         return;
       case 'email-recovery':
         unawaited(_openEmailSessionRecovery());
+        return;
+      case 'telegram-login-code':
+        unawaited(_openDevicePairingBot());
         return;
       case 'check-update':
         unawaited(_checkForClientUpdate(forcePrompt: true));

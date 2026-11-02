@@ -981,6 +981,13 @@ An authorized operator may issue the same ten-minute code for an existing
 legacy user through the guarded admin surface. After claim, the client switches
 to the returned canonical account session and refreshes subscription identity;
 it must not keep showing the abandoned local trial profile.
+If saved device metadata survives but its secure session pair is missing, a fresh
+one-time code can still claim a new device session under the normal device limit.
+The replacement is saved only while the previous account/install/credentials
+remain unchanged. Email recovery instead restores the saved installation.
+The profile's `Восстановить вход` action opens the existing code-entry sheet
+with `Код из Telegram` and `Восстановить по почте` actions; email is optional
+for users who sign in through Telegram.
 Account device labels use a human-safe platform identity: Android contributes
 manufacturer and model, while serial numbers, hardware IDs and install IDs
 remain hidden. Generic runtime hostnames such as `localhost` are never shown as

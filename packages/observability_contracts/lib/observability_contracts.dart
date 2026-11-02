@@ -123,6 +123,7 @@ abstract final class ObservabilityAttributeKeys {
 const connectionFailureOperations = <String>{
   'managed_profile_stage', 'core_connect', 'tunnel_settle', 'managed_profile_refresh',
   'qa_claim', 'managed_profile', 'routing_catalog', 'auth_refresh',
+  'redeem', 'device_pairing_claim', 'session_start_trial',
 };
 
 // Fixed admission/request failures; these are not network-quality failures.

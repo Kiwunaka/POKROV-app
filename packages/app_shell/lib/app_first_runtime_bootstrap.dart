@@ -4196,8 +4196,12 @@ class AppFirstRuntimeBootstrapper
       );
     }
 
-    var state = await _loadOrCreateState(hostPlatform);
     final file = await _stateFile(hostPlatform);
+    // The one-time code supplies fresh account proof even if the old secure
+    // pair is missing. Keep the saved identity for the guarded replacement.
+    var state = await _withAppFirstStateFileLock(file,
+        () => _loadStateFromFile(hostPlatform, file, allowMissingSession: true)) ??
+        await _loadOrCreateState(hostPlatform);
     // A different account still gets a fresh install. For the current account,
     // the server can confirm the bound device without replacing its session.
     final pairedInstallId = _generateInstallId(hostPlatform);
@@ -4255,7 +4259,7 @@ class AppFirstRuntimeBootstrapper
       }
       final receipt = response!;
       return await _withAppFirstStateFileLock(file, () async {
-        final current = await _loadStateFromFile(hostPlatform, file);
+        final current = await _loadStateFromFile(hostPlatform, file, allowMissingSession: true);
         requireSameSession(current);
         if (receipt['existing_device'] == true) {
           if (receipt['ok'] != true ||
