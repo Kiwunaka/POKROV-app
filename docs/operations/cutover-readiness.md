@@ -5,6 +5,22 @@ is the only current release queue; [Execution section 0](C:/Users/kiwun/Download
 explains how to continue. Dated results below retain their original scope and do
 not create new tasks or permission to repeat accepted checks.
 
+Private **1.5.0+4260**, App `cc445c4e` including fix `2e7a1d46`, adds handled
+initial/resume observation errors and typed support-key expiry to 4259.
+Six packages are in `E:/POKROV-tools/temp/release-1.5.0-4260`: four
+production-signed/non-debuggable APKs, the unsigned Windows setup and its
+single-installer ZIP. Core `98af7fd` (1.2.15/ABI2), authenticated Slipstream,
+Zapret2/Lua, F82 and trust inputs are unchanged. APK versions/ABIs/model and
+packaged Core/Slipstream bytes passed; Windows version/model/staged runtime
+cohort and exact ZIP setup identity passed. Local unpackers do not support
+this setup's Inno 6.7 format, so installed payload verification remains for the
+VM. No device check, upload or release publication ran for 4260.
+
+App-shell analysis and 45 focused tests passed. The full run had 334 passes,
+6 skips and one timing assertion failure; that last case passed separately
+after a narrow matcher fix. The original eight failures are closed. The full
+suite and earlier transport acceptance were not repeated for packaging.
+
 Private **1.5.0+4259** is 4258 plus the shared fonts (Onest text, Unbounded
 titles and big numbers) from App `562a4de3`, with the same Core, Zapret2,
 ranker and trust selection. Four production-signed APKs (certificate
@@ -19,9 +35,8 @@ and transport trust defines. Four production-signed APKs (certificate
 `0A0602A7…`) and the unsigned Windows setup are in
 `E:/POKROV-tools/temp/release-1.5.0-4258` and in the owner-only GitHub draft
 «POKROV 1.5.0+4258 · закрытая сборка» (not published, no tag, no update
-pointer). Analyze and package tests passed; the shell keeps the same eight
-failing tests as `main` before the redesign. No phone, VM, TalkBack or
-Narrator check ran.
+pointer). Analyze and package tests passed; the current shell regression
+result is recorded with 4260 above. No phone, VM, TalkBack or Narrator check ran.
 
 Private **1.5.0+4257** contains six packages from App `a4f69339` under
 `E:/POKROV-tools/temp/release-1.5.0-4257`, with Core `98af7fd` (1.2.15/ABI2)
