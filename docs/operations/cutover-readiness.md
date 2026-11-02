@@ -5,6 +5,13 @@ is the only current release queue; [Execution section 0](C:/Users/kiwun/Download
 explains how to continue. Dated results below retain their original scope and do
 not create new tasks or permission to repeat accepted checks.
 
+Private **1.5.0+4259** is 4258 plus the shared fonts (Onest text, Unbounded
+titles and big numbers) from App `562a4de3`, with the same Core, Zapret2,
+ranker and trust selection. Four production-signed APKs (certificate
+`0A0602A7…`) and the unsigned Windows setup are in
+`E:/POKROV-tools/temp/release-1.5.0-4259` and in the owner-only GitHub draft
+«POKROV 1.5.0+4259 · закрытая сборка». No phone or VM check ran.
+
 Private **1.5.0+4258** adds the owner-chosen task tabs (Защита, Доступ, Помощь,
 Настройки), home widgets, the Settings search and «ты» copy from App `819c43f3`.
 It reuses the 4257 Core `98af7fd` selection, Zapret2 release file, ranker model
