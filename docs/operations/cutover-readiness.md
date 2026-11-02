@@ -5,17 +5,22 @@ is the only current release queue; [Execution section 0](C:/Users/kiwun/Download
 explains how to continue. Dated results below retain their original scope and do
 not create new tasks or permission to repeat accepted checks.
 
-Private **1.5.0+4252** contains the six packages from App `1b9dd3e0`, with Core
-1.2.15/ABI2 and the bundled v1 shadow model unchanged. The Windows VM passed the
-new stopped-client Rules Save and Profile LocalDPI Save. Only LocalDPI was
-intentionally changed, false/true/false; country, mode and login were retained.
-The full preferences file was not replayed because the encoded command exceeded
-the guest limit; byte equality is not claimed. Normal tray exit left no app or
-TUN, and normal VM shutdown completed. The preceding 4250 email recovery and
-4251 About/catalog checks remain accepted and were not repeated. The phone still
-has 4251 installed with ADB unavailable; 4252 has no physical mobile acceptance.
-Beeline Gemini, DNS-tunnel and direct YouTube remain pending. Public metadata
-and update manifests are unchanged.
+Private **1.5.0+4253** contains all six packages from App `f4e596c3`. Windows
+uses the private Core `8079e69` DLL, version 1.2.15/ABI2; Android retains the
+selected 4235 Core/Slipstream artifacts. F82 remains shadow-only. The audit
+fixes account-owned notification caching, support/device error recovery,
+SmartDNS refresh/expiry and DNS-only status, plus asynchronous routing changes.
+Four APKs passed production signing/non-debuggable/version/ABI checks; Windows
+setup and single-installer ZIP remain unsigned.
+The Windows VM passed a normal 4252-to-4253 upgrade, installed DLL/native export
+checks, stopped Profile/Rules/Diagnostics, SmartDNS refresh/cancel and Devices.
+No settings were intentionally changed. After normal tray exit, chosen settings,
+DNS, all 16 routes, proxy and WinHTTP matched baseline; app/TUN/helpers were zero
+and normal shutdown reached PoweredOff/Unlocked. Cache timestamps changed; whole
+preferences byte equality is not claimed. Network/content and earlier accepted
+checks were not repeated. The phone's last confirmed install is 4251 with ADB
+unavailable: Beeline Gemini, DNS-tunnel and direct YouTube remain pending.
+Public metadata and update manifests are unchanged.
 
 Public metadata remains **1.4.5 / schema 0 / min-supported 1.3.0**.
 **1.5.0+4175 is a draft with seven assets**, not a public release. The

@@ -1,5 +1,18 @@
 # Windows acceptance
 
+Private **1.5.0+4253**, App `f4e596c3`, passed a normal 4252-to-4253 upgrade
+(setup exit 0, service Running). The installed private Core DLL matches `8079e69`;
+its native exports returned version 1.2.15 / ABI2. Stopped Profile, Rules and
+Diagnostics opened normally. The SmartDNS sheet showed three providers,
+completed Refresh, and closed during another refresh without changing selection.
+Devices showed the current device; its error/retry branch was covered by a
+widget regression, not forced on this VM. No Connect or content/network test ran.
+After normal tray Exit, chosen settings, DNS, all 16 routes, proxy and WinHTTP
+matched baseline, with app/TUN/helpers zero. Cache timestamps changed; no full
+preferences byte replay is claimed. Normal shutdown reached PoweredOff/Unlocked.
+The six packages are under `E:/POKROV-tools/temp/release-1.5.0-4253`; Windows
+setup/ZIP remain unsigned. No release publication or updater handoff occurred.
+
 Private **1.5.0+4252**, App `1b9dd3e0`, passed stopped-client Rules Save and
 Profile LocalDPI Save on the Windows VM, with visible confirmation and no TUN
 start. The changed LocalDPI preference was restored to false through the UI;
