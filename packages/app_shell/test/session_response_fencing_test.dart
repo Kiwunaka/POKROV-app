@@ -288,18 +288,22 @@ void main() {
     await f.expectState('B', 'B-access');
   });
 
-  test('accepted reward is not repeated when its summary rejects refresh', () async {
+  test('accepted reward is not repeated or published after terminal session rejection', () async {
     final f = await _Fixture.create();
     await f.state('A', 'A-access');
     f.rejectInitialBonusAccess = true;
     f.rejectRefreshCount = 1;
 
-    final result = await f.bootstrapper.spinBonusWheel(hostPlatform: HostPlatform.windows);
+    await expectLater(
+      f.bootstrapper.spinBonusWheel(hostPlatform: HostPlatform.windows),
+      throwsA(isA<BootstrapFailure>().having(
+        (error) => error.code, 'code', 'device_recovery_required')),
+    );
     expect(f.rewards, 1);
     expect(f.refreshes, 1);
-    expect(result.ok, isTrue);
-    expect(result.rewardDays, 1);
-    expect(result.summary, isNull);
+    expect(await f.secrets.readSessionPair(
+      hostPlatform: HostPlatform.windows, installId: _Fixture.install), isNull);
+    expect(f.cache.clears, 1);
   });
 
   test('current account links and reward survive a same-account summary refresh', () async {

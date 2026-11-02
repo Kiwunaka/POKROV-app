@@ -12018,7 +12018,8 @@ class AppFirstSupportTicketService
       recipient = keySet.activeRecipient(now);
       await _supportKeySetCache.write(normalized);
     } on Object catch (error) {
-      onlineFailure = error;
+      onlineFailure = error is BootstrapFailure && error.code == 'support_key_set_expired'
+          ? const SupportBundleFailure('support_key_set_expired') : error;
       final cached = await _supportKeySetCache.read();
       if (cached != null) {
         try {

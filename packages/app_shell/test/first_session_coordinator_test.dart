@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
@@ -90,6 +91,71 @@ class _MemoryFirstLaunchStore implements PokrovFirstLaunchStore {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  const runtimeChannel = MethodChannel('space.pokrov/runtime_engine');
+  final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  final nativeCalls = <String>[];
+  setUp(() {
+    nativeCalls.clear();
+    messenger.setMockMethodCallHandler(runtimeChannel, (call) async {
+      nativeCalls.add(call.method);
+      return switch (call.method) {
+        'runtimeEngine.snapshot' || 'runtimeEngine.disconnect' ||
+        'runtimeEngine.invalidateManagedProfile' => <String, Object?>{
+          'phase': 'initialized', 'supportsLiveConnect': true,
+          'canInitialize': false, 'canConnect': false,
+        },
+        _ => null,
+      };
+    });
+  });
+  tearDown(() => messenger.setMockMethodCallHandler(runtimeChannel, null));
+
+  testWidgets('initial runtime timeout stays in the shell and resume can recover', (tester) async {
+    final stalled = Completer<Map<String, Object?>>();
+    var snapshots = 0;
+    var completedSnapshots = 0;
+    const stopped = <String, Object?>{
+      'phase': 'initialized', 'supportsLiveConnect': true,
+      'canInitialize': false, 'canConnect': true,
+    };
+    messenger.setMockMethodCallHandler(runtimeChannel, (call) async {
+      if (call.method != 'runtimeEngine.snapshot') return null;
+      snapshots++;
+      final snapshot = await stalled.future;
+      completedSnapshots++;
+      return snapshot;
+    });
+    final shell = PokrovShellController();
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: _PairingActions(),
+      firstLaunchStore: _MemoryFirstLaunchStore(completed: true),
+      shellController: shell,
+      runtimeActionTimeout: const Duration(milliseconds: 20),
+    ));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 21));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+    expect(shell.isBusy, isFalse);
+    expect(shell.isConnected, isFalse);
+    expect(find.text('Не удалось проверить состояние POKROV. Повтори проверку.'), findsOneWidget);
+
+    stalled.complete(stopped);
+    await tester.pump();
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(snapshots, 2);
+    expect(completedSnapshots, 2);
+    expect(shell.isBusy, isFalse);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    shell.dispose();
+  });
+
   testWidgets('email recovery sheet completes the existing restore flow', (tester) async {
     final actions = _PairingActions();
     final store = _MemoryFirstLaunchStore();
@@ -134,6 +200,9 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     expect(actions.recoveredEmail, 'account@example.invalid');
     expect(actions.recoveryCode, '123456');
+    expect(nativeCalls, containsAll([
+      'runtimeEngine.disconnect', 'runtimeEngine.invalidateManagedProfile',
+    ]));
     expect(store.completed, isTrue);
     expect(find.byKey(const ValueKey('first-launch-restore-screen')), findsNothing);
     expect(find.byKey(const ValueKey('email-recovery-code')), findsNothing);

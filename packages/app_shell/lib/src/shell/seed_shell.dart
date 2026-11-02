@@ -338,11 +338,19 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       _connectionManager._reportClientRuntimeError(code, failureKind: failureKind,
           failureOperation: failureOperation, failureHttpStatus: failureHttpStatus,
           failureReason: failureReason, failureRequestId: failureRequestId);
-  Future<void> _resumeRuntimeAndTrustedWifiChecks() => _connectionManager.resume();
+  Future<void> _resumeRuntimeAndTrustedWifiChecks() =>
+      _connectionManager.resume().catchError(_runtimeObservationFailed);
   Future<PokrovWifiNetworkStatus> _readCurrentWifi() => _connectionManager._readCurrentWifi();
   Future<void> _repairRuntime({ValueChanged<_ProtectionRepairStep>? onStep, ValueChanged<Future<void> Function()?>? onCancelAvailable}) => _connectionManager.repair(onStep: onStep, onCancelAvailable: onCancelAvailable);
   Future<void> _reportFirstSessionEvent(String eventName, {required String stage, required String result, String errorCode = '', bool? retryable}) => _connectionManager._reportFirstSessionEvent(eventName, stage: stage, result: result, errorCode: errorCode, retryable: retryable);
-  Future<void> _refreshRuntimeSnapshot() => _connectionManager.refresh();
+  Future<void> _refreshRuntimeSnapshot() =>
+      _connectionManager.refresh().catchError(_runtimeObservationFailed);
+
+  void _runtimeObservationFailed(Object error) {
+    if (!mounted) return;
+    _runtimeHeadline = 'Не удалось проверить состояние POKROV. Повтори проверку.';
+    showPokrovSnack(context, _runtimeHeadline!, tone: PokrovSnackTone.danger);
+  }
   bool get _routingCatalogEnabled => _connectionManager._routingCatalogEnabled;
   bool get _selectiveServicesAvailable => _connectionManager._selectiveServicesAvailable;
   Future<_CatalogServiceSelectionData> _loadCatalogServiceSelection({required bool Function() isCurrent, required Future<void> cancelled}) => _connectionManager._loadCatalogServiceSelection(isCurrent: isCurrent, cancelled: cancelled);

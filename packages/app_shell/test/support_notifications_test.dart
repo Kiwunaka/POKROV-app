@@ -1,11 +1,32 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  const runtimeChannel = MethodChannel('space.pokrov/runtime_engine');
+  final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  final nativeCalls = <String>[];
+  setUp(() {
+    nativeCalls.clear();
+    messenger.setMockMethodCallHandler(runtimeChannel, (call) async {
+      nativeCalls.add(call.method);
+      return switch (call.method) {
+        'runtimeEngine.snapshot' || 'runtimeEngine.disconnect' ||
+        'runtimeEngine.invalidateManagedProfile' => <String, Object?>{
+          'phase': 'initialized', 'supportsLiveConnect': true,
+          'canInitialize': false, 'canConnect': false,
+        },
+        _ => null,
+      };
+    });
+  });
+  tearDown(() => messenger.setMockMethodCallHandler(runtimeChannel, null));
+
   testWidgets('disk inbox belongs only to the matching session owner', (tester) async {
     final client = _BoundInboxClient()..owner = 'account-A'..offline = false;
     final experience = _MemoryExperience();
@@ -80,6 +101,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     await tester.ensureVisible(find.byKey(const ValueKey('profile-redeem-submit')));
+    await tester.pump(const Duration(seconds: 1));
     await tester.tap(find.byKey(const ValueKey('profile-redeem-submit')));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
@@ -121,11 +143,16 @@ void main() {
     links.add(Uri.parse('pokrov://pair?code=ABCD-9XYZ'));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
+    await tester.ensureVisible(find.byKey(const ValueKey('profile-redeem-submit')));
+    await tester.pump(const Duration(seconds: 1));
     await tester.tap(find.byKey(const ValueKey('profile-redeem-submit')));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     expect(client.accountChanged, isTrue);
     expect(find.byKey(const ValueKey('profile-notifications-sheet')), findsNothing);
+    expect(nativeCalls, containsAll([
+      'runtimeEngine.disconnect', 'runtimeEngine.invalidateManagedProfile',
+    ]));
     expect(find.text('Поддержка ответила'), findsNothing);
     await tester.pumpWidget(const SizedBox.shrink());
     await links.close();
@@ -153,6 +180,8 @@ void main() {
     await tester.pump(const Duration(seconds: 60));
     links.add(Uri.parse('pokrov://pair?code=ABCD-9XYZ'));
     await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.ensureVisible(find.byKey(const ValueKey('profile-redeem-submit')));
     await tester.pump(const Duration(seconds: 1));
     await tester.tap(find.byKey(const ValueKey('profile-redeem-submit')));
     await tester.pump();

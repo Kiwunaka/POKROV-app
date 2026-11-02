@@ -23,6 +23,20 @@ import 'package:pokrov_runtime_engine/runtime_engine.dart';
 const _validClientUpdateSha256 =
     'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 
+Future<void> _deleteQaDirectory(Directory directory) async {
+  for (var attempt = 0;; attempt++) {
+    try {
+      await directory.delete(recursive: true);
+      return;
+    } on FileSystemException catch (error) {
+      // Disposed background observations may still be closing their files.
+      if (!Platform.isWindows ||
+          !const {32, 145}.contains(error.osError?.errorCode) || attempt == 24) rethrow;
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+  }
+}
+
 Future<String> _readBootstrapFixture(String name) async {
   for (final path in <String>[
     'packages/app_shell/test/fixtures/$name',
@@ -508,7 +522,7 @@ void main() {
     HttpOverrides.global = null;
     addTearDown(() => HttpOverrides.global = httpOverrides);
     final directory = await Directory.systemTemp.createTemp('pokrov-first-provider-qa-');
-    addTearDown(() => directory.delete(recursive: true));
+    addTearDown(() => _deleteQaDirectory(directory));
     final now = DateTime.now().toUtc();
     String wire(DateTime time) => '${time.toIso8601String().substring(0, 19)}Z';
     final start = wire(now.subtract(const Duration(seconds: 1)));
@@ -2450,6 +2464,7 @@ void main() {
     expect(sessionRefreshes, 3);
     expect((await restarted.loadCachedManagedProfile(inputs))?.cacheEntryId, renewed.cacheEntryId,
         reason: 'authorized renewal replaces the older cached profile');
+    const profileTimeout = Duration(milliseconds: 100);
     Matcher deadlineAt(String operation) => allOf(
       isA<TimeoutException>(),
       isA<ManagedProfileTimeout>()
@@ -2459,20 +2474,21 @@ void main() {
         .having((error) => error.preparation?['http_status'], 'observed HTTP status',
             operation == 'managed_fetch' ? 200 : null)
         .having((error) => error.preparation?['elapsed_ms'], 'monotonic elapsed',
-            greaterThanOrEqualTo(100)),
+            // Timer truncates the remaining Duration to whole milliseconds.
+            greaterThanOrEqualTo(profileTimeout.inMilliseconds - 1)),
       isNot(isA<BootstrapFailure>()),
     );
     stall = true;
     await expectLater(online.resolveManagedProfile(
       hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode,
-      timeout: const Duration(milliseconds: 100),
+      timeout: profileTimeout,
     ).timeout(const Duration(seconds: 2)), throwsA(deadlineAt('managed_fetch')));
     expect((await restarted.loadCachedManagedProfile(inputs))?.cacheEntryId, renewed.cacheEntryId);
     stall = false;
     stallRoutePolicy = true;
     await expectLater(online.resolveManagedProfile(
       hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode,
-      timeout: const Duration(milliseconds: 100),
+      timeout: profileTimeout,
     ).timeout(const Duration(seconds: 2)), throwsA(deadlineAt('route_policy')));
     expect((await restarted.loadCachedManagedProfile(inputs))?.cacheEntryId, renewed.cacheEntryId);
     stallRoutePolicy = false;

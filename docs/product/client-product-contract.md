@@ -335,6 +335,10 @@ Daily shell state language is shared across Home and support diagnostics:
 `Подключаемся…`, `Подключено`, `Отключаем…`, and `Не защищено`. A disconnect
 must never be described as a connection attempt. First-layer refresh copy says
 that settings were updated without exposing the API hostname.
+Startup and foreground runtime observations use the existing bounded action
+timeout. A failed observation shows a retry notice in the current shell; it
+does not escape as an unhandled asynchronous error or start a new connection.
+A later foreground observation can recover normally.
 
 The client control plane uses only the owned app/API origin pair. It selects an
 origin with an unauthenticated JSON health request before sending real work;
@@ -603,6 +607,8 @@ Support contract rules:
   Diagnostics retains `support_key_set_expired` and tells the operator to renew
   the server contract; it does not claim a report was saved. A fresh signed set
   restores both actions without changing client trust or the encryption scheme.
+  The public key-set endpoint's typed expiry response has the same meaning as
+  expiry found while verifying a signed set locally.
 - the ordinary encrypted network summary includes the already collected, closed
   `connection_diagnostic`: last attempted transport/phase, native failure and
   cleanup flags, Core version, DNS/route counts and egress stage, numeric error,
