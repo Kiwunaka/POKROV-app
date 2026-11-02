@@ -54,18 +54,6 @@ Map<String, Object?> _readyManagedProfile(String revision,
   };
 }
 
-class _PausedProfileCacheClear extends ManagedProfileCache {
-  final clearStarted = Completer<void>();
-  final releaseClear = Completer<void>();
-
-  @override
-  Future<void> clear(String platform) async {
-    await super.clear(platform);
-    clearStarted.complete();
-    await releaseClear.future;
-  }
-}
-
 class _PausedSecureStoragePlatform extends TestFlutterSecureStoragePlatform {
   _PausedSecureStoragePlatform(super.data);
   final readStarted = Completer<void>();
@@ -2364,6 +2352,7 @@ void main() {
     var stall = false;
     var stallRoutePolicy = false;
     var accessTokenExpired = false;
+    var refreshUnavailable = false;
     var delayRenewedProfile = false;
     var sessionRefreshes = 0;
     DateTime? now;
@@ -2382,10 +2371,15 @@ void main() {
           request.response.write('{"detail":"access denied"}');
         } else if (request.uri.path == '/api/client/session/refresh') {
           sessionRefreshes++;
-          accessTokenExpired = false;
-          request.response.write(jsonEncode({'session': {
-            'access_token': 'renewed-fixture-token', 'refresh_token': 'renewed-fixture-refresh', 'account_id': 'cache-account',
-          }}));
+          if (refreshUnavailable) {
+            request.response.statusCode = HttpStatus.serviceUnavailable;
+            request.response.write('{"detail":"unavailable"}');
+          } else {
+            accessTokenExpired = false;
+            request.response.write(jsonEncode({'session': {
+              'access_token': 'renewed-fixture-token', 'refresh_token': 'renewed-fixture-refresh', 'account_id': 'cache-account',
+            }}));
+          }
         } else if (request.uri.path == '/api/client/subscription') {
           request.response.write(jsonEncode({
             'lane': subscriptionDenied ? 'expiredOrBlocked' : 'paidUnlimited',
@@ -2445,14 +2439,21 @@ void main() {
     expect(await restarted.loadCachedManagedProfile(const ManagedProfileCacheInputs(
       hostPlatform: HostPlatform.windows, routeMode: RouteMode.allExceptRu)), isNull);
     accessTokenExpired = true;
+    refreshUnavailable = true;
+    await expectLater(online.resolveManagedProfile(
+      hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode),
+      throwsA(isA<BootstrapFailure>().having((error) => error.statusCode, 'status', 503)));
+    expect((await restarted.loadCachedManagedProfile(inputs))?.cacheEntryId, b.cacheEntryId,
+        reason: 'access expiry followed by a refresh outage preserves the authorized offline profile');
+    refreshUnavailable = false;
     delayRenewedProfile = true;
     revision = 'renewed';
     final renewed = await online.resolveManagedProfile(hostPlatform: inputs.hostPlatform,
         routeMode: inputs.routeMode, timeout: const Duration(seconds: 3));
     expect(renewed.source?.revision, 'renewed');
-    expect(sessionRefreshes, 1);
+    expect(sessionRefreshes, 3);
     expect((await restarted.loadCachedManagedProfile(inputs))?.cacheEntryId, renewed.cacheEntryId,
-        reason: 'authorized renewal stores fresh bytes, never resurrecting the denied cache');
+        reason: 'authorized renewal replaces the older cached profile');
     Matcher deadlineAt(String operation) => allOf(
       isA<TimeoutException>(),
       isA<ManagedProfileTimeout>()
@@ -2491,7 +2492,7 @@ void main() {
     await expectLater(online.resolveManagedProfile(
       hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode),
       throwsA(isA<BootstrapFailure>().having((error) => error.statusCode, 'status', 403)));
-    expect(sessionRefreshes, 1, reason: 'revoked access cannot start another auth retry');
+    expect(sessionRefreshes, 3, reason: 'revoked access cannot start another auth retry');
     expect(await restarted.loadCachedManagedProfile(inputs), isNull);
     denied = false;
     await online.refreshCachedManagedProfile(inputs);
@@ -2917,7 +2918,7 @@ void main() {
       await utf8.decoder.bind(request).join();
       request.response.headers.contentType = ContentType.json;
       request.response.write(jsonEncode({'ok': true, 'session': {
-        'scope': 'client', 'account_id': 'new-account',
+        'scope': 'client', 'account_id': 'old-account',
         'access_token': 'new-access', 'refresh_token': 'new-refresh',
       }}));
       await request.response.close();
@@ -2965,7 +2966,7 @@ void main() {
     expect((await recovery.timeout(const Duration(seconds: 2))).ok, isTrue);
     expect(requests, ['POST /api/auth/email/otp/finish']);
     final saved = jsonDecode(await file.readAsString()) as Map;
-    expect(saved['account_id'], 'new-account');
+    expect(saved['account_id'], 'old-account');
     expect(saved['install_id'], installId);
     expect(saved['profile_revision'], isEmpty);
     expect(saved.containsKey('session_token'), isFalse);
@@ -2973,6 +2974,81 @@ void main() {
     expect(jsonDecode(values[secretKey]!), {
       'version': 1, 'access_token': 'new-access', 'refresh_token': 'new-refresh',
     });
+  });
+
+  test('email login isolates a different account from its previous bearer and late refresh rejection', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-email-account-switch-');
+    final file = File('${directory.path}/app-first-session-windows.json');
+    const platform = HostPlatform.windows;
+    const previousInstall = 'email-previous-install';
+    await file.writeAsString(jsonEncode({
+      'schema_version': 1, 'install_id': previousInstall,
+      'account_id': 'previous-account', 'session_token_storage': 'secure',
+      'managed_manifest_path': '/api/client/profile/managed',
+    }));
+    final secrets = MemoryAppFirstSessionSecretStore();
+    await secrets.writeSessionPair(hostPlatform: platform, installId: previousInstall,
+      pair: const AppFirstSessionCredentials(accessToken: 'previous-access', refreshToken: 'previous-refresh'));
+    final installs = <String>[];
+    final refreshStarted = Completer<void>();
+    final releaseRefresh = Completer<void>();
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() async {
+      if (!releaseRefresh.isCompleted) releaseRefresh.complete();
+      await server.close(force: true);
+      await directory.delete(recursive: true);
+    });
+    server.listen((request) async {
+      if (request.uri.path == '/api/client/subscription' ||
+          request.uri.path == '/api/client/session/refresh') {
+        await utf8.decoder.bind(request).join();
+        if (request.uri.path.endsWith('/refresh')) {
+          refreshStarted.complete();
+          await releaseRefresh.future;
+        }
+        request.response.statusCode = HttpStatus.unauthorized;
+        request.response.headers.contentType = ContentType.json;
+        request.response.write('{"detail":{"code":"session_revoked"}}');
+        await request.response.close();
+        return;
+      }
+      expect(request.uri.path, '/api/auth/email/otp/finish');
+      expect(request.headers.value(HttpHeaders.authorizationHeader), isNull);
+      final body = jsonDecode(await utf8.decoder.bind(request).join()) as Map;
+      installs.add(body['install_id'] as String);
+      request.response.headers.contentType = ContentType.json;
+      if (installs.length == 1) {
+        request.response.statusCode = HttpStatus.conflict;
+        request.response.write('{"detail":{"code":"device_identity_conflict"}}');
+      } else {
+        expect(installs.last, isNot(previousInstall));
+        request.response.write(jsonEncode({'ok': true, 'session': {
+          'scope': 'client', 'account_id': 'email-account',
+          'access_token': 'email-access', 'refresh_token': 'email-refresh',
+        }}));
+      }
+      await request.response.close();
+    });
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => directory, sessionSecretStore: secrets);
+    final staleRefresh = expectLater(bootstrapper.fetchClientSubscription(hostPlatform: platform),
+      throwsA(isA<BootstrapFailure>().having((error) => error.code, 'stale rejection', 'session_changed')));
+    await refreshStarted.future;
+    final result = await bootstrapper.recoverEmailSession(
+      hostPlatform: platform, email: 'synthetic@example.test', code: '123456');
+    releaseRefresh.complete();
+    await staleRefresh;
+    expect(installs, hasLength(2));
+    expect(installs.first, previousInstall);
+    expect(result.installId, installs.last);
+    expect(result.existingDevice, isFalse);
+    final saved = jsonDecode(await file.readAsString()) as Map;
+    expect(saved['install_id'], result.installId);
+    expect(saved['account_id'], 'email-account');
+    expect(await secrets.readSessionPair(hostPlatform: platform, installId: previousInstall), isNull);
+    expect((await secrets.readSessionPair(hostPlatform: platform,
+      installId: result.installId))?.refreshToken, 'email-refresh');
   });
 
   test('serializes overlapping app-first state writes without leaking secrets',
@@ -3899,7 +3975,7 @@ void main() {
         [trialInstallId, trialInstallId]);
   });
 
-  test('support and account requests share one session refresh', () async {
+  test('cancelled profile leaves shared refresh durable after a lost response', () async {
     final httpOverrides = HttpOverrides.current;
     HttpOverrides.global = null;
     addTearDown(() => HttpOverrides.global = httpOverrides);
@@ -3930,6 +4006,7 @@ void main() {
     final bothDenied = Completer<void>();
     final refreshStarted = Completer<void>();
     final releaseRefresh = Completer<void>();
+    final profileDenied = Completer<void>();
     var denied = 0;
     var refreshes = 0;
     final authorizedPaths = <String>[];
@@ -3946,6 +4023,11 @@ void main() {
         expect(jsonDecode(body), {'refresh_token': 'refresh-one'});
         if (!refreshStarted.isCompleted) refreshStarted.complete();
         await releaseRefresh.future;
+        if (refreshes == 1) {
+          final socket = await request.response.detachSocket(writeHeaders: false);
+          socket.destroy();
+          return;
+        }
         request.response.write(jsonEncode({
           'session': {
             'access_token': 'fresh-access',
@@ -3956,6 +4038,7 @@ void main() {
       } else if (request.headers.value(HttpHeaders.authorizationHeader) ==
           'Bearer expired-access') {
         denied += 1;
+        if (path == '/api/client/route-policy') profileDenied.complete();
         if (denied == 2) bothDenied.complete();
         await bothDenied.future;
         request.response
@@ -3965,9 +4048,11 @@ void main() {
         expect(request.headers.value(HttpHeaders.authorizationHeader),
             'Bearer fresh-access');
         authorizedPaths.add(path);
-        request.response.write(path == '/api/client/subscription'
-            ? '{"lane":"paid"}'
-            : '{"tickets":[{"id":88,"status":"open"}]}');
+        request.response.write(switch (path) {
+          '/api/client/subscription' => '{"lane":"paid"}',
+          '/api/client/runtime/stats' => '{"ok":true}',
+          _ => '{"tickets":[{"id":88,"status":"open"}]}',
+        });
       }
       await request.response.close();
     });
@@ -3985,12 +4070,25 @@ void main() {
     await refreshStarted.future;
     await pumpEventQueue();
     expect(refreshes, 1);
+    final stats = bootstrapper.reportRuntimeStats(hostPlatform: platform,
+        runtimePhase: 'failed', connected: false);
+    final cancelProfile = Completer<void>();
+    final cancelledProfile = expectLater(bootstrapper.resolveManagedProfile(
+      hostPlatform: platform, routeMode: RouteMode.fullTunnel,
+      cancelled: cancelProfile.future), throwsA(isA<Exception>().having(
+        (error) => error.toString(), 'cancellation', 'managed_profile_cancelled')));
+    await profileDenied.future;
+    await pumpEventQueue();
+    cancelProfile.complete();
+    await cancelledProfile.timeout(const Duration(seconds: 1));
+    expect(refreshes, 1, reason: 'caller cancellation does not abort the pending session rotation');
     releaseRefresh.complete();
     expect((await subscription).lane, 'paid');
     expect((await tickets).single.id, 88);
+    expect(await stats, isTrue);
     expect(authorizedPaths,
-        unorderedEquals(['/api/client/subscription', '/api/tickets']));
-    expect(refreshes, 1);
+        unorderedEquals(['/api/client/subscription', '/api/tickets', '/api/client/runtime/stats']));
+    expect(refreshes, 2, reason: 'the same credential retries the lost response once');
     expect((await secrets.readSessionPair(
       hostPlatform: platform, installId: installId,
     ))?.refreshToken, 'refresh-two');
@@ -4028,10 +4126,14 @@ void main() {
     var refreshes = 0;
     final profileBearers = <String?>[];
     final savedBindings = <Map<String, dynamic>>[];
+    final profileDenied = Completer<void>();
+    final releaseProfileDenial = Completer<void>();
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-    addTearDown(server.close);
-    unawaited(() async {
-      await for (final request in server) {
+    addTearDown(() async {
+      if (!releaseProfileDenial.isCompleted) releaseProfileDenial.complete();
+      await server.close(force: true);
+    });
+    server.listen((request) async {
         final body = await utf8.decoder.bind(request).join();
         final path = request.uri.path;
         request.response.headers.contentType = ContentType.json;
@@ -4057,6 +4159,8 @@ void main() {
             jsonDecode(await stateFile.readAsString()) as Map<String, dynamic>,
           );
           if (profileBearers.length == 1) {
+            profileDenied.complete();
+            await releaseProfileDenial.future;
             request.response
               ..statusCode = HttpStatus.unauthorized
               ..write('{"detail":"expired"}');
@@ -4078,23 +4182,19 @@ void main() {
           request.response.statusCode = HttpStatus.notFound;
         }
         await request.response.close();
-      }
-    }());
-    final cache = _PausedProfileCacheClear();
+    });
     final bootstrapper = AppFirstRuntimeBootstrapper(
       apiBaseUrl: 'http://127.0.0.1:${server.port}/',
       supportDirectoryResolver: () async => tempDirectory,
       sessionSecretStore: secrets,
-      managedProfileCache: cache,
       delayScheduler: (_) async {},
     );
     final resolving = bootstrapper.resolveManagedProfile(
       hostPlatform: HostPlatform.windows,
       routeMode: RouteMode.fullTunnel,
     );
-    // The profile's identity guard has passed, but its refresh has not read
-    // the latest credentials yet. Complete the concurrent rotation here.
-    await cache.clearStarted.future;
+    // Finish a concurrent rotation before the old access denial arrives.
+    await profileDenied.future;
     try {
       final subscription = await bootstrapper.fetchClientSubscription(
         hostPlatform: HostPlatform.windows,
@@ -4102,7 +4202,7 @@ void main() {
       expect(subscription.lane, 'trial');
       expect(refreshes, 1);
     } finally {
-      cache.releaseClear.complete();
+      releaseProfileDenial.complete();
     }
     final payload = await resolving;
     expect(payload.profileName, 'pokrov-windows-refresh');
@@ -4120,7 +4220,7 @@ void main() {
     expect(cached?.profileName, payload.profileName);
   });
 
-  test('refresh failure never starts a second trial for an existing install',
+  test('terminal refresh rejection stops background requests and retains recovery metadata',
       () async {
     final tempDirectory = await Directory.systemTemp.createTemp(
       'pokrov-bootstrap-refresh-failure-test-',
@@ -4131,10 +4231,13 @@ void main() {
     });
     var starts = 0;
     var refreshes = 0;
+    var requests = 0;
+    final secrets = MemoryAppFirstSessionSecretStore();
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(server.close);
     unawaited(() async {
       await for (final request in server) {
+        requests++;
         await utf8.decoder.bind(request).join();
         if (request.uri.path == '/api/client/session/start-trial') {
           starts += 1;
@@ -4169,6 +4272,7 @@ void main() {
     final bootstrapper = AppFirstRuntimeBootstrapper(
       apiBaseUrl: 'http://127.0.0.1:${server.port}/',
       supportDirectoryResolver: () async => tempDirectory,
+      sessionSecretStore: secrets,
       delayScheduler: (_) async {},
     );
     await expectLater(
@@ -4181,17 +4285,34 @@ void main() {
             .having(
               (error) => error.message,
               'message',
-              contains('восстановить доступ'),
+              contains('Восстановить вход'),
             )
             .having(
               (error) => error.code,
               'code',
               'fresh_auth_required',
-            ),
+            )
+            .having((error) => error.sessionRejected, 'definite rejection', isTrue),
       ),
     );
     expect(starts, 1);
     expect(refreshes, 1);
+    final file = File('${tempDirectory.path}/app-first-session-windows.json');
+    final state = jsonDecode(await file.readAsString()) as Map;
+    expect(state['session_token_storage'], 'secure');
+    expect(state['account_id'], '42');
+    expect(await secrets.readSessionPair(hostPlatform: HostPlatform.windows,
+      installId: state['install_id'] as String), isNull);
+    final requestsBeforeRecovery = requests;
+    final recoveryRequired = throwsA(isA<BootstrapFailure>()
+        .having((error) => error.code, 'code', 'device_recovery_required'));
+    await expectLater(bootstrapper.fetchClientSubscription(hostPlatform: HostPlatform.windows), recoveryRequired);
+    expect(await bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.windows,
+      runtimePhase: 'failed', connected: false), isFalse);
+    expect(await bootstrapper.submitReleaseHealthBatch(hostPlatform: HostPlatform.windows,
+      batch: const {}, correlationId: '11111111-1111-4111-8111-111111111111'), isFalse);
+    await bootstrapper.refreshNetworkContext(hostPlatform: HostPlatform.windows);
+    expect(requests, requestsBeforeRecovery, reason: 'a rejected pair is never retried by background work');
   });
 
   test(

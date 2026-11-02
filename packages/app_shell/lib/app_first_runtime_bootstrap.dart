@@ -144,6 +144,7 @@ class _ManagedProfileRequests {
     if (cancelled != null) {
       unawaited(cancelled.then((_) {
         _cancelled = true;
+        _cancelledSignal.complete();
         for (final client in _clients) {
           client.close(force: true);
         }
@@ -157,6 +158,7 @@ class _ManagedProfileRequests {
   }
 
   bool _cancelled = false;
+  final _cancelledSignal = Completer<void>();
   final _clients = <HttpClient>{};
   final _connections = <ConnectionTask<Socket>>{};
   bool get isCancelled => _cancelled;
@@ -164,6 +166,11 @@ class _ManagedProfileRequests {
   void requireActive() {
     if (_cancelled) throw const _ManagedProfileCancelled();
   }
+
+  Future<T> wait<T>(Future<T> operation) => Future.any([
+    operation,
+    _cancelledSignal.future.then<T>((_) => throw const _ManagedProfileCancelled()),
+  ]);
 
   HttpClient attach(HttpClient client) {
     if (_cancelled) {
@@ -1199,6 +1206,7 @@ class BootstrapFailure implements Exception {
     this.osErrorCode,
     this.preparation,
     this.requestId,
+    this.sessionRejected = false,
   });
 
   final String message;
@@ -1211,6 +1219,7 @@ class BootstrapFailure implements Exception {
   final int? osErrorCode;
   final Map<String, Object>? preparation;
   final String? requestId;
+  final bool sessionRejected;
 
   PortalFailureReason? get reason => PortalFailureReason.fromCode(code);
 
@@ -3310,29 +3319,22 @@ class AppFirstRuntimeBootstrapper
     required Map<String, Object?> batch,
     required String correlationId,
   }) async {
-    final state = await _loadOrCreateState(hostPlatform);
-    if (invitationNetworkDeferred) return false;
-    if (!state.hasSession) {
-      return false;
-    }
-    final client = _createHttpClient(hostPlatform);
     try {
+      final state = await _loadState(hostPlatform);
+      if (state == null || !state.hasSession || invitationNetworkDeferred) return false;
       await PortalCorrelationScope.run(
         correlationId,
-        () => _requestJson(
+        () => _requestClientJsonWithSession(
           method: 'POST',
           path: '/api/client/observability/release-health/batches',
           hostPlatform: hostPlatform,
-          client: client,
-          bearerToken: state.sessionToken,
+          requiredBinding: _RuntimeStatsBinding(state.accountId, state.installId),
           body: batch,
         ),
       );
       return true;
     } on BootstrapFailure {
       return false;
-    } finally {
-      client.close(force: true);
     }
   }
 
@@ -3341,10 +3343,6 @@ class AppFirstRuntimeBootstrapper
     required HostPlatform hostPlatform,
     required OperationalBuildIdentity build,
   }) async {
-    final state = await _loadOrCreateState(hostPlatform);
-    if (!state.hasSession) {
-      return const ClientReleaseHealthBaseline.unavailable();
-    }
     final parameters = <String, String>{
       'app_version': build.appVersion,
       'build_number': build.buildNumber,
@@ -3359,14 +3357,16 @@ class AppFirstRuntimeBootstrapper
       path: '/api/client/observability/release-health/baseline',
       queryParameters: parameters,
     ).toString();
-    final client = _createHttpClient(hostPlatform);
     try {
-      final response = await _requestJson(
+      final state = await _loadState(hostPlatform);
+      if (state == null || !state.hasSession) {
+        return const ClientReleaseHealthBaseline.unavailable();
+      }
+      final response = await _requestClientJsonWithSession(
         method: 'GET',
         path: path,
         hostPlatform: hostPlatform,
-        client: client,
-        bearerToken: state.sessionToken,
+        requiredBinding: _RuntimeStatsBinding(state.accountId, state.installId),
       );
       return ClientReleaseHealthBaseline.parse(
         response.cast<String, Object?>(),
@@ -3376,8 +3376,6 @@ class AppFirstRuntimeBootstrapper
       return const ClientReleaseHealthBaseline.unavailable();
     } on FormatException {
       return const ClientReleaseHealthBaseline.unavailable();
-    } finally {
-      client.close(force: true);
     }
   }
 
@@ -3815,6 +3813,7 @@ class AppFirstRuntimeBootstrapper
     requests.requireActive();
     final client = requests.attach(_createHttpClient(hostPlatform));
     var timedOut = false;
+    final preparationExpired = Completer<void>();
     var accessPreparing = false;
     String? currentOperation;
     String? deadlineOperation;
@@ -3835,6 +3834,7 @@ class AppFirstRuntimeBootstrapper
         deadlinePreparation = preparation();
       }
       timedOut = true;
+      if (!preparationExpired.isCompleted) preparationExpired.complete();
       client.close(force: true);
     }
     var timer = timeout == null ? null : Timer(timeout - preparationClock.elapsed, expireProfile);
@@ -3845,11 +3845,15 @@ class AppFirstRuntimeBootstrapper
         accessPreparing = false;
         if (!state.hasSession) {
           currentOperation = null;
-          state = await _startTrial(
-            state: state,
-            hostPlatform: hostPlatform,
-            client: client,
-          );
+          state = await requests.wait(Future.any([
+            _startTrial(
+              state: state,
+              hostPlatform: hostPlatform,
+              client: client,
+            ),
+            preparationExpired.future.then<_StoredBootstrapState>((_) =>
+                throw ManagedProfileTimeout(deadlineOperation, preparation: deadlinePreparation)),
+          ]));
           // Node confirms a new key after the trial request returns. Give the
           // profile its normal deadline from that point, not from trial start.
           if (timeout != null) {
@@ -4056,7 +4060,7 @@ class AppFirstRuntimeBootstrapper
           return manifest.payload;
         } on BootstrapFailure catch (error) {
           requests.requireActive();
-          if (error.statusCode == 401 || error.statusCode == 403) {
+          if (error.statusCode == HttpStatus.forbidden) {
             final current = await _loadState(hostPlatform);
             requests.requireActive();
             if (current == null || current.accountId != state.accountId || current.installId != state.installId ||
@@ -4075,21 +4079,26 @@ class AppFirstRuntimeBootstrapper
           if (attempt == 0 && error.statusCode == HttpStatus.unauthorized) {
             if (timedOut) throw ManagedProfileTimeout(deadlineOperation, preparation: deadlinePreparation);
             if (state.refreshToken.isNotEmpty && timeout != null && timeout < requestTimeout) {
-              // The denied cache is gone. The single authorized session retry
-              // now needs the normal online profile budget, not its cache wait.
+              // The session retry needs its normal online budget while the
+              // existing authorized offline profile remains available.
               timer?.cancel();
               timer = Timer(requestTimeout, expireProfile);
             }
             currentOperation = null;
-            state = await _startTrial(
-              state: state.copyWith(
-                sessionToken: '',
+            state = await requests.wait(Future.any([
+              _startTrial(
+                state: state,
+                hostPlatform: hostPlatform,
+                client: client,
               ),
-              hostPlatform: hostPlatform,
-              client: client,
-            );
+              preparationExpired.future.then<_StoredBootstrapState>((_) =>
+                  throw ManagedProfileTimeout(deadlineOperation, preparation: deadlinePreparation)),
+            ]));
             cacheGeneration = _managedProfileCache.generation(hostPlatform.name);
             continue;
+          }
+          if (error.statusCode == HttpStatus.unauthorized) {
+            await _rejectSession(hostPlatform, state, error);
           }
           rethrow;
         }
@@ -4114,7 +4123,7 @@ class AppFirstRuntimeBootstrapper
       if (error is BootstrapFailure) {
         throw BootstrapFailure(error.message, statusCode: error.statusCode,
           operation: error.operation, code: error.code, operationalCode: error.operationalCode,
-          requestId: error.requestId,
+          requestId: error.requestId, sessionRejected: error.sessionRejected,
           apiFailureKind: error.apiFailureKind, observedHttpStatus: error.observedHttpStatus,
           osErrorCode: error.osErrorCode, preparation: preparation());
       }
@@ -4167,13 +4176,14 @@ class AppFirstRuntimeBootstrapper
         } on BootstrapFailure catch (error) {
           if (attempt == 0 && _isSessionFailure(error.statusCode)) {
             state = await _startTrial(
-              state: state.copyWith(
-                sessionToken: '',
-              ),
+              state: state,
               hostPlatform: hostPlatform,
               client: client,
             );
             continue;
+          }
+          if (_isSessionFailure(error.statusCode)) {
+            await _rejectSession(hostPlatform, state, error);
           }
           rethrow;
         }
@@ -4216,23 +4226,36 @@ class AppFirstRuntimeBootstrapper
       );
     }
     final client = _createHttpClient(hostPlatform);
+    var recoveredInstallId = state.installId;
     try {
       // Email OTP is fresh account proof. An old bearer/refresh is not needed.
-      final response = await _requestJson(
-        method: 'POST', path: '/api/auth/email/otp/finish',
-        hostPlatform: hostPlatform, client: client,
-        body: <String, Object?>{
-          'email': email.trim(), 'code': code.trim(),
-          'install_id': state.installId,
-          'device_name': await _deviceName(hostPlatform),
-          'platform': hostPlatform.name,
-          'os_version': _trim(Platform.operatingSystemVersion, 64),
-          'app_version': pokrovClientVersion,
-          'locale': _trim(Platform.localeName, 32),
-          'time_zone': _trim(DateTime.now().timeZoneName, 64),
-        },
-      );
-      final session = _readMap(response['session']);
+      Map<String, dynamic>? response;
+      for (var attempt = 0; attempt < 2; attempt++) {
+        try {
+          response = await _requestJson(
+            method: 'POST', path: '/api/auth/email/otp/finish',
+            hostPlatform: hostPlatform, client: client,
+            body: <String, Object?>{
+              'email': email.trim(), 'code': code.trim(),
+              'install_id': recoveredInstallId,
+              'device_name': await _deviceName(hostPlatform),
+              'platform': hostPlatform.name,
+              'os_version': _trim(Platform.operatingSystemVersion, 64),
+              'app_version': pokrovClientVersion,
+              'locale': _trim(Platform.localeName, 32),
+              'time_zone': _trim(DateTime.now().timeZoneName, 64),
+            },
+          );
+          break;
+        } on BootstrapFailure catch (error) {
+          if (attempt != 0 || error.statusCode != HttpStatus.conflict ||
+              error.code != 'device_identity_conflict') rethrow;
+          // The server rolled back OTP consumption for another account's
+          // install. Give the proven account its own device identity.
+          recoveredInstallId = _generateInstallId(hostPlatform);
+        }
+      }
+      final session = _readMap(response!['session']);
       final pair = _sessionPairFromResponse(response);
       final accountId = _readText(session['canonical_account_id'] ?? session['account_id']);
       if (pair == null || pair.refreshToken.isEmpty || accountId.isEmpty ||
@@ -4249,17 +4272,21 @@ class AppFirstRuntimeBootstrapper
           throw const BootstrapFailure('Сессия изменилась. Повторите вход.', code: 'session_changed');
         }
         final nextState = current.copyWith(
+          installId: recoveredInstallId,
           sessionToken: pair.accessToken, refreshToken: pair.refreshToken,
           accountId: accountId, expectsSecureSessionToken: true,
           managedManifestPath: _defaultManagedManifestPath, profileRevision: '',
         );
         // Keep metadata and the previous secret until the replacement is saved.
         await _sessionSecretStore.writeSessionPair(
-          hostPlatform: hostPlatform, installId: current.installId, pair: pair);
+          hostPlatform: hostPlatform, installId: recoveredInstallId, pair: pair);
         try {
           await _stateFileWriter(file, jsonEncode(nextState.toJson()));
         } on Object {
-          if (current.hasSession) {
+          if (recoveredInstallId != current.installId) {
+            await _sessionSecretStore.deleteSessionToken(
+              hostPlatform: hostPlatform, installId: recoveredInstallId);
+          } else if (current.hasSession) {
             await _sessionSecretStore.writeSessionPair(hostPlatform: hostPlatform,
               installId: current.installId, pair: AppFirstSessionCredentials(
                 accessToken: current.sessionToken, refreshToken: current.refreshToken));
@@ -4269,10 +4296,26 @@ class AppFirstRuntimeBootstrapper
           }
           rethrow;
         }
+        if (current.installId != recoveredInstallId) {
+          try {
+            await _sessionSecretStore.deleteSessionToken(
+              hostPlatform: hostPlatform, installId: current.installId);
+          } on Object {
+            // The new account is durable; obsolete-secret cleanup is separate.
+          }
+        }
+        if (current.installId != nextState.installId || current.accountId != nextState.accountId) {
+          try {
+            await _managedProfileCache.clear(hostPlatform.name);
+          } on Object {
+            // Cached entries remain bound to the previous account/install.
+          }
+        }
         _rememberRuntimeStatsBinding(hostPlatform, nextState);
         _notifyTransportSelectionSessionWrite(file, nextState);
         return DevicePairingClaimResult(ok: true, accountId: accountId,
-          installId: nextState.installId, existingDevice: true);
+          installId: nextState.installId,
+          existingDevice: recoveredInstallId == state.installId);
       });
     } finally {
       client.close(force: true);
@@ -4350,7 +4393,6 @@ class AppFirstRuntimeBootstrapper
           state = await _refreshSession(
             state: state,
             hostPlatform: hostPlatform,
-            client: client,
           );
         }
       }
@@ -4400,6 +4442,11 @@ class AppFirstRuntimeBootstrapper
           file: file,
           state: nextState,
         );
+        try {
+          await _managedProfileCache.clear(hostPlatform.name);
+        } on Object {
+          // The fresh install cannot load the previous account's cache.
+        }
         if (state.installId != pairedInstallId) {
           // Retain the previous pair until the replacement metadata is durable.
           // A failed write must leave the previous account usable.
@@ -4800,6 +4847,9 @@ class AppFirstRuntimeBootstrapper
         }
       }
       return acknowledged;
+    } on BootstrapFailure catch (error) {
+      if (error.sessionRejected || error.code == 'device_recovery_required') return false;
+      rethrow;
     } finally {
       onDeliveryReceipt?.call(RuntimeStatsDeliveryReceipt(
         appVersion: pokrovClientVersion, buildNumber: pokrovClientBuildNumber,
@@ -4834,6 +4884,13 @@ class AppFirstRuntimeBootstrapper
             (claims['exp'] as int) <= now.millisecondsSinceEpoch ~/ 1000 + 6) return;
       } on FormatException {
         return;
+      }
+      if (loadedState != null) {
+        final current = await _loadState(hostPlatform);
+        if (current == null || current.accountId != state.accountId ||
+            current.installId != state.installId ||
+            current.sessionToken != state.sessionToken ||
+            current.refreshToken != state.refreshToken) return;
       }
       if (_lastNetworkContextAccount == state.accountId && _lastNetworkContextAt != null &&
           now.difference(_lastNetworkContextAt!) < const Duration(hours: 1)) return;
@@ -5073,13 +5130,14 @@ class AppFirstRuntimeBootstrapper
           ownedRequests.requireActive();
           if (attempt == 0 && _isSessionFailure(error.statusCode)) {
             state = await _startTrial(
-              state: state.copyWith(
-                sessionToken: '',
-              ),
+              state: state,
               hostPlatform: hostPlatform,
               client: client,
             );
             continue;
+          }
+          if (_isSessionFailure(error.statusCode)) {
+            await _rejectSession(hostPlatform, state, error);
           }
           rethrow;
         }
@@ -5943,6 +6001,7 @@ class AppFirstRuntimeBootstrapper
     Map<String, Object?>? body,
     Duration? requestTimeoutOverride,
     Future<void>? cancelled,
+    _RuntimeStatsBinding? requiredBinding,
   }) async {
     final requests = _ManagedProfileRequests(cancelled);
     var state = await _loadOrCreateState(hostPlatform, timeout: requestTimeoutOverride);
@@ -5951,12 +6010,16 @@ class AppFirstRuntimeBootstrapper
     try {
       for (var attempt = 0; attempt < 2; attempt += 1) {
         requests.requireActive();
+        if (requiredBinding != null && !requiredBinding.matches(state)) {
+          throw const BootstrapFailure(
+              'Сессия изменилась. Повторите вход.', code: 'session_changed');
+        }
         if (!state.hasSession) {
-          state = await _startTrial(
+          state = await requests.wait(_startTrial(
             state: state,
             hostPlatform: hostPlatform,
             client: client,
-          );
+          ));
           requests.requireActive();
         }
 
@@ -5985,15 +6048,16 @@ class AppFirstRuntimeBootstrapper
         } on BootstrapFailure catch (error) {
           requests.requireActive();
           if (attempt == 0 && _isSessionFailure(error.statusCode)) {
-            state = await _startTrial(
-              state: state.copyWith(
-                sessionToken: '',
-              ),
+            state = await requests.wait(_startTrial(
+              state: state,
               hostPlatform: hostPlatform,
               client: client,
-            );
+            ));
             requests.requireActive();
             continue;
+          }
+          if (_isSessionFailure(error.statusCode)) {
+            await _rejectSession(hostPlatform, state, error);
           }
           rethrow;
         }
@@ -6243,13 +6307,14 @@ class AppFirstRuntimeBootstrapper
         } on BootstrapFailure catch (error) {
           if (attempt == 0 && _isSessionFailure(error.statusCode)) {
             state = await _startTrial(
-              state: state.copyWith(
-                sessionToken: '',
-              ),
+              state: state,
               hostPlatform: hostPlatform,
               client: client,
             );
             continue;
+          }
+          if (_isSessionFailure(error.statusCode)) {
+            await _rejectSession(hostPlatform, state, error);
           }
           rethrow;
         }
@@ -6415,13 +6480,14 @@ class AppFirstRuntimeBootstrapper
         } on BootstrapFailure catch (error) {
           if (attempt == 0 && _isSessionFailure(error.statusCode)) {
             state = await _startTrial(
-              state: state.copyWith(
-                sessionToken: '',
-              ),
+              state: state,
               hostPlatform: hostPlatform,
               client: client,
             );
             continue;
+          }
+          if (_isSessionFailure(error.statusCode)) {
+            await _rejectSession(hostPlatform, state, error);
           }
           rethrow;
         }
@@ -6490,13 +6556,14 @@ class AppFirstRuntimeBootstrapper
         } on BootstrapFailure catch (error) {
           if (attempt == 0 && _isSessionFailure(error.statusCode)) {
             state = await _startTrial(
-              state: state.copyWith(
-                sessionToken: '',
-              ),
+              state: state,
               hostPlatform: hostPlatform,
               client: client,
             );
             continue;
+          }
+          if (_isSessionFailure(error.statusCode)) {
+            await _rejectSession(hostPlatform, state, error);
           }
           rethrow;
         }
@@ -7155,17 +7222,15 @@ class AppFirstRuntimeBootstrapper
     required HttpClient client,
   }) {
     // An existing install must refresh its device session, never bootstrap a
-    // second trial identity. Callers clear only the expired access token, so
-    // the securely retained rotating credential is still available here.
+    // second trial identity. Keep the original pair for the replacement guard.
     if (state.refreshToken.trim().isNotEmpty) {
       return _refreshSession(
         state: state,
         hostPlatform: hostPlatform,
-        client: client,
       );
     }
     if (state.expectsSecureSessionToken) {
-      return Future<_StoredBootstrapState>.error(const BootstrapFailure(
+      return _rejectSession(hostPlatform, state, const BootstrapFailure(
         'Сессия устройства истекла. Используйте почту или код, чтобы восстановить доступ.',
         statusCode: HttpStatus.unauthorized,
       ));
@@ -7332,9 +7397,8 @@ class AppFirstRuntimeBootstrapper
   Future<_StoredBootstrapState> _refreshSession({
     required _StoredBootstrapState state,
     required HostPlatform hostPlatform,
-    required HttpClient client,
   }) {
-    final key = '${hostPlatform.name}:${state.installId.trim()}:${state.accountId}';
+    final key = '${hostPlatform.name}:${state.installId.trim()}:${state.accountId}:${state.refreshToken}';
     final inFlight = _refreshFlights[key];
     if (inFlight != null) {
       return inFlight;
@@ -7342,7 +7406,6 @@ class AppFirstRuntimeBootstrapper
     final refresh = _refreshSessionWithLatestCredentials(
       state: state,
       hostPlatform: hostPlatform,
-      client: client,
     );
     _refreshFlights[key] = refresh;
     refresh.then<void>(
@@ -7364,7 +7427,6 @@ class AppFirstRuntimeBootstrapper
   Future<_StoredBootstrapState> _refreshSessionWithLatestCredentials({
     required _StoredBootstrapState state,
     required HostPlatform hostPlatform,
-    required HttpClient client,
   }) async {
     final refreshToken = state.refreshToken.trim();
     if (refreshToken.isEmpty) {
@@ -7373,29 +7435,42 @@ class AppFirstRuntimeBootstrapper
         statusCode: HttpStatus.unauthorized,
       );
     }
-    final latest = await _sessionSecretStore.readSessionPair(
-      hostPlatform: hostPlatform,
-      installId: state.installId,
-    );
-    if (_credentialsHaveAdvanced(latest, state)) {
-      return _loadRefreshSuccessor(hostPlatform, state);
+    final latest = await _loadRefreshSuccessor(hostPlatform, state);
+    if (latest.refreshToken != state.refreshToken ||
+        latest.sessionToken != state.sessionToken) {
+      return latest;
     }
+    // Rotation belongs to the saved session, not to a caller's cancellable
+    // profile/account operation. Always finish its guarded secure write.
+    final client = _createHttpClient(hostPlatform);
     try {
-      final response = await _requestJson(
-        method: 'POST',
-        path: '/api/client/session/refresh',
-        client: client,
-        hostPlatform: hostPlatform,
-        body: <String, Object?>{'refresh_token': refreshToken},
-      );
-      final pair = _sessionPairFromResponse(response);
+      Map<String, dynamic>? response;
+      for (var attempt = 0; attempt < 2; attempt++) {
+        try {
+          response = await _requestJson(
+            method: 'POST', path: '/api/client/session/refresh',
+            client: client, hostPlatform: hostPlatform,
+            body: <String, Object?>{'refresh_token': refreshToken},
+          );
+          break;
+        } on BootstrapFailure catch (error) {
+          // The server can return the same unused successor for this exact
+          // refresh. Retry a lost response once while that window is open.
+          if (attempt != 0 ||
+              !(error.operationalCode == 'API-002' ||
+                error.operationalCode == 'API-003' ||
+                const {500, 502, 503, 504}.contains(error.statusCode))) rethrow;
+        }
+      }
+      final receipt = response!;
+      final pair = _sessionPairFromResponse(receipt);
       if (pair == null || pair.refreshToken.trim().isEmpty) {
         throw const BootstrapFailure(
-          'Сессия устройства истекла. Используйте почту или код, чтобы восстановить доступ.',
-          statusCode: HttpStatus.unauthorized,
+          'POKROV не получил полную сессию устройства. Повторите запрос.',
+          operationalCode: 'API-008',
         );
       }
-      final session = _readMap(response['session']);
+      final session = _readMap(receipt['session']);
       final file = await _stateFile(hostPlatform);
       return await _withAppFirstStateFileLock(file, () async {
         final current = await _loadStateFromFile(hostPlatform, file);
@@ -7403,6 +7478,8 @@ class AppFirstRuntimeBootstrapper
         // Keep concurrent profile updates while replacing only this pair.
         if (current == null ||
             current.installId != state.installId ||
+            current.accountId != state.accountId ||
+            current.sessionToken != state.sessionToken ||
             current.refreshToken != refreshToken) {
           throw const BootstrapFailure(
             'Сессия изменилась. Повторите вход.',
@@ -7414,9 +7491,9 @@ class AppFirstRuntimeBootstrapper
           refreshToken: pair.refreshToken,
           accountId: _readText(
             session['canonical_account_id'] ??
-                response['canonical_account_id'] ??
+                receipt['canonical_account_id'] ??
                 session['account_id'] ??
-                response['account_id'],
+                receipt['account_id'],
             fallback: current.accountId,
           ),
           expectsSecureSessionToken: true,
@@ -7424,10 +7501,10 @@ class AppFirstRuntimeBootstrapper
         await _runtimeStatsOutbox.rebindAccount(
           hostPlatform,
           legacyAccountId: _readText(
-            session['account_id'] ?? response['account_id'],
+            session['account_id'] ?? receipt['account_id'],
           ),
           canonicalAccountId: _readText(
-            session['canonical_account_id'] ?? response['canonical_account_id'],
+            session['canonical_account_id'] ?? receipt['canonical_account_id'],
           ),
           installId: nextState.installId,
         );
@@ -7439,7 +7516,9 @@ class AppFirstRuntimeBootstrapper
         return nextState;
       });
     } on BootstrapFailure catch (error) {
-      if (_isSessionFailure(error.statusCode)) {
+      if (error.statusCode == HttpStatus.unauthorized ||
+          error.statusCode == HttpStatus.forbidden ||
+          error.statusCode == HttpStatus.notFound) {
         final latest = await _sessionSecretStore.readSessionPair(
           hostPlatform: hostPlatform,
           installId: state.installId,
@@ -7447,17 +7526,45 @@ class AppFirstRuntimeBootstrapper
         if (_credentialsHaveAdvanced(latest, state)) {
           return _loadRefreshSuccessor(hostPlatform, state);
         }
-        throw BootstrapFailure(
-          error.reason != null ? error.message
-              : 'Сессия устройства истекла. Используйте почту или код, чтобы восстановить доступ.',
-          statusCode: HttpStatus.unauthorized,
-          operation: error.operation,
-          code: error.code,
-          requestId: error.requestId,
-        );
+        return _rejectSession(hostPlatform, state, error);
       }
       rethrow;
+    } finally {
+      client.close(force: true);
     }
+  }
+
+  Future<Never> _rejectSession(HostPlatform hostPlatform,
+      _StoredBootstrapState state, BootstrapFailure error) async {
+    final file = await _stateFile(hostPlatform);
+    await _withAppFirstStateFileLock(file, () async {
+      final current = await _loadStateFromFile(
+          hostPlatform, file, allowMissingSession: true);
+      if (current == null || current.installId != state.installId ||
+          current.accountId != state.accountId ||
+          current.sessionToken != state.sessionToken ||
+          current.refreshToken != state.refreshToken) {
+        throw const BootstrapFailure(
+            'Сессия изменилась. Повторите вход.', code: 'session_changed');
+      }
+      await _persistStateToFile(hostPlatform: hostPlatform, file: file,
+        state: current.copyWith(sessionToken: '', refreshToken: '',
+            expectsSecureSessionToken: true));
+      try {
+        await _managedProfileCache.clear(hostPlatform.name);
+      } on Object {
+        // The missing secure pair also prevents loading a cached profile.
+      }
+    });
+    throw BootstrapFailure(
+      error.reason != null ? error.message
+          : 'Сессия устройства истекла. Используйте почту или код, чтобы восстановить доступ.',
+      statusCode: HttpStatus.unauthorized,
+      operation: error.operation,
+      code: error.code.isEmpty ? 'auth_session_expired' : error.code,
+      requestId: error.requestId,
+      sessionRejected: true,
+    );
   }
 
   bool _credentialsHaveAdvanced(
@@ -10854,8 +10961,7 @@ class AppFirstRuntimeBootstrapper
   }
 
   bool _isSessionFailure(int? statusCode) =>
-      statusCode == HttpStatus.unauthorized ||
-      statusCode == HttpStatus.forbidden;
+      statusCode == HttpStatus.unauthorized;
 
   bool _shouldRetryStatus(int statusCode) =>
       statusCode == HttpStatus.requestTimeout ||
@@ -12018,9 +12124,7 @@ class AppFirstSupportTicketService
           if (attempt == 0 &&
               _bootstrapper._isSessionFailure(error.statusCode)) {
             state = await _startTrial(
-              state: state.copyWith(
-                sessionToken: '',
-              ),
+              state: state,
               hostPlatform: hostPlatform,
               client: client,
             );
@@ -12122,9 +12226,7 @@ class AppFirstSupportTicketService
           if (attempt == 0 &&
               _bootstrapper._isSessionFailure(error.statusCode)) {
             state = await _startTrial(
-              state: state.copyWith(
-                sessionToken: '',
-              ),
+              state: state,
               hostPlatform: hostPlatform,
               client: client,
             );

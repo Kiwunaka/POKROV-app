@@ -34,6 +34,8 @@ Windows checks must not be repeated. Public release, update pointers and all
 new customer contact remain prohibited; automation stays PAUSED.
 
 Public metadata remains **1.4.5 / schema 0 / min-supported 1.3.0**.
+As of 2 November the live routing catalog is **32**, provider policy **9**;
+catalog expiry is **2026-11-17T19:36:53Z**. Active ML is not a 1.5.0 gate.
 **1.5.0+4175 is a draft with seven assets**, not a public release. The
 16 October draft packages contain production-signed universal, arm64-v8a,
 armeabi-v7a and x86_64 APKs plus the unsigned Windows setup, release-index and
@@ -43,7 +45,7 @@ setup exited 0 and app/service/Core 1.2.14 started in the Clean VM. The seven
 assets were checked against the draft; unchanged protocol QA was not repeated.
 Strict-v2 is not required by the current release plan.
 
-On 29 October provider policy **5/state 4/security 1** was published once with
+Historical 29 October snapshot: provider policy **5/state 4/security 1** was published once with
 WLrus Windows covering both exact Gemini hosts. DNS-AI Windows, WLrus Android
 and the existing provider/permission objects stayed unchanged; catalog
 **32/state 31/security 2** and signed compatibility 31 remain live. Windows 4239

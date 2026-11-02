@@ -553,6 +553,39 @@ void main() {
     expect(selected.profileName, 'de:profile_0');
   });
 
+  test('native blackhole timeout returns before host settlement cancellation and is remembered', () async {
+    final selector = SmartConnectCandidateSelector();
+    final blackhole = _candidate(0);
+    final catalog = _catalog([blackhole]);
+    final failures = <String>[];
+    var cancelledBeforeReply = false;
+    await expectLater(selector.select(
+      catalog: catalog, network: 'network-a', platform: HostPlatform.android,
+      cancelled: Completer<void>().future,
+      probeTimeout: const Duration(milliseconds: 20),
+      probeSettlementTimeout: const Duration(milliseconds: 100),
+      onProbeResult: (_, result) => failures.add(result.failureKind),
+      probe: (_, cancelled, timeout) async {
+        unawaited(cancelled.then((_) => cancelledBeforeReply = true));
+        await Future<void>.delayed(timeout + const Duration(milliseconds: 10));
+        expect(cancelledBeforeReply, isFalse);
+        return const SmartConnectCandidateProbeResult.failure('timeout',
+          probeStage: 'read_headers', probeError: {'cancel_state': 'deadline'});
+      },
+    ), throwsA(isA<SmartConnectSelectionExhausted>()));
+    expect(failures, ['timeout']);
+    final retried = <String>[];
+    final selected = await selector.select(
+      catalog: _catalog([blackhole, _candidate(1)]), network: 'network-a',
+      platform: HostPlatform.android, cancelled: Completer<void>().future,
+      probe: (candidate, _, __) async {
+        retried.add(candidate.candidateRef);
+        return _success(candidate);
+      });
+    expect(selected.profileName, 'de:profile_1');
+    expect(retried, isNot(contains(blackhole.candidateRef)));
+  });
+
   test('all candidates are retried when failure memory filters the whole catalog', () async {
     final selector = SmartConnectCandidateSelector();
     final catalog = _catalog([_candidate(0), _candidate(1)]);

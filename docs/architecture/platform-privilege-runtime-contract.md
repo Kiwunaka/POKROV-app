@@ -641,6 +641,26 @@ it. A missing or exhausted cache proceeds to the ordinary API path; user Apply a
 manual repair retain their previous order. API availability no longer delays this
 handoff's first cached probe, and neither probing nor handoff extends cache expiry.
 
+Android and Windows retire a failed handoff only on fresh healthy proof for its
+unchanged command, profile inputs, source and exact staged/effective digest.
+Account replacement cancels the prior connection, explicitly stops its TUN and
+invalidates Android's reusable profile before loading the new account. A confirmed
+session rejection also stops retained handoff protection. Stop never toggles a
+completed pending attempt back on; pending settlement uses native state and
+failure codes, independently of localized status text. Snapshot reads and
+cancellation joins use the existing action timeout. Candidate Core deadlines stay
+unchanged, with the existing candidate work allowance reserved for returning a
+typed outcome before host cancellation; only actual network failures are learned.
+
+Connect, reconnect and recovery share one monotonic operation deadline. Its
+allowance is derived from the existing cold-profile maximum, largest candidate
+group and stage/connect action budgets, with the native pending-connect window
+as a lower bound. Queued automatic retries inherit the original clock across
+preparation and backoff. Phase requests receive the remaining allowance; expiry
+uses the existing cancellation owner, joins native work and reports the fixed
+`connect_deadline` / `CONN-008` once. Cleanup keeps its existing confirmation
+budgets, and an unconfirmed native owner prevents another mutation.
+
 The ordinary cache reserves a different admitted bridge host before another
 RAW/XHTTP alias of the same ingress, preferring a different exit node when both
 are available. Current Mini aliases share Cinema; RF2 and ru_spb aliases share

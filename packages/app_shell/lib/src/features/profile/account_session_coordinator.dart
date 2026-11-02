@@ -33,7 +33,7 @@ class AccountSessionCoordinator {
 
   bool recordSessionFailure(Object error) {
     if (_loginRecoveryRequired || error is! BootstrapFailure ||
-        !(error.statusCode == 401 || const {
+        !(error.sessionRejected || const {
           'auth_session_expired', 'device_recovery_required', 'fresh_auth_required',
         }.contains(error.code))) return false;
     _loginRecoveryRequired = true;
@@ -66,13 +66,14 @@ class AccountSessionCoordinator {
     required Future<void> Function() refreshInbox,
     required bool Function() isActive,
   }) async {
+    if (_loginRecoveryRequired) return;
     // These reads can refresh the same expired session. Preserve their order
     // to avoid competing account transactions during first launch.
     await refreshSubscription();
-    if (isActive()) {
+    if (!_loginRecoveryRequired && isActive()) {
       await refreshBonus();
     }
-    if (isActive()) {
+    if (!_loginRecoveryRequired && isActive()) {
       await refreshInbox();
     }
   }

@@ -320,10 +320,9 @@ final class _RuntimeStatsOutbox {
       final state = await owner._loadState(platform);
       if (!record.binding.matches(state) || owner.invitationNetworkDeferred)
         return accepted;
-      HttpClient? client;
+      final cancelled = Completer<void>();
       var requestStarted = false;
       try {
-        client = owner._createHttpClient(platform);
         for (var attempt = 0;; attempt++) {
           final remaining =
               owner.smartConnectTelemetryDeadline - elapsed.elapsed;
@@ -331,9 +330,9 @@ final class _RuntimeStatsOutbox {
           try {
             requestStarted = true;
             final response = await owner
-                ._requestJson(
-                    client: client,
-                    bearerToken: state!.sessionToken,
+                ._requestClientJsonWithSession(
+                    requiredBinding: record.binding,
+                    cancelled: cancelled.future,
                     hostPlatform: platform,
                     method: 'POST',
                     path: '/api/client/runtime/stats',
@@ -364,7 +363,7 @@ final class _RuntimeStatsOutbox {
         }
         return accepted;
       } finally {
-        client?.close(force: true);
+        cancelled.complete();
       }
       accepted.add(record.key);
       await _withAppFirstStateFileLock(file, () async {

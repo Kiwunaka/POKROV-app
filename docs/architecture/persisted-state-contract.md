@@ -153,12 +153,15 @@ through the app. Reading a legacy profile never grants the new marker or tears
 down an already active tunnel. Runtime schema 1 and profile files remain retained.
 These source changes and migration paths are `NOT_VERIFIED`.
 
-The managed-profile cache also retains `last_observed_at` in its version-1
-secure-storage envelope. Reads serialize with mutations and advance this
-observation even when a record is expired. A subsequent earlier wall-clock
-value makes the cache unavailable after restart as well; profile verification
-timestamps are never renewed by this metadata. Existing envelopes establish
-the observation on their first read. This is not an independent trusted clock.
+The managed-profile cache retains `last_observed_at` in its version-1
+secure-storage envelope. Normal reads serialize with mutations without rewriting
+the encrypted profile block. Observed expiry advances the durable rollback fence,
+so setting the clock back cannot revive expired material after restart. A new
+authorized download replaces that observation and can replace an older download
+whose verification timestamp is now in the future after a clock correction.
+Offline reads never renew verification time or the existing access-expiry window.
+Ordinary resume and status refresh preserve a background profile refresh's owner;
+connection commands, account replacement and profile-input changes still fence it.
 
 ## Version Routing and Rollback
 
