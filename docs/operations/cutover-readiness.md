@@ -12,9 +12,14 @@ production-signed/non-debuggable APKs, the unsigned Windows setup and its
 single-installer ZIP. Core `98af7fd` (1.2.15/ABI2), authenticated Slipstream,
 Zapret2/Lua, F82 and trust inputs are unchanged. APK versions/ABIs/model and
 packaged Core/Slipstream bytes passed; Windows version/model/staged runtime
-cohort and exact ZIP setup identity passed. Local unpackers do not support
-this setup's Inno 6.7 format, so installed payload verification remains for the
-VM. No device check, upload or release publication ran for 4260.
+cohort and exact ZIP setup identity passed. The normal VM upgrade from 4258
+retained account/install identity; all 12 installed runtime files matched the
+manifest. Onest/Unbounded, Home, one minimize/resume and the help entry passed,
+with no unhandled error captured. One cabinet handoff after the new Brain and
+static deployment opened Telegram proxy without another login or error. No
+proxy, OTP, message, report or VPN connection was started. Tray Exit restored
+settings, DNS, all 16 routes and proxies; owned processes/TUN/guard were absent
+and the VM is PoweredOff/Unlocked. Phone checks, upload and publication did not run.
 
 App-shell analysis and 45 focused tests passed. The full run had 334 passes,
 6 skips and one timing assertion failure; that last case passed separately
@@ -36,7 +41,10 @@ and transport trust defines. Four production-signed APKs (certificate
 `E:/POKROV-tools/temp/release-1.5.0-4258` and in the owner-only GitHub draft
 «POKROV 1.5.0+4258 · закрытая сборка» (not published, no tag, no update
 pointer). Analyze and package tests passed; the current shell regression
-result is recorded with 4260 above. No phone, VM, TalkBack or Narrator check ran.
+result is recorded with 4260 above. The VM upgrade from 4257 retained identity;
+tabs, widget editing/restoration, DNS search, recovery, diagnostics and proxy
+entry passed. Exit restored the network/settings baseline and powered off the
+VM. Phone, TalkBack and Narrator checks did not run.
 
 Private **1.5.0+4257** contains six packages from App `a4f69339` under
 `E:/POKROV-tools/temp/release-1.5.0-4257`, with Core `98af7fd` (1.2.15/ABI2)
