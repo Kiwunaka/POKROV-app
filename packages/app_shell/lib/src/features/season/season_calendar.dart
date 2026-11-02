@@ -3,23 +3,22 @@
 /// the checks below: 9 May, Easter, 12 April, then the fixed holidays.
 library;
 
-/// Season ids; they match `PokrovSeason` names in `pokrov_app_ui`.
-enum PokrovSeasonId { halloween, newYear, christmas, valentine, defender, womensDay, aprilFools, cosmonautics, easter, victoryDay }
+import 'package:pokrov_app_ui/pokrov_app_ui.dart' show PokrovSeason;
 
-PokrovSeasonId? pokrovSeasonForDate(DateTime now) {
+PokrovSeason? pokrovSeasonForDate(DateTime now) {
   final value = now.month * 100 + now.day;
   bool within(int from, int to) => value >= from && value <= to;
-  if (within(508, 509)) return PokrovSeasonId.victoryDay;
+  if (within(508, 509)) return PokrovSeason.victoryDay;
   final sinceEaster = DateTime.utc(now.year, now.month, now.day).difference(orthodoxEaster(now.year)).inDays;
-  if (sinceEaster == 0 || sinceEaster == 1) return PokrovSeasonId.easter;
-  if (within(412, 412)) return PokrovSeasonId.cosmonautics;
-  if (within(401, 401)) return PokrovSeasonId.aprilFools;
-  if (within(307, 308)) return PokrovSeasonId.womensDay;
-  if (within(222, 223)) return PokrovSeasonId.defender;
-  if (within(213, 214)) return PokrovSeasonId.valentine;
-  if (within(106, 108)) return PokrovSeasonId.christmas;
-  if (within(1215, 1231) || within(101, 105)) return PokrovSeasonId.newYear;
-  if (within(1025, 1031) || within(1101, 1101)) return PokrovSeasonId.halloween;
+  if (sinceEaster == 0 || sinceEaster == 1) return PokrovSeason.easter;
+  if (within(412, 412)) return PokrovSeason.cosmonautics;
+  if (within(401, 401)) return PokrovSeason.aprilFools;
+  if (within(307, 308)) return PokrovSeason.womensDay;
+  if (within(222, 223)) return PokrovSeason.defender;
+  if (within(213, 214)) return PokrovSeason.valentine;
+  if (within(106, 108)) return PokrovSeason.christmas;
+  if (within(1215, 1231) || within(101, 105)) return PokrovSeason.newYear;
+  if (within(1025, 1031) || within(1101, 1101)) return PokrovSeason.halloween;
   return null;
 }
 

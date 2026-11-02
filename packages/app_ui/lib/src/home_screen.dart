@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'brand.dart';
 import 'connect_button.dart';
 import 'models.dart';
+import 'season.dart';
 import 'tokens.dart';
 import 'widgets.dart';
 
@@ -42,7 +43,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final error = data.phase == ConnectionPhase.error;
-    return SafeArea(
+    return PokrovSeasonBackdrop(phase: data.phase, child: SafeArea(
       bottom: false,
       child: ListView(
         padding: EdgeInsets.fromLTRB(16, 8, 16, 112),
@@ -99,7 +100,7 @@ class HomeScreen extends StatelessWidget {
           if (_advanced) ..._advancedBlock(context) else ..._simpleBlock(error),
         ],
       ),
-    );
+    ));
   }
 
   List<Widget> _simpleBlock(bool error) {

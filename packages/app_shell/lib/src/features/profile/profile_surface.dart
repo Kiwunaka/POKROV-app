@@ -36,6 +36,8 @@ class _ProfileSection extends StatelessWidget {
     this.onOpenBypass,
     required this.themeMode,
     required this.onThemeModeChanged,
+    this.seasonalTheme = true,
+    this.onSeasonalThemeChanged,
     required this.interfaceMode,
     required this.onInterfaceModeChanged,
     required this.subscriptionInfo,
@@ -95,6 +97,8 @@ class _ProfileSection extends StatelessWidget {
   final VoidCallback? onOpenBypass;
   final ThemeMode themeMode;
   final ValueChanged<ThemeMode> onThemeModeChanged;
+  final bool seasonalTheme;
+  final ValueChanged<bool>? onSeasonalThemeChanged;
   final PokrovInterfaceMode interfaceMode;
   final ValueChanged<PokrovInterfaceMode> onInterfaceModeChanged;
   final ClientSubscriptionInfo? subscriptionInfo;
@@ -236,7 +240,8 @@ class _ProfileSection extends StatelessWidget {
         onActivate: () => _showRedeemSheet(context, hintCode: appContext.redeemHint,
           onRedeem: (code) => onOpenHandoff('redeem', code),
           onEmailRecovery: () => onOpenHandoff('email-recovery', '')),
-        onTheme: () => _showThemeModeSheet(context, selected: themeMode, onChanged: onThemeModeChanged),
+        onTheme: () => _showThemeModeSheet(context, selected: themeMode, onChanged: onThemeModeChanged,
+          seasonal: seasonalTheme, onSeasonalChanged: onSeasonalThemeChanged),
         onNotifications: () {
           onOpenNotifications();
           _showNotificationsSheet(context, notifications: notifications,
@@ -294,6 +299,8 @@ void _showThemeModeSheet(
   BuildContext context, {
   required ThemeMode selected,
   required ValueChanged<ThemeMode> onChanged,
+  bool seasonal = true,
+  ValueChanged<bool>? onSeasonalChanged,
 }) {
   void select(ThemeMode mode) {
     // Apply immediately so the springy checkmark is visible, then let the
@@ -353,6 +360,19 @@ void _showThemeModeSheet(
               title: 'Тёмная',
               selected: selected == ThemeMode.dark,
               onTap: () => select(ThemeMode.dark),
+            ),
+            if (onSeasonalChanged != null) StatefulBuilder(
+              builder: (context, setSheet) => SwitchListTile.adaptive(
+                key: const ValueKey('profile-seasonal-theme'),
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Праздничное оформление'),
+                subtitle: const Text('Украшения в праздники по дате на устройстве'),
+                value: seasonal,
+                onChanged: (value) {
+                  setSheet(() => seasonal = value);
+                  onSeasonalChanged(value);
+                },
+              ),
             ),
           ],
         ),

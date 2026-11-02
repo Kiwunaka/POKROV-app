@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'models.dart';
+import 'season.dart';
 import 'tokens.dart';
 
 /// The big round «Подключить» button with a live ring.
@@ -10,7 +11,8 @@ import 'tokens.dart';
 /// connecting: an arc spins around the circle;
 /// on: the circle fills green and soft waves leave it;
 /// error: the ring turns amber and the label says «Повторить».
-/// With reduced motion the ring stays still.
+/// With reduced motion the ring stays still. A holiday season adds its
+/// decoration around the ring; it is hidden on an error.
 class PokrovConnectButton extends StatefulWidget {
   const PokrovConnectButton({super.key, required this.phase, required this.onPressed, this.diameter = 232, this.label});
 
@@ -28,6 +30,7 @@ class PokrovConnectButton extends StatefulWidget {
 class _PokrovConnectButtonState extends State<PokrovConnectButton> with TickerProviderStateMixin {
   late final AnimationController _spin = AnimationController(vsync: this, duration: Duration(milliseconds: 1100));
   late final AnimationController _waves = AnimationController(vsync: this, duration: Duration(milliseconds: 2800));
+  late final PokrovSeasonClock _season = PokrovSeasonClock(this);
 
   bool get _reduceMotion => MediaQuery.maybeOf(context)?.disableAnimations ?? false;
 
@@ -40,11 +43,15 @@ class _PokrovConnectButtonState extends State<PokrovConnectButton> with TickerPr
   @override
   void didUpdateWidget(PokrovConnectButton oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.phase != widget.phase) _sync();
+    if (oldWidget.phase != widget.phase) {
+      _sync();
+      _season.wake();
+    }
   }
 
   void _sync() {
     final calm = _reduceMotion;
+    _season.allow(PokrovSeasonTheme.of(context) != null && widget.phase != ConnectionPhase.error && !calm && TickerMode.of(context));
     if (widget.phase == ConnectionPhase.connecting && !calm) {
       if (!_spin.isAnimating) _spin.repeat();
     } else {
@@ -62,6 +69,7 @@ class _PokrovConnectButtonState extends State<PokrovConnectButton> with TickerPr
   void dispose() {
     _spin.dispose();
     _waves.dispose();
+    _season.dispose();
     super.dispose();
   }
 
@@ -83,6 +91,10 @@ class _PokrovConnectButtonState extends State<PokrovConnectButton> with TickerPr
       ConnectionPhase.on => 'Выключить защиту',
       ConnectionPhase.error => 'Повторить подключение',
     };
+    final season = PokrovSeasonTheme.of(context);
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    PokrovSeasonButtonPainter? decor({bool face = false}) => season == null || error ? null
+        : PokrovSeasonButtonPainter(season: season, phase: phase, dark: dark, clock: _season, face: face);
     final iconColor = on ? pokrovOnAccent(context) : (error ? pokrovColor(context, PokrovColors.warnIcon) : pokrovColor(context, PokrovColors.accent));
 
     return SizedBox(
@@ -98,6 +110,7 @@ class _PokrovConnectButtonState extends State<PokrovConnectButton> with TickerPr
                 spin: _spin,
                 waves: _waves,
                 innerRadius: widget.diameter / 2,
+                accent: pokrovColor(context, PokrovColors.accent),
               ),
             ),
           ),
@@ -117,7 +130,7 @@ class _PokrovConnectButtonState extends State<PokrovConnectButton> with TickerPr
                 color: on ? pokrovColor(context, PokrovColors.accent) : pokrovColor(context, PokrovColors.surface),
                 boxShadow: [
                   BoxShadow(
-                    color: on ? Color(0x5912805A) : Color(0x1F103D2E),
+                    color: on ? pokrovColor(context, PokrovColors.accent).withValues(alpha: 0.35) : Color(0x1F103D2E),
                     blurRadius: 44,
                     offset: Offset(0, 18),
                   ),
@@ -129,36 +142,44 @@ class _PokrovConnectButtonState extends State<PokrovConnectButton> with TickerPr
                 clipBehavior: Clip.antiAlias,
                 child: InkWell(
                   onTap: widget.onPressed,
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        AnimatedSwitcher(
-                          duration: PokrovMotion.quick,
-                          transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
-                          child: Icon(
-                            Icons.power_settings_new_rounded,
-                            key: ValueKey(iconColor),
-                            size: widget.diameter * 0.23,
-                            color: iconColor,
+                  child: CustomPaint(
+                    painter: decor(face: true),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AnimatedSwitcher(
+                            duration: PokrovMotion.quick,
+                            transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
+                            child: Icon(
+                              Icons.power_settings_new_rounded,
+                              key: ValueKey(iconColor),
+                              size: widget.diameter * 0.23,
+                              color: iconColor,
+                            ),
                           ),
-                        ),
-                        SizedBox(height: widget.diameter * 0.04),
-                        AnimatedDefaultTextStyle(
-                          duration: PokrovMotion.state,
-                          style: TextStyle(
-                            fontFamily: pokrovFontFamily,
-                            fontSize: widget.diameter * 0.09,
-                            fontWeight: FontWeight.w800,
-                            color: on ? pokrovOnAccent(context) : pokrovColor(context, PokrovColors.ink),
+                          SizedBox(height: widget.diameter * 0.04),
+                          AnimatedDefaultTextStyle(
+                            duration: PokrovMotion.state,
+                            style: TextStyle(
+                              fontFamily: pokrovFontFamily,
+                              fontSize: widget.diameter * 0.09,
+                              fontWeight: FontWeight.w800,
+                              color: on ? pokrovOnAccent(context) : pokrovColor(context, PokrovColors.ink),
+                            ),
+                            child: Text(label),
                           ),
-                          child: Text(label),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
+            ),
+          ),
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(key: const ValueKey('season-decor'), painter: decor()),
             ),
           ),
         ],
@@ -168,13 +189,14 @@ class _PokrovConnectButtonState extends State<PokrovConnectButton> with TickerPr
 }
 
 class _RingPainter extends CustomPainter {
-  _RingPainter({required this.phase, required this.spin, required this.waves, required this.innerRadius})
+  _RingPainter({required this.phase, required this.spin, required this.waves, required this.innerRadius, required this.accent})
       : super(repaint: Listenable.merge([spin, waves]));
 
   final ConnectionPhase phase;
   final Animation<double> spin;
   final Animation<double> waves;
   final double innerRadius;
+  final Color accent;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -202,7 +224,7 @@ class _RingPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 5
           ..strokeCap = StrokeCap.round
-          ..color = PokrovColors.accent;
+          ..color = accent;
         final start = spin.value * 2 * math.pi - math.pi / 2;
         canvas.drawArc(Rect.fromCircle(center: center, radius: outer), start, math.pi * 0.55, false, arc);
       case ConnectionPhase.on:
@@ -212,16 +234,16 @@ class _RingPainter extends CustomPainter {
           final wave = Paint()
             ..style = PaintingStyle.stroke
             ..strokeWidth = 2
-            ..color = PokrovColors.accent.withValues(alpha: 0.45 * (1 - t));
+            ..color = accent.withValues(alpha: 0.45 * (1 - t));
           if (waves.value > 0 || offset == 0) canvas.drawCircle(center, radius, wave);
         }
         stroke
-          ..color = PokrovColors.accent.withValues(alpha: 0.3)
+          ..color = accent.withValues(alpha: 0.3)
           ..strokeWidth = 3;
         canvas.drawCircle(center, outer, stroke);
     }
   }
 
   @override
-  bool shouldRepaint(_RingPainter oldDelegate) => oldDelegate.phase != phase || oldDelegate.innerRadius != innerRadius;
+  bool shouldRepaint(_RingPainter oldDelegate) => oldDelegate.phase != phase || oldDelegate.innerRadius != innerRadius || oldDelegate.accent != accent;
 }
