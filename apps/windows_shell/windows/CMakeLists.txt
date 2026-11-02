@@ -128,8 +128,8 @@ endif()
 
 # Approved local-DPI package assets are required. No fetching or execution;
 # never package upstream .bat files.
-foreach(POKROV_DPI_FILE winws.exe cygwin1.dll WinDivert.dll WinDivert64.sys
-    tls_clienthello_4pda_to.bin tls_clienthello_www_google_com.bin NOTICES.txt)
+foreach(POKROV_DPI_FILE winws2.exe cygwin1.dll WinDivert.dll WinDivert64.sys
+    zapret-lib.lua zapret-antidpi.lua tls_clienthello_www_google_com.bin NOTICES.txt)
   if(NOT EXISTS "${POKROV_RUNTIME_DIR}/local-dpi/${POKROV_DPI_FILE}")
     message(FATAL_ERROR "Incomplete approved local-dpi bundle: ${POKROV_DPI_FILE}")
   endif()

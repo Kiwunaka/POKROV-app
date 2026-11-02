@@ -3778,6 +3778,19 @@ void main() {
     expect(jsonDecode(await stateFile.readAsString()), establishedState);
     expect((await sessionSecretStore.readSessionPair(hostPlatform: HostPlatform.windows,
         installId: 'concurrent-login-install'))?.refreshToken, 'concurrent-login-refresh');
+
+    // A fresh pairing code also recovers metadata whose secure pair is gone.
+    beforeClaimResponse = null;
+    await sessionSecretStore.deleteSessionToken(
+      hostPlatform: HostPlatform.windows, installId: 'concurrent-login-install');
+    final recovered = await bootstrapper.claimDevicePairingCode(
+      hostPlatform: HostPlatform.windows, code: 'NPQR-6789');
+    expect(recovered.ok, isTrue);
+    expect(recovered.accountId, 'paired-account-id');
+    expect(recovered.installId, isNot('concurrent-login-install'));
+    expect(claimBearers.last, isNull);
+    expect((await sessionSecretStore.readSessionPair(hostPlatform: HostPlatform.windows,
+        installId: recovered.installId))?.refreshToken, 'paired-refresh-token');
   });
 
   test('refreshes an expired access session without starting a second trial',

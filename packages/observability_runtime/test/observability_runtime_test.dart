@@ -7,10 +7,15 @@ import 'package:pokrov_observability_runtime/observability_runtime.dart';
 void main() {
   test('connection deadline maps to timeout', () {
     expect(OperationalFailureMapper.connection('connect_deadline'), 'CONN-008');
+    expect(OperationalFailureMapper.portal(statusCode: 409, platformCode: 'device_limit_reached'), 'AUTH-004');
+    expect(OperationalFailureMapper.portal(statusCode: 409, platformCode: 'pairing_code_used'), 'API-008');
   });
 
   group('typed privacy contract', () {
     test('rejects unknown fields and privacy-mode widening', () {
+      final reason = _event(1, attributes: const {'failure_reason': 'device_limit_reached'});
+      expect(OperationalBreadcrumb.fromEvent(reason).failureReason, PortalFailureReason.deviceLimitReached);
+      expect(() => _event(1, attributes: const {'failure_reason': 'private_unknown_reason'}), throwsArgumentError);
       expect(
         () => _event(1, attributes: const {'destination': 'planted'}),
         throwsArgumentError,

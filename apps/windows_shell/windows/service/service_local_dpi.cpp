@@ -345,17 +345,20 @@ bool RefreshWindowsLocalDpiRetryIDs(CoreRuntime& core,
 
 std::wstring WindowsLocalDpiCommand(const std::wstring& directory,
     const std::string& hostlist, DWORD interface_index, WindowsLocalDpiStrategy strategy) {
-  const auto pattern = Quote(directory + L"tls_clienthello_www_google_com.bin");
-  const auto scope = Quote(directory + L"winws.exe") + L" --wf-iface=" + std::to_wstring(interface_index) +
-      L" --wf-tcp=443 --filter-tcp=443 --filter-l7=tls --hostlist-domains=" +
-      std::wstring(hostlist.begin(), hostlist.end()) + L" --ip-id=zero";
+  // winws2 and both Lua libraries are one pinned release (LuaCompat 6).
+  // TLS needs outgoing data and the constructor's automatic SYN/FIN/RST capture.
+  const auto scope = Quote(directory + L"winws2.exe") + L" --wf-iface=" + std::to_wstring(interface_index) +
+      L" --wf-tcp-out=443 --lua-init=@" + Quote(directory + L"zapret-lib.lua") +
+      L" --lua-init=@" + Quote(directory + L"zapret-antidpi.lua") +
+      L" --filter-tcp=443 --filter-l7=tls --hostlist-domains=" +
+      std::wstring(hostlist.begin(), hostlist.end()) + L" --out-range=-d10 --payload=tls_client_hello";
   if (strategy == WindowsLocalDpiStrategy::kMultidisorderMidsld) {
-    // Upstream zapret blockcheck TLS candidate; no fake bytes or sequence overlap.
-    return scope + L" --dpi-desync=multidisorder --dpi-desync-split-pos=1,midsld";
+    return scope + L" --lua-desync=multidisorder:pos=1,midsld:ip_id=zero";
   }
-  // Flowseal 1.10.3/1.10.4 ALT4 Google TCP/443 branch; default split position is 2.
-  return scope + L" --dpi-desync=fake,multisplit --dpi-desync-repeats=6"
-      L" --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=1000 --dpi-desync-fake-tls=" + pattern;
+  // Translate the bounded ALT4 retry to zapret2's documented Lua functions.
+  return scope + L" --blob=tls_google:@" + Quote(directory + L"tls_clienthello_www_google_com.bin") +
+      L" --lua-desync=fake:blob=tls_google:tcp_seq=1000:tcp_ack=-66000:repeats=6:ip_id=zero"
+      L" --lua-desync=multisplit:pos=2:ip_id=zero";
 }
 
 std::string WindowsLocalDpiHostList(const std::vector<WindowsLocalDpiService>& services) {
@@ -389,7 +392,8 @@ bool WindowsLocalDpiExecutor::AssetsReady() {
   const auto directory_handle = LockAsset(directory.substr(0, directory.size() - 1), true);
   if (directory_handle == INVALID_HANDLE_VALUE) return false;
   state_->files.push_back(directory_handle);
-  for (const auto* name : {L"winws.exe", L"cygwin1.dll", L"WinDivert.dll", L"WinDivert64.sys",
+  for (const auto* name : {L"winws2.exe", L"cygwin1.dll", L"WinDivert.dll", L"WinDivert64.sys",
+                         L"zapret-lib.lua", L"zapret-antidpi.lua",
                          L"tls_clienthello_www_google_com.bin"}) {
     const auto file = LockAsset(directory + name);
     if (file == INVALID_HANDLE_VALUE) { Stop(); return false; }
@@ -543,7 +547,7 @@ std::string WindowsLocalDpiExecutor::StartChild(
   STARTUPINFOW startup{};
   startup.cb = sizeof(startup);
   PROCESS_INFORMATION process{};
-  if (!::CreateProcessW((directory + L"winws.exe").c_str(), command.data(), nullptr, nullptr, FALSE,
+  if (!::CreateProcessW((directory + L"winws2.exe").c_str(), command.data(), nullptr, nullptr, FALSE,
       CREATE_SUSPENDED | CREATE_NO_WINDOW, nullptr, directory.c_str(), &startup, &process)) {
     Stop(); return "local_dpi_child_failed";
   }

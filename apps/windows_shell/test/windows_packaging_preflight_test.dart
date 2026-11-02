@@ -21,6 +21,7 @@ Future<Directory> _runtimeFixture(
   final root = Directory('../..').absolute;
   for (final relative in [
     'scripts/build-windows-release.ps1',
+    'scripts/candidate-ranker-asset.ps1',
     'scripts/check-client-version-parity.ps1',
     'scripts/support-signing-pin.ps1',
     'config/release-handoff.seed.json',
@@ -76,6 +77,7 @@ function Get-AuthenticodeSignature {
 }
 & (Join-Path $PSScriptRoot 'scripts/build-windows-release.ps1') `
   -SkipBuild -SkipZip -SkipInstaller -SyncRuntime `
+  -CandidateRankerModelPath (Join-Path $PSScriptRoot 'ranker.bin') `
   -RuntimeArtifactsPath (Join-Path $PSScriptRoot 'runtime.json') `
   -CoreArtifactDirectory (Join-Path $PSScriptRoot 'source-runtime') `
   -MsvcRuntimeDirectory (Join-Path $PSScriptRoot 'fixture-msvc')
@@ -97,6 +99,21 @@ function Get-AuthenticodeSignature {
   };
   await File('${fixture.path}/runtime.json')
       .writeAsString(jsonEncode(manifest));
+  // The builder validates the model's header/length before runtime preflight.
+  // These fixture bytes are never used for inference or an application build.
+  await Directory('${fixture.path}/packages/app_shell/assets/models')
+      .create(recursive: true);
+  final model = File('${fixture.path}/ranker.bin');
+  await model.writeAsBytes(utf8.encode('PKRTF001'));
+  final modelHandle = await model.open(mode: FileMode.append);
+  await modelHandle.truncate(3734808);
+  await modelHandle.close();
+  if (builtBundle) {
+    final builtModel = File('${fixture.path}/fixture-build/data/flutter_assets/'
+        'packages/pokrov_app_shell/assets/models/candidate-ranker-v1.bin');
+    await builtModel.parent.create(recursive: true);
+    await model.copy(builtModel.path);
+  }
   await Directory('${fixture.path}/source-runtime').create();
   await File('${fixture.path}/source-runtime/pokrov-core.dll')
       .writeAsString('abc');
@@ -139,6 +156,8 @@ Future<ProcessResult> _preflight(Directory fixture,
         '-SkipBuild',
         '-SkipZip',
         '-SkipInstaller',
+        '-CandidateRankerModelPath',
+        '${fixture.path}/ranker.bin',
         if (sync) '-SyncRuntime',
         '-RuntimeArtifactsPath',
         '${fixture.path}/runtime.json',
@@ -154,6 +173,87 @@ Future<ProcessResult> _preflight(Directory fixture,
     });
 
 void main() {
+  test('runtime sync keeps the selected Zapret2 dependency subdirectory', () async {
+    final fixture = await _runtimeFixture(staged: true);
+    final sourceRoot = Directory('../..').absolute;
+    await File('${sourceRoot.path}/scripts/sync-pokrov-core-runtime.ps1')
+        .copy('${fixture.path}/scripts/sync-pokrov-core-runtime.ps1');
+    final core = Directory('${fixture.path}/core');
+    await core.create();
+    await File('${core.path}/VERSION').writeAsString('1.2.14\n');
+    for (final args in [
+      ['init', '--quiet', core.path],
+      ['-C', core.path, 'add', 'VERSION'],
+      ['-C', core.path, '-c', 'commit.gpgSign=false', '-c', 'user.name=Packaging fixture',
+        '-c', 'user.email=fixture@example.invalid', 'commit', '--quiet', '-m', 'fixture'],
+    ]) {
+      expect((await Process.run('git', args)).exitCode, 0);
+    }
+    final commit = await Process.run('git', ['-C', core.path, 'rev-parse', 'HEAD']);
+    expect(commit.exitCode, 0);
+    final manifestFile = File('${fixture.path}/runtime.json');
+    final manifest = jsonDecode(await manifestFile.readAsString()) as Map<String, dynamic>;
+    final selectedCore = manifest['core'] as Map<String, dynamic>;
+    selectedCore['source_commit'] = (commit.stdout as String).trim();
+    final windows = selectedCore['assets']['windows'] as Map<String, dynamic>;
+    const nested = 'local-dpi/winws2.exe';
+    (windows['runtime_dependencies'] as List).add(nested);
+    (windows['runtime_dependency_size'] as Map)[nested] = 3;
+    (windows['runtime_dependency_sha256'] as Map)[nested] = _abcSha256;
+    await manifestFile.writeAsString(jsonEncode(manifest));
+    final nestedSource = File('${fixture.path}/source-runtime/$nested');
+    await nestedSource.parent.create();
+    await nestedSource.writeAsString('abc');
+    final result = await Process.run('pwsh', [
+      '-NoLogo', '-NoProfile', '-NonInteractive', '-File',
+      '${fixture.path}/scripts/sync-pokrov-core-runtime.ps1',
+      '-CoreRoot', core.path, '-RuntimeArtifactsPath', manifestFile.path,
+      '-CoreArtifactDirectory', '${fixture.path}/source-runtime', '-Platforms', 'windows',
+    ]);
+    expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
+    expect(await File('${fixture.path}/fixture-runtime/$nested').readAsString(), 'abc');
+    expect(await File('${fixture.path}/fixture-runtime/winws2.exe').exists(), isFalse);
+  }, skip: !Platform.isWindows);
+
+  test('packaging excludes old engines and unselected local DPI files', () async {
+    final fixture = await _runtimeFixture(staged: true, builtBundle: true);
+    await File('${fixture.path}/fixture-build/libcronet.dll').writeAsString('abc');
+    final configFile = File('${fixture.path}/config/windows-release.seed.json');
+    final config = jsonDecode(await configFile.readAsString()) as Map<String, dynamic>;
+    (config['required_files'] as List).addAll(['local-dpi/winws2.exe', 'local-dpi/zapret-lib.lua']);
+    await configFile.writeAsString(jsonEncode(config));
+    final dpi = Directory('${fixture.path}/fixture-build/local-dpi');
+    await dpi.create();
+    for (final name in ['winws2.exe', 'zapret-lib.lua', 'winws.exe', 'install.bat']) {
+      await File('${dpi.path}/$name').writeAsString('fixture');
+    }
+    final wrapper = File('${fixture.path}/bundle-preflight.ps1');
+    final preflight = await wrapper.readAsString();
+    // Fake executable metadata only; this fixture never runs a client binary.
+    await wrapper.writeAsString(r'''
+function Get-Item {
+  param([string]$LiteralPath)
+  $item = Microsoft.PowerShell.Management\Get-Item -LiteralPath $LiteralPath
+  if ($LiteralPath -like '*fixture-build*pokrov_windows.exe') {
+    $config = [IO.File]::ReadAllText((Join-Path $PSScriptRoot 'config/windows-release.seed.json')) | ConvertFrom-Json
+    $versionText = [IO.File]::ReadAllText((Join-Path $PSScriptRoot 'apps/windows_shell/pubspec.yaml'))
+    $version = [regex]::Match($versionText, '(?m)^version:\s*(\S+)').Groups[1].Value
+    return [pscustomobject]@{ VersionInfo = [pscustomobject]@{
+      CompanyName = $config.metadata.company_name; FileDescription = $config.metadata.file_description
+      ProductName = $config.metadata.product_name; FileVersion = $version; ProductVersion = $version
+    } }
+  }
+  return $item
+}
+''' + preflight);
+    final result = await _preflight(fixture, sync: true, builtBundle: true);
+    expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
+    final stageRoot = Directory('${fixture.path}/apps/windows_shell/build/release_bundle');
+    final bundle = (await stageRoot.list().where((entry) => entry is Directory).first).path;
+    expect((await Directory('$bundle/local-dpi').list().map((f) => f.uri.pathSegments.last).toList())..sort(),
+        ['winws2.exe', 'zapret-lib.lua']);
+  }, skip: !Platform.isWindows);
+
   for (final staged in [true, false]) {
     test(
         staged

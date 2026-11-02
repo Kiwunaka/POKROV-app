@@ -19,7 +19,7 @@ import 'package:pokrov_app_shell/src/shell/managed_profile_cache.dart';
 import 'package:pokrov_app_shell/src/shell/runtime_connectivity_report.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_diagnostics_collectors/diagnostics_collectors.dart';
-import 'package:pokrov_observability_contracts/observability_contracts.dart' show ObservabilityPrivacyClass;
+import 'package:pokrov_observability_contracts/observability_contracts.dart' show ObservabilityPrivacyClass, PortalFailureReason;
 import 'package:pokrov_observability_runtime/observability_runtime.dart'
     show OperationalAttributePolicy, OperationalBreadcrumb, OperationalFailureMapper;
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
@@ -285,6 +285,8 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
     required bool connected, String errorCode = '', String failureKind = '',
     String? failureOperation,
     int? failureHttpStatus,
+    PortalFailureReason? failureReason,
+    String? failureRequestId,
     String selectedNodeCode = '', String routeMode = '', int? durationMs,
     int? attemptNumber, bool? retryable, String networkClass = '',
     String carrierMccMnc = '', String carrierName = '', String candidateTransport = '',
@@ -301,6 +303,8 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
       'failure_kind': failureKind, 'connectivity': runtimeConnectivityReport(connectivitySnapshot),
       'failure_operation': failureOperation,
       'failure_http_status': failureHttpStatus,
+      'failure_reason': failureReason?.wireValue,
+      'failure_request_id': failureRequestId,
       'egress_probe': egressProbeObservation,
       'native_kind': connectivitySnapshot?.lastFailureKind,
       'candidate_ref': candidateRef, 'candidate_variant': candidateVariant,
@@ -414,6 +418,8 @@ class _QaProfileFailureBootstrapper extends AppFirstRuntimeBootstrapper {
     required HostPlatform hostPlatform, required String runtimePhase, required bool connected,
     String errorCode = '', String failureKind = '', String? failureOperation,
     int? failureHttpStatus,
+    PortalFailureReason? failureReason,
+    String? failureRequestId,
     String selectedNodeCode = '', String routeMode = '', int? durationMs, int? attemptNumber,
     bool? retryable, String networkClass = '', String carrierMccMnc = '', String carrierName = '',
     String candidateTransport = '', String candidateRef = '', String candidateVariant = '',
@@ -547,7 +553,10 @@ Future<({VerifiedRoutingCatalog catalog, VerifiedSmartAccessProviderPolicy provi
           'enabled': true, 'classification': 'geo_restricted', 'reason': 'Synthetic test',
           'evidence_status': 'verified', 'source_ids': ['fixture'], 'evidence_ids': ['fixture'],
           'platforms': ['windows'], 'access_states': ['paid_unlimited'],
-          'route_intents': [{'mode': 'selective', 'action': 'approved_gateway'}],
+          'route_intents': [
+            {'mode': 'selective', 'action': 'approved_gateway'},
+            {'mode': 'smart_safe', 'action': 'approved_gateway'},
+          ],
           'android': [], 'windows': [], 'networks': [], 'external_gateway_policy': 'approved',
           'provider_capability_refs': ['gemini-old', 'gemini-complete'],
           'domains': [for (final domain in domains) {...domain, 'shared': false, 'role': 'web', 'source_ids': ['fixture']}]}],
@@ -618,11 +627,13 @@ Future<VerifiedSmartAccessLease> _smartDnsLease({required VerifiedRoutingCatalog
 class _StartupAccountBootstrapper extends _StatsBootstrapper implements AppFirstClientDataService {
   int subscriptionReads = 0;
   ClientSubscriptionInfo? subscription;
+  BootstrapFailure? subscriptionFailure;
 
   @override
   Future<ClientSubscriptionInfo> fetchClientSubscription({required HostPlatform hostPlatform,
     Duration? requestTimeout, Future<void>? cancelled}) async {
     subscriptionReads++;
+    if (subscriptionFailure case final failure?) throw failure;
     return subscription ?? const ClientSubscriptionInfo(lane: 'trialPremium', accessState: 'trial_premium',
       expiresAt: '', daysLeft: 1, autoRenew: false, renewUrl: null,
       plans: [], trafficPolicy: {});
@@ -1217,6 +1228,7 @@ ConnectionManager _manager(
   PokrovForegroundConnectPolicy? foregroundConnectPolicy,
   Future<bool> Function()? authorizeAndroid,
   PokrovClientObservability? observability,
+  AccountSessionCoordinator? accountSessionCoordinator,
   FirstSessionCoordinator? firstSessionCoordinator,
   Future<CandidateRankerShadow>? candidateRankerShadow,
   Duration actionTimeout = const Duration(seconds: 18),
@@ -1229,7 +1241,7 @@ ConnectionManager _manager(
       candidateRankerShadow: candidateRankerShadow,
       actionTimeout: actionTimeout,
       accountSessionCoordinator:
-          AccountSessionCoordinator(accountActions: null),
+          accountSessionCoordinator ?? AccountSessionCoordinator(accountActions: null),
       firstSessionCoordinator:
           firstSessionCoordinator ?? FirstSessionCoordinator(store: _FirstLaunchStore()),
       clientExperienceStore: experienceStore ?? _ExperienceStore(),
@@ -1782,6 +1794,32 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('subscription failure diagnostics distinguish local denial from an HTTP response', (tester) async {
+    for (final failure in const [
+      BootstrapFailure('local session unavailable', statusCode: 401),
+      BootstrapFailure('service unavailable', statusCode: 503, operation: 'GET /api/client/subscription'),
+    ]) {
+      final bootstrapper = _StartupAccountBootstrapper()..subscriptionFailure = failure;
+      await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: bootstrapper, firstLaunchStore: _FirstLaunchStore(),
+        clientExperienceStore: _CatalogPickerExperience(), themeMode: ThemeMode.light,
+        onThemeModeChanged: (_) {},
+      )));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      final report = bootstrapper.actualReports.singleWhere(
+        (value) => value['error_code'] == 'subscription_refresh_failed');
+      final isHttpResponse = failure.operation != null;
+      expect(report['failure_operation'], isHttpResponse ? 'subscription_refresh' : null);
+      expect(report['failure_http_status'], isHttpResponse ? 503 : null);
+      expect(PokrovAuthRequestDiagnostic.finished(errorCode: failure.operationalErrorCode,
+        failure: failure).httpStatus, isHttpResponse ? 503 : null);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    }
+  });
+
   test('retired Xbox DNS preference returns to automatic without direct AI routing', () async {
     final preferences = PokrovRoutingPreferences.fromJson({
       'dnsPreset': 'xbox',
@@ -2125,9 +2163,9 @@ void main() {
       await tester.tap(find.text('Правила'));
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('rules-advanced-open')), findsNothing);
-      expect(find.text('Windows: Flowseal / zapret.'), findsOneWidget);
+      expect(find.text('Windows: Zapret2.'), findsOneWidget);
       expect(find.byKey(const ValueKey('rules-local-dpi')), ready ? findsOneWidget : findsNothing);
-      expect(find.text('Flowseal / zapret недоступен: служба POKROV не подтвердила готовность компонента.'),
+      expect(find.text('Zapret2 недоступен: служба POKROV не подтвердила готовность компонента.'),
         ready ? findsNothing : findsOneWidget);
       if (ready) {
         await tester.tap(find.text('Всё через POKROV'));
@@ -2986,6 +3024,17 @@ void main() {
     expect(jsonEncode(unavailableReport), isNot(contains('synthetic-private-message')));
     expect(jsonEncode(unavailableReport), isNot(contains('/api/client/')));
     expect(unavailableRuntime.connectCalls, 0);
+
+    final local = _StatsBootstrapper()..failure = const BootstrapFailure(
+      'local session unavailable', statusCode: 401);
+    final localRuntime = _Runtime();
+    final localManager = _manager(localRuntime, local);
+    addTearDown(localManager.dispose);
+    await localManager.connect();
+    final localReport = local.actualReports.singleWhere((value) => value['runtime_phase'] == 'failed');
+    expect(localReport['failure_operation'], isNull);
+    expect(localReport['failure_http_status'], isNull);
+    expect(localRuntime.connectCalls, 0);
 
     final catalog = _CatalogFailureBootstrapper();
     final catalogRuntime = _Runtime();
@@ -6228,6 +6277,59 @@ void main() {
     expect(await smartAccessLeaseRevocation(grant: identity, policy: changed, now: DateTime.now().toUtc(),
       verifiedGrant: grant), SmartAccessLeaseRevocation.drain);
     expect(await changed.matchesRetainedRuntimeScope(identity.lease, DateTime.now().toUtc()), isFalse);
+  });
+
+  test('SmartDNS lease 500 keeps the allExceptRu VPN fallback', () async {
+    final fixture = await _smartDnsFixture();
+    final directory = await Directory.systemTemp.createTemp('pokrov-smart-dns-vpn-500-');
+    addTearDown(() => _deleteTestDirectory(directory));
+    final bootstrapper = _SmartDnsBootstrapper(directory, fixture.catalog, fixture.providers,
+      (_) async => throw const BootstrapFailure('lease failed', statusCode: 500,
+        operation: 'POST /api/client/smart-access/lease'))
+      ..cached.failure = null;
+    final account = AccountSessionCoordinator(accountActions: null)
+      ..updateSubscriptionInfo(await bootstrapper.fetchClientSubscription(hostPlatform: HostPlatform.windows));
+    final runtime = _SmartDnsRuntime();
+    final manager = _manager(runtime, bootstrapper, accountSessionCoordinator: account,
+      authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    addTearDown(manager.dispose);
+    manager.selectRouteMode(RouteMode.allExceptRu);
+
+    await manager.connect();
+
+    expect(bootstrapper.leaseRequests, 1);
+    expect(manager.status.phase, ConnectionPhase.connected, reason: manager.headline);
+    expect(runtime.connectCalls, 1);
+    final fallback = jsonDecode(runtime.stagedPayloads.single.configPayload) as Map;
+    expect((fallback['outbounds'] as List).cast<Map>().any((row) => row['type'] == 'pokrov-smart-access'), isFalse);
+    expect(((fallback['route'] as Map)['rules'] as List).cast<Map>().any((row) =>
+      (row['domain'] as List?)?.contains('gemini.google.com') == true && row['outbound'] == 'proxy'), isTrue);
+  });
+
+  test('SmartDNS lease 500 without VPN never stages a DNS-only or fallback profile', () async {
+    final fixture = await _smartDnsFixture();
+    final directory = await Directory.systemTemp.createTemp('pokrov-smart-dns-local-500-');
+    addTearDown(() => _deleteTestDirectory(directory));
+    final bootstrapper = _SmartDnsBootstrapper(directory, fixture.catalog, fixture.providers,
+      (_) async => throw const BootstrapFailure('lease failed', statusCode: 500,
+        operation: 'POST /api/client/smart-access/lease'))
+      ..cached.failure = null;
+    final runtime = _SmartDnsRuntime();
+    final manager = _manager(runtime, bootstrapper,
+      authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    addTearDown(manager.dispose);
+    manager.updateExperience(const PokrovClientExperienceState.empty().copyWith(
+      routingPreferences: const PokrovRoutingPreferences.defaults().copyWith(selectedCatalogServiceIds: {'gemini'})));
+    manager.selectRouteMode(RouteMode.selectiveServices);
+
+    await manager.connect();
+
+    expect(bootstrapper.leaseRequests, 1);
+    expect(manager.status.phase, ConnectionPhase.actionRequired);
+    expect(bootstrapper.cached.resolutions, isEmpty, reason: 'a lease 500 cannot introduce a VPN into DNS-only preparation');
+    expect(runtime.stagedPayloads, isEmpty);
+    expect(runtime.connectCalls, 0);
+    expect(runtime.calls, isNot(contains('disconnect')));
   });
 
   test('SmartDNS complete scope wins before affinity and partial local access uses VPN fallback', () async {

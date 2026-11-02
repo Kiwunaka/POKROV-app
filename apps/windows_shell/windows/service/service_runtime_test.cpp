@@ -316,20 +316,72 @@ void TestWindowsLocalDpiStrategyArguments() {
            "terminal withdrawal or unsupported failure scheduled a strategy retry");
   }
   const std::wstring directory = L"C:\\Program Files\\POKROV\\local-dpi\\";
-  const std::wstring scope = L"\"C:\\Program Files\\POKROV\\local-dpi\\winws.exe\" --wf-iface=12"
-      L" --wf-tcp=443 --filter-tcp=443 --filter-l7=tls --hostlist-domains=^www.youtube.com --ip-id=zero";
+  const std::wstring scope = L"\"C:\\Program Files\\POKROV\\local-dpi\\winws2.exe\" --wf-iface=12"
+      L" --wf-tcp-out=443 --lua-init=@\"C:\\Program Files\\POKROV\\local-dpi\\zapret-lib.lua\""
+      L" --lua-init=@\"C:\\Program Files\\POKROV\\local-dpi\\zapret-antidpi.lua\""
+      L" --filter-tcp=443 --filter-l7=tls --hostlist-domains=^www.youtube.com"
+      L" --out-range=-d10 --payload=tls_client_hello";
   const std::wstring pattern = L"\"C:\\Program Files\\POKROV\\local-dpi\\tls_clienthello_www_google_com.bin\"";
   Expect(WindowsLocalDpiCommand(directory, "^www.youtube.com", 12, order[0]) == scope +
-      L" --dpi-desync=multidisorder --dpi-desync-split-pos=1,midsld",
-      "CDN strategy changed the verified exact-host/interface scope or added fake bytes");
+      L" --lua-desync=multidisorder:pos=1,midsld:ip_id=zero",
+      "Zapret2 CDN strategy changed the verified exact-host/interface scope or Lua pipeline");
   Expect(WindowsLocalDpiCommand(directory, "^www.youtube.com", 12, order[1]) == scope +
-      L" --dpi-desync=fake,multisplit --dpi-desync-repeats=6 --dpi-desync-fooling=badseq"
-      L" --dpi-desync-badseq-increment=1000 --dpi-desync-fake-tls=" + pattern,
-      "ALT4 changed the verified exact-host/interface scope or upstream Google branch");
+      L" --blob=tls_google:@" + pattern +
+      L" --lua-desync=fake:blob=tls_google:tcp_seq=1000:tcp_ack=-66000:repeats=6:ip_id=zero"
+      L" --lua-desync=multisplit:pos=2:ip_id=zero",
+      "Zapret2 retry changed the verified exact-host/interface scope or Lua pipeline");
 }
 
 BOOL __cdecl RefuseDriverClose(HANDLE) { return FALSE; }
 BOOL __cdecl CloseTestDriverGuard(HANDLE handle) { return ::CloseHandle(handle); }
+
+// Exercise winws2 v1.0.6's token/sandbox Job sequence in a disposable child.
+// No packet filter, driver, Cygwin or upstream executable is loaded here.
+bool EnterZapret2TestSandbox(HANDLE ready) {
+  HANDLE token = nullptr;
+  if (!::OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY | TOKEN_ADJUST_PRIVILEGES |
+      TOKEN_ADJUST_DEFAULT, &token)) return false;
+  DWORD size = 0;
+  ::GetTokenInformation(token, TokenPrivileges, nullptr, 0, &size);
+  std::vector<unsigned char> storage(size);
+  auto* privileges = reinterpret_cast<TOKEN_PRIVILEGES*>(storage.data());
+  LUID traverse{};
+  bool restricted = ::LookupPrivilegeValueW(nullptr, SE_CHANGE_NOTIFY_NAME, &traverse) &&
+      ::GetTokenInformation(token, TokenPrivileges, privileges, size, &size);
+  for (DWORD i = 0; restricted && i < privileges->PrivilegeCount; ++i) {
+    const auto& luid = privileges->Privileges[i].Luid;
+    if (luid.HighPart != traverse.HighPart || luid.LowPart != traverse.LowPart) {
+      privileges->Privileges[i].Attributes = SE_PRIVILEGE_REMOVED;
+    }
+  }
+  restricted = restricted && ::AdjustTokenPrivileges(token, FALSE, privileges, 0, nullptr, nullptr);
+  SID_IDENTIFIER_AUTHORITY authority = SECURITY_MANDATORY_LABEL_AUTHORITY;
+  PSID sid = nullptr;
+  restricted = restricted && ::AllocateAndInitializeSid(&authority, 1, SECURITY_MANDATORY_LOW_RID,
+      0, 0, 0, 0, 0, 0, 0, &sid);
+  if (sid != nullptr) {
+    TOKEN_MANDATORY_LABEL label{{sid, SE_GROUP_INTEGRITY}};
+    restricted = restricted && ::SetTokenInformation(token, TokenIntegrityLevel, &label,
+        static_cast<DWORD>(sizeof(label) + ::GetLengthSid(sid)));
+    ::FreeSid(sid);
+  }
+  ::CloseHandle(token);
+  if (!restricted) return false;
+  HANDLE sandbox = ::CreateJobObjectW(nullptr, nullptr);
+  JOBOBJECT_BASIC_LIMIT_INFORMATION limits{};
+  limits.LimitFlags = JOB_OBJECT_LIMIT_ACTIVE_PROCESS;
+  limits.ActiveProcessLimit = 1;
+  JOBOBJECT_BASIC_UI_RESTRICTIONS ui{};
+  ui.UIRestrictionsClass = JOB_OBJECT_UILIMIT_DESKTOP | JOB_OBJECT_UILIMIT_DISPLAYSETTINGS |
+      JOB_OBJECT_UILIMIT_EXITWINDOWS | JOB_OBJECT_UILIMIT_GLOBALATOMS | JOB_OBJECT_UILIMIT_HANDLES |
+      JOB_OBJECT_UILIMIT_READCLIPBOARD | JOB_OBJECT_UILIMIT_SYSTEMPARAMETERS | JOB_OBJECT_UILIMIT_WRITECLIPBOARD;
+  const bool configured = sandbox != nullptr &&
+      ::SetInformationJobObject(sandbox, JobObjectBasicLimitInformation, &limits, sizeof(limits)) &&
+      ::SetInformationJobObject(sandbox, JobObjectBasicUIRestrictions, &ui, sizeof(ui)) &&
+      ::AssignProcessToJobObject(sandbox, ::GetCurrentProcess());
+  if (sandbox != nullptr) ::CloseHandle(sandbox);
+  return configured && ::SetEvent(ready);
+}
 
 void TestWindowsLocalDpiOwnedCleanup() {
   using pokrov::service::StopWindowsLocalDpiChild;
@@ -346,26 +398,40 @@ void TestWindowsLocalDpiOwnedCleanup() {
         JobObjectExtendedLimitInformation, &limits, sizeof(limits));
     Expect(configured, "local DPI test Job was not configured");
     if (!configured) { if (job != nullptr) ::CloseHandle(job); return; }
-    std::wstring command = L"\"" + std::wstring(path.data(), size) + L"\" --local-dpi-test-child";
+    SECURITY_ATTRIBUTES security{sizeof(security), nullptr, TRUE};
+    HANDLE ready = ::CreateEventW(&security, TRUE, FALSE, nullptr);
+    Expect(ready != nullptr, "Zapret2 sandbox test event was unavailable");
+    if (ready == nullptr) { ::CloseHandle(job); return; }
+    std::wstring command = L"\"" + std::wstring(path.data(), size) +
+        (kill_on_close ? L"\" --local-dpi-zapret2-test-child " +
+            std::to_wstring(reinterpret_cast<std::uintptr_t>(ready)) : L"\" --local-dpi-test-child");
     STARTUPINFOW startup{};
     startup.cb = sizeof(startup);
     PROCESS_INFORMATION child{};
-    const bool created = ::CreateProcessW(path.data(), command.data(), nullptr, nullptr, FALSE,
+    const bool created = ::CreateProcessW(path.data(), command.data(), nullptr, nullptr, TRUE,
         CREATE_SUSPENDED | CREATE_NO_WINDOW, nullptr, nullptr, &startup, &child) != FALSE;
     Expect(created, "local DPI test child was not created");
-    if (!created) { ::CloseHandle(job); return; }
+    if (!created) { ::CloseHandle(ready); ::CloseHandle(job); return; }
     const bool assigned = ::AssignProcessToJobObject(job, child.hProcess) != FALSE;
     Expect(assigned, "local DPI test child was not assigned to its Job");
     if (!assigned) {
       ::TerminateProcess(child.hProcess, 1);
       ::CloseHandle(child.hThread);
       ::CloseHandle(child.hProcess);
+      ::CloseHandle(ready);
       ::CloseHandle(job);
       return;
     }
     const auto resumed = ::ResumeThread(child.hThread);
     ::CloseHandle(child.hThread);
     Expect(resumed != static_cast<DWORD>(-1), "local DPI test child was not resumed");
+    if (kill_on_close) {
+      const auto signal = pokrov::service::WaitWindowsLocalDpiSignal(child.hProcess, ready,
+          [] { return true; }, ::GetTickCount64() + 3000);
+      Expect(signal == WAIT_OBJECT_0 + 1,
+          "Zapret2 token drop and nested sandbox Job failed under the owned cleanup Job");
+    }
+    ::CloseHandle(ready);
     HANDLE witness = nullptr;
     const bool duplicated = ::DuplicateHandle(::GetCurrentProcess(), child.hProcess,
         ::GetCurrentProcess(), &witness, SYNCHRONIZE, FALSE, 0) != FALSE;
@@ -1966,6 +2032,11 @@ void TestProtectedHandoffRetainsGuardUntilVerifiedOrExplicitOff() {
 }  // namespace
 
 int main(int argc, char** argv) {
+  if (argc == 3 && std::string(argv[1]) == "--local-dpi-zapret2-test-child") {
+    if (!EnterZapret2TestSandbox(reinterpret_cast<HANDLE>(std::stoull(argv[2])))) return 1;
+    ::Sleep(10000);
+    return 0;
+  }
   if (argc == 2 && std::string(argv[1]) == "--local-dpi-metadata") {
     TestWindowsTelegramMetadataComposition();
     return failures == 0 ? 0 : 1;

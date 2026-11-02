@@ -21,6 +21,18 @@ for the accepted source/package scope. The default
 [tracked manifest](../config/runtime-artifacts.seed.json) is not the private
 selected binding and must not be used to restage this private build.
 
+Windows local DPI now uses [Zapret2 v1.0.6](https://github.com/bol-van/zapret2/releases/tag/v1.0.6)
+(`221d7dff`, LuaCompat 6): package `winws2.exe`, `zapret-lib.lua`,
+`zapret-antidpi.lua`, the Google TLS blob, Cygwin, WinDivert and `NOTICES.txt`
+as `local-dpi/` dependencies in the selected runtime manifest. The private
+selection is `E:/POKROV-tools/temp/zapret2-1.0.6/runtime-artifacts.zapret2-v1.0.6.json`
+with its `windows` artifact directory and `windows-release.zapret2-v1.0.6.json`.
+Sync preserves dependency subdirectories; packaging excludes unselected files
+left by an older engine. The service keeps the same signed domain/interface
+scope, fresh TLS proof and bounded two-strategy retry, using Zapret2's Lua
+`multidisorder` and `fake`/`multisplit` functions. Native checks cover arguments
+and owned sandbox cleanup; actual Lua/filter acceptance still requires the VM.
+
 - [build-android-production.ps1](build-android-production.ps1) validates an
   already staged Android runtime with `RuntimeArtifactsPath`. Copying is
   explicit: `-SyncRuntime` or `-CoreArtifactDirectory` invokes Android-only sync.

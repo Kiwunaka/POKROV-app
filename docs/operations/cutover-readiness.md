@@ -5,22 +5,31 @@ is the only current release queue; [Execution section 0](C:/Users/kiwun/Download
 explains how to continue. Dated results below retain their original scope and do
 not create new tasks or permission to repeat accepted checks.
 
-Private **1.5.0+4253** contains all six packages from App `f4e596c3`. Windows
+Private **1.5.0+4255** contains all six packages from App `7712e915`, under
+`E:/POKROV-tools/temp/release-1.5.0-4255`. Windows
 uses the private Core `8079e69` DLL, version 1.2.15/ABI2; Android retains the
-selected 4235 Core/Slipstream artifacts. F82 remains shadow-only. The audit
-fixes account-owned notification caching, support/device error recovery,
-SmartDNS refresh/expiry and DNS-only status, plus asynchronous routing changes.
-Four APKs passed production signing/non-debuggable/version/ABI checks; Windows
-setup and single-installer ZIP remain unsigned.
-The Windows VM passed a normal 4252-to-4253 upgrade, installed DLL/native export
-checks, stopped Profile/Rules/Diagnostics, SmartDNS refresh/cancel and Devices.
-No settings were intentionally changed. After normal tray exit, chosen settings,
+selected 4235 Core/Slipstream artifacts. F82 remains shadow-only and Decider is
+manual; active ML is not a release blocker. The retained audit fixes are joined
+by missing-session recovery and actionable account errors with support request
+IDs. Four APKs are production-signed/non-debuggable; Windows setup and its
+single-installer ZIP remain unsigned.
+The Windows VM passed a normal 4254-to-4255 upgrade and one synthetic invalid-code
+refusal with the new Russian message. After normal tray exit, chosen settings,
 DNS, all 16 routes, proxy and WinHTTP matched baseline; app/TUN/helpers were zero
-and normal shutdown reached PoweredOff/Unlocked. Cache timestamps changed; whole
-preferences byte equality is not claimed. Network/content and earlier accepted
-checks were not repeated. The phone's last confirmed install is 4251 with ADB
-unavailable: Beeline Gemini, DNS-tunnel and direct YouTube remain pending.
-Public metadata and update manifests are unchanged.
+and normal shutdown reached PoweredOff/Unlocked. Whole preferences-file byte
+equality is not claimed. Network/content and earlier accepted
+checks were not repeated. The phone was updated to 4255 with data retained.
+Beeline Gemini lacked the full Android SmartDNS scope; DNSTT stopped on a
+SmartDNS lease 500, and Slipstream started before a periodic egress timeout.
+Direct ByeDPI YouTube had no playback. Settings/Wi-Fi and stopped VPN state were
+restored; the owner has taken the phone away. New source changes handle optional
+SmartDNS 500 through the existing VPN route and give unambiguous DNS carriers
+15 seconds for periodic proof (Core `80fc743`, new Android SDK); mobile acceptance
+is pending. Windows Zapret2 v1.0.6 replaces the old engine in the next private
+candidate; native lifecycle and packaging checks passed, actual filter/VM proof
+is pending. Accepted Wi-Fi, Android Naive and Windows checks
+must not be repeated. Public release, public update pointers and all new customer
+contact remain prohibited; release automation remains PAUSED.
 
 Public metadata remains **1.4.5 / schema 0 / min-supported 1.3.0**.
 **1.5.0+4175 is a draft with seven assets**, not a public release. The

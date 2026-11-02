@@ -4,13 +4,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
+import 'package:pokrov_observability_contracts/observability_contracts.dart';
 
-class _PairingActions implements ManagedProfileBootstrapper, AppFirstAccountActionService {
+class _PairingActions implements ManagedProfileBootstrapper, AppFirstAccountActionService, AppFirstExperienceService {
   int claims = 0;
+  int redeems = 0;
   bool reuseCurrentDevice = false;
+  BootstrapFailure failure = const BootstrapFailure('Код истёк. Получите новый в кабинете.',
+      statusCode: 504, operation: 'POST /api/client/device-pairing/claim',
+      apiFailureKind: 'request_timeout');
+  final reports = <Map<Symbol, dynamic>>[];
   String? requestedEmail;
   String? recoveredEmail;
   String? recoveryCode;
+  BootstrapFailure? emailFailure;
 
   @override
   Future<void> requestEmailLoginCode({required HostPlatform hostPlatform, required String email}) async {
@@ -21,6 +28,7 @@ class _PairingActions implements ManagedProfileBootstrapper, AppFirstAccountActi
   Future<DevicePairingClaimResult> recoverEmailSession({
     required HostPlatform hostPlatform, required String email, required String code,
   }) async {
+    if (emailFailure case final failure?) throw failure;
     recoveredEmail = email;
     recoveryCode = code;
     return const DevicePairingClaimResult(ok: true, accountId: 'fixture-account',
@@ -37,11 +45,23 @@ class _PairingActions implements ManagedProfileBootstrapper, AppFirstAccountActi
       return const DevicePairingClaimResult(ok: true, accountId: 'fixture-account',
           installId: 'fixture-install', existingDevice: true);
     }
-    throw const BootstrapFailure('Код истёк. Получите новый в кабинете.');
+    throw failure;
   }
 
   @override
-  dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
+  Future<AppFirstRedeemResult> redeemCode({required HostPlatform hostPlatform, required String code}) async {
+    redeems++;
+    throw failure;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) {
+    if (invocation.memberName == #reportRuntimeStats) {
+      reports.add(invocation.namedArguments);
+      return Future<bool>.value(true);
+    }
+    throw UnimplementedError();
+  }
 }
 
 class _MemoryFirstLaunchStore implements PokrovFirstLaunchStore {
@@ -94,6 +114,20 @@ void main() {
     expect(actions.requestedEmail, 'account@example.invalid');
     expect(actions.recoveredEmail, isNull);
     await tester.enterText(find.byKey(const ValueKey('email-recovery-code')), '123456');
+    const requestId = '11111111-1111-4111-8111-111111111111';
+    actions.emailFailure = const BootstrapFailure('Код из письма не подошёл. Запросите новый код.',
+      statusCode: 401, code: 'email_otp_invalid', operation: 'POST /api/auth/email/otp/finish', requestId: requestId);
+    await tester.ensureVisible(submit);
+    await tester.tap(submit);
+    await tester.pump();
+    expect(find.text('Код из письма не подошёл. Запросите новый код.'), findsOneWidget);
+    final failed = actions.reports.lastWhere((args) => args[#errorCode] == 'email_login_failed');
+    expect(failed[#failureOperation], 'email_otp_finish');
+    expect(failed[#failureReason], PortalFailureReason.emailOtpInvalid);
+    expect(failed[#failureRequestId], requestId);
+    expect(failed.toString(), isNot(contains('account@example.invalid')));
+    expect(failed.toString(), isNot(contains('123456')));
+    actions.emailFailure = null;
     await tester.ensureVisible(submit);
     await tester.tap(submit);
     await tester.pump();
@@ -137,6 +171,39 @@ void main() {
     await tester.pump();
     expect(actions.claims, 1);
     expect(find.text('Код истёк. Получите новый в кабинете.'), findsOneWidget);
+    final report = actions.reports.lastWhere((args) => args[#errorCode] == 'pairing_claim_failed');
+    expect(report[#failureKind], 'request_timeout');
+    expect(report[#failureOperation], 'device_pairing_claim');
+    expect(report[#failureHttpStatus], isNull);
+    expect(connectionFailureOperations, containsAll(['device_pairing_claim', 'redeem']));
+    actions.failure = const BootstrapFailure('local session unavailable', statusCode: 401);
+    ScaffoldMessenger.of(tester.element(find.byType(Scaffold).first)).clearSnackBars();
+    links.add(link);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.tap(find.byKey(const ValueKey('profile-redeem-submit')));
+    await tester.pump();
+    final localReport = actions.reports.lastWhere((args) => args[#errorCode] == 'pairing_claim_failed');
+    expect(localReport[#failureOperation], isNull);
+    expect(localReport[#failureHttpStatus], isNull);
+    actions.failure = const BootstrapFailure('private response text', statusCode: 410,
+        operation: 'POST /api/redeem', code: 'private_server_reason');
+    ScaffoldMessenger.of(tester.element(find.byType(Scaffold).first)).clearSnackBars();
+    links.add(link);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.enterText(field, 'POKROV-ACCESS-TEST');
+    await tester.ensureVisible(find.byKey(const ValueKey('profile-redeem-submit')));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('profile-redeem-submit')));
+    await tester.pump();
+    final redeemReport = actions.reports.lastWhere((args) => args[#errorCode] == 'redeem_failed');
+    expect(actions.redeems, 1);
+    expect(redeemReport[#failureOperation], 'redeem');
+    expect(redeemReport[#failureHttpStatus], 410);
+    expect(redeemReport[#failureReason], isNull);
+    expect(redeemReport.toString(), isNot(contains('private_server_reason')));
+    expect(redeemReport.toString(), isNot(contains('private response text')));
     ScaffoldMessenger.of(tester.element(find.byType(Scaffold).first)).clearSnackBars();
     actions.reuseCurrentDevice = true;
     links.add(link);
@@ -144,7 +211,7 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     await tester.tap(find.byKey(const ValueKey('profile-redeem-submit')));
     await tester.pump();
-    expect(actions.claims, 2);
+    expect(actions.claims, 3);
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Вход подтверждён. Устройство уже связано с этим аккаунтом.'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());

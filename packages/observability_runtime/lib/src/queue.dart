@@ -182,6 +182,7 @@ final class OperationalBreadcrumb {
     this.probeError,
     this.failureKind,
     this.failureOperation,
+    this.failureReason,
     this.durationMs,
     this.prepareReason,
     this.errorOrigin,
@@ -210,6 +211,8 @@ final class OperationalBreadcrumb {
             ? event.attributes['failure_kind'] as String : null,
         failureOperation: connectionFailureOperations.contains(event.attributes['failure_operation'])
             ? event.attributes['failure_operation'] as String : null,
+        failureReason: event.attributes['failure_reason'] is String
+            ? PortalFailureReason.fromCode(event.attributes['failure_reason'] as String) : null,
         durationMs: event.attributes['duration_ms'] as int?,
         prepareReason: OperationalAttributePolicy.prepareFailureAttributes(
           reason: event.attributes['prepare_reason'] is String
@@ -231,6 +234,7 @@ final class OperationalBreadcrumb {
   final Map<String, Object>? probeError;
   final String? failureKind;
   final String? failureOperation;
+  final PortalFailureReason? failureReason;
   final int? durationMs;
   final String? prepareReason;
   final ObservabilityErrorOrigin? errorOrigin;

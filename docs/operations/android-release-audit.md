@@ -1,12 +1,23 @@
 # Android acceptance
 
-Updated 27 October 2026. Private Android ARM64 **4227**, App `c416369c` with
-the ByeDPI fix `ba611b6a` and Core `58b11d4` / 1.2.14, is installed. The four
-final APKs passed production checks. Windows 4227 setup and single-entry ZIP
-were built; the setup is unsigned and the VM was not reinstalled. Public 1.4.5
-and draft 4175 are unchanged. [Artifacts and exact scope](cutover-readiness.md).
+Updated 2 November 2026. Private **1.5.0+4255**, App `7712e915`, includes four
+production-signed/non-debuggable APKs using the retained 4235 Core/Slipstream
+artifacts and shadow F82. **4255** was installed on the phone with data retained.
+On Beeline, ordinary Gemini used VPN fallback because the Android capability
+covers only one host; DNSTT stopped before Core on a SmartDNS lease HTTP 500.
+Slipstream started TUN/DNS/egress, then failed the periodic egress timeout.
+Direct ByeDPI YouTube timed out without playback; UDP/443 rejections do not prove
+ICMP delivery, and zero handoffs mean no successful handoff, not no TCP attempt.
+Stop removed the service and active VPN; settings and Wi-Fi were restored.
+The owner has taken the phone away, so further mobile checks wait for its return.
+Core `80fc743` and a new Android SDK provide a 15-second periodic budget only
+for unambiguous selected DNS carriers; this is not yet phone acceptance.
+Accepted Wi-Fi and
+Android Naive checks below must not be repeated. Public 1.4.5 and draft 4175 are
+unchanged; release, public update pointers and new customer contact remain
+prohibited, with automation PAUSED. [Artifacts and exact scope](cutover-readiness.md).
 
-On the owned Wi-Fi, the actual app admitted `OOB_TLS_RECORD`; Chrome played Big
+On 4227 on the owned Wi-Fi, the actual app admitted `OOB_TLS_RECORD`; Chrome played Big
 Buck Bunny at UI-selected 1920×1080 for 85.94 seconds with 5,157 decoded frames
 and 70 dropped. Nine fresh Googlevideo HTTP/1.1 responses returned 200 and
 39,132,679 bytes. After refresh, direct TCP was 7, VPN TCP 0 and rejected QUIC 6;

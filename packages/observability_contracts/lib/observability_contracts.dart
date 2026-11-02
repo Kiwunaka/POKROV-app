@@ -70,6 +70,79 @@ enum ObservabilityErrorOrigin {
   security,
 }
 
+// Only source-defined API reasons may cross the diagnostics boundary.
+enum PortalFailureReason {
+  deviceLimitReached('device_limit_reached'),
+  deviceLimitExceeded('device_limit_exceeded'),
+  pairingNotFound('pairing_not_found'),
+  pairingCodeInvalid('pairing_code_invalid'),
+  pairingCodeExpired('pairing_code_expired'),
+  pairingCodeUsed('pairing_code_used'),
+  deviceAlreadyRegistered('device_already_registered'),
+  deviceIdentityConflict('device_identity_conflict'),
+  deviceInvalid('device_invalid'),
+  pairingNotConfigured('pairing_not_configured'),
+  authSessionExpired('auth_session_expired'),
+  freshAuthRequired('fresh_auth_required'),
+  deviceRecoveryRequired('device_recovery_required'),
+  accessExpired('access_expired'),
+  refreshTokenInvalid('refresh_token_invalid'),
+  refreshReuseDetected('refresh_reuse_detected'),
+  refreshExpired('refresh_expired'),
+  sessionRevoked('session_revoked'),
+  deviceRevoked('device_revoked'),
+  deviceCredentialChanged('device_credential_changed'),
+  sessionEpochChanged('session_epoch_changed'),
+  accountNotFound('account_not_found'),
+  accountUnavailable('account_unavailable'),
+  accountRestricted('account_restricted'),
+  rateLimited('rate_limited'),
+  serviceUnavailable('service_unavailable'),
+  nodeCapacityExhausted('node_capacity_exhausted'),
+  emailOtpInvalid('email_otp_invalid'),
+  emailOtpExpired('email_otp_expired'),
+  redeemCodeRequired('redeem_code_required'),
+  subscriptionLinkNotRedeemCode('subscription_link_not_redeem_code'),
+  redeemCodeNotSupported('redeem_code_not_supported'),
+  accessKeyNotFound('access_key_not_found'),
+  accessKeyRevoked('access_key_revoked'),
+  accessKeyAlreadyRedeemed('access_key_already_redeemed'),
+  accessKeySelfRedeem('access_key_self_redeem'),
+  accessKeyTypeUnsupported('access_key_type_unsupported'),
+  termsRequired('terms_required'),
+  promoNotFound('promo_not_found'),
+  promoExhausted('promo_exhausted'),
+  promoExpired('promo_expired'),
+  promoAlreadyRedeemed('promo_already_redeemed'),
+  promoInvalid('promo_invalid'),
+  promoCampaignRestricted('promo_campaign_restricted'),
+  giftCodeInvalid('gift_code_invalid'),
+  giftCodeNotFound('gift_code_not_found'),
+  giftCodeRevoked('gift_code_revoked'),
+  giftCodeTypeUnsupported('gift_code_type_unsupported'),
+  giftCodeAlreadyRedeemed('gift_code_already_redeemed'),
+  giftCodeSelfRedeem('gift_code_self_redeem'),
+  paymentPending('payment_pending'),
+  paymentClaimReversed('payment_claim_reversed'),
+  paymentManualReview('payment_manual_review'),
+  paymentAccountConflict('payment_account_conflict'),
+  activeAccessRequired('active_access_required'),
+  sessionNotConfigured('session_not_configured'),
+  paymentNotRedeemable('payment_not_redeemable'),
+  giftCampaignRestricted('gift_campaign_restricted');
+
+  const PortalFailureReason(this.wireValue);
+  final String wireValue;
+
+  static PortalFailureReason? fromCode(String? code) {
+    final normalized = code?.trim().toLowerCase();
+    for (final reason in values) {
+      if (reason.wireValue == normalized) return reason;
+    }
+    return null;
+  }
+}
+
 abstract final class ObservabilityAttributeKeys {
   static const allowed = <String>{
     'api_failure_kind',
@@ -90,6 +163,7 @@ abstract final class ObservabilityAttributeKeys {
     'error_count',
     'failure_kind',
     'failure_operation',
+    'failure_reason',
     'from_version',
     'http_status',
     'interface_ready',
@@ -123,6 +197,9 @@ abstract final class ObservabilityAttributeKeys {
 const connectionFailureOperations = <String>{
   'managed_profile_stage', 'core_connect', 'tunnel_settle', 'managed_profile_refresh',
   'qa_claim', 'managed_profile', 'routing_catalog', 'auth_refresh',
+  'redeem', 'device_pairing_claim', 'session_start_trial',
+  'subscription_refresh',
+  'email_otp_start', 'email_otp_finish',
 };
 
 // Fixed admission/request failures; these are not network-quality failures.

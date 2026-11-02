@@ -143,6 +143,7 @@ final class OperationalAttemptTimeline {
     int? httpStatus,
     String? apiFailureKind,
     int? osErrorCode,
+    PortalFailureReason? failureReason,
   }) {
     _requireActive();
     final open = _open;
@@ -161,6 +162,7 @@ final class OperationalAttemptTimeline {
           httpStatus: httpStatus,
           apiFailureKind: apiFailureKind,
           osErrorCode: osErrorCode,
+          failureReason: failureReason,
         ),
     };
     _emit(
@@ -217,6 +219,7 @@ final class OperationalAttemptTimeline {
     ObservabilityErrorOrigin errorOrigin = ObservabilityErrorOrigin.client,
     String? failureKind,
     String? failureOperation,
+    PortalFailureReason? failureReason,
   }) {
     _requireActive();
     if (kind == OperationalTerminalKind.succeeded && !_verified) {
@@ -261,6 +264,7 @@ final class OperationalAttemptTimeline {
         'phase': _verified ? 'egress' : 'stop',
         if (connectionClosedGuardCodes.contains(failureKind)) 'failure_kind': failureKind,
         if (connectionFailureOperations.contains(failureOperation)) 'failure_operation': failureOperation,
+        if (failureReason != null) 'failure_reason': failureReason.wireValue,
         if (kind == OperationalTerminalKind.timeout) 'status_class': 'timeout',
         if (kind == OperationalTerminalKind.cancelled)
           'status_class': 'cancelled',

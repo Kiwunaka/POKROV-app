@@ -172,6 +172,7 @@ abstract final class OperationalFailureMapper {
     'fresh_auth_required': 'AUTH-002',
     'device_recovery_required': 'AUTH-002',
     'device_limit_exceeded': 'AUTH-004',
+    'device_limit_reached': 'AUTH-004',
     'account_restricted': 'AUTH-005',
     'acquisition_expired': 'AUTH-006',
     'acquisition_replayed': 'AUTH-006',

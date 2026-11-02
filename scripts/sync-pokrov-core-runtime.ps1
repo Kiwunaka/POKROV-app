@@ -98,7 +98,9 @@ foreach ($platform in $Platforms) {
   New-Item -ItemType Directory -Force -Path $destination | Out-Null
   Copy-Item -Force -LiteralPath $sourceEntry -Destination $destination
   foreach ($dependency in $dependencies) {
-    Copy-Item -Force -LiteralPath (Join-Path $sourceRoot $dependency) -Destination $destination
+    $dependencyDestination = Join-Path $destination $dependency
+    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $dependencyDestination) | Out-Null
+    Copy-Item -Force -LiteralPath (Join-Path $sourceRoot $dependency) -Destination $dependencyDestination
   }
 
   Assert-FileIdentity `

@@ -4,6 +4,7 @@ Future<void> _showRedeemSheet(
   BuildContext context, {
   required String hintCode,
   required ValueChanged<String> onRedeem,
+  VoidCallback? onTelegramCode,
   VoidCallback? onEmailRecovery,
 }) {
   return showModalBottomSheet<void>(
@@ -45,6 +46,19 @@ Future<void> _showRedeemSheet(
                   onRedeem(code);
                 },
               ),
+              if (onTelegramCode != null) ...[
+                TextButton.icon(
+                  onPressed: onTelegramCode,
+                  icon: const Icon(Icons.telegram_rounded),
+                  label: const Text('Код из Telegram'),
+                ),
+                Text(
+                  'Код Telegram занимает новый слот устройства.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: PokrovPalette.of(context).muted,
+                  ),
+                ),
+              ],
               if (onEmailRecovery != null) TextButton.icon(
                 onPressed: () {
                   Navigator.of(context).pop();

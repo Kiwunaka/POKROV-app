@@ -1261,6 +1261,8 @@ class ConnectionManager extends ChangeNotifier {
     String failureKind = '',
     String? failureOperation,
     int? failureHttpStatus,
+    PortalFailureReason? failureReason,
+    String? failureRequestId,
     RuntimeEgressProbeObservation? egressProbeObservation,
     bool? retryable,
   }) async {
@@ -1292,6 +1294,8 @@ class ConnectionManager extends ChangeNotifier {
         failureKind: failureKind,
         failureOperation: failureOperation,
         failureHttpStatus: failureHttpStatus,
+        failureReason: failureReason,
+        failureRequestId: failureRequestId,
         egressProbeObservation: egressProbeObservation,
         selectedNodeCode: const {'warp_over_proxy', 'warp_direct'}.contains(materialCandidate?.warpMode)
             ? ''
@@ -1329,6 +1333,8 @@ class ConnectionManager extends ChangeNotifier {
   }
 
   Future<void> _reportClientRuntimeError(String errorCode, {String failureKind = '', String? failureOperation, int? failureHttpStatus,
+      PortalFailureReason? failureReason,
+      String? failureRequestId,
       RuntimeEgressProbeObservation? egressProbeObservation}) =>
       _reportClientLifecycle(
         'failed',
@@ -1336,6 +1342,8 @@ class ConnectionManager extends ChangeNotifier {
         failureKind: failureKind,
         failureOperation: failureOperation,
         failureHttpStatus: failureHttpStatus,
+        failureReason: failureReason,
+        failureRequestId: failureRequestId,
         egressProbeObservation: egressProbeObservation,
         retryable: errorCode != 'redeem_failed',
       );
@@ -1892,7 +1900,8 @@ class ConnectionManager extends ChangeNotifier {
         throw const ConnectionOperationSuperseded();
       }
       _update(() { _runtimeHeadline = error.message; });
-      unawaited(_reportClientRuntimeError('connect_failed'));
+      unawaited(_reportClientRuntimeError('connect_failed', failureReason: error.reason,
+          failureRequestId: error.requestId));
       _notify(error.message, tone: PokrovSnackTone.danger);
       _recordProtectionEvent(
         kind: 'repair_failed',
@@ -3457,6 +3466,8 @@ class ConnectionManager extends ChangeNotifier {
               }
 
               bool authorityUnavailable(BootstrapFailure error) =>
+                  (error.statusCode == HttpStatus.internalServerError &&
+                      localSmartAccessState == null) ||
                   error.code == 'smart_access_admission_paused' ||
                   error.code == 'smart_access_access_denied' ||
                   error.code == 'smart_access_policy_changed' ||
@@ -4666,9 +4677,11 @@ class ConnectionManager extends ChangeNotifier {
       });
       unawaited(_reportClientRuntimeError(error.operationalErrorCode,
           failureKind: _runtimeStatsSnapshotAttempt == _connectionAttemptNumber
-              ? '' : error.apiFailureKind ?? error.code,
+              ? '' : error.apiFailureKind ?? (connectionClosedGuardCodes.contains(error.code) ? error.code : 'unknown'),
+          failureReason: error.reason,
+          failureRequestId: error.requestId,
           failureOperation: businessOperation,
-          failureHttpStatus: error.apiFailureKind == null ? error.statusCode : error.observedHttpStatus));
+          failureHttpStatus: error.httpStatusForDiagnostics));
       _notify(message, tone: PokrovSnackTone.danger);
     } on Object catch (error, stack) {
       if (!_connectionCoordinator.ownsOperation(generation)) return;

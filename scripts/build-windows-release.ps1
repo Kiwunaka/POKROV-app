@@ -718,7 +718,16 @@ if (Test-Path -LiteralPath $stagedBundleDirectory) {
 }
 
 New-Item -ItemType Directory -Force -Path $stagedBundleDirectory | Out-Null
-Copy-Item -Recurse -Force -Path (Join-Path $releaseOutputDirectory "*") -Destination $stagedBundleDirectory
+# CMake install can retain an older engine in an existing build directory.
+# Package only the selected local-DPI files, including their matching Lua pair.
+Get-ChildItem -LiteralPath $releaseOutputDirectory -Force |
+  Where-Object Name -ne 'local-dpi' |
+  Copy-Item -Recurse -Force -Destination $stagedBundleDirectory
+foreach ($dpiFile in @($requiredFiles | Where-Object { $_ -like 'local-dpi/*' })) {
+  $dpiDestination = Join-Path $stagedBundleDirectory $dpiFile
+  New-Item -ItemType Directory -Force -Path (Split-Path -Parent $dpiDestination) | Out-Null
+  Copy-Item -LiteralPath (Join-Path $releaseOutputDirectory $dpiFile) -Destination $dpiDestination -Force
+}
 foreach ($runtimeFile in $appLocalMsvcRuntimeFiles) {
   Copy-Item -Force -LiteralPath (Join-Path $appLocalMsvcRuntimeDirectory $runtimeFile) `
     -Destination (Join-Path $stagedBundleDirectory $runtimeFile)

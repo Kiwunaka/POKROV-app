@@ -17,9 +17,9 @@ class _LocalDpiCard extends StatelessWidget {
       key: const ValueKey('rules-local-dpi-card'),
       title: 'Обход блокировок',
       lines: [
-        hostPlatform == HostPlatform.windows ? 'Windows: Flowseal / zapret.' : 'Android 10 и новее: ByeDPI.',
+        hostPlatform == HostPlatform.windows ? 'Windows: Zapret2.' : 'Android 10 и новее: ByeDPI.',
         if (!runtimeReady)
-          'Flowseal / zapret недоступен: служба POKROV не подтвердила готовность компонента.'
+          'Zapret2 недоступен: служба POKROV не подтвердила готовность компонента.'
         else if (!supportedMode)
           'Работает в режимах «Россия напрямую» и «Только выбранные сервисы».'
         else

@@ -219,6 +219,14 @@ and retry guards. API discovery still reports its existing public error; URLs,
 exception text and response material are excluded, and release-health telemetry
 does not include the added local details.
 
+Actual known business codes also have a separate `failure_reason` from
+`PortalFailureReason`. Headers and nested `detail.code` supply that code; an HTTP
+status alone never identifies a device limit. The existing runtime-stats outbox
+preserves the reason and a validated UUIDv4 `failure_request_id` for support.
+Known reasons show a specific action in the app; unknown reasons stay unset and
+the error shows the request ID when available. Raw messages and response bodies
+do not enter these fields. Network and Core retain their existing typed kinds.
+
 When an unbundled catalog needs another candidate's material, its API failure
 remains an API failure if selection finds no winner, rather than becoming
 CONN-008. Other ready candidates and the ordinary group after a WARP group still
