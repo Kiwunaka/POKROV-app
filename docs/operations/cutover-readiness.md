@@ -5,31 +5,33 @@ is the only current release queue; [Execution section 0](C:/Users/kiwun/Download
 explains how to continue. Dated results below retain their original scope and do
 not create new tasks or permission to repeat accepted checks.
 
-Private **1.5.0+4255** contains all six packages from App `7712e915`, under
-`E:/POKROV-tools/temp/release-1.5.0-4255`. Windows
-uses the private Core `8079e69` DLL, version 1.2.15/ABI2; Android retains the
-selected 4235 Core/Slipstream artifacts. F82 remains shadow-only and Decider is
-manual; active ML is not a release blocker. The retained audit fixes are joined
-by missing-session recovery and actionable account errors with support request
-IDs. Four APKs are production-signed/non-debuggable; Windows setup and its
-single-installer ZIP remain unsigned.
-The Windows VM passed a normal 4254-to-4255 upgrade and one synthetic invalid-code
-refusal with the new Russian message. After normal tray exit, chosen settings,
-DNS, all 16 routes, proxy and WinHTTP matched baseline; app/TUN/helpers were zero
-and normal shutdown reached PoweredOff/Unlocked. Whole preferences-file byte
-equality is not claimed. Network/content and earlier accepted
-checks were not repeated. The phone was updated to 4255 with data retained.
-Beeline Gemini lacked the full Android SmartDNS scope; DNSTT stopped on a
-SmartDNS lease 500, and Slipstream started before a periodic egress timeout.
-Direct ByeDPI YouTube had no playback. Settings/Wi-Fi and stopped VPN state were
-restored; the owner has taken the phone away. New source changes handle optional
-SmartDNS 500 through the existing VPN route and give unambiguous DNS carriers
-15 seconds for periodic proof (Core `80fc743`, new Android SDK); mobile acceptance
-is pending. Windows Zapret2 v1.0.6 replaces the old engine in the next private
-candidate; native lifecycle and packaging checks passed, actual filter/VM proof
-is pending. Accepted Wi-Fi, Android Naive and Windows checks
-must not be repeated. Public release, public update pointers and all new customer
-contact remain prohibited; release automation remains PAUSED.
+Private **1.5.0+4256** contains six packages from App `4f384ec7`, under
+`E:/POKROV-tools/temp/release-1.5.0-4256`. Windows retains Core `8079e69`
+(1.2.15/ABI2); Android selects Core `80fc743` with unchanged Slipstream libraries.
+F82 remains shadow-only and Decider manual. Four APKs are production-signed and
+non-debuggable; Windows setup and its single-installer ZIP remain unsigned.
+
+Windows 4256 upgraded from 4255 with its account retained. Official Zapret2 v1.0.6
+and matching Lua libraries passed both actual CLI dry-runs. One ordinary app
+Connect then ran the owned winws2 with physical-interface/signed YouTube scope;
+native startup/proof/admission and DNS/egress passed. One YouTube HTTPS HEAD
+returned 200 with one local handoff and no VPN handoff. This is not video 1080p
+acceptance. Bounded strategy retry/sandbox cleanup were covered by focused native
+checks; no artificial whole-VPN fault or repeated earlier transport matrix ran.
+Normal Stop and tray Exit restored the selected settings, DNS, all 16 routes,
+user proxy and WinHTTP; App/TUN/winws/winws2/helpers and guard filters were 0.
+QA files were removed; the VM shut down gracefully to PoweredOff/Unlocked.
+
+The phone's last install is 4255 with data retained. Beeline Gemini lacked full
+Android SmartDNS scope; DNSTT stopped on a SmartDNS lease 500, and Slipstream
+started before a periodic egress timeout. Direct ByeDPI YouTube had no playback.
+Settings/Wi-Fi and stopped VPN state were restored; the owner took the phone
+away. New 4256 source handles optional SmartDNS 500 through the existing VPN and
+gives unambiguous selected DNS carriers 15 seconds for periodic proof; other
+paths remain 3 seconds. Core required checks and package bindings passed, but
+new mobile acceptance awaits the phone. Accepted Wi-Fi, Naive and earlier
+Windows checks must not be repeated. Public release, update pointers and all
+new customer contact remain prohibited; automation stays PAUSED.
 
 Public metadata remains **1.4.5 / schema 0 / min-supported 1.3.0**.
 **1.5.0+4175 is a draft with seven assets**, not a public release. The

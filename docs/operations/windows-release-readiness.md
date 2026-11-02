@@ -1,20 +1,27 @@
 # Windows acceptance
 
-Current private **1.5.0+4255**, App `7712e915`, passed a normal 4254-to-4255
-upgrade and one synthetic invalid-code refusal with the new Russian message.
-It retains Windows Core `8079e69` / 1.2.15 / ABI2. After normal tray Exit,
-chosen settings, DNS, all 16 routes, proxy and WinHTTP matched baseline;
-app/TUN/helpers were zero and the VM reached PoweredOff/Unlocked. All six
-packages are under `E:/POKROV-tools/temp/release-1.5.0-4255`; Windows setup/ZIP
-remain unsigned. Earlier accepted checks were not repeated. Public release,
-public update pointers and new customer contact remain prohibited; automation
-remains PAUSED. [Current release queue and acceptance limits](cutover-readiness.md).
+Current private **1.5.0+4256**, App `4f384ec7`, uses official Zapret2 v1.0.6
+with its matching Lua libraries and retains Core `8079e69` /1.2.15/ABI2.
+It upgraded from 4255 with the encrypted account store and settings retained.
+Both exact CLI/Lua dry-runs passed on the VM. One ordinary Connect ran the owned
+winws2 with physical-interface/signed YouTube scope; native proof/admission,
+DNS and egress passed with no failed service. A single YouTube HTTPS HEAD
+returned 200 in 1.344 s, with local handoffs 1 / VPN 0. This is a scoped HTTPS result,
+not video 1080p acceptance. The alternate Lua strategy and bounded retry were
+covered by CLI parsing/native tests, not a second network strategy trial.
+Normal Stop and tray Exit restored the selected settings, DNS, all 16 routes,
+user proxy and WinHTTP; App/TUN/winws/winws2/helpers and guard filters were 0.
+QA files were removed; the VM shut down gracefully to PoweredOff/Unlocked.
 
-The next private candidate replaces winws1 with official Zapret2 v1.0.6 and its
-matching Lua libraries. Existing permission/proof, interface/domain scope and
-one bounded same-connection retry remain. Native strategy/readiness/lifecycle,
-nested sandbox cleanup, UI labels and packaging passed focused checks; actual
-winws2 Lua/filter and end-to-end proof on the VM are not yet accepted.
+All six packages are under `E:/POKROV-tools/temp/release-1.5.0-4256`;
+Windows setup/ZIP remain unsigned. Public release, public update pointers and
+new customer contact remain prohibited; automation stays PAUSED.
+[Current release queue and acceptance limits](cutover-readiness.md).
+
+Historical 4255 passed the 4254-to-4255 upgrade and synthetic invalid-code refusal
+with the new Russian message. After normal Exit, chosen settings/DNS/16 routes/
+proxies matched baseline, app/TUN/helpers were zero and the VM was off. That
+unchanged error scenario and earlier accepted networks were not repeated.
 
 Historical private **1.5.0+4253**, App `f4e596c3`, passed a normal 4252-to-4253 upgrade
 (setup exit 0, service Running). The installed private Core DLL matches `8079e69`;

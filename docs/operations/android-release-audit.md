@@ -1,8 +1,9 @@
 # Android acceptance
 
-Updated 2 November 2026. Private **1.5.0+4255**, App `7712e915`, includes four
-production-signed/non-debuggable APKs using the retained 4235 Core/Slipstream
-artifacts and shadow F82. **4255** was installed on the phone with data retained.
+Updated 2 November 2026. Private **1.5.0+4256**, App `4f384ec7`, includes four
+production-signed/non-debuggable APKs using Android Core `80fc743` /1.2.15/ABI2,
+unchanged Slipstream libraries and shadow F82. All three native ABI bindings and
+packaged libraries match the selected SDK. **4255** was installed on the phone with data retained.
 On Beeline, ordinary Gemini used VPN fallback because the Android capability
 covers only one host; DNSTT stopped before Core on a SmartDNS lease HTTP 500.
 Slipstream started TUN/DNS/egress, then failed the periodic egress timeout.
