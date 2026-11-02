@@ -107,6 +107,12 @@ void main() {
     expect(tester.binding.transientCallbackCount, 0, reason: 'ordinary days have no holiday motion');
   });
 
+  testWidgets('the off status stays readable in the dark theme', (tester) async {
+    await _pumpHome(tester, season: PokrovSeason.victoryDay, brightness: Brightness.dark);
+    final color = tester.widget<Text>(find.text('Защита выключена')).style!.color!;
+    expect(_contrast(color, const Color(0xFF26322B)), greaterThanOrEqualTo(4.5));
+  });
+
   testWidgets('status and connect stay tappable over the decoration', (tester) async {
     var toggles = 0, statuses = 0;
     await _pumpHome(tester, season: PokrovSeason.aprilFools, onToggle: () => toggles++, onStatus: () => statuses++);

@@ -636,11 +636,11 @@ void _buttonDecor(Canvas c, PokrovSeason season, double t, bool dark, bool on) {
       const a0 = -150.0, a1 = -30.0;
       final cap = Path();
       for (var deg = a0; deg <= a1; deg += 3) {
-        final p = at(deg, o + 4 + math.sin((deg - a0) / (a1 - a0) * math.pi) * 4 + math.sin(deg / 6) * 1.5);
+        final p = at(deg, o + 1 + math.sin((deg - a0) / (a1 - a0) * math.pi) * 3 + math.sin(deg / 6));
         deg == a0 ? cap.moveTo(p.dx, p.dy) : cap.lineTo(p.dx, p.dy);
       }
       for (var deg = a1; deg >= a0; deg -= 3) {
-        final p = at(deg, ri + 2 + math.sin((deg - a0) / (a1 - a0) * math.pi * 5) * 2);
+        final p = at(deg, o - 9 + math.sin((deg - a0) / (a1 - a0) * math.pi * 5) * 2.5);
         cap.lineTo(p.dx, p.dy);
       }
       cap.close();

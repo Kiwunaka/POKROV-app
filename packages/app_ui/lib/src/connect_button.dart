@@ -111,6 +111,7 @@ class _PokrovConnectButtonState extends State<PokrovConnectButton> with TickerPr
                 waves: _waves,
                 innerRadius: widget.diameter / 2,
                 accent: pokrovColor(context, PokrovColors.accent),
+                track: pokrovColor(context, PokrovColors.track),
               ),
             ),
           ),
@@ -189,7 +190,7 @@ class _PokrovConnectButtonState extends State<PokrovConnectButton> with TickerPr
 }
 
 class _RingPainter extends CustomPainter {
-  _RingPainter({required this.phase, required this.spin, required this.waves, required this.innerRadius, required this.accent})
+  _RingPainter({required this.phase, required this.spin, required this.waves, required this.innerRadius, required this.accent, required this.track})
       : super(repaint: Listenable.merge([spin, waves]));
 
   final ConnectionPhase phase;
@@ -197,6 +198,7 @@ class _RingPainter extends CustomPainter {
   final Animation<double> waves;
   final double innerRadius;
   final Color accent;
+  final Color track;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -207,7 +209,7 @@ class _RingPainter extends CustomPainter {
     switch (phase) {
       case ConnectionPhase.off:
         stroke
-          ..color = PokrovColors.track
+          ..color = track
           ..strokeWidth = 2;
         canvas.drawCircle(center, outer, stroke);
       case ConnectionPhase.error:
@@ -217,7 +219,7 @@ class _RingPainter extends CustomPainter {
         canvas.drawCircle(center, outer, stroke);
       case ConnectionPhase.connecting:
         stroke
-          ..color = PokrovColors.track
+          ..color = track
           ..strokeWidth = 2;
         canvas.drawCircle(center, outer, stroke);
         final arc = Paint()
@@ -245,5 +247,5 @@ class _RingPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_RingPainter oldDelegate) => oldDelegate.phase != phase || oldDelegate.innerRadius != innerRadius || oldDelegate.accent != accent;
+  bool shouldRepaint(_RingPainter oldDelegate) => oldDelegate.phase != phase || oldDelegate.innerRadius != innerRadius || oldDelegate.accent != accent || oldDelegate.track != track;
 }

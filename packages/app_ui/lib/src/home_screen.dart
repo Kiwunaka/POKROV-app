@@ -230,7 +230,7 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (text, bg, fg, dot) = switch (data.phase) {
-      ConnectionPhase.off => ('Защита выключена', pokrovColor(context, PokrovColors.chip), Color(0xFF4A525B), pokrovColor(context, PokrovColors.faint)),
+      ConnectionPhase.off => ('Защита выключена', pokrovColor(context, PokrovColors.chip), Theme.of(context).brightness == Brightness.dark ? Color(0xFFB4C0B8) : Color(0xFF4A525B), pokrovColor(context, PokrovColors.faint)),
       ConnectionPhase.connecting => ('Ищем быстрый путь', pokrovColor(context, PokrovColors.accentSoft), pokrovColor(context, PokrovColors.accentText), pokrovColor(context, PokrovColors.accent)),
       ConnectionPhase.on => ('${data.connectedCountry} · ${data.uptime}', pokrovColor(context, PokrovColors.accentSoft), pokrovColor(context, PokrovColors.accentText), pokrovColor(context, PokrovColors.connected)),
       ConnectionPhase.error => ('Не получилось', pokrovColor(context, PokrovColors.warnBg), pokrovColor(context, PokrovColors.warnStrong), pokrovColor(context, PokrovColors.warnDot)),
