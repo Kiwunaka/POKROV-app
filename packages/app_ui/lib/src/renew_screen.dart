@@ -87,7 +87,7 @@ class RenewScreen extends StatelessWidget {
                         ],
                       ),
                       SizedBox(height: 4),
-                      Text(plan.price, style: TextStyle(fontSize: 36, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+                      Text(plan.price, textScaler: pokrovTitleScaler(context), style: TextStyle(fontFamily: pokrovDisplayFontFamily, fontSize: 32, fontWeight: FontWeight.w700)),
                       if (plan.perMonth.isNotEmpty) Text(plan.perMonth, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: pokrovColor(context, PokrovColors.accent))),
                       SizedBox(height: 4),
                     ],

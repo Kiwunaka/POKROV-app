@@ -38,7 +38,7 @@ class BonusesScreen extends StatelessWidget {
                     duration: Duration(milliseconds: 700),
                     curve: Curves.elasticOut,
                     builder: (context, s, child) => Transform.scale(scale: s, child: child),
-                    child: Text(data.total, style: TextStyle(fontSize: 40, fontWeight: FontWeight.w800, color: pokrovColor(context, PokrovColors.warnStrong), height: 1)),
+                    child: Text(data.total, textScaler: pokrovTitleScaler(context), style: TextStyle(fontFamily: pokrovDisplayFontFamily, fontSize: 36, fontWeight: FontWeight.w800, color: pokrovColor(context, PokrovColors.warnStrong), height: 1)),
                   ),
                   SizedBox(width: 14),
                   Expanded(
