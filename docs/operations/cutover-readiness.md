@@ -5,7 +5,22 @@ is the only current release queue; [Execution section 0](C:/Users/kiwun/Download
 explains how to continue. Dated results below retain their original scope and do
 not create new tasks or permission to repeat accepted checks.
 
-Private **1.5.0+4256** contains six packages from App `4f384ec7`, under
+Private **1.5.0+4257** contains six packages from App `a4f69339` under
+`E:/POKROV-tools/temp/release-1.5.0-4257`, with Core `98af7fd` (1.2.15/ABI2)
+and the authenticated Slipstream companions on Windows and all three Android ABIs.
+The selected manifest is
+`E:/POKROV-tools/artifacts/core-1.2.15-audit4257/runtime-artifacts.audit4257.json`.
+Official Zapret2/Lua and F82 shadow/manual Decider remain selected. Four APKs
+are production-signed/non-debuggable; Windows setup and its one-installer ZIP
+remain unsigned. The VM upgrade retained account/install identity; invalid-code
+handling, local recovery validation, Rules/Profile/Diagnostics and native
+Initialize/Stop passed. After tray Exit, app/TUN/helpers/guard were zero and
+DNS, all 16 routes, proxies and selected settings matched the baseline. The VM
+is powered off and unlocked. Transport acceptance was not repeated; the phone
+is away. No customer delivery or general release occurred. The backend audit
+package still requires its separate production approval.
+
+The preceding private **1.5.0+4256** contains six packages from App `4f384ec7`, under
 `E:/POKROV-tools/temp/release-1.5.0-4256`. Windows retains Core `8079e69`
 (1.2.15/ABI2); Android selects Core `80fc743` with unchanged Slipstream libraries.
 F82 remains shadow-only and Decider manual. Four APKs are production-signed and
