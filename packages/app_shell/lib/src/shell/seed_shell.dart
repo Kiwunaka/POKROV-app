@@ -13,6 +13,8 @@ class PokrovSeedApp extends StatefulWidget {
     this.clientUpdateProgressReader,
     this.firstLaunchStore,
     this.themeModeStore = const PokrovFileThemeModeStore(),
+    this.seasonalThemeStore = const PokrovFileSeasonalThemeStore(),
+    this.seasonClock = DateTime.now,
     this.connectHintStore = const PokrovFileConnectHintStore(),
     this.runtimeActionTimeout = const Duration(seconds: 18),
     this.protectionProbe,
@@ -39,6 +41,10 @@ class PokrovSeedApp extends StatefulWidget {
   final PokrovClientUpdateProgressReader? clientUpdateProgressReader;
   final PokrovFirstLaunchStore? firstLaunchStore;
   final PokrovFileThemeModeStore themeModeStore;
+  final PokrovFileSeasonalThemeStore seasonalThemeStore;
+
+  /// Device clock for the holiday decoration; tests pass a fixed date.
+  final DateTime Function() seasonClock;
   final PokrovFileConnectHintStore connectHintStore;
   final Duration runtimeActionTimeout;
   final PokrovProtectionProbe? protectionProbe;
@@ -58,13 +64,66 @@ class PokrovSeedApp extends StatefulWidget {
   State<PokrovSeedApp> createState() => _PokrovSeedAppState();
 }
 
-class _PokrovSeedAppState extends State<PokrovSeedApp> {
+/// `--dart-define=POKROV_SEASON=<id>` previews a holiday on any date;
+/// `newYearNight` also enables the fireworks.
+const _seasonDefine = String.fromEnvironment('POKROV_SEASON');
+
+class _PokrovSeedAppState extends State<PokrovSeedApp> with WidgetsBindingObserver {
   ThemeMode _themeMode = ThemeMode.system;
+  bool _seasonalTheme = true;
+  (ui.PokrovSeason?, bool) _season = (null, false);
+  Timer? _seasonTimer;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _season = _currentSeason();
     unawaited(_restoreThemeMode());
+    unawaited(_restoreSeasonalTheme());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _seasonTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    final season = _currentSeason();
+    if (season != _season) setState(() => _season = season);
+  }
+
+  /// Holiday for the device's local time, rechecked at the next full hour.
+  (ui.PokrovSeason?, bool) _currentSeason() {
+    final now = widget.seasonClock();
+    _seasonTimer?.cancel();
+    _seasonTimer = Timer(DateTime(now.year, now.month, now.day, now.hour + 1).difference(now), () {
+      final season = _currentSeason();
+      if (mounted && season != _season) setState(() => _season = season);
+    });
+    if (_seasonDefine.isNotEmpty) {
+      final night = _seasonDefine == 'newYearNight';
+      return (night ? ui.PokrovSeason.newYear : ui.PokrovSeason.values.asNameMap()[_seasonDefine], night);
+    }
+    final season = pokrovSeasonForDate(now);
+    return (season, season == ui.PokrovSeason.newYear && pokrovNewYearNight(now));
+  }
+
+  Future<void> _restoreSeasonalTheme() async {
+    final restored = await widget.seasonalThemeStore.read();
+    if (!mounted || restored == _seasonalTheme) return;
+    setState(() => _seasonalTheme = restored);
+  }
+
+  void _setSeasonalTheme(bool enabled) {
+    if (_seasonalTheme == enabled) return;
+    PokrovHaptics.tap();
+    unawaited(widget.seasonalThemeStore.write(enabled));
+    setState(() => _seasonalTheme = enabled);
   }
 
   Future<void> _restoreThemeMode() async {
@@ -90,6 +149,8 @@ class _PokrovSeedAppState extends State<PokrovSeedApp> {
 
   @override
   Widget build(BuildContext context) {
+    final season = _seasonalTheme ? _season.$1 : null;
+    final fireworks = _seasonalTheme && _season.$2;
     return MaterialApp(
       title: 'POKROV',
       debugShowCheckedModeBanner: false,
@@ -103,10 +164,14 @@ class _PokrovSeedAppState extends State<PokrovSeedApp> {
       theme: _buildPokrovTheme(
         tokens: PokrovPalette.light,
         brightness: Brightness.light,
+        season: season,
+        fireworks: fireworks,
       ),
       darkTheme: _buildPokrovTheme(
         tokens: PokrovPalette.dark,
         brightness: Brightness.dark,
+        season: season,
+        fireworks: fireworks,
       ),
       home: PokrovSeedShell(
         appContext: widget.appContext,
@@ -134,6 +199,8 @@ class _PokrovSeedAppState extends State<PokrovSeedApp> {
         acquisitionUriStream: widget.acquisitionUriStream,
         themeMode: _themeMode,
         onThemeModeChanged: _setThemeMode,
+        seasonalTheme: _seasonalTheme,
+        onSeasonalThemeChanged: _setSeasonalTheme,
       ),
     );
   }
@@ -142,10 +209,15 @@ class _PokrovSeedAppState extends State<PokrovSeedApp> {
 ThemeData _buildPokrovTheme({
   required PokrovPaletteTokens tokens,
   required Brightness brightness,
-}) => ui.pokrovUiTheme(brightness: brightness).copyWith(
-  extensions: [tokens],
-  pageTransitionsTheme: pokrovAdaptivePageTransitionsTheme(),
-);
+  ui.PokrovSeason? season,
+  bool fireworks = false,
+}) {
+  final base = ui.pokrovUiTheme(brightness: brightness, season: season, fireworks: fireworks);
+  return base.copyWith(
+    extensions: [...base.extensions.values, tokens],
+    pageTransitionsTheme: pokrovAdaptivePageTransitionsTheme(),
+  );
+}
 
 class PokrovSeedShell extends StatefulWidget {
   const PokrovSeedShell({
@@ -165,6 +237,8 @@ class PokrovSeedShell extends StatefulWidget {
     this.clientExperienceStore = const PokrovFileClientExperienceStore(),
     required this.themeMode,
     required this.onThemeModeChanged,
+    this.seasonalTheme = true,
+    this.onSeasonalThemeChanged,
     this.shellController,
     this.currentWifiProbe,
     this.wifiPermissionRequester,
@@ -192,6 +266,8 @@ class PokrovSeedShell extends StatefulWidget {
   final PokrovClientExperienceStore clientExperienceStore;
   final ThemeMode themeMode;
   final ValueChanged<ThemeMode> onThemeModeChanged;
+  final bool seasonalTheme;
+  final ValueChanged<bool>? onSeasonalThemeChanged;
   final PokrovShellController? shellController;
   final PokrovWifiProbe? currentWifiProbe;
   final PokrovWifiPermissionRequester? wifiPermissionRequester;
@@ -3702,6 +3778,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                 ? _openLocalDpiControl : null,
             themeMode: widget.themeMode,
             onThemeModeChanged: widget.onThemeModeChanged,
+            seasonalTheme: widget.seasonalTheme,
+            onSeasonalThemeChanged: widget.onSeasonalThemeChanged,
             interfaceMode: _clientExperience.interfaceMode,
             onInterfaceModeChanged: _connectionManager.setInterfaceMode,
             subscriptionInfo: _subscriptionInfo,

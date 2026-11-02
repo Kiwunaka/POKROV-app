@@ -262,6 +262,14 @@ class _HomeThemeStore extends PokrovFileThemeModeStore {
   Future<void> write(ThemeMode mode) async { saved = mode; }
 }
 
+class _HomeSeasonalStore extends PokrovFileSeasonalThemeStore {
+  bool saved = true;
+  @override
+  Future<bool> read() async => saved;
+  @override
+  Future<void> write(bool enabled) async { saved = enabled; }
+}
+
 class _NoConnectBootstrapper implements ManagedProfileBootstrapper {
   @override
   Never noSuchMethod(Invocation invocation) =>
@@ -1281,6 +1289,7 @@ void main() {
     final firstLaunch = _RestoredFirstLaunch();
     final experience = _HomeExperience();
     final themeStore = _HomeThemeStore();
+    final seasonalStore = _HomeSeasonalStore();
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     const channel = MethodChannel('space.pokrov/runtime_engine');
     tester.view.physicalSize = const Size(1280, 800);
@@ -1302,6 +1311,7 @@ void main() {
       appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
       bootstrapper: _NoConnectBootstrapper(), firstLaunchStore: firstLaunch,
       clientExperienceStore: experience, themeModeStore: themeStore,
+      seasonalThemeStore: seasonalStore, seasonClock: () => DateTime(2026, 12, 20),
     ));
     firstLaunch.completion.complete(true);
     await tester.pump();
@@ -1348,6 +1358,16 @@ void main() {
     await tester.pumpAndSettle();
     expect(themeStore.saved, ThemeMode.dark);
     expect(tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode, ThemeMode.dark);
+    ui.PokrovSeason? season() => tester.widget<MaterialApp>(find.byType(MaterialApp)).darkTheme!.extension<ui.PokrovSeasonTheme>()!.season;
+    expect(season(), ui.PokrovSeason.newYear, reason: 'the device date decides the holiday');
+    await tester.tap(find.text('Тема'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('profile-seasonal-theme')));
+    await tester.pumpAndSettle();
+    expect(seasonalStore.saved, isFalse);
+    expect(season(), isNull);
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
     tester.state<ScrollableState>(find.descendant(of: find.byType(ui.ProfileScreen), matching: find.byType(Scrollable)).first).position.jumpTo(0);
     await tester.pumpAndSettle();
     final profileTitle = find.descendant(of: find.byType(ui.ProfileScreen), matching: find.text('Профиль'));

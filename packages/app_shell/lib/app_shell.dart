@@ -40,6 +40,7 @@ import 'src/design_system/design_system.dart';
 import 'src/features/diagnostics/client_diagnostics.dart';
 import 'src/features/diagnostics/support_mode.dart';
 import 'src/features/profile/account_session_coordinator.dart';
+import 'src/features/season/season_calendar.dart';
 import 'src/features/support/support_conversation_controller.dart';
 import 'src/features/update/client_update.dart';
 import 'src/features/update/app_file_sharing.dart';
@@ -56,6 +57,7 @@ export 'src/features/diagnostics/client_diagnostics.dart';
 export 'src/features/rules/ru_app_catalog.dart';
 export 'src/features/diagnostics/support_mode.dart';
 export 'src/features/profile/account_session_coordinator.dart';
+export 'src/features/season/season_calendar.dart';
 export 'src/features/support/support_conversation_controller.dart';
 export 'src/features/support/support_polling.dart';
 export 'src/features/update/client_update.dart';
@@ -202,6 +204,38 @@ class PokrovFileThemeModeStore {
     try {
       final file = await _stateFile();
       await file.writeAsString(mode.name, flush: true);
+    } catch (_) {
+      // Best-effort persistence only.
+    }
+  }
+}
+
+/// Persists the «Праздничное оформление» switch. On by default; storage
+/// failures keep it on and never break the shell.
+class PokrovFileSeasonalThemeStore {
+  const PokrovFileSeasonalThemeStore();
+
+  static const _fileName = 'pokrov-seasonal-theme.txt';
+
+  Future<File> _stateFile() async {
+    final directory = await getApplicationSupportDirectory();
+    await directory.create(recursive: true);
+    return File('${directory.path}${Platform.pathSeparator}$_fileName');
+  }
+
+  Future<bool> read() async {
+    try {
+      final file = await _stateFile();
+      return !await file.exists() || (await file.readAsString()).trim() != 'off';
+    } catch (_) {
+      return true;
+    }
+  }
+
+  Future<void> write(bool enabled) async {
+    try {
+      final file = await _stateFile();
+      await file.writeAsString(enabled ? 'on' : 'off', flush: true);
     } catch (_) {
       // Best-effort persistence only.
     }

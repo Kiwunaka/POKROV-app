@@ -1,7 +1,7 @@
 ---
 name: POKROV Client Design System
 status: active
-updated: 2026-10-18
+updated: 2026-11-02
 ---
 
 # POKROV Client Design System
@@ -79,6 +79,23 @@ Profile's interface-mode control scales with text and wraps below its label,
 with horizontal scrolling when needed, so both choices remain readable and
 usable at 200% text scale without changing the saved mode handler. Segmented
 choices keep keyboard focus and activate the same callback with Tab/Enter.
+
+## Holiday decoration
+
+The app shell picks a holiday from the device's local date, with no network:
+Halloween 25 Oct–1 Nov, New Year 15 Dec–5 Jan (fireworks after a confirmed
+connection on the night of 31 Dec 18:00–1 Jan 06:00), Christmas 6–8 Jan,
+13–14 Feb, 22–23 Feb, 7–8 Mar, 1 Apr, 12 Apr, Orthodox Easter and the next
+day, and 8–9 May. Overlaps resolve as 9 May, Easter, 12 April, then the rest.
+`PokrovSeasonTheme` carries the season into `app_ui`, which tints only the
+accent tokens (never warning or status tokens) and draws a `CustomPaint`
+backdrop behind Home plus decoration around the connect circle. The status
+text, the verified-only «Защищено» and the error look never change; an error
+hides the decoration. Motion runs at about 30 frames a second, stops under
+reduced motion, while the app is inactive and a minute after the last touch.
+«Праздничное оформление» in the theme sheet is on by default and persisted.
+`--dart-define=POKROV_SEASON=<id>` (or `newYearNight`) previews a holiday;
+the UI example has a holiday picker in the theme row.
 
 ## Boundaries
 

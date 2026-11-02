@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'season.dart';
+
 /// Colors of the approved 18.10 frame. Values mirror the light
 /// `pokrov-clear` tokens from the platform `shared/design-tokens.json`.
 abstract final class PokrovColors {
@@ -46,8 +48,11 @@ abstract final class PokrovMotion {
   static const settle = Curves.easeOutCubic;
 }
 
-ThemeData pokrovUiTheme({Brightness brightness = Brightness.light}) {
+/// [season] tints the accent family and decorates the home screen; null is
+/// the everyday look.
+ThemeData pokrovUiTheme({Brightness brightness = Brightness.light, PokrovSeason? season, bool fireworks = false}) {
   final dark = brightness == Brightness.dark;
+  final seasonAccent = pokrovSeasonColor(season, PokrovColors.accent, dark: dark);
   final base = ThemeData(
     useMaterial3: true,
     brightness: brightness,
@@ -55,8 +60,8 @@ ThemeData pokrovUiTheme({Brightness brightness = Brightness.light}) {
     scaffoldBackgroundColor: dark ? const Color(0xFF111715) : PokrovColors.canvas,
     colorScheme: ColorScheme.fromSeed(
       brightness: brightness,
-      seedColor: PokrovColors.accent,
-      primary: dark ? const Color(0xFF8AC4AB) : PokrovColors.accent,
+      seedColor: seasonAccent ?? PokrovColors.accent,
+      primary: seasonAccent ?? (dark ? const Color(0xFF8AC4AB) : PokrovColors.accent),
       surface: dark ? const Color(0xFF161D1A) : PokrovColors.surface,
     ),
     splashFactory: InkRipple.splashFactory,
@@ -70,12 +75,18 @@ ThemeData pokrovUiTheme({Brightness brightness = Brightness.light}) {
       dragHandleColor: dark ? const Color(0xFF44524B) : const Color(0xFFD5DBD8),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
     ),
+    extensions: [PokrovSeasonTheme(season: season, fireworks: fireworks)],
   );
 }
 
-/// Resolve the approved light tokens against the persisted system/light/dark choice.
+/// Resolve the approved light tokens against the persisted system/light/dark
+/// choice and the active holiday accent.
 Color pokrovColor(BuildContext context, Color color) {
-  if (Theme.of(context).brightness != Brightness.dark) return color;
+  final theme = Theme.of(context);
+  final dark = theme.brightness == Brightness.dark;
+  final seasonal = pokrovSeasonColor(theme.extension<PokrovSeasonTheme>()?.season, color, dark: dark);
+  if (seasonal != null) return seasonal;
+  if (!dark) return color;
   return <Color, Color>{
     PokrovColors.canvas: Color(0xFF111715),
     PokrovColors.surface: Color(0xFF161D1A),

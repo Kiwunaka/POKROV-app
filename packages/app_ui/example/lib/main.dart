@@ -9,16 +9,55 @@ import 'sample_data.dart';
 /// app replaces [_PreviewState] with its own controllers.
 void main() => runApp(const PokrovPreviewApp());
 
+/// Theme and holiday of the preview; `--dart-define=POKROV_SEASON=<id>`
+/// opens it on a holiday (`newYearNight` adds the fireworks).
+class _Look {
+  const _Look({this.dark = false, this.season, this.fireworks = false});
+
+  final bool dark;
+  final PokrovSeason? season;
+  final bool fireworks;
+
+  _Look copyWith({bool? dark, PokrovSeason? season, bool clearSeason = false, bool? fireworks}) => _Look(
+        dark: dark ?? this.dark,
+        season: clearSeason ? null : season ?? this.season,
+        fireworks: fireworks ?? this.fireworks,
+      );
+}
+
+const _seasonDefine = String.fromEnvironment('POKROV_SEASON');
+
+final _look = ValueNotifier(_Look(
+  season: _seasonDefine == 'newYearNight' ? PokrovSeason.newYear : PokrovSeason.values.asNameMap()[_seasonDefine],
+  fireworks: _seasonDefine == 'newYearNight',
+));
+
+const _seasonNames = {
+  PokrovSeason.halloween: 'Хэллоуин',
+  PokrovSeason.newYear: 'Новый год',
+  PokrovSeason.christmas: 'Рождество',
+  PokrovSeason.valentine: '14 февраля',
+  PokrovSeason.defender: '23 февраля',
+  PokrovSeason.womensDay: '8 марта',
+  PokrovSeason.aprilFools: '1 апреля',
+  PokrovSeason.cosmonautics: 'День космонавтики',
+  PokrovSeason.easter: 'Пасха',
+  PokrovSeason.victoryDay: '9 мая',
+};
+
 class PokrovPreviewApp extends StatelessWidget {
   const PokrovPreviewApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'POKROV макет',
-      debugShowCheckedModeBanner: false,
-      theme: pokrovUiTheme(),
-      home: const _Preview(),
+    return ValueListenableBuilder(
+      valueListenable: _look,
+      builder: (context, look, _) => MaterialApp(
+        title: 'POKROV макет',
+        debugShowCheckedModeBanner: false,
+        theme: pokrovUiTheme(brightness: look.dark ? Brightness.dark : Brightness.light, season: look.season, fireworks: look.fireworks),
+        home: const _Preview(),
+      ),
     );
   }
 }
@@ -137,6 +176,37 @@ class _PreviewState extends State<_Preview> {
     _push((context) => BonusesScreen(data: PokrovSampleData.bonuses, onBack: () => Navigator.pop(context)));
   }
 
+  void _openLook() {
+    showPokrovSheet<void>(context, (context) => ValueListenableBuilder(
+      valueListenable: _look,
+      builder: (context, look, _) => ListView(
+        shrinkWrap: true,
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        children: [
+          Text('Тема и праздник', style: pokrovTextStyle(context, PokrovText.heading)),
+          const SizedBox(height: 12),
+          PokrovSegmented(
+            labels: const ['Светлая', 'Тёмная'],
+            index: look.dark ? 1 : 0,
+            onChanged: (i) => _look.value = look.copyWith(dark: i == 1),
+          ),
+          for (final season in [null, ...PokrovSeason.values])
+            PokrovRow(
+              title: season == null ? 'Без праздника' : _seasonNames[season]!,
+              value: season == look.season ? 'выбран' : null,
+              onTap: () => _look.value = season == null ? look.copyWith(clearSeason: true) : look.copyWith(season: season),
+            ),
+          PokrovRow(
+            title: 'Салют при подключении',
+            value: look.fireworks ? 'вкл' : 'выкл',
+            onTap: () => _look.value = look.copyWith(fireworks: !look.fireworks),
+            divider: false,
+          ),
+        ],
+      ),
+    ));
+  }
+
   void _setMode(InterfaceMode mode) {
     setState(() {
       _mode = mode;
@@ -189,6 +259,7 @@ class _PreviewState extends State<_Preview> {
           data: PokrovSampleData.profile(_mode),
           onRenew: _openRenew,
           onModeChanged: _setMode,
+          onTheme: _openLook,
           onHelp: _openSupport,
           onBonuses: _openBonuses,
         );
