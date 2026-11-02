@@ -247,7 +247,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
             _readText(response['profile_revision']) !=
                 '$tcpFallbackFromRevision:fallback:legacy_reality_fallback')) {
       throw const BootstrapFailure(
-        'Сервер не подтвердил резервное подключение. Повторите попытку позже.',
+        'Сервер не подтвердил резервное подключение. Попробуй ещё раз позже.',
       );
     }
     final configFormat = _readText(response['config_format']);
@@ -329,7 +329,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
         _readText(provisioning['status']) == 'ready';
     if (!provisioningReady) {
       throw const BootstrapFailure(
-        'POKROV еще завершает первый запуск. Попробуйте через минуту.',
+        'POKROV еще завершает первый запуск. Попробуй через минуту.',
         operationalCode: 'API-011',
       );
     }

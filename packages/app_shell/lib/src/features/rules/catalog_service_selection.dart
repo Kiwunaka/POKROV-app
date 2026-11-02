@@ -193,7 +193,7 @@ class _CatalogServiceSelectionSheetState extends State<_CatalogServiceSelectionS
         final closed = error is _CatalogServiceSelectionFailure
             ? error : _CatalogServiceSelectionFailure.from('unknown', error);
         setState(() => _error =
-            'Не удалось обновить каталог. ${closed.description} Повторите попытку.');
+            'Не удалось обновить каталог. ${closed.description} Попробуй ещё раз.');
       }
     }
   }
@@ -228,18 +228,18 @@ class _CatalogServiceSelectionSheetState extends State<_CatalogServiceSelectionS
       if (current.catalog.catalog.payloadSha256 != viewed.catalog.catalog.payloadSha256 ||
           current.profileRevision != viewed.profileRevision ||
           current.accessState != viewed.accessState) {
-        setState(() => _error = 'Правила или настройки изменились. Обновите список и проверьте выбор.');
+        setState(() => _error = 'Правила или настройки изменились. Обнови список и проверь выбор.');
         return;
       }
       current.compile(selected);
       if (!widget.onSave(current, selected)) {
-        setState(() => _error = 'Сохранение недоступно. Обновите список и проверьте поддержку режима.');
+        setState(() => _error = 'Сохранение недоступно. Обнови список и проверь поддержку режима.');
         return;
       }
       Navigator.of(context).pop();
     } on Object {
       if (mounted && generation == _generation) {
-        setState(() => _error = 'Выбор не сохранён. Проверьте доступность сервисов и обновите каталог.');
+        setState(() => _error = 'Выбор не сохранён. Проверь доступность сервисов и обнови каталог.');
       }
     } finally {
       if (mounted && generation == _generation) setState(() => _saving = false);
@@ -288,15 +288,15 @@ class _CatalogServiceSelectionSheetState extends State<_CatalogServiceSelectionS
           const Text('Выбор сохранится для следующего подключения. Текущее соединение останется без изменений. Ручные правила имеют приоритет.'),
           if (data?.runtimeObservedAt != null) ...[
             const SizedBox(height: 8),
-            Text('Выбор шлюза на ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(data!.runtimeObservedAt!.toLocal()))}. Обновите список, чтобы прочитать состояние снова.'),
+            Text('Выбор шлюза на ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(data!.runtimeObservedAt!.toLocal()))}. Обнови список, чтобы прочитать состояние снова.'),
             const Text('Доступность сайта здесь не проверяется. При переключении старые соединения сохраняют прежний шлюз.'),
           ],
           if (_error != null) Text(_error!),
-          if (data != null && !validNow) const Text('Срок действия каталога истёк. Обновите список.'),
+          if (data != null && !validNow) const Text('Срок действия каталога истёк. Обнови список.'),
           if (data != null && data.nativeWindowVersion != 1)
             const Text('Поддержка каталога модулем подключения пока не подтверждена. Без неё подключение недоступно.'),
           if (data != null && _selected.isNotEmpty && compiled == null && validNow)
-            const Text('В выборе есть недоступные или конфликтующие правила. Уберите их перед сохранением.'),
+            const Text('В выборе есть недоступные или конфликтующие правила. Убери их перед сохранением.'),
           Row(children: [
             Expanded(child: Text('Выбрано: ${_selected.length}')),
             TextButton(onPressed: _saving ? null : _refresh, child: const Text('Обновить')),
@@ -371,7 +371,7 @@ class _CatalogServiceEvidence extends StatelessWidget {
     bool current(Object? start, Object? end) => !now.isBefore(DateTime.parse(start! as String)) &&
       now.isBefore(DateTime.parse(end! as String));
     final reasons = <String>[
-      if (!data.providerMetadataCurrent) 'Обновите сведения о подтверждении.',
+      if (!data.providerMetadataCurrent) 'Обнови сведения о подтверждении.',
       if (row['platform'] != data.platform) 'Подтверждение для другой платформы.',
       if (row['verification'] != 'verified') 'Есть только данные источника.',
       if (row['enabled'] != true || provider['enabled'] != true) 'Использование отключено.',
@@ -389,8 +389,8 @@ class _CatalogServiceEvidence extends StatelessWidget {
     return ExpansionTile(
       key: PageStorageKey('service-evidence-${service.id}'), tilePadding: EdgeInsets.zero,
       title: const Text('Подтверждения Smart Access'),
-      subtitle: Text(policy == null ? 'Сведения недоступны. Обновите список.'
-        : !data.providerMetadataCurrent ? 'Сведения устарели. Обновите список.'
+      subtitle: Text(policy == null ? 'Сведения недоступны. Обнови список.'
+        : !data.providerMetadataCurrent ? 'Сведения устарели. Обнови список.'
         : rows.isEmpty ? 'Для этого сервиса нет подтверждений в политике.' : 'Что указано в подписанной политике'),
       children: [
         if (policy != null) ...[

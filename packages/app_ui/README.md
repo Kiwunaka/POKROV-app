@@ -2,6 +2,8 @@
 
 Screens of the redesign the owner approved on 2026-10-18. The frame was built from the 1.5.0 screens: same circle button, chips, tabs, emerald and Golos Text, with plain «ты» texts, technical detail moved to a second layer, and live motion.
 
+On 2026-11-02 the owner chose direction D: four task tabs (Защита, Доступ, Помощь, Настройки) instead of the Simple/Advanced split, widgets on the main screen that the person picks and orders, and one search over Settings.
+
 The package is presentation only. Screens take view data (`lib/src/models.dart`) and callbacks; they never read runtime, network or storage. `example/lib/sample_data.dart` holds the fake data used only by the preview app and tests.
 
 ## Preview app
@@ -23,12 +25,14 @@ Feature filenames below belong to the existing
 
 | Screen | Data | Comes from today |
 |---|---|---|
-| `HomeScreen` | `HomeViewData` | `home_surface.dart`, `protection_center.dart` |
+| `HomeScreen` | `HomeViewData`, `HomeTile` | `home_surface.dart`, `home_tiles.dart` |
+| `HomeTilesSheet` | `HomeTileOption` | `home_tiles.dart`; choice saved by `PokrovFileHomeTilesStore` |
 | `StatusSheet` | `StatusViewData` | protection center checks, mapped to three plain rows |
-| `FirstConnectSheet` | `FirstRouteChoice` | first-connect route question in [seed_shell.dart](../app_shell/lib/src/shell/seed_shell.dart) |
 | `LocationsScreen` | `LocationsViewData` | `locations_surface.dart` |
-| `RulesScreen` | `RulesViewData` | `rules_surface.dart`; expert settings stay behind «Для опытных» |
-| `ProfileScreen` | `ProfileViewData` | `profile_surface.dart`; interface mode switches inline |
+| `RulesScreen` | `RulesViewData` | `rules_surface.dart`; page «Что идёт через POKROV», expert settings behind «Для опытных» |
+| `AccessScreen` | `AccessViewData` | `profile_surface.dart` (`_ProfilePart.access`) |
+| `HelpScreen` | phase and callbacks | `help_surface.dart` |
+| `SettingsScreen` | `SettingsEntry` | `profile_surface.dart` (`_ProfilePart.settings`) |
 | `RenewScreen` | `RenewViewData` | tariffs from the platform catalog; payment opens the existing checkout URL |
 | `SupportScreen` | `SupportViewData` | `support_chat.dart` |
 | `BonusesScreen` | `BonusesViewData` | `rewards_hub.dart` |

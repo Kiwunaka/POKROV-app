@@ -1381,7 +1381,7 @@ void main() {
       onThemeModeChanged: (_) {},
     )));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('nav-profile')));
+    await tester.tap(find.byKey(const ValueKey('nav-access')));
     await tester.pumpAndSettle();
     dynamic profile() => tester.widget(find.byWidgetPredicate(
         (widget) => widget.runtimeType.toString() == '_ProfileSection'));
@@ -2193,7 +2193,7 @@ void main() {
       preferences: PokrovRoutingPreferences.fromJson({
         'dnsPreset': 'custom', 'dnsTransport': 'direct', 'customDnsUrl': saved,
       }));
-    const warning = 'Сохранённый адрес DNS не поддерживается. Используется DNS профиля POKROV; исправьте адрес в настройке DNS.';
+    const warning = 'Сохранённый адрес DNS не поддерживается. Используется DNS профиля POKROV; исправь адрес в настройке DNS.';
     expect(find.text(warning), findsOneWidget);
     expect(find.byKey(const ValueKey('rules-dns-direct-toggle')), findsNothing);
     final picker = find.byKey(const ValueKey('rules-dns-picker'));
@@ -2586,7 +2586,7 @@ void main() {
     }
     openProviders();
     await tester.pumpAndSettle();
-    expect(find.text('Не удалось загрузить SmartDNS-провайдеров. Повторите попытку.'), findsOneWidget);
+    expect(find.text('Не удалось загрузить SmartDNS-провайдеров. Попробуй ещё раз.'), findsOneWidget);
     final refresh = find.byKey(const ValueKey('rules-smart-dns-provider-refresh'));
     await tester.tap(refresh);
     await tester.pumpAndSettle();
@@ -2606,7 +2606,7 @@ void main() {
     expect(reads, 4);
     await tester.tap(refresh);
     await tester.pumpAndSettle();
-    expect(find.text('Не удалось загрузить SmartDNS-провайдеров. Повторите попытку.'), findsOneWidget);
+    expect(find.text('Не удалось загрузить SmartDNS-провайдеров. Попробуй ещё раз.'), findsOneWidget);
     expect(ownProvider, findsNothing);
     final nextPolicy = Completer<VerifiedSmartAccessProviderPolicy>();
     bootstrapper.providerLoader = () => nextPolicy.future;
@@ -4767,7 +4767,7 @@ void main() {
     await tester.pump(const Duration(seconds: 6));
     final card = find.byType(ui.WarnCard);
     expect(find.descendant(of: card,
-      matching: find.text('Сервер ещё не подготовил подключение. Повторите попытку позже.')), findsOneWidget);
+      matching: find.text('Сервер ещё не подготовил подключение. Попробуй ещё раз позже.')), findsOneWidget);
     expect(find.textContaining('Похоже, сеть мешает'), findsNothing);
     expect(nativeConnects, 0);
     final previousAttempts = bootstrapper.resolutions.length;
@@ -4956,7 +4956,7 @@ void main() {
       ..nextCacheRefreshFailure = const SocketException('offline');
     await tester.tap(refresh);
     await tester.pumpAndSettle();
-    expect(find.text('Страны обновлены, но список соединений не обновился. Попробуйте ещё раз.'), findsOneWidget);
+    expect(find.text('Страны обновлены, но список соединений не обновился. Попробуй ещё раз.'), findsOneWidget);
     await tester.tap(refresh);
     await tester.pumpAndSettle();
     expect(find.textContaining('не обновился'), findsNothing);
@@ -6806,7 +6806,7 @@ void main() {
     await manager.connect();
     expect(manager.status.phase, ConnectionPhase.actionRequired);
     expect(manager.headline,
-      'Не удалось применить настройки DNS. Проверьте выбранный DNS и повторите подключение.');
+      'Не удалось применить настройки DNS. Проверь выбранный DNS и повтори подключение.');
     expect(runtime.connectCalls, 0);
   });
 
@@ -6819,7 +6819,7 @@ void main() {
     await manager.connect();
     expect(manager.status.phase, ConnectionPhase.actionRequired);
     expect(manager.headline,
-        'Не удалось подтвердить время устройства. Проверьте дату и время, затем повторите подключение.');
+        'Не удалось подтвердить время устройства. Проверь дату и время, затем повтори подключение.');
     expect(runtime.connectCalls, 0);
     final report = bootstrapper.actualReports.singleWhere((value) => value['runtime_phase'] == 'failed');
     expect(report['error_code'], 'API-008');
@@ -6847,16 +6847,16 @@ void main() {
     expect(runtime.connectCalls, 0);
     expect(manager.attemptId, 2);
     expect(manager.busy, isFalse);
-    const pendingMessage = 'Доступ ещё готовится. Нажмите «Подключить», чтобы повторить попытку.';
+    const pendingMessage = 'Доступ ещё готовится. Нажми «Подключить», чтобы повторить попытку.';
     bootstrapper.failure = const BootstrapFailure(pendingMessage,
         code: 'access_preparing', operationalCode: 'API-011');
     await manager.connect();
-    expect(manager.headline, 'Сервер ещё не подготовил подключение. Повторите попытку позже.');
+    expect(manager.headline, 'Сервер ещё не подготовил подключение. Попробуй ещё раз позже.');
     expect(runtime.calls, isNot(contains('stage')));
     expect(runtime.connectCalls, 0);
     bootstrapper.failure = const BootstrapFailure('not yet ready', operationalCode: 'API-011');
     await manager.connect();
-    expect(manager.headline, 'Сервер ещё не подготовил подключение. Повторите попытку позже.');
+    expect(manager.headline, 'Сервер ещё не подготовил подключение. Попробуй ещё раз позже.');
     bootstrapper.cacheAvailable = true;
     await manager.connect();
     expect(bootstrapper.lastProfileTimeout, const Duration(seconds: 3));

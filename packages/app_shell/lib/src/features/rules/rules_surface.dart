@@ -246,7 +246,7 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
       applied = await widget.onApply(next);
     } on Object {
       if (mounted) {
-        showPokrovSnack(context, 'Не удалось применить правила. Повторите попытку.',
+        showPokrovSnack(context, 'Не удалось применить правила. Попробуй ещё раз.',
           tone: PokrovSnackTone.danger);
       }
     } finally {
@@ -489,7 +489,7 @@ class _RuAppsPresetCardState extends State<_RuAppsPresetCard> with WidgetsBindin
     if (appIds.isEmpty) {
       showPokrovSnack(
         context,
-        'RU-приложения не найдены. Обновите список или настройте вручную.',
+        'RU-приложения не найдены. Обнови список или настрой вручную.',
         tone: PokrovSnackTone.danger,
       );
       return;
@@ -592,13 +592,13 @@ class _RuAppsPresetCardState extends State<_RuAppsPresetCard> with WidgetsBindin
         if (!mounted) return;
         if (refreshed.verifiedCatalog != verifiedCatalog ||
             !setEquals(refreshed.apps.map((app) => app.identifier).toSet(), appIds.toSet())) {
-          showPokrovSnack(context, 'Список приложений изменился. Обновите и подтвердите его снова.',
+          showPokrovSnack(context, 'Список приложений изменился. Обнови и подтверди его снова.',
             tone: PokrovSnackTone.danger);
           _refresh();
           return;
         }
       } on Object {
-        if (mounted) showPokrovSnack(context, 'Не удалось проверить приложения. Повторите попытку.',
+        if (mounted) showPokrovSnack(context, 'Не удалось проверить приложения. Попробуй ещё раз.',
           tone: PokrovSnackTone.danger);
         return;
       }
@@ -724,8 +724,8 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
       // Inline validation instead of a silent no-op.
       setState(() {
         _manualError = _controller.text.trim().isEmpty
-            ? 'Введите название приложения.'
-            : 'Не получилось добавить: используйте латинские буквы, цифры, точки или дефисы.';
+            ? 'Введи название приложения.'
+            : 'Не получилось добавить: используй латинские буквы, цифры, точки или дефисы.';
       });
       return;
     }
@@ -861,7 +861,7 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
               border: Border.all(color: p.line),
             ),
             child: Text(
-              'Добавьте приложения из списка. Ручной ввод нужен только для восстановления или поддержки.',
+              'Добавь приложения из списка. Ручной ввод нужен только для восстановления или поддержки.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: p.muted,
                     height: 1.35,
@@ -1170,8 +1170,8 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
                                       ? 'Выбранные приложения будут работать напрямую.'
                                       : widget.hostPlatform ==
                                               HostPlatform.windows
-                                          ? 'Выберите приложение, которое пойдёт через VPN.'
-                                          : 'Выберите приложения, которые пойдут через VPN.',
+                                          ? 'Выбери приложение, которое пойдёт через VPN.'
+                                          : 'Выбери приложения, которые пойдут через VPN.',
                                   maxLines: 2,
                                   style: Theme.of(context)
                                       .textTheme
@@ -1269,7 +1269,7 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
                           if (candidates.isEmpty) {
                             return Center(
                               child: Text(
-                                'Ничего не найдено. Проверьте название или добавьте приложение вручную.',
+                                'Ничего не найдено. Проверь название или добавь приложение вручную.',
                                 textAlign: TextAlign.center,
                                 style: Theme.of(context)
                                     .textTheme

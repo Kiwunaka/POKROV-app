@@ -15,10 +15,21 @@ pixels wide, including pushed screens. System/light/dark choice is persisted.
 
 ## Screens and actions
 
-- Protection, Locations and Profile are always in the tab bar. Rules appears
-  only in Advanced mode; Profile owns the persisted Simple/Advanced switch.
-  Home keeps one connection action, a status sheet, the first connection scope
-  sheet, the notification bell and the real next step for the channel bonus.
+- The tab bar always shows four tabs named by task: «Защита», «Доступ»,
+  «Помощь», «Настройки». There is no Simple/Advanced switch. Home keeps one
+  connection action, the status line and sheet, the notification bell, the
+  channel-bonus next step and the widgets the person chose (default: country,
+  route, bypass, WARP; the choice and order are saved in
+  `pokrov-home-tiles.txt`). WARP switches in place; other widgets open their
+  existing screen or sheet. Country and route open as full pages over the tab
+  they came from, with a back button and system back. The first-connect scope
+  sheet is gone: the saved route is confirmed and changed in Settings.
+- «Доступ» holds the access card and renewal, the next useful step, devices,
+  «Код для входа», «Код активации», Telegram and mail, bonuses, the Telegram
+  proxy and sharing. «Помощь» starts with the connection check, then topics
+  for the AI helper, a person, the report, history and feedback. «Настройки»
+  has one search over every entry; expert entries open the route page with
+  «Для опытных» expanded.
 - Locations shows Auto and API countries, with an explicit refresh. Country
   selection retains existing admission, manual pin and bridge policies.
   Missing measurements never become fabricated ping or speed labels.
@@ -27,9 +38,10 @@ pixels wide, including pushed screens. System/light/dark choice is persisted.
   editors. DNS, custom routes, trusted Wi-Fi and Windows stack stay under
   «Для опытных», with the existing saved draft and single apply action.
   Direct DoH remains opt-in and affects resolver traffic only.
-- Profile retains account linking, device management and activation, theme,
-  notifications, WARP, platform settings, sharing, About and legal links.
-  Devices uses the real existing service; the mock «2 из 5» counter is absent.
+- Account linking, device management and activation live on «Доступ»; theme
+  and holiday decoration, notifications, WARP, platform settings, home widgets,
+  About and legal links live on «Настройки». Devices uses the real existing
+  service; the mock «2 из 5» counter is absent.
 - Renewal shows only platform catalog plans and prices, opens the existing
   checkout URL unchanged and asks the user to confirm the term there. No
   introductory price or device quota is invented by the view.
@@ -42,8 +54,8 @@ pixels wide, including pushed screens. System/light/dark choice is persisted.
   calendar state. Actions retain their existing eligibility and callbacks.
   Missing achievements, prices and offers stay absent.
 - Real promo slots retain impression/click events, expiry, dismissal and media.
-  Empty slots are hidden. Home uses 132-pixel slots in Simple mode and 84-pixel
-  slots in Advanced mode (358 pixels wide at a 390-pixel viewport).
+  Empty slots are hidden. Home uses 84-pixel slots below the widgets (358
+  pixels wide at a 390-pixel viewport); «Доступ» uses the full card.
   Unavailable optional actions have no visible placeholder.
 
 ## Status and diagnostics
@@ -75,10 +87,11 @@ Narrator, physical devices and real VPN connectivity require their own checks.
 
 The connect CTA and status semantics expose their existing tap callbacks;
 an unavailable connect action stays disabled for assistive activation too.
-Profile's interface-mode control scales with text and wraps below its label,
-with horizontal scrolling when needed, so both choices remain readable and
-usable at 200% text scale without changing the saved mode handler. Segmented
-choices keep keyboard focus and activate the same callback with Tab/Enter.
+At 200% text the home widgets stack in one column, the connect label shrinks
+instead of breaking, the wordmark yields to the mark and tab labels shrink
+instead of clipping. Every row, widget and switch is one keyboard-focusable
+control with a spoken label and state. Segmented choices keep keyboard focus
+and activate the same callback with Tab/Enter.
 
 ## Holiday decoration
 

@@ -495,7 +495,7 @@ void _showSystemSurfacePreferencesSheet(
             ),
             const SizedBox(height: 4),
             Text(
-              'Если плитки POKROV нет: раскройте шторку, нажмите «Изменить» и перетащите POKROV в активные кнопки.',
+              'Если плитки POKROV нет: открой шторку, нажми «Изменить» и перетащи POKROV в активные кнопки.',
               style: Theme.of(sheetContext).textTheme.bodySmall?.copyWith(
                     color: PokrovPalette.of(sheetContext).muted,
                     height: 1.35,
@@ -642,7 +642,7 @@ void _showWindowsShellPreferencesSheet(
                   key: const ValueKey('windows-launch-at-login-toggle'),
                   title: 'Запускать вместе с Windows',
                   description:
-                      'POKROV откроется после входа в систему, но подключение останется под вашим контролем.',
+                      'POKROV откроется после входа в систему, а подключаться или нет, решаешь ты.',
                   value: current.launchAtLogin,
                   next: (value) => current.copyWith(launchAtLogin: value),
                 ),

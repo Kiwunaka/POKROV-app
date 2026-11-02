@@ -196,7 +196,7 @@ Future<void> showPokrovClientUpdatePrompt({
                 const SizedBox(height: 14),
                 Text(
                   version.isEmpty
-                      ? 'Установите свежую версию, чтобы получить исправления и актуальные правила.'
+                      ? 'Установи свежую версию, чтобы получить исправления и актуальные правила.'
                       : 'Свежая версия: $version.',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: p.muted,

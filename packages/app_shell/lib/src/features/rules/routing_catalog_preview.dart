@@ -187,8 +187,8 @@ class _RoutingCatalogPreviewCardState extends State<_RoutingCatalogPreviewCard>
       setState(() {
         _loading = false;
         _error = error is RoutingCatalogFailure && error.code == 'catalog_profile_access_invalid'
-            ? 'Сначала обновите данные о доступе в профиле.'
-            : 'Не удалось получить актуальные правила. Повторите попытку.';
+            ? 'Сначала обнови данные о доступе во вкладке «Доступ».'
+            : 'Не удалось получить актуальные правила. Попробуй ещё раз.';
       });
     }
   }
@@ -207,7 +207,7 @@ class _RoutingCatalogPreviewCardState extends State<_RoutingCatalogPreviewCard>
       lines: [
         if (_loading) 'Загружаем предпросмотр…'
         else if (_error != null) _error!
-        else if (expired) 'Срок действия правил истёк. Обновите каталог перед подключением.'
+        else if (expired) 'Срок действия правил истёк. Обнови каталог перед подключением.'
         else if (preview != null) ...[
           'Предпросмотр: ${_routeModeShortLabel(widget.routeMode)}.',
           'Маршруты рассчитаны для рабочего VPN. Этот список не подтверждает текущее подключение.',

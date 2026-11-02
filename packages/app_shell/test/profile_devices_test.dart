@@ -35,7 +35,7 @@ void main() {
     await tester.pump();
     await tester.tap(find.byKey(const ValueKey('profile-device-revoke-approve')));
     await tester.pump();
-    expect(find.text('Не удалось отвязать устройство. Попробуйте еще раз.'), findsOneWidget);
+    expect(find.text('Не удалось отвязать устройство. Попробуй ещё раз.'), findsOneWidget);
     expect(revoke, findsOneWidget);
 
     final issue = find.byKey(const ValueKey('profile-device-pairing-issue'));

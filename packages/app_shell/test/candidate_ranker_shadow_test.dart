@@ -142,7 +142,7 @@ void main() {
     await tester.tap(disable);
     await tester.pump();
     expect(tester.takeException(), isNull);
-    expect(find.text('Не удалось сохранить отключение. Повторите.'), findsOneWidget);
+    expect(find.text('Не удалось сохранить отключение. Повтори.'), findsOneWidget);
     expect(tester.widget<OutlinedButton>(disable).onPressed, isNotNull);
     await tester.tap(disable);
     await tester.pumpAndSettle();
@@ -157,7 +157,7 @@ void main() {
       ),
       onOpenDiagnostics: () {}, onDisable: () => attempts++,
     ))));
-    expect(find.text('Отключение не сохранено. Повторите.'), findsOneWidget);
+    expect(find.text('Отключение не сохранено. Повтори.'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('persistent-support-mode-disable')));
     expect(attempts, 3);
   });

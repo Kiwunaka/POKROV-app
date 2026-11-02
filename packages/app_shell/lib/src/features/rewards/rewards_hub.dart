@@ -646,7 +646,7 @@ class _RewardsReferralCardState extends State<_RewardsReferralCard> {
                     child: Text(
                       widget.paidRequired
                           ? 'Ссылка появится автоматически после первой оплаты.'
-                          : 'Ссылка пока не готова. Нажмите «Обновить сводку».',
+                          : 'Ссылка пока не готова. Нажми «Обновить сводку».',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: p.muted,
                             height: 1.3,

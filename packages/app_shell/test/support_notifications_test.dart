@@ -182,7 +182,7 @@ void main() {
             'id': 'broadcast-app-campaign',
             'kind': 'message',
             'title': 'Сообщение от POKROV',
-            'body': 'Новая информация для вашего аккаунта.',
+            'body': 'Новая информация для твоего аккаунта.',
             'createdAt': '2026-10-29T12:00:00Z',
             'ctaLabel': '',
             'ctaHref': null,
@@ -205,7 +205,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     expect(find.text('Сообщение от POKROV'), findsOneWidget);
-    expect(find.text('Новая информация для вашего аккаунта.'), findsOneWidget);
+    expect(find.text('Новая информация для твоего аккаунта.'), findsOneWidget);
     expect(find.byKey(const ValueKey('profile-notification-cta-broadcast-app-campaign')), findsNothing);
     expect(client.readBatches, [['broadcast-app-campaign']]);
     await tester.pumpWidget(const SizedBox.shrink());

@@ -375,7 +375,7 @@ class ConnectionPresentation {
         ConnectionTone.muted,
     };
     final subtitle = retainedFailure
-        ? 'Защита от прямого выхода включена. Восстановите соединение или отключите POKROV.'
+        ? 'Защита от прямого выхода включена. Восстанови соединение или отключи POKROV.'
         : switch (phase) {
       ConnectionExperiencePhase.connectedVerified =>
         'DNS и выход через VPN подтверждены',

@@ -83,7 +83,7 @@ void main() {
     expect(limited.reason, PortalFailureReason.deviceLimitReached);
     expect(limited.operationalErrorCode, 'AUTH-004');
     expect(limited.message, contains('Лимит устройств исчерпан'));
-    expect(limited.message, contains('отвяжите старое устройство'));
+    expect(limited.message, contains('отвяжи старое устройство'));
     expect(limited.requestId, requestId);
     expect(await bootstrapper.reportRuntimeStats(
       hostPlatform: HostPlatform.windows, runtimePhase: 'failed', connected: false,

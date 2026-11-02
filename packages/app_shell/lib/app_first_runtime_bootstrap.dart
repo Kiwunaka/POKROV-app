@@ -275,10 +275,10 @@ enum ManagedProfileOfflineState {
   captivePortal;
 
   String get message => switch (this) {
-    noNetwork => 'Нет сети. Подключитесь к Wi-Fi или мобильной сети.',
+    noNetwork => 'Нет сети. Подключись к Wi-Fi или мобильной сети.',
     apiUnavailable => 'Сервис недоступен. Используем сохранённый профиль, если он действителен.',
-    accessEnded => 'Доступ закончился. Продлите доступ, чтобы подключиться.',
-    captivePortal => 'Войдите в сеть Wi-Fi, затем повторите подключение.',
+    accessEnded => 'Доступ закончился. Продли доступ, чтобы подключиться.',
+    captivePortal => 'Войди в сеть Wi-Fi, затем повтори подключение.',
   };
 }
 
@@ -1113,84 +1113,84 @@ abstract interface class AppFirstSmartAccessService {
 
 String? portalFailureUserMessage(PortalFailureReason? reason) => switch (reason) {
   PortalFailureReason.deviceLimitReached || PortalFailureReason.deviceLimitExceeded =>
-    'Лимит устройств исчерпан. Откройте кабинет и отвяжите старое устройство.',
+    'Лимит устройств исчерпан. Открой кабинет и отвяжи старое устройство.',
   PortalFailureReason.pairingNotFound || PortalFailureReason.pairingCodeInvalid =>
-    'Код входа не найден или введён неверно. Проверьте восемь символов или получите новый код в Telegram либо кабинете.',
+    'Код входа не найден или введён неверно. Проверь восемь символов или получи новый код в Telegram либо кабинете.',
   PortalFailureReason.pairingCodeExpired =>
-    'Код входа истёк. Получите новый код в Telegram или кабинете.',
+    'Код входа истёк. Получи новый код в Telegram или кабинете.',
   PortalFailureReason.pairingCodeUsed =>
-    'Код входа уже использован или отменён. Получите новый код в Telegram или кабинете.',
+    'Код входа уже использован или отменён. Получи новый код в Telegram или кабинете.',
   PortalFailureReason.deviceAlreadyRegistered =>
-    'Устройство уже связано с аккаунтом. Восстановите вход по почте или обратитесь в поддержку.',
+    'Устройство уже связано с аккаунтом. Восстанови вход по почте или напиши в поддержку.',
   PortalFailureReason.deviceIdentityConflict =>
-    'Устройство связано с другим аккаунтом. Войдите в нужный аккаунт или обратитесь в поддержку.',
+    'Устройство связано с другим аккаунтом. Войди в нужный аккаунт или напиши в поддержку.',
   PortalFailureReason.deviceInvalid =>
-    'Не удалось определить устройство. Перезапустите приложение; если ошибка повторится, обратитесь в поддержку.',
+    'Не удалось определить устройство. Перезапусти приложение; если ошибка повторится, напиши в поддержку.',
   PortalFailureReason.pairingNotConfigured =>
-    'Вход по коду временно недоступен. Попробуйте восстановить вход по почте или обратитесь в поддержку.',
+    'Вход по коду временно недоступен. Попробуй восстановить вход по почте или напиши в поддержку.',
   PortalFailureReason.deviceRevoked =>
-    'Доступ этого устройства отозван. Откройте «Восстановить вход» в профиле. Если код не помогает, используйте привязанную почту или обратитесь в поддержку.',
+    'Доступ этого устройства отозван. Открой «Восстановить вход» во вкладке «Доступ». Если код не помогает, используй привязанную почту или напиши в поддержку.',
   PortalFailureReason.authSessionExpired || PortalFailureReason.freshAuthRequired ||
   PortalFailureReason.deviceRecoveryRequired || PortalFailureReason.accessExpired ||
   PortalFailureReason.refreshTokenInvalid || PortalFailureReason.refreshReuseDetected ||
   PortalFailureReason.refreshExpired || PortalFailureReason.sessionRevoked ||
   PortalFailureReason.deviceCredentialChanged || PortalFailureReason.sessionEpochChanged =>
-    'Сессия устройства больше не действует. Откройте «Восстановить вход» в профиле. Если код не помогает, используйте привязанную почту или обратитесь в поддержку.',
+    'Сессия устройства больше не действует. Открой «Восстановить вход» во вкладке «Доступ». Если код не помогает, используй привязанную почту или напиши в поддержку.',
   PortalFailureReason.accountNotFound || PortalFailureReason.accountUnavailable ||
   PortalFailureReason.accountRestricted =>
-    'Аккаунт недоступен. Обратитесь в поддержку через Telegram или кабинет.',
+    'Аккаунт недоступен. Напиши в поддержку через Telegram или кабинет.',
   PortalFailureReason.rateLimited =>
-    'Слишком много попыток. Подождите немного и повторите.',
+    'Слишком много попыток. Подожди немного и повтори.',
   PortalFailureReason.serviceUnavailable =>
-    'Сервис временно недоступен. Попробуйте ещё раз позже.',
+    'Сервис временно недоступен. Попробуй ещё раз позже.',
   PortalFailureReason.nodeCapacityExhausted =>
-    'В выбранной локации нет свободных подключений. Выберите другую локацию.',
+    'В выбранной локации нет свободных подключений. Выбери другую локацию.',
   PortalFailureReason.emailOtpInvalid =>
-    'Код из письма не подошёл или уже использован. Запросите новый код.',
+    'Код из письма не подошёл или уже использован. Запроси новый код.',
   PortalFailureReason.emailOtpExpired =>
-    'Код из письма истёк. Запросите новый код.',
-  PortalFailureReason.redeemCodeRequired => 'Введите код входа или активации.',
+    'Код из письма истёк. Запроси новый код.',
+  PortalFailureReason.redeemCodeRequired => 'Введи код входа или активации.',
   PortalFailureReason.subscriptionLinkNotRedeemCode =>
-    'Ссылка подключения не является кодом. Получите код входа в Telegram или кабинете.',
+    'Ссылка подключения не является кодом. Получи код входа в Telegram или кабинете.',
   PortalFailureReason.redeemCodeNotSupported =>
-    'Код не найден или не поддерживается. Проверьте код либо обратитесь в поддержку.',
+    'Код не найден или не поддерживается. Проверь код либо напиши в поддержку.',
   PortalFailureReason.accessKeyNotFound || PortalFailureReason.promoNotFound ||
   PortalFailureReason.giftCodeInvalid || PortalFailureReason.giftCodeNotFound =>
-    'Код активации не найден. Проверьте код или обратитесь к тому, кто его выдал.',
+    'Код активации не найден. Проверь код или обратись к тому, кто его выдал.',
   PortalFailureReason.accessKeyRevoked || PortalFailureReason.giftCodeRevoked =>
-    'Код активации отозван. Обратитесь к тому, кто его выдал, или в поддержку.',
+    'Код активации отозван. Обратись к тому, кто его выдал, или в поддержку.',
   PortalFailureReason.accessKeyAlreadyRedeemed || PortalFailureReason.promoAlreadyRedeemed ||
   PortalFailureReason.giftCodeAlreadyRedeemed =>
-    'Этот код активации уже использован. Проверьте подписку или запросите другой код.',
+    'Этот код активации уже использован. Проверь подписку или запроси другой код.',
   PortalFailureReason.accessKeySelfRedeem || PortalFailureReason.giftCodeSelfRedeem =>
-    'Нельзя активировать собственный подарочный код. Передайте его другому человеку.',
+    'Нельзя активировать собственный подарочный код. Передай его другому человеку.',
   PortalFailureReason.accessKeyTypeUnsupported || PortalFailureReason.giftCodeTypeUnsupported ||
   PortalFailureReason.promoInvalid =>
-    'Этот код не поддерживается. Обратитесь к тому, кто его выдал, или в поддержку.',
+    'Этот код не поддерживается. Обратись к тому, кто его выдал, или в поддержку.',
   PortalFailureReason.termsRequired =>
-    'Перед активацией кода примите условия сервиса в кабинете.',
+    'Перед активацией кода прими условия сервиса в кабинете.',
   PortalFailureReason.promoExhausted =>
-    'Лимит активаций промокода исчерпан. Используйте другой код.',
+    'Лимит активаций промокода исчерпан. Используй другой код.',
   PortalFailureReason.promoExpired =>
-    'Промокод истёк. Используйте действующий код.',
+    'Промокод истёк. Используй действующий код.',
   PortalFailureReason.promoCampaignRestricted =>
-    'Промокод недоступен для этого аккаунта. Проверьте условия акции или обратитесь в поддержку.',
+    'Промокод недоступен для этого аккаунта. Проверь условия акции или напиши в поддержку.',
   PortalFailureReason.paymentPending =>
-    'Оплата ещё обрабатывается. Подождите и обновите подписку в профиле.',
+    'Оплата ещё обрабатывается. Подожди и обнови доступ во вкладке «Доступ».',
   PortalFailureReason.paymentClaimReversed =>
-    'Платёж отменён или возвращён. Проверьте платёж в кабинете или обратитесь в поддержку.',
+    'Платёж отменён или возвращён. Проверь платёж в кабинете или напиши в поддержку.',
   PortalFailureReason.paymentManualReview =>
-    'Платёж требует проверки. Обратитесь в поддержку через Telegram или кабинет.',
+    'Платёж требует проверки. Напиши в поддержку через Telegram или кабинет.',
   PortalFailureReason.paymentAccountConflict =>
-    'Этот платёж связан с другим аккаунтом. Войдите в нужный аккаунт или обратитесь в поддержку.',
+    'Этот платёж связан с другим аккаунтом. Войди в нужный аккаунт или напиши в поддержку.',
   PortalFailureReason.activeAccessRequired =>
-    'Для подключения нужен действующий доступ. Проверьте подписку в профиле или обратитесь в поддержку.',
+    'Для подключения нужен действующий доступ. Проверь доступ во вкладке «Доступ» или напиши в поддержку.',
   PortalFailureReason.sessionNotConfigured =>
-    'Сервис входа временно недоступен. Попробуйте позже или обратитесь в поддержку.',
+    'Сервис входа временно недоступен. Попробуй позже или напиши в поддержку.',
   PortalFailureReason.paymentNotRedeemable =>
-    'Не удалось активировать доступ по этому платежу. Проверьте платёж в кабинете или обратитесь в поддержку.',
+    'Не удалось активировать доступ по этому платежу. Проверь платёж в кабинете или напиши в поддержку.',
   PortalFailureReason.giftCampaignRestricted =>
-    'Подарочный код недоступен для этого аккаунта. Проверьте условия акции или обратитесь в поддержку.',
+    'Подарочный код недоступен для этого аккаунта. Проверь условия акции или напиши в поддержку.',
   null => null,
 };
 
@@ -3805,7 +3805,7 @@ class AppFirstRuntimeBootstrapper
                         hostPlatform, normalizedSelectedApps)
                     .isEmpty))) {
       throw const BootstrapFailure(
-        'Выберите хотя бы одно приложение в разделе «Правила».',
+        'Выбери хотя бы одно приложение в Настройках → «Что идёт через POKROV».',
       );
     }
     final preparationClock = Stopwatch()..start();
@@ -4113,7 +4113,7 @@ class AppFirstRuntimeBootstrapper
           (error.statusCode == 401 || error.statusCode == 403 || error.code == 'managed_profile_superseded'))) {
         if (accessPreparing) {
           throw const BootstrapFailure(
-            'Доступ ещё готовится. Нажмите «Подключить», чтобы повторить попытку.',
+            'Доступ ещё готовится. Нажми «Подключить», чтобы повторить попытку.',
             code: 'access_preparing', operationalCode: 'API-011',
             operation: 'managed_profile',
           );
@@ -4222,7 +4222,7 @@ class AppFirstRuntimeBootstrapper
         () => _loadStateFromFile(hostPlatform, file, allowMissingSession: true));
     if (state == null || state.installId.trim().isEmpty) {
       throw const BootstrapFailure(
-        'Данные этого устройства не найдены. Обратитесь в поддержку.',
+        'Данные этого устройства не найдены. Напиши в поддержку.',
       );
     }
     final client = _createHttpClient(hostPlatform);
@@ -4269,7 +4269,7 @@ class AppFirstRuntimeBootstrapper
             current.sessionToken != state.sessionToken ||
             current.refreshToken != state.refreshToken ||
             current.expectsSecureSessionToken != state.expectsSecureSessionToken) {
-          throw const BootstrapFailure('Сессия изменилась. Повторите вход.', code: 'session_changed');
+          throw const BootstrapFailure('Сессия изменилась. Повтори вход.', code: 'session_changed');
         }
         final nextState = current.copyWith(
           installId: recoveredInstallId,
@@ -4352,7 +4352,7 @@ class AppFirstRuntimeBootstrapper
           current?.sessionToken != state.sessionToken ||
           current?.refreshToken != state.refreshToken) {
         throw const BootstrapFailure(
-          'Сессия изменилась. Откройте ссылку ещё раз.',
+          'Сессия изменилась. Открой ссылку ещё раз.',
           code: 'pairing_session_changed',
         );
       }
@@ -5457,7 +5457,7 @@ class AppFirstRuntimeBootstrapper
     final timer = Timer(remainingBudget - elapsed.elapsed, () {
       // Closing an in-flight TLS handshake can surface a later SocketException.
       // Complete the operation with its actual cause before closing the handle.
-      deadline.completeError(const BootstrapFailure('Сервис не ответил вовремя. Попробуйте ещё раз.',
+      deadline.completeError(const BootstrapFailure('Сервис не ответил вовремя. Попробуй ещё раз.',
         operation: 'POST /api/client/smart-access/first-provider-qa/control',
         operationalCode: 'API-002', apiFailureKind: 'request_timeout'));
       client.close(force: true);
@@ -6012,7 +6012,7 @@ class AppFirstRuntimeBootstrapper
         requests.requireActive();
         if (requiredBinding != null && !requiredBinding.matches(state)) {
           throw const BootstrapFailure(
-              'Сессия изменилась. Повторите вход.', code: 'session_changed');
+              'Сессия изменилась. Повтори вход.', code: 'session_changed');
         }
         if (!state.hasSession) {
           state = await requests.wait(_startTrial(
@@ -6042,7 +6042,7 @@ class AppFirstRuntimeBootstrapper
               current.refreshToken != state.refreshToken ||
               current.sessionToken != state.sessionToken) {
             throw const BootstrapFailure(
-              'Сессия изменилась. Повторите вход.', code: 'session_changed');
+              'Сессия изменилась. Повтори вход.', code: 'session_changed');
           }
           return response;
         } on BootstrapFailure catch (error) {
@@ -6261,7 +6261,7 @@ class AppFirstRuntimeBootstrapper
   }) async {
     final normalizedNode = nodeCode.trim().toLowerCase();
     if (normalizedNode.isEmpty) {
-      throw const BootstrapFailure('Выберите локацию из списка.');
+      throw const BootstrapFailure('Выбери локацию из списка.');
     }
     final allowedCodes = {
       for (final node in smartConnect.shortlist) node.code.trim().toLowerCase(),
@@ -6392,7 +6392,7 @@ class AppFirstRuntimeBootstrapper
               current.refreshToken != state.refreshToken ||
               current.sessionToken != state.sessionToken) {
             throw const BootstrapFailure(
-              'Сессия изменилась. Повторите вход.', code: 'session_changed');
+              'Сессия изменилась. Повтори вход.', code: 'session_changed');
           }
           return AppFirstBonusSummary(
             referralCount: referralCount,
@@ -6577,7 +6577,7 @@ class AppFirstRuntimeBootstrapper
           current.refreshToken != state.refreshToken ||
           current.sessionToken != state.sessionToken) {
         throw const BootstrapFailure(
-          'Сессия изменилась. Повторите вход.', code: 'session_changed');
+          'Сессия изменилась. Повтори вход.', code: 'session_changed');
       }
       // The mutation already succeeded. A summary read/refresh failure must
       // not enter the POST retry loop and claim the same reward again.
@@ -6595,7 +6595,7 @@ class AppFirstRuntimeBootstrapper
           (afterSummary.accountId != state.accountId &&
               afterSummary.accountId != rewardAccountId)) {
         throw const BootstrapFailure(
-          'Сессия изменилась. Повторите вход.', code: 'session_changed');
+          'Сессия изменилась. Повтори вход.', code: 'session_changed');
       }
       return AppFirstBonusRewardResult(
         ok: rewardResponse['ok'] == true,
@@ -6914,7 +6914,7 @@ class AppFirstRuntimeBootstrapper
   Future<T> _waitForLocalState<T>(Future<T> pending, {Duration? timeout}) =>
       pending.timeout(timeout ?? requestTimeout, onTimeout: () {
         throw const BootstrapFailure(
-          'Локальное хранилище POKROV не ответило вовремя. Повторите попытку.',
+          'Локальное хранилище POKROV не ответило вовремя. Попробуй ещё раз.',
           code: 'local_state_timeout', operation: 'local_state',
           operationalCode: 'APP-BOOT-004',
         );
@@ -7095,7 +7095,7 @@ class AppFirstRuntimeBootstrapper
       _traceBootstrap('state_load', 'fail', reason: 'expected_pair_absent',
         operationalCode: 'API-008');
       throw const BootstrapFailure(
-        'Сохраненная сессия устройства недоступна. Используйте почту или код, '
+        'Сохраненная сессия устройства недоступна. Используй почту или код, '
         'чтобы восстановить доступ.',
         code: 'device_recovery_required',
       );
@@ -7231,7 +7231,7 @@ class AppFirstRuntimeBootstrapper
     }
     if (state.expectsSecureSessionToken) {
       return _rejectSession(hostPlatform, state, const BootstrapFailure(
-        'Сессия устройства истекла. Используйте почту или код, чтобы восстановить доступ.',
+        'Сессия устройства истекла. Используй почту или код, чтобы восстановить доступ.',
         statusCode: HttpStatus.unauthorized,
       ));
     }
@@ -7317,7 +7317,7 @@ class AppFirstRuntimeBootstrapper
           current.refreshToken != effectiveState.refreshToken ||
           current.expectsSecureSessionToken != effectiveState.expectsSecureSessionToken) {
         throw const BootstrapFailure(
-          'Сессия изменилась. Повторите вход.', code: 'session_changed');
+          'Сессия изменилась. Повтори вход.', code: 'session_changed');
       }
       final nextState = current.copyWith(
         sessionToken: pair.accessToken,
@@ -7431,7 +7431,7 @@ class AppFirstRuntimeBootstrapper
     final refreshToken = state.refreshToken.trim();
     if (refreshToken.isEmpty) {
       throw const BootstrapFailure(
-        'Сессия устройства истекла. Используйте почту или код, чтобы восстановить доступ.',
+        'Сессия устройства истекла. Используй почту или код, чтобы восстановить доступ.',
         statusCode: HttpStatus.unauthorized,
       );
     }
@@ -7466,7 +7466,7 @@ class AppFirstRuntimeBootstrapper
       final pair = _sessionPairFromResponse(receipt);
       if (pair == null || pair.refreshToken.trim().isEmpty) {
         throw const BootstrapFailure(
-          'POKROV не получил полную сессию устройства. Повторите запрос.',
+          'POKROV не получил полную сессию устройства. Повтори запрос.',
           operationalCode: 'API-008',
         );
       }
@@ -7482,7 +7482,7 @@ class AppFirstRuntimeBootstrapper
             current.sessionToken != state.sessionToken ||
             current.refreshToken != refreshToken) {
           throw const BootstrapFailure(
-            'Сессия изменилась. Повторите вход.',
+            'Сессия изменилась. Повтори вход.',
             code: 'session_changed',
           );
         }
@@ -7545,7 +7545,7 @@ class AppFirstRuntimeBootstrapper
           current.sessionToken != state.sessionToken ||
           current.refreshToken != state.refreshToken) {
         throw const BootstrapFailure(
-            'Сессия изменилась. Повторите вход.', code: 'session_changed');
+            'Сессия изменилась. Повтори вход.', code: 'session_changed');
       }
       await _persistStateToFile(hostPlatform: hostPlatform, file: file,
         state: current.copyWith(sessionToken: '', refreshToken: '',
@@ -7558,7 +7558,7 @@ class AppFirstRuntimeBootstrapper
     });
     throw BootstrapFailure(
       error.reason != null ? error.message
-          : 'Сессия устройства истекла. Используйте почту или код, чтобы восстановить доступ.',
+          : 'Сессия устройства истекла. Используй почту или код, чтобы восстановить доступ.',
       statusCode: HttpStatus.unauthorized,
       operation: error.operation,
       code: error.code.isEmpty ? 'auth_session_expired' : error.code,
@@ -7592,7 +7592,7 @@ class AppFirstRuntimeBootstrapper
           current.installId != previous.installId ||
           previous.accountId.isEmpty || current.accountId != previous.accountId) {
         throw const BootstrapFailure(
-          'Сессия изменилась. Повторите вход.', code: 'session_changed');
+          'Сессия изменилась. Повтори вход.', code: 'session_changed');
       }
       // A concurrent rotation may win, but its tokens must travel with its
       // own account and profile state, not a copy of the previous identity.
@@ -7704,7 +7704,7 @@ class AppFirstRuntimeBootstrapper
       onAccessPreparing?.call();
       if (attempt >= preparingPullLimit - 1) {
         throw const BootstrapFailure(
-          'Доступ ещё готовится. Нажмите «Подключить», чтобы повторить попытку.',
+          'Доступ ещё готовится. Нажми «Подключить», чтобы повторить попытку.',
           code: 'access_preparing', operationalCode: 'API-011',
         );
       }
@@ -7746,7 +7746,7 @@ class AppFirstRuntimeBootstrapper
       _traceBootstrap('managed_response', 'fail', reason: 'managed_path_invalid',
         operationalCode: 'API-008');
       throw const BootstrapFailure(
-        'POKROV получил недопустимый путь профиля. Обновите настройки и попробуйте ещё раз.',
+        'POKROV получил недопустимый путь профиля. Обнови настройки и попробуй ещё раз.',
       );
     }
     return uri.toString();
@@ -7768,7 +7768,7 @@ class AppFirstRuntimeBootstrapper
             routeMode == RouteMode.excludedApps) &&
         selectedApps.isEmpty) {
       throw const BootstrapFailure(
-        'Выберите хотя бы одно приложение в разделе «Правила».',
+        'Выбери хотя бы одно приложение в Настройках → «Что идёт через POKROV».',
       );
     }
     final decoded = jsonDecode(rawConfigPayload);
@@ -10438,7 +10438,7 @@ class AppFirstRuntimeBootstrapper
         return bytes;
       } on SocketException {
         const failure = BootstrapFailure(
-          'Не удалось обновить правила. Проверьте интернет и попробуйте ещё раз.',
+          'Не удалось обновить правила. Проверь интернет и попробуй ещё раз.',
         );
         if (attempt >= maxRequestAttempts - 1) {
           throw failure;
@@ -10446,7 +10446,7 @@ class AppFirstRuntimeBootstrapper
         lastFailure = failure;
       } on HttpException {
         const failure = BootstrapFailure(
-          'Не удалось обновить правила. Проверьте интернет и попробуйте ещё раз.',
+          'Не удалось обновить правила. Проверь интернет и попробуй ещё раз.',
         );
         if (attempt >= maxRequestAttempts - 1) {
           throw failure;
@@ -10454,7 +10454,7 @@ class AppFirstRuntimeBootstrapper
         lastFailure = failure;
       } on HandshakeException {
         const failure = BootstrapFailure(
-          'Не удалось безопасно обновить правила. Проверьте дату, время и интернет.',
+          'Не удалось безопасно обновить правила. Проверь дату, время и интернет.',
         );
         if (attempt >= maxRequestAttempts - 1) {
           throw failure;
@@ -10462,7 +10462,7 @@ class AppFirstRuntimeBootstrapper
         lastFailure = failure;
       } on TimeoutException {
         const failure = BootstrapFailure(
-          'Обновление правил заняло слишком много времени. Попробуйте ещё раз.',
+          'Обновление правил заняло слишком много времени. Попробуй ещё раз.',
           statusCode: HttpStatus.gatewayTimeout,
         );
         if (attempt >= maxRequestAttempts - 1) {
@@ -10476,7 +10476,7 @@ class AppFirstRuntimeBootstrapper
 
     throw lastFailure ??
         const BootstrapFailure(
-          'Не удалось обновить правила. Проверьте интернет и попробуйте ещё раз.',
+          'Не удалось обновить правила. Проверь интернет и попробуй ещё раз.',
         );
   }
 
@@ -10649,7 +10649,7 @@ class AppFirstRuntimeBootstrapper
           reason: traceReason, status: traceStatus, error: error);
         _invalidateApiBaseUrl(requestUri);
         final failure = BootstrapFailure(
-          'Не удалось связаться с сервисом. Проверьте сеть и попробуйте ещё раз.',
+          'Не удалось связаться с сервисом. Проверь сеть и попробуй ещё раз.',
           operation: operation,
           operationalCode: 'API-002',
           apiFailureKind: 'request_socket',
@@ -10665,7 +10665,7 @@ class AppFirstRuntimeBootstrapper
           reason: traceReason, status: traceStatus, error: error);
         _invalidateApiBaseUrl(requestUri);
         final failure = BootstrapFailure(
-          'Не удалось связаться с сервисом. Проверьте сеть и попробуйте ещё раз.',
+          'Не удалось связаться с сервисом. Проверь сеть и попробуй ещё раз.',
           operation: operation,
           operationalCode: 'API-002',
           apiFailureKind: 'request_http',
@@ -10680,7 +10680,7 @@ class AppFirstRuntimeBootstrapper
           reason: traceReason, status: traceStatus, error: error);
         _invalidateApiBaseUrl(requestUri);
         final failure = BootstrapFailure(
-          'Не удалось безопасно подключиться к сервису. Проверьте дату, время и интернет.',
+          'Не удалось безопасно подключиться к сервису. Проверь дату, время и интернет.',
           operation: operation,
           operationalCode: 'API-003',
           apiFailureKind: 'request_tls',
@@ -10695,7 +10695,7 @@ class AppFirstRuntimeBootstrapper
           reason: traceReason, status: traceStatus, error: error);
         _invalidateApiBaseUrl(requestUri);
         final failure = BootstrapFailure(
-          'Сервис не ответил вовремя. Попробуйте ещё раз.',
+          'Сервис не ответил вовремя. Попробуй ещё раз.',
           statusCode: HttpStatus.gatewayTimeout,
           operation: operation,
           operationalCode: 'API-002',
@@ -10821,7 +10821,7 @@ class AppFirstRuntimeBootstrapper
       }
     }
     throw BootstrapFailure(
-      'Не удалось связаться с сервисом. Проверьте сеть и попробуйте ещё раз.',
+      'Не удалось связаться с сервисом. Проверь сеть и попробуй ещё раз.',
       operationalCode: 'API-002',
       apiFailureKind: lastFailureKind,
       observedHttpStatus: lastHttpStatus,
@@ -10928,7 +10928,7 @@ class AppFirstRuntimeBootstrapper
     final contentLength = response.contentLength;
     if (contentLength > maxBytes) {
       throw const BootstrapFailure(
-        'Ответ сервиса оказался слишком большим. Попробуйте ещё раз.',
+        'Ответ сервиса оказался слишком большим. Попробуй ещё раз.',
         operationalCode: 'API-010',
       );
     }
@@ -10949,7 +10949,7 @@ class AppFirstRuntimeBootstrapper
         final chunk = iterator.current;
         if (chunk.length > maxBytes - bytes.length) {
           throw const BootstrapFailure(
-            'Ответ сервиса оказался слишком большим. Попробуйте ещё раз.',
+            'Ответ сервиса оказался слишком большим. Попробуй ещё раз.',
             operationalCode: 'API-010',
           );
         }
@@ -11179,7 +11179,7 @@ class AppFirstRuntimeBootstrapper
     final knownMessage = portalFailureUserMessage(PortalFailureReason.fromCode(code));
     if (knownMessage != null) return knownMessage;
     if (statusCode >= HttpStatus.internalServerError && statusCode < 600) {
-      return 'Сервис подготовки временно недоступен. Попробуйте ещё раз.';
+      return 'Сервис подготовки временно недоступен. Попробуй ещё раз.';
     }
     if (statusCode >= HttpStatus.badRequest &&
         statusCode < HttpStatus.internalServerError) {
@@ -11191,7 +11191,7 @@ class AppFirstRuntimeBootstrapper
               ? _readText(detailValue['message'] ?? detailValue['detail'])
               : _readText(detailValue);
           if (detail == 'selected node is not eligible') {
-            return 'Эта локация сейчас недоступна. Выберите другую.';
+            return 'Эта локация сейчас недоступна. Выбери другую.';
           }
           final safeDetail = _safeUserCopy(detail);
           if (safeDetail.isNotEmpty) {
@@ -11202,7 +11202,7 @@ class AppFirstRuntimeBootstrapper
         // Non-JSON error bodies are not consumer copy.
       }
     }
-    return 'Не удалось выполнить запрос. Попробуйте ещё раз.';
+    return 'Не удалось выполнить запрос. Попробуй ещё раз.';
   }
 
   String _safeUserCopy(String value) {
@@ -11606,7 +11606,7 @@ class PokrovFileSupportBundleOutbox implements SupportBundleEncryptedOutbox {
       if (occupied + bytes.length > _maximumOutboxBytes) {
         throw const SupportBundleTransferFailure(
           'outbox_full',
-          'Хранилище диагностики заполнено. Повторите отправку сохранённого пакета.',
+          'Хранилище диагностики заполнено. Повтори отправку сохранённого пакета.',
         );
       }
       await next.writeAsBytes(bytes, flush: true);
@@ -12644,7 +12644,7 @@ int _appFirstBootstrapSchemaVersion(Map<String, dynamic> json) {
     operationalCode: 'API-008');
   throw const BootstrapFailure(
     'Эта версия POKROV не может безопасно прочитать сохраненное состояние. '
-    'Обновите приложение или восстановите совместимую версию.',
+    'Обнови приложение или восстанови совместимую версию.',
   );
 }
 

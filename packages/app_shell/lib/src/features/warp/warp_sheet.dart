@@ -153,7 +153,7 @@ class _WarpConsentSheet extends StatelessWidget {
                       ? 'WARP активен в текущем подключении.'
                       : enabled
                           ? 'WARP включится при следующем подключении.'
-                          : 'Включите WARP, чтобы использовать его при подключении.',
+                          : 'Включи WARP, чтобы использовать его при подключении.',
                   value: '',
                   foreground: foreground,
                   muted: secondary,

@@ -407,12 +407,12 @@ class PokrovTelegramBonusCard extends StatelessWidget {
     final (title, detail, action) = switch (state) {
       PokrovTelegramBonusState.available => (
           'Бонус за Telegram',
-          'Подпишитесь на канал и заберите бонус.',
+          'Подпишись на канал и забери бонус.',
           'Получить',
         ),
       PokrovTelegramBonusState.openingTelegram => (
           'Открываем Telegram',
-          'После подписки вернитесь в POKROV.',
+          'После подписки вернись в POKROV.',
           null,
         ),
       PokrovTelegramBonusState.checking => (
@@ -422,7 +422,7 @@ class PokrovTelegramBonusCard extends StatelessWidget {
         ),
       PokrovTelegramBonusState.readyToClaim => (
           'Бонус готов',
-          'Получите дополнительные дни к доступу.',
+          'Получи дополнительные дни к доступу.',
           'Забрать',
         ),
       PokrovTelegramBonusState.claimed => (

@@ -1251,7 +1251,7 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
       if (mounted) {
         setState(() {
           _supportModeError =
-              'Режим поддержки не включен. Проверьте код и параметры сборки.';
+              'Режим поддержки не включен. Проверь код и параметры сборки.';
         });
       }
     } finally {
@@ -1282,7 +1282,7 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
     } on Object {
       if (mounted) {
         setState(() {
-          _supportModeError = 'Не удалось сохранить отключение. Повторите.';
+          _supportModeError = 'Не удалось сохранить отключение. Повтори.';
         });
       }
     } finally {
@@ -1302,7 +1302,7 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
       if (mounted) await _refresh();
     } on Object {
       if (mounted) {
-        setState(() => _qaStartError = 'Проверка сейчас недоступна. Обновите сведения для поддержки.');
+        setState(() => _qaStartError = 'Проверка сейчас недоступна. Обнови сведения для поддержки.');
         await _refresh(includeReleaseHealth: false);
       }
     } finally {
@@ -1375,7 +1375,7 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
       if (mounted) {
         setState(() {
           _pendingBundlesError =
-              'Не удалось прочитать сохранённые отчёты. Обновите проверку.';
+              'Не удалось прочитать сохранённые отчёты. Обнови проверку.';
         });
       }
     }
@@ -1411,7 +1411,7 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
         setState(() {
           _deliveryError = _bundleErrorMessage(
             error,
-            'Не удалось передать зашифрованную диагностику. Повторите отправку сохранённого отчёта.',
+            'Не удалось передать зашифрованную диагностику. Повтори отправку сохранённого отчёта.',
           );
         });
       }
@@ -1479,11 +1479,11 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
       'support_mode_volume_exhausted' =>
         'Лимит режима поддержки исчерпан. Для нового расширенного отчёта нужен новый код от оператора. Сохранённые отчёты можно отправить повторно.',
       'support_mode_inactive' =>
-        'Режим поддержки завершён. Обновите проверку или введите новый код от оператора.',
+        'Режим поддержки завершён. Обнови проверку или введи новый код от оператора.',
       'support_saved_bundle_missing' =>
-        'Сохранённый отчёт больше не ожидает отправки. Обновите проверку.',
+        'Сохранённый отчёт больше не ожидает отправки. Обнови проверку.',
       'outbox_full' =>
-        'Хранилище диагностики заполнено. Повторите отправку сохранённых отчётов.',
+        'Хранилище диагностики заполнено. Повтори отправку сохранённых отчётов.',
       'outbox_content_invalid' =>
         'Сохранённый отчёт повреждён. Он не отправлен и остаётся на устройстве.',
       _ => fallback,
@@ -1910,7 +1910,7 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
                   const SizedBox(height: 6),
                   Text(
                     _supportMode.disablePending
-                        ? 'Сбор остановлен. Повторите отключение, чтобы сохранить его на устройстве.'
+                        ? 'Сбор остановлен. Повтори отключение, чтобы сохранить его на устройстве.'
                         : _supportMode.active
                         ? 'Категории: ${_supportMode.allowedCategories.map(_categoryRu).join(', ')}. Использовано ${_supportMode.consumedBytes} из ${_supportMode.maximumTotalBytes} байт и ${_supportMode.consumedBundles} из ${_supportMode.maximumBundles} пакетов.'
                         : 'Код выдаёт оператор для конкретного обращения, платформы и сборки. Режим всегда виден, не выполняет команды и отключится автоматически не позднее чем через 30 минут.',
@@ -2051,16 +2051,16 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
             const SizedBox(height: 8),
             if (!_report.crashDiagnosticsReady) ...[
               const Text(
-                'Сведения об авариях Windows ещё не прочитаны. Обновите проверку '
-                'или выключите режим поддержки, чтобы отправить обычную сводку.',
+                'Сведения об авариях Windows ещё не прочитаны. Обнови проверку '
+                'или выключи режим поддержки, чтобы отправить обычную сводку.',
                 key: ValueKey('diagnostics-crashes-unavailable'),
               ),
               const SizedBox(height: 8),
             ],
             if (!_report.candidateDiagnosticsReady) ...[
               const Text(
-                'Этапы проверки подключения Android ещё не прочитаны. Обновите проверку '
-                'или выключите режим поддержки, чтобы отправить обычную сводку.',
+                'Этапы проверки подключения Android ещё не прочитаны. Обнови проверку '
+                'или выключи режим поддержки, чтобы отправить обычную сводку.',
                 key: ValueKey('diagnostics-candidates-unavailable'),
               ),
               const SizedBox(height: 8),

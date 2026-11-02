@@ -138,14 +138,14 @@ class ConnectionManager extends ChangeNotifier {
         _invalidateQuickSettingsProfile();
         if (!await _waitForQuickSettingsInvalidation(_managedProfileRevision)) {
           throw const BootstrapFailure(
-            'Не удалось удалить настройки прежнего аккаунта. Повторите отключение POKROV.',
+            'Не удалось удалить настройки прежнего аккаунта. Повтори отключение POKROV.',
             code: 'account_profile_invalidation_unconfirmed');
         }
       });
     } on Object {
       _activePhase = ConnectionPhase.actionRequired;
       _runtimeHeadline = _connectionFailureMessage =
-          'Остановка прежнего аккаунта не подтверждена. Повторите отключение POKROV.';
+          'Остановка прежнего аккаунта не подтверждена. Повтори отключение POKROV.';
       _publish();
     }
   }
@@ -889,7 +889,7 @@ class ConnectionManager extends ChangeNotifier {
     } on Object {
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
       _activePhase = ConnectionPhase.actionRequired;
-      _runtimeHeadline = _connectionFailureMessage = 'Отключение не подтверждено. Повторите попытку.';
+      _runtimeHeadline = _connectionFailureMessage = 'Отключение не подтверждено. Попробуй ещё раз.';
     } finally {
       if (!_disposed && _connectionCoordinator.ownsOperation(generation)) {
         _connectionCoordinator.finishAction();
@@ -939,8 +939,8 @@ class ConnectionManager extends ChangeNotifier {
           final healthy = _runtimeSnapshot?.isCleanlyHealthy == true && !retainsProtection;
           _activePhase = healthy ? null : ConnectionPhase.actionRequired;
           _runtimeHeadline = healthy
-              ? 'Прежнее подключение работает. Повторите смену подключения.'
-              : 'Подключение заняло слишком долго. Повторите попытку или отключите POKROV.';
+              ? 'Прежнее подключение работает. Повтори смену подключения.'
+              : 'Подключение заняло слишком долго. Попробуй ещё раз или отключи POKROV.';
           _connectionFailureMessage = healthy ? null : _runtimeHeadline;
           _notify(_runtimeHeadline!, tone: PokrovSnackTone.danger);
           _publish();
@@ -1007,7 +1007,7 @@ class ConnectionManager extends ChangeNotifier {
         if (!_disposed && number == _commandNumber) {
           _activePhase = ConnectionPhase.actionRequired;
           _runtimeHeadline = _connectionFailureMessage =
-              'Остановка подключения ещё не подтверждена. Повторите отключение POKROV.';
+              'Остановка подключения ещё не подтверждена. Повтори отключение POKROV.';
           _publish();
         }
         return;
@@ -1068,7 +1068,7 @@ class ConnectionManager extends ChangeNotifier {
         _runtimeSnapshot = current;
         if (!_runtimeStopConfirmed(current)) {
           throw const BootstrapFailure(
-              'Остановка подключения ещё не подтверждена. Проверьте состояние POKROV.',
+              'Остановка подключения ещё не подтверждена. Проверь состояние POKROV.',
               code: 'connect_cancel_unconfirmed',
               operation: 'cancel_connect');
         }
@@ -1315,7 +1315,7 @@ class ConnectionManager extends ChangeNotifier {
       );
     } else {
       _notify(
-        'Настройки сохранены, но подключение не восстановлено. Нажмите «Подключить».',
+        'Настройки сохранены, но подключение не восстановлено. Нажми «Подключить».',
         tone: PokrovSnackTone.danger,
       );
     }
@@ -1709,7 +1709,7 @@ class ConnectionManager extends ChangeNotifier {
       return true;
     }
     final message = result == PokrovWindowsTunnelAuthorization.unavailable
-        ? 'Служба POKROV недоступна. Переустановите приложение или запустите восстановление.'
+        ? 'Служба POKROV недоступна. Переустанови приложение или запусти восстановление.'
         : 'Служба POKROV не прошла проверку подлинности или совместимости.';
     _update(() {
       _runtimeHeadline = message;
@@ -1745,7 +1745,7 @@ class ConnectionManager extends ChangeNotifier {
         : 'Подключение остановлено в доверенной сети «$name».';
     _update(() {
       _runtimeHeadline =
-          '$message Отключите паузу в правилах для ручного подключения.';
+          '$message Отключи паузу в правилах для ручного подключения.';
     });
     _notify(message, tone: PokrovSnackTone.info);
     return true;
@@ -1792,7 +1792,7 @@ class ConnectionManager extends ChangeNotifier {
       _update(() => _runtimeSnapshot = current);
       if (!_runtimeStopConfirmed(current)) {
         throw const BootstrapFailure(
-            'Отключение в доверенной Wi-Fi сети не подтверждено. Повторите попытку.',
+            'Отключение в доверенной Wi-Fi сети не подтверждено. Попробуй ещё раз.',
             code: 'connect_cancel_unconfirmed', operation: 'cancel_connect');
       }
       final name = trusted.name?.trim();
@@ -1852,7 +1852,7 @@ class ConnectionManager extends ChangeNotifier {
       if (!_disposed) {
         _update(() {
           _runtimeHeadline =
-              'POKROV уже выполняет действие. Дождитесь завершения.';
+              'POKROV уже выполняет действие. Дождись завершения.';
         });
       }
       throw const _ProtectionRepairBusy();
@@ -1964,7 +1964,7 @@ class ConnectionManager extends ChangeNotifier {
       }
       if (!invalidated) {
         throw const BootstrapFailure(
-          'Не удалось обновить настройки для быстрого подключения. Попробуйте ещё раз.',
+          'Не удалось обновить настройки для быстрого подключения. Попробуй ещё раз.',
         );
       }
 
@@ -1989,7 +1989,7 @@ class ConnectionManager extends ChangeNotifier {
           _managedProfileDirty = true;
         });
         throw const BootstrapFailure(
-          'Настройки изменились. Подключитесь еще раз, чтобы обновить профиль.',
+          'Настройки изменились. Подключись еще раз, чтобы обновить профиль.',
         );
       }
       _managedProfileDirty = false;
@@ -2167,7 +2167,7 @@ class ConnectionManager extends ChangeNotifier {
       _update(() {
         _runtimeSnapshot = current;
         _runtimeHeadline =
-            'Доступ не активен. Продлите доступ, чтобы подключиться.';
+            'Доступ не активен. Продли доступ, чтобы подключиться.';
       });
       _invalidateQuickSettingsProfile();
     } on ConnectionOperationSuperseded {
@@ -2469,7 +2469,7 @@ class ConnectionManager extends ChangeNotifier {
           .timeout(const Duration(seconds: 3));
     } on Object {
       throw const BootstrapFailure(
-        'Отмена подключения не подтверждена. Проверьте состояние POKROV и отключите его при необходимости.',
+        'Отмена подключения не подтверждена. Проверь состояние POKROV и отключи его при необходимости.',
         code: 'connect_cancel_unconfirmed',
         operation: 'cancel_connect',
       );
@@ -2724,11 +2724,11 @@ class ConnectionManager extends ChangeNotifier {
             (mode == RouteMode.selectedApps || mode == RouteMode.excludedApps) &&
             _clientExperience.routingPreferences.effectiveDnsTransport ==
                 PokrovDnsTransport.direct)
-          'Для выбора приложений в Windows включите DNS через VPN.',
+          'Для выбора приложений в Windows включи DNS через VPN.',
         if ((mode == RouteMode.selectedApps ||
                 mode == RouteMode.excludedApps) &&
             _selectedAppIds.isEmpty)
-          'Перед подключением выберите хотя бы одно приложение.',
+          'Перед подключением выбери хотя бы одно приложение.',
       ],
     );
   }
@@ -2822,7 +2822,7 @@ class ConnectionManager extends ChangeNotifier {
           requestTimeout: _withinConnectBudget(_actionTimeout), cancelled: cancelled);
       requireCurrent();
       if (subscription.lane == 'expiredOrBlocked') {
-        throw const BootstrapFailure('Доступ не активен. Продлите доступ, чтобы подключиться.',
+        throw const BootstrapFailure('Доступ не активен. Продли доступ, чтобы подключиться.',
             code: 'managed_profile_access_denied', statusCode: 403);
       }
       _subscriptionInfo = subscription;
@@ -2851,7 +2851,7 @@ class ConnectionManager extends ChangeNotifier {
             requireCurrent();
             if (currentNetwork.contextRef != network!.contextRef ||
                 currentNetwork.ipv6Available != false) {
-              throw const BootstrapFailure('Сеть изменилась. Подключитесь ещё раз.', code: 'candidate_network_changed');
+              throw const BootstrapFailure('Сеть изменилась. Подключись ещё раз.', code: 'candidate_network_changed');
             }
           }
           return profile;
@@ -2930,7 +2930,7 @@ class ConnectionManager extends ChangeNotifier {
       final nativeKey = network.selectionKey;
       final context = network.contextRef;
       if (nativeKey == null || nativeKey.isEmpty || context == null || context.isEmpty) {
-        throw const BootstrapFailure('Не удалось проверить сеть. Попробуйте подключиться ещё раз.', code: 'candidate_network_unavailable');
+        throw const BootstrapFailure('Не удалось проверить сеть. Попробуй подключиться ещё раз.', code: 'candidate_network_unavailable');
       }
       final asn = !retainsProtection && _runtimeSnapshot?.phase != RuntimePhase.running &&
               network.networkClass != 'cellular'
@@ -3072,7 +3072,7 @@ class ConnectionManager extends ChangeNotifier {
         }
       }
       if (!selectedCandidate) {
-        throw apiFailure ?? const BootstrapFailure('Рабочее подключение не найдено. Проверьте сеть и попробуйте ещё раз.',
+        throw apiFailure ?? const BootstrapFailure('Рабочее подключение не найдено. Проверь сеть и попробуй ещё раз.',
             code: 'candidate_selection_exhausted', operationalCode: 'CONN-008');
       }
       requireCurrent();
@@ -3082,7 +3082,7 @@ class ConnectionManager extends ChangeNotifier {
       ]);
       requireCurrent();
       if (currentNetwork.contextRef != context || currentNetwork.selectionKey != nativeKey) {
-        throw const BootstrapFailure('Сеть изменилась. Подключитесь ещё раз.', code: 'candidate_network_changed');
+        throw const BootstrapFailure('Сеть изменилась. Подключись ещё раз.', code: 'candidate_network_changed');
       }
       if (cache is CachedManagedProfileBootstrapper && invitation == null) {
         try {
@@ -3229,7 +3229,7 @@ class ConnectionManager extends ChangeNotifier {
       final key = network.selectionKey;
       final context = network.contextRef;
       if (key == null || key.isEmpty || context == null || context.isEmpty) {
-        throw const BootstrapFailure('Не удалось проверить сеть. Попробуйте подключиться ещё раз.', code: 'candidate_network_unavailable');
+        throw const BootstrapFailure('Не удалось проверить сеть. Попробуй подключиться ещё раз.', code: 'candidate_network_unavailable');
       }
       _candidateNetworkClass = network.networkClass;
       _candidateCarrierMccMnc = network.mccMnc;
@@ -3324,7 +3324,7 @@ class ConnectionManager extends ChangeNotifier {
         }
         if (!found) throw const SmartConnectSelectionExhausted();
       } on SmartConnectSelectionExhausted {
-        throw const BootstrapFailure('Рабочее подключение не найдено. Проверьте сеть и попробуйте ещё раз.',
+        throw const BootstrapFailure('Рабочее подключение не найдено. Проверь сеть и попробуй ещё раз.',
             code: 'candidate_selection_exhausted', operationalCode: 'CONN-008');
       }
       requireCurrent();
@@ -3340,7 +3340,7 @@ class ConnectionManager extends ChangeNotifier {
         throw const BootstrapFailure('Подготовка подключения отменена.', code: 'managed_profile_superseded', statusCode: 409);
       }
       if (currentNetwork.contextRef != context || currentNetwork.selectionKey != key) {
-        throw const BootstrapFailure('Сеть изменилась. Подключитесь ещё раз.', code: 'candidate_network_changed');
+        throw const BootstrapFailure('Сеть изменилась. Подключись ещё раз.', code: 'candidate_network_changed');
       }
       _candidatePhysicalNetwork = network;
       _candidateNetworkKey = key;
@@ -3436,7 +3436,7 @@ class ConnectionManager extends ChangeNotifier {
             _warpRuntimeAttemptAllowed(displayWarpPolicy));
     if (selectedWarpMode != null && !warpRuntimeAttemptEnabled) {
       throw const BootstrapFailure(
-        'Настройки подключения изменились. Подключитесь ещё раз.',
+        'Настройки подключения изменились. Подключись ещё раз.',
         code: 'managed_profile_superseded',
         statusCode: 409,
         operation: 'managed_profile',
@@ -3451,7 +3451,7 @@ class ConnectionManager extends ChangeNotifier {
         requestedVariant != 'direct' &&
         warpRuntimeAttemptEnabled) {
       throw const BootstrapFailure(
-        'WARP пока нельзя использовать с вариантом «Через мост». Выключите WARP или выберите «Обычный».',
+        'WARP пока нельзя использовать с вариантом «Через мост». Выключи WARP или выбери «Обычный».',
       );
     }
     var runtimePayload = payload.copyWith(
@@ -3776,19 +3776,19 @@ class ConnectionManager extends ChangeNotifier {
             'smart_access_native_unsupported' =>
               'Для этих правил нужно обновить модуль подключения.',
             'smart_access_budget_exhausted' =>
-              'Подготовка маршрута сервиса заняла слишком долго. Повторите подключение.',
+              'Подготовка маршрута сервиса заняла слишком долго. Повтори подключение.',
             'catalog_clock_rollback' =>
-              'Не удалось подтвердить время устройства. Проверьте дату и время, затем повторите подключение.',
+              'Не удалось подтвердить время устройства. Проверь дату и время, затем повтори подключение.',
             'catalog_process_scope_invalid' =>
-              'Не удалось применить выбор EXE. Повторно выберите приложения.',
+              'Не удалось применить выбор EXE. Повторно выбери приложения.',
             'catalog_process_dns_transport_unsupported' =>
-              'Для выбора приложений в Windows включите DNS через VPN.',
+              'Для выбора приложений в Windows включи DNS через VPN.',
             'catalog_dns_lane_invalid' =>
-              'Не удалось применить настройки DNS. Проверьте выбранный DNS и повторите подключение.',
+              'Не удалось применить настройки DNS. Проверь выбранный DNS и повтори подключение.',
             'catalog_gateway_lease_missing' =>
               'Для этого режима ещё не подготовлен маршрут сервиса.',
             _ =>
-              'Правила подключения недоступны. Обновите их и повторите попытку.',
+              'Правила подключения недоступны. Обнови их и повтори попытку.',
           },
           code: error.code,
           operation: 'routing_catalog');
@@ -3973,10 +3973,10 @@ class ConnectionManager extends ChangeNotifier {
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return null;
       _offlineState = state;
       return switch (state) {
-        ManagedProfileOfflineState.noNetwork => 'Нет сети. Подключитесь к Wi-Fi или мобильному интернету.',
-        ManagedProfileOfflineState.captivePortal => 'Войдите в сеть Wi-Fi, затем повторите подключение.',
-        ManagedProfileOfflineState.accessEnded => 'Срок доступа истёк. Подключитесь к сети и продлите доступ.',
-        ManagedProfileOfflineState.apiUnavailable => 'Сервис настроек временно недоступен. Попробуйте ещё раз.',
+        ManagedProfileOfflineState.noNetwork => 'Нет сети. Подключись к Wi-Fi или мобильному интернету.',
+        ManagedProfileOfflineState.captivePortal => 'Войди в сеть Wi-Fi, затем повтори подключение.',
+        ManagedProfileOfflineState.accessEnded => 'Срок доступа истёк. Подключись к сети и продли доступ.',
+        ManagedProfileOfflineState.apiUnavailable => 'Сервис настроек временно недоступен. Попробуй ещё раз.',
       };
     } on Object { return null; }
   }
@@ -4162,13 +4162,13 @@ class ConnectionManager extends ChangeNotifier {
         return;
       }
       _update(() {
-        _runtimeHeadline = 'POKROV уже обновляется. Подождите немного.';
+        _runtimeHeadline = 'POKROV уже обновляется. Подожди немного.';
       });
       return;
     }
     if (_warpPolicyBusy && _runtimeSnapshot?.phase != RuntimePhase.running) {
       _update(() {
-        _runtimeHeadline = 'POKROV уже обновляется. Подождите немного.';
+        _runtimeHeadline = 'POKROV уже обновляется. Подожди немного.';
       });
       return;
     }
@@ -4292,7 +4292,7 @@ class ConnectionManager extends ChangeNotifier {
         });
         if (!_runtimeStopConfirmed(current)) {
           throw const BootstrapFailure(
-              'Остановка прежнего подключения не подтверждена. Проверьте состояние POKROV.');
+              'Остановка прежнего подключения не подтверждена. Проверь состояние POKROV.');
         }
         _protectedHandoffActive = false;
         _activeCandidateRef = null;
@@ -4316,7 +4316,7 @@ class ConnectionManager extends ChangeNotifier {
         if (refreshedSubscription && _subscriptionInfo?.lane == 'expiredOrBlocked') {
           _update(() {
             _runtimeHeadline =
-                'Доступ не активен. Продлите доступ, чтобы подключиться.';
+                'Доступ не активен. Продли доступ, чтобы подключиться.';
           });
           return;
         }
@@ -4347,7 +4347,7 @@ class ConnectionManager extends ChangeNotifier {
       if (!invalidated) {
         _update(() {
           _runtimeHeadline =
-              'Не удалось обновить настройки для быстрого подключения. Попробуйте ещё раз.';
+              'Не удалось обновить настройки для быстрого подключения. Попробуй ещё раз.';
         });
         return;
       }
@@ -4377,7 +4377,7 @@ class ConnectionManager extends ChangeNotifier {
           RuntimePhase.running,
         }.contains(current.phase)) {
           throw const BootstrapFailure(
-            'Запуск POKROV Core не подтверждён. Попробуйте подключиться ещё раз.',
+            'Запуск POKROV Core не подтверждён. Попробуй подключиться ещё раз.',
             operation: 'initialize',
             code: 'core_initialize_unconfirmed',
           );
@@ -4569,7 +4569,7 @@ class ConnectionManager extends ChangeNotifier {
               _runtimeSnapshot = current;
               _managedProfileDirty = true;
               _runtimeHeadline =
-                  'Настройки изменились. Подключитесь еще раз, чтобы обновить профиль.';
+                  'Настройки изменились. Подключись еще раз, чтобы обновить профиль.';
             });
             return;
           }
@@ -4953,13 +4953,13 @@ class ConnectionManager extends ChangeNotifier {
       if (cancellationError != null) throw cancellationError;
       if (!_protectedHandoffActive && !_runtimeStopConfirmed(current)) {
         throw const BootstrapFailure(
-            'Остановка подключения ещё не подтверждена. Проверьте состояние POKROV.',
+            'Остановка подключения ещё не подтверждена. Проверь состояние POKROV.',
             code: 'connect_cancel_unconfirmed',
             operation: 'cancel_connect');
       }
       _update(() {
         _runtimeHeadline = _protectedHandoffActive
-            ? 'Восстановление отменено. Повторите подключение или отключите POKROV.'
+            ? 'Восстановление отменено. Повтори подключение или отключи POKROV.'
             : 'Попытка подключения отменена.';
       });
     } on ConnectionOperationSuperseded {
@@ -4969,7 +4969,7 @@ class ConnectionManager extends ChangeNotifier {
         return;
       final message = error is BootstrapFailure
           ? error.message
-          : 'Отмена подключения не подтверждена. Проверьте состояние POKROV.';
+          : 'Отмена подключения не подтверждена. Проверь состояние POKROV.';
       _update(() {
         _activePhase = ConnectionPhase.actionRequired;
         _runtimeHeadline = message;
@@ -5351,7 +5351,7 @@ class ConnectionManager extends ChangeNotifier {
       if (!baselineReady) {
         _update(() {
           _runtimeHeadline =
-              'WARP не прошёл проверку. Выключите его и повторите подключение.';
+              'WARP не прошёл проверку. Выключи его и повтори подключение.';
         });
         if (!fallbackReported) {
           unawaited(_reportWarpRuntimeFallback(warpFailure));
@@ -5379,7 +5379,7 @@ class ConnectionManager extends ChangeNotifier {
         _runtimeHeadline = current.phase == RuntimePhase.running
             ? 'POKROV подключен. WARP временно на паузе.'
             : current.message.trim().isEmpty
-                ? 'Обычный VPN тоже не подключился. Попробуйте другую локацию.'
+                ? 'Обычный VPN тоже не подключился. Попробуй другую локацию.'
                 : current.message;
       });
       if (current.phase == RuntimePhase.running) {
@@ -5556,7 +5556,7 @@ class ConnectionManager extends ChangeNotifier {
       final retryInitialActivation = _activeCandidateRef == null &&
           !retainsProtection && failed != null && _runtimeStopConfirmed(failed);
       if (!retryInitialActivation && engine is! RuntimeProtectedHandoff) {
-        throw const BootstrapFailure('Для восстановления соединения обновите POKROV.', code: 'protected_handoff_unavailable');
+        throw const BootstrapFailure('Для восстановления соединения обнови POKROV.', code: 'protected_handoff_unavailable');
       }
       // Profile preparation and probes must also retain the existing tunnel
       // when a manual replacement is cancelled before native handoff starts.
@@ -5573,7 +5573,7 @@ class ConnectionManager extends ChangeNotifier {
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
       if (!invalidated) {
         throw const BootstrapFailure(
-            'Не удалось обновить настройки для быстрого подключения. Попробуйте ещё раз.');
+            'Не удалось обновить настройки для быстрого подключения. Попробуй ещё раз.');
       }
       final cacheInputs = _managedProfileCacheInputs;
       final profileRevision = _managedProfileRevision;
@@ -5605,7 +5605,7 @@ class ConnectionManager extends ChangeNotifier {
           return;
         }
         if (engine is! RuntimeCandidateProbing) {
-          throw const BootstrapFailure('Для восстановления соединения обновите POKROV.',
+          throw const BootstrapFailure('Для восстановления соединения обнови POKROV.',
               code: 'candidate_probe_unavailable');
         }
       }
@@ -5674,7 +5674,7 @@ class ConnectionManager extends ChangeNotifier {
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
       if (usedCachedProfile && !_cachedProfileFallbackGate.canFallback(
           cachedProfileAvailable: true, inputsVerified: true)) {
-        throw const BootstrapFailure('Доступ не активен. Продлите доступ, чтобы подключиться.',
+        throw const BootstrapFailure('Доступ не активен. Продли доступ, чтобы подключиться.',
             code: 'managed_profile_access_denied', statusCode: 403);
       }
       final prepared = payload;
@@ -5745,7 +5745,7 @@ class ConnectionManager extends ChangeNotifier {
         _runtimeHeadline = current.isCleanlyHealthy
             ? usedCachedProfile ? 'POKROV подключен по сохраненным настройкам. Сервис обновим позже.' : 'POKROV подключен.'
             : tryNext ? 'Проверяем другое защищённое подключение…'
-            : 'Не удалось восстановить подключение. Попробуйте ещё раз или отключите POKROV.';
+            : 'Не удалось восстановить подключение. Попробуй ещё раз или отключи POKROV.';
       });
       if (current.isCleanlyHealthy) {
         _protectedHandoffActive = false;
@@ -5772,7 +5772,7 @@ class ConnectionManager extends ChangeNotifier {
       _update(() {
         _activePhase = ConnectionPhase.actionRequired;
         _runtimeHeadline = _connectionFailureMessage = offlineMessage ?? (error is BootstrapFailure ? _bootstrapFailureMessage(error)
-            : 'Не удалось восстановить подключение. Попробуйте ещё раз или отключите POKROV.');
+            : 'Не удалось восстановить подключение. Попробуй ещё раз или отключи POKROV.');
       });
     } finally {
       if (terminalCode != null &&
@@ -5830,7 +5830,7 @@ class ConnectionManager extends ChangeNotifier {
               ? 'Основное подключение не ответило. Пробуем резервное…'
               : 'Локация не ответила. Пробуем другую…'
           : failed.message.trim().isEmpty
-              ? 'Подключение остановлено. Попробуйте еще раз.'
+              ? 'Подключение остановлено. Попробуй ещё раз.'
               : failed.message;
     });
     // Preserve the downloaded/proven cache for a manual offline retry.
@@ -5876,7 +5876,7 @@ class ConnectionManager extends ChangeNotifier {
 
   String _bootstrapFailureMessage(BootstrapFailure error) =>
       error.operationalErrorCode == 'API-011'
-          ? 'Сервер ещё не подготовил подключение. Повторите попытку позже.'
+          ? 'Сервер ещё не подготовил подключение. Попробуй ещё раз позже.'
           : error.message;
 
   String _runtimeUnexpectedErrorMessage(Object error) {
@@ -5900,9 +5900,9 @@ class ConnectionManager extends ChangeNotifier {
       RuntimeBoundConnectFailure(failureKind: 'profile_payload_invalid') =>
         'POKROV отклонил некорректные настройки подключения.',
       TimeoutException() =>
-        'POKROV не дождался ответа. Попробуйте еще раз, а если не поможет — напишите в поддержку.',
+        'POKROV не дождался ответа. Попробуй ещё раз, а если не поможет — напиши в поддержку.',
       _ =>
-        'POKROV не смог начать подключение. Попробуйте еще раз, а если не поможет — напишите в поддержку: диагностику можно приложить прямо в чате.',
+        'POKROV не смог начать подключение. Попробуй ещё раз, а если не поможет — напиши в поддержку: диагностику можно приложить прямо в чате.',
     };
   }
 
@@ -6188,7 +6188,7 @@ class ConnectionManager extends ChangeNotifier {
     if (!wasConnected) {
       if (_runtimeBusy) {
         _update(() {
-          _runtimeHeadline = 'Настройки сохранены. Повторите применение после текущего действия.';
+          _runtimeHeadline = 'Настройки сохранены. Повтори применение после текущего действия.';
         });
         return false;
       }
@@ -6197,7 +6197,7 @@ class ConnectionManager extends ChangeNotifier {
             'Правила сохранены. Они применятся при следующем подключении.';
       });
       _notify(
-        'Правила сохранены. Подключите POKROV, чтобы применить.',
+        'Правила сохранены. Подключи POKROV, чтобы применить.',
         tone: PokrovSnackTone.success,
       );
       return true;
@@ -6335,7 +6335,7 @@ class ConnectionManager extends ChangeNotifier {
         _warpRuntimeConsent &&
         _managedWarpPolicy.canOfferRuntime) {
       const message =
-          'WARP пока нельзя использовать с вариантом «Через мост». Выключите WARP или выберите «Обычный».';
+          'WARP пока нельзя использовать с вариантом «Через мост». Выключи WARP или выбери «Обычный».';
       _update(() {
         _runtimeHeadline = message;
       });
@@ -6402,8 +6402,8 @@ class ConnectionManager extends ChangeNotifier {
         _managedProfileDirty = true;
         _cachedProfileFallbackGate.markUserChange();
         _runtimeHeadline = wasConnected
-            ? 'Локация сохранена. Переподключите POKROV, чтобы применить.'
-            : 'Локация сохранена. Подключите POKROV, чтобы применить.';
+            ? 'Локация сохранена. Переподключи POKROV, чтобы применить.'
+            : 'Локация сохранена. Подключи POKROV, чтобы применить.';
         _clientExperience = _clientExperience.copyWith(
           recentNodeCodes: recentCodes,
           interfaceMode: PokrovInterfaceMode.advanced,
@@ -6422,7 +6422,7 @@ class ConnectionManager extends ChangeNotifier {
         );
       } else {
         _notify(
-          'Локация сохранена. Подключите POKROV.',
+          'Локация сохранена. Подключи POKROV.',
           tone: PokrovSnackTone.success,
         );
       }
@@ -6460,7 +6460,7 @@ class ConnectionManager extends ChangeNotifier {
         _runtimeHeadline = previousHeadline;
       });
       _notify(
-        'Не удалось сохранить локацию. Проверьте подключение и попробуйте ещё раз.',
+        'Не удалось сохранить локацию. Проверь подключение и попробуй ещё раз.',
         tone: PokrovSnackTone.danger,
       );
     } finally {
@@ -6483,10 +6483,10 @@ class ConnectionManager extends ChangeNotifier {
     if (_selectedAppIds.length >= 128) {
       _update(() {
         _runtimeHeadline =
-            'Можно выбрать не больше 128 приложений. Удалите одно, чтобы добавить другое.';
+            'Можно выбрать не больше 128 приложений. Удали одно, чтобы добавить другое.';
       });
       _notify(
-        'Можно выбрать не больше 128 приложений. Удалите одно, чтобы добавить другое.',
+        'Можно выбрать не больше 128 приложений. Удали одно, чтобы добавить другое.',
         tone: PokrovSnackTone.danger,
       );
       return;
@@ -6539,7 +6539,7 @@ class ConnectionManager extends ChangeNotifier {
         .toSet()
         .toList(growable: false);
     if (normalized.length > 128) {
-      _notify('Выберите не больше 128 приложений вручную.',
+      _notify('Выбери не больше 128 приложений вручную.',
           tone: PokrovSnackTone.danger);
       return;
     }
@@ -6580,7 +6580,7 @@ class ConnectionManager extends ChangeNotifier {
       );
     } else {
       _notify(
-        'RU-пресет сохранён. Подключите POKROV.',
+        'RU-пресет сохранён. Подключи POKROV.',
         tone: PokrovSnackTone.success,
       );
     }
@@ -6603,8 +6603,8 @@ class ConnectionManager extends ChangeNotifier {
       _managedProfileDirty = true;
       _cachedProfileFallbackGate.markUserChange();
       _runtimeHeadline = wasConnected
-          ? 'Автоматический выбор включен. Переподключите POKROV, чтобы применить.'
-          : 'Автоматический выбор включен. Подключите POKROV, чтобы применить.';
+          ? 'Автоматический выбор включен. Переподключи POKROV, чтобы применить.'
+          : 'Автоматический выбор включен. Подключи POKROV, чтобы применить.';
       _clientExperience = _clientExperience.copyWith(
         preferredNodeCode: '',
         preferredVariantId: 'direct',
@@ -6622,7 +6622,7 @@ class ConnectionManager extends ChangeNotifier {
     } else {
       unawaited(refreshTransportCatalog(force: true));
       _notify(
-        'Автоматический выбор включен. Подключите POKROV.',
+        'Автоматический выбор включен. Подключи POKROV.',
         tone: PokrovSnackTone.success,
       );
     }

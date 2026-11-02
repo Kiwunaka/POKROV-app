@@ -119,7 +119,7 @@ class PokrovWarpLifecycle {
         PokrovWarpPhase.revoked =>
           'Режим выключен. Его можно включить снова после проверки доступности.',
         PokrovWarpPhase.error =>
-          'POKROV не смог включить дополнительный режим. Попробуйте позже или напишите в поддержку.',
+          'POKROV не смог включить дополнительный режим. Попробуй позже или напиши в поддержку.',
       };
 
   String get publicActionLabel =>

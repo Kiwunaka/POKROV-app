@@ -23,7 +23,7 @@ class _LocalDpiCard extends StatelessWidget {
         else if (!supportedMode)
           'Работает в режимах «Россия напрямую» и «Только выбранные сервисы».'
         else
-          'Применяется при подключении POKROV. При прямом соединении сервис видит ваш IP.',
+          'Применяется при подключении POKROV. При прямом соединении сервис видит твой IP.',
       ],
       child: !supportedMode || (!runtimeReady && !preferences.localDpiEnabled) ? null : _RoutingToggleRow(
         key: const ValueKey('rules-local-dpi'),
@@ -103,7 +103,7 @@ class _PurposeRoutingCard extends StatelessWidget {
       key: const ValueKey('rules-purpose-routes'),
       title: 'Готовые маршруты',
       lines: const [
-        'Выберите задачи. POKROV добавит проверяемые доменные правила поверх основного режима.',
+        'Выбери задачи. POKROV добавит проверяемые доменные правила поверх основного режима.',
       ],
       child: Column(
         children: [
@@ -168,7 +168,7 @@ class _CustomRoutingCard extends StatelessWidget {
       lines: [
         fallbackMode == RouteMode.fullTunnel
             ? 'В режиме «Всё через POKROV» правила «напрямую» не применяются.'
-            : 'Домен, IP или подсеть можно отправить через VPN либо оставить напрямую. Первым срабатывает ваше точное правило.',
+            : 'Домен, IP или подсеть можно отправить через VPN либо оставить напрямую. Первым срабатывает твоё точное правило.',
       ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -277,10 +277,10 @@ class _DnsAndLanCard extends StatelessWidget {
         if (windowsAppScope)
           'Системный DNS всех приложений идёт через VPN, включая приложения с прямым маршрутом. Собственный DoH приложения следует маршруту его данных.',
         customDnsError != null
-            ? 'Сохранённый адрес DNS не поддерживается. Используется DNS профиля POKROV; исправьте адрес в настройке DNS.'
+            ? 'Сохранённый адрес DNS не поддерживается. Используется DNS профиля POKROV; исправь адрес в настройке DNS.'
             : windowsAppScope
                 ? preferences.effectiveDnsTransport == PokrovDnsTransport.direct
-                    ? 'В режиме выбора приложений DNS напрямую недоступен. Для подключения выключите эту настройку.'
+                    ? 'В режиме выбора приложений DNS напрямую недоступен. Для подключения выключи эту настройку.'
                     : 'В режиме выбора приложений DNS напрямую недоступен.'
             : preferences.effectiveDnsTransport == PokrovDnsTransport.direct &&
                     fallbackMode == RouteMode.fullTunnel
@@ -346,7 +346,7 @@ class _DnsAndLanCard extends StatelessWidget {
             key: const ValueKey('rules-lan-toggle'),
             title: 'Локальная сеть',
             subtitle: preferences.lanSubnets.isEmpty
-                ? 'Сначала укажите подсети принтера, NAS или других устройств.'
+                ? 'Сначала укажи подсети принтера, NAS или других устройств.'
                 : 'Только заданные подсети идут напрямую. Правило действует в любой сети с этими адресами.',
             value: preferences.allowLan,
             enabled: preferences.lanSubnets.isNotEmpty,
@@ -479,7 +479,7 @@ class _TrustedWifiCardState extends State<_TrustedWifiCard> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Введите точное имя сети. Пароль не нужен и не сохраняется.',
+              'Введи точное имя сети. Пароль не нужен и не сохраняется.',
               style: Theme.of(sheetContext).textTheme.bodyMedium?.copyWith(
                     color: PokrovPalette.of(sheetContext).muted,
                   ),
@@ -522,18 +522,18 @@ class _TrustedWifiCardState extends State<_TrustedWifiCard> {
       return 'Сеть «${status.name}» добавлена.';
     }
     if (status.reason == 'permission_requested') {
-      return 'После системного разрешения нажмите «Определить текущую» ещё раз.';
+      return 'После системного разрешения нажми «Определить текущую» ещё раз.';
     }
     if (status.permissionRequired) {
       return 'Android скрывает имя сети без разрешения на точное местоположение.';
     }
     if (status.reason == 'ssid_unavailable') {
-      return 'Android пока не сообщил имя сети. Проверьте, что геолокация включена, и нажмите «Определить текущую» ещё раз.';
+      return 'Android пока не сообщил имя сети. Проверь, что геолокация включена, и нажми «Определить текущую» ещё раз.';
     }
     if (!status.connected) {
       return 'Устройство сейчас не подключено к Wi-Fi.';
     }
-    return 'Имя текущей сети определить не удалось. Добавьте его вручную.';
+    return 'Имя текущей сети определить не удалось. Добавь его вручную.';
   }
 
   @override
@@ -554,7 +554,7 @@ class _TrustedWifiCardState extends State<_TrustedWifiCard> {
             key: const ValueKey('rules-trusted-wifi-toggle'),
             title: 'Пауза в доверенных сетях',
             subtitle: preferences.trustedWifiNames.isEmpty
-                ? 'Сначала добавьте хотя бы одну сеть.'
+                ? 'Сначала добавь хотя бы одну сеть.'
                 : 'Точное совпадение по имени Wi-Fi.',
             value: preferences.pauseOnTrustedWifi,
             onChanged: preferences.trustedWifiNames.isEmpty
@@ -700,14 +700,14 @@ class _AlwaysOnGuideCard extends StatelessWidget {
                   : 'Подключение при запуске Windows',
               lines: isAndroid
                   ? const [
-                      'Откройте настройки Android → Сеть и интернет → VPN → POKROV.',
-                      'Сначала включите «Постоянная VPN». Проверьте обычное подключение.',
-                      'Только после проверки включайте «Блокировать соединения без VPN»: при ошибке туннеля интернет будет недоступен.',
+                      'Открой настройки Android → Сеть и интернет → VPN → POKROV.',
+                      'Сначала включи «Постоянная VPN». Проверь обычное подключение.',
+                      'Только после проверки включай «Блокировать соединения без VPN»: при ошибке туннеля интернет будет недоступен.',
                       'В режиме «Только выбранные» остальные приложения тоже останутся без сети.',
                     ]
                   : const [
                       'POKROV показывает текущее состояние в трее и не скрывает ошибку подключения.',
-                      'Автоподключение включайте только после успешной ручной проверки профиля.',
+                      'Автоподключение включай только после успешной ручной проверки профиля.',
                     ],
             ),
           ),
@@ -898,7 +898,7 @@ class _RouteDecisionProbeState extends State<_RouteDecisionProbe> {
         null) {
       setState(() {
         _decision = null;
-        _error = 'Введите домен, IP или подсеть CIDR.';
+        _error = 'Введи домен, IP или подсеть CIDR.';
       });
       return;
     }
@@ -992,7 +992,7 @@ Future<List<String>?> _showLanSubnetsSheet(BuildContext context, List<String> in
           children: [
             Text('Подсети локальной сети', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
-            const Text('Укажите адреса из настроек роутера или сети. Например: 192.168.1.0/24 или fd12:3456:789a::/64. До 16 подсетей, каждая с новой строки.'),
+            const Text('Укажи адреса из настроек роутера или сети. Например: 192.168.1.0/24 или fd12:3456:789a::/64. До 16 подсетей, каждая с новой строки.'),
             const SizedBox(height: 12),
             TextFormField(
               key: const ValueKey('rules-lan-subnets-input'), initialValue: value,
@@ -1002,7 +1002,7 @@ Future<List<String>?> _showLanSubnetsSheet(BuildContext context, List<String> in
               decoration: InputDecoration(labelText: 'IPv4 / IPv6 CIDR', errorText: error),
             ),
             const SizedBox(height: 8),
-            const Text('Поддерживаются частные IPv4 и IPv6 ULA. Link-local IPv6 требует привязки к интерфейсу и здесь недоступен. Пустой список отключит LAN. После сохранения включите «Локальная сеть».'),
+            const Text('Поддерживаются частные IPv4 и IPv6 ULA. Link-local IPv6 требует привязки к интерфейсу и здесь недоступен. Пустой список отключит LAN. После сохранения включи «Локальная сеть».'),
             const SizedBox(height: 16),
             FilledButton(
               key: const ValueKey('rules-lan-subnets-save'),
@@ -1011,7 +1011,7 @@ Future<List<String>?> _showLanSubnetsSheet(BuildContext context, List<String> in
                     .where((line) => line.isNotEmpty).toList();
                 final subnets = lines.map(normalizePokrovLanSubnet).toList();
                 if (lines.length > 16 || subnets.any((subnet) => subnet == null)) {
-                  setSheetState(() => error = 'Укажите до 16 частных подсетей CIDR. Публичные адреса и диапазон всего интернета недопустимы.');
+                  setSheetState(() => error = 'Укажи до 16 частных подсетей CIDR. Публичные адреса и диапазон всего интернета недопустимы.');
                   return;
                 }
                 final normalized = subnets.cast<String>().toSet().toList()..sort();
@@ -1110,7 +1110,7 @@ Future<void> _showAddRouteRuleSheet(
                     );
                     if (rule == null) {
                       setSheetState(() {
-                        error = 'Проверьте формат адреса.';
+                        error = 'Проверь формат адреса.';
                       });
                       return;
                     }
@@ -1226,7 +1226,7 @@ class _SmartDnsProviderSheetState extends State<_SmartDnsProviderSheet> {
         const SizedBox(height: 8),
         const Text('Выбор действует при следующем подключении для сервисов с разрешённым SmartDNS. Обычный DNS и AdGuard настраиваются отдельно. Без действующего разрешения сервис идёт через VPN.'),
         const SizedBox(height: 8),
-        const Text('Выбирая внешнего провайдера, вы разрешаете передавать ему свой IP и домены этих сервисов. Их HTTPS-трафик проходит через его ретранслятор без расшифровки.'),
+        const Text('Выбирая внешнего провайдера, ты разрешаешь передавать ему свой IP и домены этих сервисов. Их HTTPS-трафик проходит через его ретранслятор без расшифровки.'),
         const SizedBox(height: 12),
         ListTile(key: const ValueKey('rules-smart-dns-provider-automatic'),
           contentPadding: EdgeInsets.zero, title: const Text('Автоматически'),
@@ -1236,7 +1236,7 @@ class _SmartDnsProviderSheetState extends State<_SmartDnsProviderSheet> {
         if (_loading)
           const Padding(padding: EdgeInsets.all(12), child: Center(child: CircularProgressIndicator())),
         if (_failed)
-          const Text('Не удалось загрузить SmartDNS-провайдеров. Повторите попытку.'),
+          const Text('Не удалось загрузить SmartDNS-провайдеров. Попробуй ещё раз.'),
         if (!_loading && !_failed && providers.isEmpty)
           const Text('Сейчас нет доступных подписанных провайдеров. Можно оставить автоматический выбор.'),
         if (preferences.smartDnsProviderId.isNotEmpty && !selectionAvailable &&

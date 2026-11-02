@@ -210,10 +210,10 @@ Future<bool> _showVpnPermissionExplainer(
     builder: (context) => AlertDialog(
       key: const ValueKey('vpn-permission-explainer'),
       icon: const Icon(Icons.vpn_key_rounded),
-      title: Text(recovery ? 'Разрешение на VPN не выдано' : 'Разрешите VPN'),
+      title: Text(recovery ? 'Разрешение на VPN не выдано' : 'Разреши VPN'),
       content: Text(
         recovery
-            ? 'Android снова покажет системный запрос. Выберите «ОК», чтобы POKROV смог создать защищённое подключение.'
+            ? 'Android снова покажет системный запрос. Выбери «ОК», чтобы POKROV смог создать защищённое подключение.'
             : 'Сейчас Android покажет системный запрос на VPN. POKROV использует это разрешение только для создания защищённого подключения.',
       ),
       actions: [
@@ -406,7 +406,7 @@ class _FirstLaunchAcquisitionNotice extends StatelessWidget {
         ? 'Переход подтверждён. Можно продолжить без кода.'
         : consuming
             ? 'Подтверждаем переход… Выбор доступа уже доступен.'
-            : 'Переход не применён. Начните бесплатно или восстановите доступ — ничего не потеряно.';
+            : 'Переход не применён. Начни бесплатно или восстанови доступ — ничего не потеряно.';
     return Semantics(
       liveRegion: true,
       child: Container(
@@ -511,7 +511,7 @@ class _FirstLaunchRestoreScreen extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                'Введите одноразовый код устройства из бота или кабинета. Код активации из Telegram, сайта или письма тоже подойдет.',
+                'Введи одноразовый код устройства из бота или кабинета. Код активации из Telegram, сайта или письма тоже подойдет.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: p.muted,
                   height: 1.35,

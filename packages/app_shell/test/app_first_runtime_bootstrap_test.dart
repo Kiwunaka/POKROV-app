@@ -4660,7 +4660,7 @@ void main() {
       throwsA(isA<BootstrapFailure>().having(
         (error) => error.message,
         'message',
-        'POKROV получил недопустимый путь профиля. Обновите настройки и попробуйте ещё раз.',
+        'POKROV получил недопустимый путь профиля. Обнови настройки и попробуй ещё раз.',
       )),
     );
     expect(requests, 0);

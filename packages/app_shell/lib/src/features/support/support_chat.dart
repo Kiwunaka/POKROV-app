@@ -732,7 +732,7 @@ class _SupportFeedbackSheetState extends State<_SupportFeedbackSheet> {
     final message = _messageController.text.trim();
     if (_submitting || message.length < 3) {
       setState(() {
-        _error = 'Напишите хотя бы несколько слов.';
+        _error = 'Напиши хотя бы несколько слов.';
       });
       return;
     }
@@ -834,7 +834,7 @@ class _SupportFeedbackSheetState extends State<_SupportFeedbackSheet> {
                           textCapitalization: TextCapitalization.sentences,
                           decoration: const InputDecoration(
                             labelText: 'Что улучшить?',
-                            hintText: 'Опишите идею или проблему',
+                            hintText: 'Опиши идею или проблему',
                             alignLabelWithHint: true,
                             border: OutlineInputBorder(),
                           ),

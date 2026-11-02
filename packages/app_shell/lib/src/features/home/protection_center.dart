@@ -230,7 +230,7 @@ class _ProtectionCenterController extends ChangeNotifier {
       _data = await _onRefresh();
       _error = null;
     } on _ProtectionRepairBusy {
-      _error = 'POKROV уже выполняет действие. Дождитесь завершения.';
+      _error = 'POKROV уже выполняет действие. Дождись завершения.';
     } on Object {
       _error = 'Не удалось обновить проверки.';
     } finally {
@@ -293,7 +293,7 @@ class _ProtectionCenterController extends ChangeNotifier {
       // Keep the sheet busy through native settlement and readback.
       await cancel();
     } on Object {
-      _error = 'Отмена восстановления не подтверждена. Проверьте состояние POKROV.';
+      _error = 'Отмена восстановления не подтверждена. Проверь состояние POKROV.';
     } finally {
       _cancellingRepair = false;
       _notify();
@@ -697,14 +697,14 @@ _ProtectionSummary _protectionSummary(
   if (retainsProtection) {
     return const _ProtectionSummary(
       title: 'Трафик заблокирован',
-      detail: 'Защита от прямого выхода включена. Восстановите соединение или отключите POKROV.',
+      detail: 'Защита от прямого выхода включена. Восстанови соединение или отключи POKROV.',
       tone: _ProtectionSummaryTone.warning,
     );
   }
   if (snapshot?.phase != RuntimePhase.running) {
     return const _ProtectionSummary(
       title: 'Защита выключена',
-      detail: 'Подключитесь, чтобы POKROV выполнил проверки.',
+      detail: 'Подключись, чтобы POKROV выполнил проверки.',
       tone: _ProtectionSummaryTone.neutral,
     );
   }
@@ -716,7 +716,7 @@ _ProtectionSummary _protectionSummary(
   return _ProtectionSummary(
     title: hasFailure ? 'Защита требует внимания' : 'Проверяем защиту',
     detail: hasFailure
-        ? 'Одна из проверок не подтверждена. Откройте детали или запустите восстановление.'
+        ? 'Одна из проверок не подтверждена. Открой детали или запусти восстановление.'
         : 'Туннель запущен, ждём свежие результаты DNS и выхода через VPN.',
     tone: hasFailure
         ? _ProtectionSummaryTone.warning
@@ -865,7 +865,7 @@ class _ProtectionRepairOutcomeCard extends StatelessWidget {
                     : 'Туннель, DNS и выход через VPN подтверждены.'
                 : interrupted
                     ? 'Повторное подключение не продолжается. Текущее состояние туннеля показано выше.'
-                    : 'Откройте поддержку: диагностические данные будут показаны перед отправкой.',
+                    : 'Открой поддержку: диагностические данные будут показаны перед отправкой.',
           ),
           if (!succeeded && !interrupted) ...[
             const SizedBox(height: 8),
@@ -1072,23 +1072,23 @@ String _consumerTunnelDetail(RuntimeSnapshot? snapshot) {
     'resolver_timeout' ||
     'resolver_response_error' ||
     'resolver_callback_error' =>
-      'Не удалось подтвердить DNS-подключение устройства. Попробуйте подключиться снова.',
+      'Не удалось подтвердить DNS-подключение устройства. Попробуй подключиться снова.',
     'tls_handshake_failed' ||
     'tunnel_handshake_failed' =>
-      'Защищённый канал до выбранной локации не отвечает. Попробуйте другую локацию или подключитесь снова.',
+      'Защищённый канал до выбранной локации не отвечает. Попробуй другую локацию или подключись снова.',
     'core_egress_probe_failed' =>
-      'Не удалось подтвердить защищённое подключение. Попробуйте подключиться снова.',
+      'Не удалось подтвердить защищённое подключение. Попробуй подключиться снова.',
     'default_network_unavailable' ||
     'default_network_interface_unresolved' ||
     'default_network_index_unresolved' =>
-      'Устройство не подтвердило доступ к сети. Проверьте соединение и попробуйте снова.',
+      'Устройство не подтвердило доступ к сети. Проверь соединение и попробуй снова.',
     _ when failureKind.startsWith('dns_') =>
-      'Не удалось подготовить DNS для защищённого подключения. Попробуйте снова.',
+      'Не удалось подготовить DNS для защищённого подключения. Попробуй снова.',
     _ when failureKind.isNotEmpty =>
-      'Подключение требует внимания. Попробуйте подключиться снова.',
+      'Подключение требует внимания. Попробуй подключиться снова.',
     _ => snapshot == null
         ? 'Runtime не подтвердил активное соединение.'
-        : 'Подключение сейчас не активно. Попробуйте подключиться снова.',
+        : 'Подключение сейчас не активно. Попробуй подключиться снова.',
   };
 }
 
@@ -1284,7 +1284,7 @@ class _PostConnectShortcutsCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(right: 4, bottom: 6),
             child: Text(
-              'Только ваши HTTPS-ссылки. Они никогда не открываются автоматически.',
+              'Только твои HTTPS-ссылки. Они никогда не открываются автоматически.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: p.muted,
                     height: 1.3,
@@ -1334,7 +1334,7 @@ class _PostConnectShortcutsCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 4, right: 4),
               child: Text(
-                'Сначала подключите POKROV.',
+                'Сначала подключи POKROV.',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: p.muted,
                     ),

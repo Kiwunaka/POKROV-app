@@ -85,7 +85,7 @@ final class PokrovPersistentSupportModeBanner extends StatelessWidget {
                     onTap: onOpenDiagnostics,
                     child: Text(
                       view.disablePending
-                          ? 'Отключение не сохранено. Повторите.'
+                          ? 'Отключение не сохранено. Повтори.'
                           : 'Режим поддержки до $expires · ${view.consumedBundles}/${view.maximumBundles} пакетов',
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
                             color: colors.onTertiaryContainer,

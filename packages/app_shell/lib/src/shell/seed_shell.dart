@@ -383,8 +383,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         if (_selectedIndex < SeedTab.locations.index) _pageReturnIndex = _selectedIndex;
         _selectedIndex = SeedTab.rules.index;
         _runtimeHeadline = _selectiveServicesAvailable
-            ? 'Выберите хотя бы один поддерживаемый сервис в разделе «Правила».'
-            : 'Режим выбранных сервисов недоступен. Выберите другой режим в разделе «Правила».';
+            ? 'Выбери хотя бы один поддерживаемый сервис в Настройках → «Что идёт через POKROV».'
+            : 'Режим выбранных сервисов недоступен. Выбери другой режим в Настройках → «Что идёт через POKROV».';
       });
       return;
     }
@@ -648,7 +648,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     } on Object {
       if (mounted) {
         showPokrovSnack(context,
-          'Не удалось сохранить отключение режима поддержки. Повторите.',
+          'Не удалось сохранить отключение режима поддержки. Повтори.',
           tone: PokrovSnackTone.danger);
       }
     }
@@ -725,7 +725,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       await _firstSessionLoadFuture;
       if (!mounted) return;
       if (_firstSessionCoordinator.busy) {
-        showPokrovSnack(context, 'Дождитесь завершения входа и откройте ссылку ещё раз.');
+        showPokrovSnack(context, 'Дождись завершения входа и открой ссылку ещё раз.');
         return;
       }
       await _showRedeemSheet(
@@ -846,7 +846,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       href: href,
     );
     if (shortcut == null) {
-      return 'Укажите короткое название и полный адрес https://…';
+      return 'Укажи короткое название и полный адрес https://…';
     }
     if (_clientExperience.postConnectShortcuts.any(
       (item) => item.href == shortcut.href,
@@ -935,7 +935,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                     applied = await _applyRoutingPreferences(next);
                   } on Object {
                     if (sheetContext.mounted) {
-                      showPokrovSnack(sheetContext, 'Не удалось применить правила. Повторите попытку.',
+                      showPokrovSnack(sheetContext, 'Не удалось применить правила. Попробуй ещё раз.',
                         tone: PokrovSnackTone.danger);
                     }
                   } finally {
@@ -966,11 +966,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (_selectedIndex < SeedTab.locations.index) _pageReturnIndex = _selectedIndex;
       _selectedIndex = SeedTab.rules.index;
       _runtimeHeadline =
-          'Выберите хотя бы одно приложение в разделе «Правила».';
+          'Выбери хотя бы одно приложение в Настройках → «Что идёт через POKROV».';
     });
     showPokrovSnack(
       context,
-      'Выберите хотя бы одно приложение в разделе «Правила».',
+      'Выбери хотя бы одно приложение в Настройках → «Что идёт через POKROV».',
       tone: PokrovSnackTone.danger,
     );
   }
@@ -1054,7 +1054,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       setState(() {
         _locationsCatalog = catalog;
         _locationsCatalogError = transportsRefreshed ? null
-            : 'Страны обновлены, но список соединений не обновился. Попробуйте ещё раз.';
+            : 'Страны обновлены, но список соединений не обновился. Попробуй ещё раз.';
         _locationsUsingCache = false;
         _clientExperience = _clientExperience.copyWith(
           cachedLocations: catalog,
@@ -1077,7 +1077,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
       setState(() {
         _locationsCatalogError =
-            'Не удалось обновить список локаций. Проверьте соединение и попробуйте ещё раз.';
+            'Не удалось обновить список локаций. Проверь соединение и попробуй ещё раз.';
         _locationsUsingCache = _locationsCatalog != null;
       });
     } finally {
@@ -1146,7 +1146,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (mounted && showFailure) {
         showPokrovSnack(
           context,
-          failure?.message ?? 'Не удалось обновить подписку. Проверьте соединение и повторите.',
+          failure?.message ?? 'Не удалось обновить подписку. Проверь соединение и повтори.',
           tone: PokrovSnackTone.danger,
         );
       }
@@ -1232,7 +1232,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         return;
       }
       if (ownerBefore != null && ownerBefore != ownerAfter) {
-        throw const BootstrapFailure('Сессия изменилась. Повторите вход.',
+        throw const BootstrapFailure('Сессия изменилась. Повтори вход.',
             code: 'session_changed');
       }
       setState(() {
@@ -1626,7 +1626,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
     showPokrovSnack(
       context,
-      'Не удалось открыть бота. Найдите @$username в Telegram.',
+      'Не удалось открыть бота. Найди @$username в Telegram.',
       tone: PokrovSnackTone.danger,
     );
   }
@@ -1672,7 +1672,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         widget.observability?.recordUpdateCheckFailed();
         if (forcePrompt && mounted) {
           showPokrovSnack(context,
-            'Не удалось проверить обновление. Проверьте сеть и повторите.',
+            'Не удалось проверить обновление. Проверь сеть и повтори.',
             tone: PokrovSnackTone.danger);
         }
         unawaited(
@@ -1705,10 +1705,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
     if (!mounted || status == 'cancelled') return;
     final message = switch (status) {
-      'chooser_opened' => 'Выберите способ передачи APK.',
-      'saved' => 'Установщик сохранён. Передайте этот файл другу.',
+      'chooser_opened' => 'Выбери способ передачи APK.',
+      'saved' => 'Установщик сохранён. Передай этот файл другу.',
       'unavailable' =>
-        'Нет данных релиза для проверки EXE. Откройте POKROV при доступном интернете.',
+        'Нет данных релиза для проверки EXE. Открой POKROV при доступном интернете.',
       'invalid' => 'Файл не совпадает с официальным установщиком POKROV.',
       'unsupported' => 'Передача файла приложения в этой сборке недоступна.',
       _ => 'Не удалось подготовить файл приложения.',
@@ -1731,7 +1731,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (mounted) {
         showPokrovSnack(
           context,
-          'Ссылка обновления отклонена. Попробуйте позже.',
+          'Ссылка обновления отклонена. Попробуй позже.',
           tone: PokrovSnackTone.danger,
         );
       }
@@ -1833,7 +1833,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           unawaited(_reportClientLifecycle('update_installer_opened'));
           showPokrovSnack(
             context,
-            'Обновление проверено. Подтвердите установку в системном окне.',
+            'Обновление проверено. Подтверди установку в системном окне.',
             tone: PokrovSnackTone.success,
           );
         case PokrovClientUpdateInstallStatus.storeOpened:
@@ -1860,7 +1860,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           );
           showPokrovSnack(
             context,
-            'Разрешите установку, затем повторите обновление: Профиль → О приложении. APK уже проверен.',
+            'Разреши установку, затем повтори обновление: Настройки → О приложении. APK уже проверен.',
           );
         case PokrovClientUpdateInstallStatus.unsupported:
         case PokrovClientUpdateInstallStatus.failed:
@@ -1877,7 +1877,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           );
           showPokrovSnack(
             context,
-            'Не удалось скачать или проверить обновление. Повторите: Профиль → О приложении.',
+            'Не удалось скачать или проверить обновление. Повтори: Настройки → О приложении.',
             tone: PokrovSnackTone.danger,
           );
       }
@@ -1893,7 +1893,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
     showPokrovSnack(
       context,
-      'Не удалось открыть загрузку. Повторите: Профиль → О приложении.',
+      'Не удалось открыть загрузку. Повтори: Настройки → О приложении.',
       tone: PokrovSnackTone.danger,
     );
   }
@@ -1905,7 +1905,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       cabinetUrl: widget.appContext.cabinetUrl,
     );
     if (uri == null) {
-      showPokrovSnack(context, 'Сначала введите код активации.');
+      showPokrovSnack(context, 'Сначала введи код активации.');
       return;
     }
 
@@ -1928,7 +1928,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
       showPokrovSnack(
         context,
-        'Не удалось открыть страницу. Попробуйте еще раз.',
+        'Не удалось открыть страницу. Попробуй ещё раз.',
         tone: PokrovSnackTone.danger,
       );
     }
@@ -1989,13 +1989,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     if (_accountSessionChanging) return false;
     final code = value.trim();
     if (code.isEmpty) {
-      showPokrovSnack(context, 'Введите код активации.');
+      showPokrovSnack(context, 'Введи код активации.');
       return false;
     }
     if (_looksLikeSubscriptionOrProxyLink(code)) {
       showPokrovSnack(
         context,
-        'Ссылка подключения не привязывает аккаунт. Введите одноразовый код или ключ активации.',
+        'Ссылка подключения не привязывает аккаунт. Введи одноразовый код или ключ активации.',
       );
       return false;
     }
@@ -2033,7 +2033,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           }
           _runtimeHeadline = paired.existingDevice
               ? 'Вход подтверждён. Устройство уже связано с этим аккаунтом.'
-              : 'Устройство привязано к вашему аккаунту.';
+              : 'Устройство привязано к твоему аккаунту.';
         });
         if (!paired.existingDevice) {
           _queueClientExperienceWrite();
@@ -2054,7 +2054,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
               ? 'Вход подтверждён. Устройство уже связано с этим аккаунтом.'
               : profileUpdated
               ? 'Устройство и профиль привязаны. Код больше не действует.'
-              : 'Устройство привязано. Обновите профиль, когда сеть восстановится.',
+              : 'Устройство привязано. Обнови профиль, когда сеть восстановится.',
           tone: profileUpdated ? PokrovSnackTone.success : PokrovSnackTone.info,
         );
         return paired.ok;
@@ -2096,7 +2096,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
       showPokrovSnack(
         context,
-        'Не удалось активировать код. Проверьте код и попробуйте еще раз.',
+        'Не удалось активировать код. Проверь код и попробуй ещё раз.',
         tone: PokrovSnackTone.danger,
       );
       return false;
@@ -2153,7 +2153,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     if (!mounted) return;
     showPokrovSnack(context, updated
         ? 'Вход восстановлен. Статус подписки обновлён.'
-        : 'Вход восстановлен, но статус подписки не загрузился. Проверьте соединение и обновите профиль.',
+        : 'Вход восстановлен, но статус подписки не загрузился. Проверь соединение и обнови профиль.',
       tone: updated ? PokrovSnackTone.success : PokrovSnackTone.danger);
   }
 
@@ -2235,7 +2235,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
       showPokrovSnack(
         context,
-        'Не удалось открыть кабинет. Проверьте соединение и попробуйте еще раз.',
+        'Не удалось открыть кабинет. Проверь соединение и попробуй ещё раз.',
         tone: PokrovSnackTone.danger,
       );
     }
@@ -2279,7 +2279,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _telegramBonusBusy = false;
         _telegramBonusStatus = result.linked
             ? 'Telegram привязан'
-            : 'Вернитесь и нажмите «Проверить»';
+            : 'Вернись и нажми «Проверить»';
         _telegramLinkVerificationPending = !result.linked && opened;
         if (!opened) {
           _telegramBonusError = 'Не удалось открыть Telegram автоматически.';
@@ -2294,7 +2294,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       setState(() {
         _telegramBonusBusy = false;
         _telegramBonusError =
-            'Не удалось получить код для Telegram. Проверьте соединение и попробуйте еще раз.';
+            'Не удалось получить код для Telegram. Проверь соединение и попробуй ещё раз.';
       });
     }
   }
@@ -2331,8 +2331,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         if (!linked) {
           _telegramBonusStatus = 'Проверить';
           _telegramBonusError = updated
-              ? 'Telegram ещё не привязан. В боте нажмите «Старт», затем проверьте снова.'
-              : 'Не удалось проверить привязку. Проверьте соединение.';
+              ? 'Telegram ещё не привязан. В боте нажми «Старт», затем проверь снова.'
+              : 'Не удалось проверить привязку. Проверь соединение.';
         }
       });
     } on Object {
@@ -2383,7 +2383,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       setState(() {
         _telegramBonusBusy = false;
         _telegramBonusError =
-            'Не удалось проверить бонус. Попробуйте еще раз через минуту.';
+            'Не удалось проверить бонус. Попробуй ещё раз через минуту.';
       });
     }
   }
@@ -2433,7 +2433,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                 error.statusCode == HttpStatus.forbidden &&
                 error.message.trim().isNotEmpty
             ? error.message.trim()
-            : 'Не удалось активировать бонус. Попробуйте еще раз.';
+            : 'Не удалось активировать бонус. Попробуй ещё раз.';
       });
     }
   }
@@ -2482,7 +2482,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       setState(() {
         _bonusSummaryBusy = false;
         _bonusSummaryError =
-            'Не удалось обновить бонусы. Проверьте соединение и попробуйте еще раз.';
+            'Не удалось обновить бонусы. Проверь соединение и попробуй ещё раз.';
       });
     }
   }
@@ -2534,7 +2534,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _bonusRewardBusy = false;
         if (result.summary != null) _bonusSummary = result.summary;
         _bonusSummaryError = result.summary == null
-            ? 'Награда начислена, но сводка бонусов не обновилась. Обновите её позже.'
+            ? 'Награда начислена, но сводка бонусов не обновилась. Обнови её позже.'
             : null;
         _connectionManager.markProfileDirty();
         _runtimeHeadline = '$actionName: награда активирована.';
@@ -2562,7 +2562,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                 error.statusCode == HttpStatus.forbidden &&
                 error.message.trim().isNotEmpty
             ? error.message.trim()
-            : 'Не удалось получить награду. Попробуйте еще раз.';
+            : 'Не удалось получить награду. Попробуй ещё раз.';
       });
       final failureMessage = _bonusSummaryError!;
       showPokrovSnack(
@@ -2582,13 +2582,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       return 'Бонус готов: +${ruDays(status.bonusDays)}';
     }
     if (status.linkRequired) {
-      return 'Сначала привяжите Telegram';
+      return 'Сначала привяжи Telegram';
     }
     if (status.reason == 'active_paid_required') {
       return _PlatformProductCopy.telegramRewardAvailableBeforePayment;
     }
     if (!status.subscriber) {
-      return 'Подпишитесь и проверьте';
+      return 'Подпишись и проверь';
     }
     return 'Проверено';
   }

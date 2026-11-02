@@ -387,7 +387,7 @@ class SupportConversationController extends ChangeNotifier {
       _change(() {
         _sending = false;
         _messages.remove(pendingMessage);
-        _sendError = 'Сообщение не отправлено. Проверьте интернет и повторите.';
+        _sendError = 'Сообщение не отправлено. Проверь интернет и повтори.';
       });
       _syncThreadPolling();
     }
@@ -466,7 +466,7 @@ class SupportConversationController extends ChangeNotifier {
     required Map<String, Object?> diagnostics,
   }) async {
     if (_sending) {
-      return 'Дождитесь отправки текущего сообщения.';
+      return 'Дождись отправки текущего сообщения.';
     }
     try {
       final receipt = await _service.createTicket(
@@ -498,7 +498,7 @@ class SupportConversationController extends ChangeNotifier {
       _syncThreadPolling();
       return null;
     } catch (_) {
-      return 'Не удалось отправить отзыв. Проверьте интернет и повторите.';
+      return 'Не удалось отправить отзыв. Проверь интернет и повтори.';
     }
   }
 }
@@ -523,7 +523,7 @@ List<SupportChatMessage> _supportGreetingMessages() {
       role: SupportChatRole.assistant,
       label: 'Помощник POKROV',
       body:
-          'Напишите, что случилось. POKROV приложит только сведения о приложении и подключении, а ответ появится здесь.',
+          'Напиши, что случилось. POKROV приложит только сведения о приложении и подключении, а ответ появится здесь.',
     ),
   ];
 }

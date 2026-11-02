@@ -434,8 +434,8 @@ PokrovRouteDecision explainPokrovRouteDecision({
         return PokrovRouteDecision(
           action: rule.action,
           reason: rule.action == PokrovRouteAction.vpn
-              ? 'Ваше правило отправляет адрес через POKROV VPN.'
-              : 'Ваше правило оставляет адрес напрямую.',
+              ? 'Твоё правило отправляет адрес через POKROV VPN.'
+              : 'Твоё правило оставляет адрес напрямую.',
           matchedValue: rule.value,
         );
       }

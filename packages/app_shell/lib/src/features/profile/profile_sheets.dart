@@ -32,7 +32,7 @@ Future<void> _showRedeemSheet(
               ),
               const SizedBox(height: 8),
               Text(
-                'Введите одноразовый код устройства из основного бота или кабинета. Код активации из Telegram или письма тоже подойдет.',
+                'Введи одноразовый код устройства из основного бота или кабинета. Код активации из Telegram или письма тоже подойдет.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: PokrovPalette.of(context).muted,
                       height: 1.35,
@@ -111,7 +111,7 @@ class _EmailSessionRecoverySheetState extends State<_EmailSessionRecoverySheet> 
   Future<void> _submit() async {
     if (_busy) return;
     if (_email.text.trim().isEmpty || (_requested && _code.text.trim().length != 6)) {
-      setState(() => _error = _requested ? 'Введите 6 цифр из письма.' : 'Введите почту аккаунта.');
+      setState(() => _error = _requested ? 'Введи 6 цифр из письма.' : 'Введи почту аккаунта.');
       return;
     }
     setState(() { _busy = true; _error = null; });
@@ -126,7 +126,7 @@ class _EmailSessionRecoverySheetState extends State<_EmailSessionRecoverySheet> 
     } on Object catch (error) {
       if (mounted) setState(() => _error = error is BootstrapFailure
           ? error.message
-          : 'Не удалось восстановить вход. Сохранённые данные устройства не удалены. Попробуйте ещё раз.');
+          : 'Не удалось восстановить вход. Сохранённые данные устройства не удалены. Попробуй ещё раз.');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -141,8 +141,8 @@ class _EmailSessionRecoverySheetState extends State<_EmailSessionRecoverySheet> 
         Text('Восстановить доступ', style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 12),
         Text(_requested
-            ? 'Если почта привязана к аккаунту, на неё отправлен одноразовый код. Введите его ниже.'
-            : 'Введите почту, уже привязанную к аккаунту. Пришлём одноразовый код для входа на этом устройстве.'),
+            ? 'Если почта привязана к аккаунту, на неё отправлен одноразовый код. Введи его ниже.'
+            : 'Введи почту, уже привязанную к аккаунту. Пришлём одноразовый код для входа на этом устройстве.'),
         const SizedBox(height: 16),
         TextField(key: const ValueKey('email-recovery-address'), controller: _email,
           enabled: !_busy && !_requested, keyboardType: TextInputType.emailAddress,
@@ -163,7 +163,7 @@ class _EmailSessionRecoverySheetState extends State<_EmailSessionRecoverySheet> 
         const SizedBox(height: 16),
         FilledButton(key: const ValueKey('email-recovery-submit'),
           onPressed: _busy ? null : () => unawaited(_submit()),
-          child: Text(_busy ? 'Подождите…' : _requested ? 'Восстановить доступ' : 'Отправить код')),
+          child: Text(_busy ? 'Подожди…' : _requested ? 'Восстановить доступ' : 'Отправить код')),
         if (_requested) TextButton(onPressed: _busy ? null : () => setState(() {
           _requested = false; _code.clear(); _error = null;
         }), child: const Text('Получить новый код')),
@@ -209,7 +209,7 @@ class _RedeemFieldsState extends State<_RedeemFields> {
     final code = _controller.text.trim();
     if (code.isEmpty) {
       setState(() {
-        _emptyCodeNotice = 'Введите код активации.';
+        _emptyCodeNotice = 'Введи код активации.';
       });
       return;
     }
@@ -393,7 +393,7 @@ class _DevicesSheetState extends State<_DevicesSheet> {
           key: const ValueKey('profile-device-revoke-confirm'),
           title: const Text('Отвязать устройство?'),
           content: Text(
-            '«$deviceName» больше не сможет пользоваться вашим доступом POKROV.',
+            '«$deviceName» больше не сможет пользоваться твоим доступом POKROV.',
           ),
           actions: [
             TextButton(
@@ -439,7 +439,7 @@ class _DevicesSheetState extends State<_DevicesSheet> {
     } else {
       showPokrovSnack(
         context,
-        'Не удалось отвязать устройство. Попробуйте еще раз.',
+        'Не удалось отвязать устройство. Попробуй ещё раз.',
         tone: PokrovSnackTone.danger,
       );
     }
@@ -464,7 +464,7 @@ class _DevicesSheetState extends State<_DevicesSheet> {
               Text('Устройства', style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 8),
               Text(
-                'Сеансы, где выполнен вход в ваш аккаунт POKROV.',
+                'Сеансы, где выполнен вход в твой аккаунт POKROV.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: tokens.muted,
                       height: 1.35,
@@ -534,7 +534,7 @@ class _DevicesSheetState extends State<_DevicesSheet> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Введите в POKROV на новом устройстве. После первого использования код закроется.',
+                            'Введи в POKROV на новом устройстве. После первого использования код закроется.',
                             style:
                                 Theme.of(context).textTheme.bodySmall?.copyWith(
                                       color: tokens.muted,
@@ -823,7 +823,7 @@ class _NotificationsSheet extends StatelessWidget {
                           Navigator.of(context).pop();
                         } else if (context.mounted) {
                           showPokrovSnack(context,
-                            'Не удалось очистить уведомления. Попробуйте ещё раз.',
+                            'Не удалось очистить уведомления. Попробуй ещё раз.',
                             tone: PokrovSnackTone.danger);
                         }
                       },

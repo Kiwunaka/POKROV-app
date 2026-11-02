@@ -363,19 +363,14 @@ Public consumer surfaces must not expose raw hostnames, ports, public IP, raw co
 
 ### Route-mode choice after activation
 
-Simple mode starts the first live connection with the existing device-wide
-`All except RU` default, without asking for route scope. It waits for saved
+The first live connection uses the saved route, by default the device-wide
+`All except RU`, without asking for route scope. It waits for saved
 preferences and preserves an explicit routing mode; the existing RU domain/IP
-rules and reviewed Android app exclusions apply automatically. Advanced mode
-keeps the first-connect scope choice and manual settings.
+rules and reviewed Android app exclusions apply automatically. Since the
+2026-11-02 redesign there is no Simple/Advanced split: the route is changed in
+Settings → «Что идёт через POKROV» (see DESIGN.md).
 
-Before the first live route activation in Advanced mode, the app asks one calm consumer question:
-
-- `How should this device work?`
-- `Optimize everything on this device`
-- `Only selected apps`
-
-Product rules for that choice:
+Product rules for the route scope:
 
 - the first choice is about device scope, not raw transport details
 - `Optimize everything on this device` is the recommended default and stays `TUN`-first
@@ -734,19 +729,19 @@ Quick-connect rules:
 
 Consumer privacy rules:
 
-The interface defaults to «Просто»: Home keeps the connect button. Locations
-offers `Автоматически` or an exit country in both «Просто» and «Продвинутый».
+Home keeps the connect button and the widgets the person chose. Locations
+offers `Автоматически` or an exit country to everyone.
 The existing connection manager selects the protocol and path automatically;
-Advanced mode does not add a manual protocol, node or path picker. Profile →
-Interface switches the interface mode. Both modes hide endpoint addresses and
+«Соединение вручную» on the country page lists admitted connections only; the
+stored interface flag is turned on before the first manual pick so the runtime
+honours it. The country page hides endpoint addresses and
 never export connection profiles. Refreshing the transport catalog alone does
 not stage a profile, mark a candidate active or establish protection; the next
 connection still requires the existing profile admission and native proof.
 Refreshing unproven choices preserves the catalog of a running or retained
 connection until its replacement passes the existing selection gates.
-WARP opt-in controls on Home and Profile are available only in «Продвинутый».
-Switching to «Просто» hides these controls and preserves saved consent and the
-current runtime connection.
+WARP opt-in is available to everyone as a Home widget and in Settings; turning
+the widget off preserves the current runtime connection until reconnect.
 Legacy manual node, variant and protocol preferences follow the CountryAuto
 restore rules above in both modes; they do not create a manual protocol choice.
 

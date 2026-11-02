@@ -10,7 +10,7 @@ class _PairingActions implements ManagedProfileBootstrapper, AppFirstAccountActi
   int claims = 0;
   int redeems = 0;
   bool reuseCurrentDevice = false;
-  BootstrapFailure failure = const BootstrapFailure('Код истёк. Получите новый в кабинете.',
+  BootstrapFailure failure = const BootstrapFailure('Код истёк. Получи новый в кабинете.',
       statusCode: 504, operation: 'POST /api/client/device-pairing/claim',
       apiFailureKind: 'request_timeout');
   final reports = <Map<Symbol, dynamic>>[];
@@ -115,12 +115,12 @@ void main() {
     expect(actions.recoveredEmail, isNull);
     await tester.enterText(find.byKey(const ValueKey('email-recovery-code')), '123456');
     const requestId = '11111111-1111-4111-8111-111111111111';
-    actions.emailFailure = const BootstrapFailure('Код из письма не подошёл. Запросите новый код.',
+    actions.emailFailure = const BootstrapFailure('Код из письма не подошёл. Запроси новый код.',
       statusCode: 401, code: 'email_otp_invalid', operation: 'POST /api/auth/email/otp/finish', requestId: requestId);
     await tester.ensureVisible(submit);
     await tester.tap(submit);
     await tester.pump();
-    expect(find.text('Код из письма не подошёл. Запросите новый код.'), findsOneWidget);
+    expect(find.text('Код из письма не подошёл. Запроси новый код.'), findsOneWidget);
     final failed = actions.reports.lastWhere((args) => args[#errorCode] == 'email_login_failed');
     expect(failed[#failureOperation], 'email_otp_finish');
     expect(failed[#failureReason], PortalFailureReason.emailOtpInvalid);
@@ -170,7 +170,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('profile-redeem-submit')));
     await tester.pump();
     expect(actions.claims, 1);
-    expect(find.text('Код истёк. Получите новый в кабинете.'), findsOneWidget);
+    expect(find.text('Код истёк. Получи новый в кабинете.'), findsOneWidget);
     final report = actions.reports.lastWhere((args) => args[#errorCode] == 'pairing_claim_failed');
     expect(report[#failureKind], 'request_timeout');
     expect(report[#failureOperation], 'device_pairing_claim');
