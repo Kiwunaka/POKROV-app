@@ -1552,7 +1552,9 @@ class ConnectionManager extends ChangeNotifier {
       return null;
     }
     final status = await _readCurrentWifi();
-    return status.matches(preferences.trustedWifiNames) ? status : null;
+    final current = _clientExperience.routingPreferences;
+    return current.pauseOnTrustedWifi && status.matches(current.trustedWifiNames)
+        ? status : null;
   }
 
   Future<bool> _blockConnectOnTrustedWifi(
@@ -1576,18 +1578,18 @@ class ConnectionManager extends ChangeNotifier {
     return true;
   }
 
-  Future<void> _pauseRunningTunnelOnTrustedWifi() async {
+  Future<bool> _pauseRunningTunnelOnTrustedWifi() async {
     if (_disposed ||
         _runtimeBusy ||
         _runtimeSnapshot?.phase != RuntimePhase.running) {
-      return;
+      return true;
     }
     final trusted = await _activeTrustedWifi();
     if (_disposed ||
         trusted == null ||
         _runtimeBusy ||
         _runtimeSnapshot?.phase != RuntimePhase.running) {
-      return;
+      return true;
     }
 
     _update(() {
@@ -1612,11 +1614,18 @@ class ConnectionManager extends ChangeNotifier {
         ownerGeneration: generation,
       );
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) {
-        return;
+        return false;
+      }
+      _update(() => _runtimeSnapshot = current);
+      if (!_runtimeStopConfirmed(current)) {
+        throw const BootstrapFailure(
+            'Отключение в доверенной Wi-Fi сети не подтверждено. Повторите попытку.',
+            code: 'connect_cancel_unconfirmed', operation: 'cancel_connect');
       }
       final name = trusted.name?.trim();
       _update(() {
-        _runtimeSnapshot = current;
+        _activePhase = null;
+        _connectionFailureMessage = null;
         _runtimeHeadline = name == null || name.isEmpty
             ? 'POKROV поставлен на паузу в доверенной Wi-Fi сети.'
             : 'POKROV поставлен на паузу в сети «$name».';
@@ -1629,14 +1638,18 @@ class ConnectionManager extends ChangeNotifier {
             : 'Туннель остановлен правилом для сети «$name».',
         tone: PokrovProtectionEventTone.neutral,
       );
+      return true;
     } on ConnectionOperationSuperseded {
-      return;
+      return false;
     } on Object catch (error) {
       if (!_disposed && _connectionCoordinator.ownsOperation(generation)) {
         _update(() {
-          _runtimeHeadline = _runtimeUnexpectedErrorMessage(error);
+          _activePhase = ConnectionPhase.actionRequired;
+          _runtimeHeadline = _connectionFailureMessage = error is BootstrapFailure
+              ? _bootstrapFailureMessage(error) : _runtimeUnexpectedErrorMessage(error);
         });
       }
+      return false;
     } finally {
       if (!_disposed && _connectionCoordinator.ownsOperation(generation)) {
         _update(() {
@@ -5511,8 +5524,9 @@ class ConnectionManager extends ChangeNotifier {
       _smartAccessRouteProfile = smartAccessVpnFallback && current.isCleanlyHealthy &&
           fallbackPolicy != null && fallbackDigest != null
           ? (policy: fallbackPolicy, digest: fallbackDigest) : null;
-      if (!usedCachedProfile) _cachedProfileFallbackGate.markFreshProfileStaged();
-      final tryNext = activation < 2 && current.hasCoreEgressProbeFailure &&
+      final profileInputsChanged = profileRevision != _managedProfileRevision;
+      if (!usedCachedProfile && !profileInputsChanged) _cachedProfileFallbackGate.markFreshProfileStaged();
+      final tryNext = !profileInputsChanged && activation < 2 && current.hasCoreEgressProbeFailure &&
           _transportCatalog != null && _candidateRef != null;
       _update(() {
         _runtimeSnapshot = current;
@@ -5528,7 +5542,7 @@ class ConnectionManager extends ChangeNotifier {
                 failedAt: DateTime.now().toUtc(), replaced: true, snapshot: current) : null;
         _stagedProfileUsesWarp = prepared.warpPolicy.canEnableRuntime;
         _activeConnectUsedWarp = _stagedProfileUsesWarp;
-        _managedProfileDirty = !current.isCleanlyHealthy;
+        _managedProfileDirty = profileInputsChanged || !current.isCleanlyHealthy;
         _activePhase = current.isCleanlyHealthy ? null : tryNext ? ConnectionPhase.recovering : ConnectionPhase.actionRequired;
         _runtimeHeadline = current.isCleanlyHealthy
             ? usedCachedProfile ? 'POKROV подключен по сохраненным настройкам. Сервис обновим позже.' : 'POKROV подключен.'
@@ -6002,7 +6016,7 @@ class ConnectionManager extends ChangeNotifier {
     PokrovRoutingPreferences preferences,
   ) async {
     if (preferences.pauseOnTrustedWifi) {
-      await _pauseRunningTunnelOnTrustedWifi();
+      if (!await _pauseRunningTunnelOnTrustedWifi()) return false;
     }
     if (_disposed) {
       return false;

@@ -449,6 +449,25 @@ class _SmartDnsBootstrapper extends _QaProfileFailureBootstrapper {
   int leaseRequests = 0;
 
   @override
+  Future<String?> notificationCacheOwner({required HostPlatform hostPlatform}) async => null;
+  @override
+  Future<ClientNotificationInbox> fetchClientNotifications({required HostPlatform hostPlatform,
+      String after = ''}) async => ClientNotificationInbox.fromJson({});
+  @override
+  Future<AppFirstBonusSummary> fetchBonusSummary({required HostPlatform hostPlatform}) async =>
+      throw const BootstrapFailure('synthetic bonus unavailable');
+  @override
+  Future<ClientAppsMetadata> fetchClientApps({required HostPlatform hostPlatform,
+      required String currentVersion, String channel = 'stable'}) async =>
+      throw const BootstrapFailure('synthetic metadata unavailable');
+  @override
+  Future<void> completeAccountOnboarding({required HostPlatform hostPlatform}) async {}
+  @override
+  Future<void> reportFirstSessionEvent({required HostPlatform hostPlatform,
+      required String eventName, required String stage, required String result, String errorCode = '',
+      bool? retryable}) async {}
+
+  @override
   bool get firstProviderQaConfigured => false;
   @override
   bool get smartAccessEnabled => true;
@@ -503,23 +522,23 @@ String _smartDnsTime(DateTime time) => '${time.toUtc().toIso8601String().split('
 
 Future<({VerifiedRoutingCatalog catalog, VerifiedSmartAccessProviderPolicy providers,
     SmartAccessVerifier verifier, SimpleKeyPair key})> _smartDnsFixture({bool completeIpv4Scope = false,
-      String? resolverBootstrapIp}) async {
+      String? resolverBootstrapIp, String audience = 'lab'}) async {
   final now = DateTime.now().toUtc();
   final start = _smartDnsTime(now.subtract(const Duration(minutes: 1)));
   final end = _smartDnsTime(now.add(const Duration(hours: 1)));
   final key = await Ed25519().newKeyPair();
   final public = base64Encode((await key.extractPublicKey()).bytes);
   final verifier = SmartAccessVerifier(providerKeysById: {'fixture': public},
-      leaseKeysById: {'fixture': public}, audience: 'lab');
+      leaseKeysById: {'fixture': public}, audience: audience);
   final digest = await smartAccessProfileSha256('synthetic SmartDNS fixture');
   const domains = [
     {'name': 'gemini.google.com', 'match': 'exact'},
     {'name': 'geminiweb-pa.clients6.google.com', 'match': 'exact'},
   ];
-  final catalog = await RoutingCatalogVerifier(publicKeysById: {'fixture': public}, audience: 'lab').verify(
+  final catalog = await RoutingCatalogVerifier(publicKeysById: {'fixture': public}, audience: audience).verify(
       await _signedSmartDns({
         'schema_version': 'pokrov-routing-catalog-v1', 'revision': 1, 'security_revision': 1,
-        'audience': 'lab', 'issued_at': start, 'expires_at': end,
+        'audience': audience, 'issued_at': start, 'expires_at': end,
         'sources': [{'source_id': 'fixture', 'url': 'https://fixture.example.test/', 'revision': '1',
           'sha256': digest, 'license': 'test', 'retrieved_at': start, 'expires_at': end}],
         'evidence': [{'evidence_id': 'fixture', 'service_id': 'gemini', 'source_ids': ['fixture'],
@@ -536,7 +555,7 @@ Future<({VerifiedRoutingCatalog catalog, VerifiedSmartAccessProviderPolicy provi
       minimumSecurityRevision: 1, currentPayloadSha256: null);
   final providers = await verifier.verifyProvider(await _signedSmartDns({
     'schema_version': 'pokrov-smart-access-providers-v1', 'revision': 1, 'security_revision': 1,
-    'audience': 'lab', 'issued_at': start, 'expires_at': end,
+    'audience': audience, 'issued_at': start, 'expires_at': end,
     'permissions': [for (final id in ['old', 'complete']) {
       'permission_id': id, 'provider_id': id, 'revision': 1, 'status': 'approved', 'embedded_use_allowed': true,
       'review_ref': 'fixture', 'review_sha256': digest, 'issued_at': start, 'expires_at': end,
@@ -578,7 +597,7 @@ Future<VerifiedSmartAccessLease> _smartDnsLease({required VerifiedRoutingCatalog
     'device_binding': await smartAccessProfileSha256(
       'pokrov-smart-access-device-v1\u0000$nonce\u0000synthetic-account\u0000synthetic-install'),
     'profile_sha256': profile, 'route_mode': 'selective',
-    'lease': {'schema_version': 'pokrov-smart-access-lease-v1', 'lease_id': nonce, 'audience': 'lab',
+    'lease': {'schema_version': 'pokrov-smart-access-lease-v1', 'lease_id': nonce, 'audience': providers.payload['audience'],
       'provider_id': 'old', 'provider_revision': 1, 'permission_id': 'old', 'permission_revision': 1,
       'capability_id': 'gemini-old', 'provider_policy_revision': 1, 'provider_security_revision': 1,
       'provider_policy_sha256': providers.payloadSha256, 'catalog_revision': 1, 'catalog_security_revision': 1,
@@ -615,8 +634,16 @@ class _StartupAccountBootstrapper extends _StatsBootstrapper implements AppFirst
 
 class _SmartDnsAccountBootstrapper extends _StartupAccountBootstrapper
     implements AppFirstSmartAccessService {
+  Future<VerifiedSmartAccessProviderPolicy> Function()? providerLoader;
+
   @override
   bool get smartAccessEnabled => true;
+
+  @override
+  Future<VerifiedSmartAccessProviderPolicy> fetchSmartAccessProviders({
+    required HostPlatform hostPlatform, required bool Function() operationIsCurrent,
+    required Duration remainingBudget, required Future<void> cancelled,
+  }) => providerLoader!();
 }
 
 class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, RuntimeConnectProgress, RuntimeCandidateProbing, RuntimeProtectedHandoff, RuntimeNetworkAvailability {
@@ -2090,7 +2117,8 @@ void main() {
       await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
         key: ValueKey(ready), appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
         bootstrapper: _Bootstrapper(), firstLaunchStore: _FirstLaunchStore(),
-        clientExperienceStore: _CatalogPickerExperience(routeMode: RouteMode.allExceptRu),
+        clientExperienceStore: _CatalogPickerExperience(routeMode: RouteMode.allExceptRu,
+          preferences: const PokrovRoutingPreferences.defaults().copyWith(localDpiEnabled: false)),
         themeMode: ThemeMode.light, onThemeModeChanged: (_) {},
       )));
       await tester.pumpAndSettle();
@@ -2112,6 +2140,27 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump();
     }
+  });
+
+  testWidgets('Windows bypass can be switched off when saved on but native readiness is absent', (tester) async {
+    final store = await _openDnsSettings(tester, routeMode: RouteMode.allExceptRu,
+      preferences: const PokrovRoutingPreferences.defaults().copyWith(localDpiEnabled: true));
+    final toggle = find.byKey(const ValueKey('rules-local-dpi'));
+    expect(toggle, findsOneWidget);
+    await tester.ensureVisible(toggle);
+    await tester.pumpAndSettle();
+    await tester.tap(toggle);
+    await tester.pumpAndSettle();
+    expect(toggle, findsNothing, reason: 'an unavailable component cannot be switched back on');
+    final save = find.byKey(const ValueKey('rules-apply-changes'));
+    await tester.ensureVisible(save);
+    await tester.pumpAndSettle();
+    await tester.tap(save);
+    await tester.pumpAndSettle();
+    expect(store.saved.routingPreferences.localDpiEnabled, isFalse);
+    expect(save, findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
   });
 
   testWidgets('SmartDNS picker follows authenticated Premium eligibility', (tester) async {
@@ -2154,6 +2203,191 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pumpAndSettle();
     }
+  });
+
+  testWidgets('SmartDNS picker retries provider failures and updates withdrawn or expired permissions', (tester) async {
+    final policies = (await tester.runAsync(() async {
+      final fixture = await _smartDnsFixture();
+      final payload = fixture.providers.payload;
+      final withdrawn = await fixture.verifier.verifyProvider(await _signedSmartDns({
+        ...payload, 'revision': 2,
+        'permissions': [for (final row in (payload['permissions']! as List).cast<Map<String, Object?>>())
+          {...row, 'status': 'revoked'}],
+      }, 'pokrov-smart-access-providers-v1', fixture.key), now: DateTime.now().toUtc(),
+        minimumRevision: 1, minimumSecurityRevision: 1, currentPayloadSha256: null);
+      return (available: fixture.providers, withdrawn: withdrawn, fixture: fixture);
+    }))!;
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(channel, (_) async => {'phase': 'initialized',
+      'supportsLiveConnect': true, 'canInitialize': false, 'canConnect': true});
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(channel, null);
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    var reads = 0;
+    final bootstrapper = _SmartDnsAccountBootstrapper()
+      ..subscription = ClientSubscriptionInfo.fromJson({'lane': 'trialPremium',
+        'access_state': 'trial_premium', 'smart_access_eligible': true})
+      ..providerLoader = () async {
+        reads++;
+        if (reads == 1 || reads == 5) throw const RoutingCatalogFailure('smart_access_budget_exhausted');
+        return reads < 4 ? policies.available : policies.withdrawn;
+      };
+    await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+      bootstrapper: bootstrapper, firstLaunchStore: _FirstLaunchStore(),
+      clientExperienceStore: _CatalogPickerExperience(), themeMode: ThemeMode.light,
+      onThemeModeChanged: (_) {},
+    )));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Правила'));
+    await tester.pumpAndSettle();
+    final advanced = find.byKey(const ValueKey('rules-advanced-toggle'));
+    await tester.scrollUntilVisible(advanced, 400, scrollable: find.descendant(
+      of: find.byWidgetPredicate((widget) => widget.runtimeType.toString() == '_RulesSection'),
+      matching: find.byType(Scrollable)).first);
+    await tester.tap(advanced);
+    await tester.pumpAndSettle();
+    void openProviders() {
+      final dynamic picker = tester.widget(find.byKey(const ValueKey('rules-smart-dns-provider-picker')));
+      picker.onTap();
+    }
+    openProviders();
+    await tester.pumpAndSettle();
+    expect(find.text('Не удалось загрузить SmartDNS-провайдеров. Повторите попытку.'), findsOneWidget);
+    final refresh = find.byKey(const ValueKey('rules-smart-dns-provider-refresh'));
+    await tester.tap(refresh);
+    await tester.pumpAndSettle();
+    final ownProvider = find.byKey(const ValueKey('rules-smart-dns-provider-old'));
+    expect(ownProvider, findsOneWidget);
+    await tester.tap(ownProvider);
+    await tester.pumpAndSettle();
+    final dynamic dns = tester.widget(find.byWidgetPredicate((widget) => widget.runtimeType.toString() == '_DnsAndLanCard'));
+    expect((dns.preferences as PokrovRoutingPreferences).smartDnsProviderId, 'old');
+    openProviders();
+    await tester.pumpAndSettle();
+    expect(ownProvider, findsOneWidget);
+    await tester.tap(refresh);
+    await tester.pumpAndSettle();
+    expect(ownProvider, findsNothing);
+    expect(find.text('Сохранённый провайдер сейчас недоступен. До получения действующего разрешения используется VPN.'), findsOneWidget);
+    expect(reads, 4);
+    await tester.tap(refresh);
+    await tester.pumpAndSettle();
+    expect(find.text('Не удалось загрузить SmartDNS-провайдеров. Повторите попытку.'), findsOneWidget);
+    expect(ownProvider, findsNothing);
+    final nextPolicy = Completer<VerifiedSmartAccessProviderPolicy>();
+    bootstrapper.providerLoader = () => nextPolicy.future;
+    await tester.tap(refresh);
+    await tester.pump();
+    expect(tester.widget<TextButton>(refresh).onPressed, isNull);
+    final expiry = DateTime.parse(_smartDnsTime(DateTime.now().toUtc().add(const Duration(seconds: 3))));
+    final expiring = (await tester.runAsync(() async {
+      final fixture = policies.fixture;
+      final payload = fixture.providers.payload;
+      return fixture.verifier.verifyProvider(await _signedSmartDns({
+        ...payload,
+        'permissions': [for (final row in (payload['permissions']! as List).cast<Map<String, Object?>>())
+          {...row, if (row['provider_id'] == 'old') 'expires_at': _smartDnsTime(expiry)}],
+        'capabilities': [for (final row in (payload['capabilities']! as List).cast<Map<String, Object?>>())
+          {...row, if (row['provider_id'] == 'old') 'expires_at': _smartDnsTime(expiry)}],
+      }, 'pokrov-smart-access-providers-v1', fixture.key), now: DateTime.now().toUtc(),
+        minimumRevision: 0, minimumSecurityRevision: 1, currentPayloadSha256: null);
+    }))!;
+    nextPolicy.complete(expiring);
+    await tester.pumpAndSettle();
+    expect(ownProvider, findsOneWidget);
+    await tester.runAsync(() => Future<void>.delayed(
+      expiry.difference(DateTime.now().toUtc()) + const Duration(milliseconds: 20)));
+    await tester.pump(const Duration(seconds: 4));
+    expect(ownProvider, findsNothing);
+    expect(find.byKey(const ValueKey('rules-smart-dns-provider-complete')), findsOneWidget);
+    expect(find.text('Сохранённый провайдер сейчас недоступен. До получения действующего разрешения используется VPN.'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('rules-smart-dns-provider-automatic')));
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('DNS-only connection status does not claim a VPN route', (tester) async {
+    final fixture = (await tester.runAsync(() => _smartDnsFixture(
+      completeIpv4Scope: true, audience: 'production')))!;
+    final directory = (await tester.runAsync(() => Directory.systemTemp.createTemp('pokrov-dns-only-status-')))!;
+    final originalStorage = FlutterSecureStoragePlatform.instance;
+    FlutterSecureStoragePlatform.instance = TestFlutterSecureStoragePlatform({});
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final phase = <String, Object?>{'phase': 'initialized', 'coreVersion': '1.2.15',
+      'coreModuleSha256': 'ab' * 32, 'supportsLiveConnect': true, 'canInitialize': false, 'canConnect': true,
+      'routingCatalogWindowVersion': 1, 'routingCatalogControlVersion': 4,
+      'smartAccessLeaseVersion': 1, 'smartAccessRuntimeControlVersion': 1};
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      final args = call.arguments as Map? ?? {};
+      switch (call.method) {
+        case 'runtimeEngine.readSmartAccessRestrictions':
+          return {'schema': 1, 'journalJson': jsonEncode({'schema': 1,
+            'snapshot_sha256': await smartAccessProfileSha256('[]'), 'entries': <Object>[]})};
+        case 'runtimeEngine.acknowledgeSmartAccessRestrictions':
+          return {'schema': 1, 'snapshotSha256': args['snapshotSha256'], 'acknowledged': true};
+        case 'runtimeEngine.stageManagedProfile':
+          phase.addAll({'phase': 'configStaged', 'stagedProfileDigest': args['expectedProfileDigest'],
+            'stagedConfigPath': '/synthetic/dns-only.json'});
+        case 'runtimeEngine.connect':
+          phase.addAll({'phase': 'running', 'effectiveProfileDigest': phase['stagedProfileDigest'],
+            'hostHealth': 'healthy', 'dnsState': 'healthy', 'uplinkState': 'healthy',
+            'dnsReady': true, 'coreEgressValidated': true});
+      }
+      return {...phase};
+    });
+    tester.view.physicalSize = const Size(1280, 1000);
+    tester.view.devicePixelRatio = 1;
+    final controller = PokrovShellController();
+    addTearDown(() async {
+      await tester.pumpWidget(const SizedBox.shrink());
+      messenger.setMockMethodCallHandler(channel, null);
+      FlutterSecureStoragePlatform.instance = originalStorage;
+      controller.dispose();
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+      await tester.runAsync(() => _deleteTestDirectory(directory));
+    });
+    final bootstrapper = _SmartDnsBootstrapper(directory, fixture.catalog, fixture.providers,
+      (profile) => _smartDnsLease(catalog: fixture.catalog, providers: fixture.providers,
+        verifier: fixture.verifier, key: fixture.key, profile: profile));
+    await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+      bootstrapper: bootstrapper, firstLaunchStore: _FirstLaunchStore(), shellController: controller,
+      windowsTunnelAuthorizer: () async => PokrovWindowsTunnelAuthorization.allowed,
+      protectionProbe: (_) async => const PokrovHttpsProbeResult.healthy(),
+      clientExperienceStore: _CatalogPickerExperience(routeMode: RouteMode.selectiveServices,
+        preferences: const PokrovRoutingPreferences.defaults().copyWith(
+          selectedCatalogServiceIds: {'gemini'}, smartDnsProviderId: 'old')),
+      themeMode: ThemeMode.light, onThemeModeChanged: (_) {},
+    )));
+    await tester.pumpAndSettle();
+    await tester.runAsync(controller.toggleConnection);
+    expect(controller.isConnected, isTrue);
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(bootstrapper.cached.resolutions, isEmpty, reason: 'the actual profile uses only SmartDNS');
+    tester.widget<ui.HomeScreen>(find.byType(ui.HomeScreen)).onOpenStatus();
+    await tester.pump(const Duration(milliseconds: 400));
+    final status = tester.widget<ui.StatusSheet>(find.byType(ui.StatusSheet));
+    expect(status.data.title, 'SmartDNS работает');
+    expect(status.data.subtitle, 'Для выбранных сервисов. Остальной трафик идёт напрямую.');
+    expect(status.data.rows.map((row) => row.title), isNot(contains('Выход через VPN')));
+    status.onDetails();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    tester.widget<PokrovDiagnosticsScreen>(find.byType(PokrovDiagnosticsScreen)).onOpenProtection();
+    await tester.pump();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('SmartDNS работает'), findsOneWidget);
+    expect(find.text('Туннель, DNS и выход через VPN подтверждены.'), findsNothing);
   });
 
   testWidgets('Rules syncs immediate Wi-Fi policy without discarding pending routing edits', (tester) async {
@@ -2399,6 +2633,52 @@ void main() {
     expect(PokrovRoutingPreferences.fromJson(const PokrovRoutingPreferences.defaults()
         .copyWith(trustedWifiNames: ['Home', 'home', ' Home']).toJson()).trustedWifiNames,
         ['Home', 'home', ' Home']);
+  });
+
+  test('Trusted Wi-Fi observation follows a pause rule disabled while its SSID read is pending', () async {
+    final runtime = _Runtime();
+    final wifiEntered = Completer<void>();
+    final wifi = Completer<PokrovWifiNetworkStatus>();
+    final manager = _manager(runtime, _Bootstrapper(), currentWifiProbe: () {
+      if (!wifiEntered.isCompleted) wifiEntered.complete();
+      return wifi.future;
+    });
+    addTearDown(manager.dispose);
+    await manager.connect();
+    manager.setRoutingPreferences(const PokrovRoutingPreferences.defaults().copyWith(
+        pauseOnTrustedWifi: true, trustedWifiNames: ['Home']));
+    final resuming = manager.resume();
+    await wifiEntered.future;
+    manager.setRoutingPreferences(const PokrovRoutingPreferences.defaults());
+    wifi.complete(_foregroundWifi(runtime, name: 'Home'));
+    await resuming;
+
+    expect(runtime.calls, isNot(contains('disconnect')));
+    expect(manager.snapshot?.phase, RuntimePhase.running);
+  });
+
+  test('Trusted Wi-Fi does not confirm pause or applied rules while the native guard remains', () async {
+    final runtime = _Runtime();
+    final experience = _ExperienceStore();
+    final manager = _manager(runtime, _Bootstrapper(), experienceStore: experience,
+        currentWifiProbe: () async => _foregroundWifi(runtime, name: 'Home'));
+    addTearDown(manager.dispose);
+    await manager.connect();
+    runtime.restoredHandoffGuard = true;
+    final preferences = const PokrovRoutingPreferences.defaults().copyWith(
+        pauseOnTrustedWifi: true, trustedWifiNames: ['Home']);
+    manager.setRoutingPreferences(preferences);
+
+    expect(await manager.applyRoutingPreferences(preferences), isFalse);
+    expect(manager.snapshot?.protectionRetained, isTrue);
+    expect(manager.headline, contains('не подтверждено'));
+    expect(experience.saved.protectionEvents.where((event) => event.kind == 'trusted_wifi_pause'), isEmpty);
+    expect(runtime.handoffCalls, 0, reason: 'a failed trusted-network stop cannot start a replacement');
+    expect(runtime.connectCalls, 1);
+
+    runtime.restoredHandoffGuard = false;
+    await manager.disconnect();
+    expect(manager.retainsProtection, isFalse);
   });
 
   test('Android foreground network policy skips disabled trusted unknown captive and unauthorized Wi-Fi', () async {
@@ -5311,6 +5591,32 @@ void main() {
     runtime.warpEgressFailure = false;
     expect(await manager.applyRoutingPreferences(preferences), isTrue);
     expect(manager.status.routes.profileDirty, isFalse);
+  });
+
+  test('routing edits during a protected replacement stay pending until their own apply', () async {
+    final runtime = _Runtime()..supportsCandidates = true;
+    final manager = _manager(runtime, _Bootstrapper(catalog: true));
+    addTearDown(manager.dispose);
+    await manager.connect();
+    runtime.handoffRelease = Completer<void>();
+    final preferences = const PokrovRoutingPreferences.defaults().copyWith(localDpiEnabled: true);
+    manager.setRoutingPreferences(preferences);
+    final applying = manager.applyRoutingPreferences(preferences);
+    await Future.any<void>([runtime.handoffStarted.future, applying.then<void>((_) {})]);
+    expect(runtime.handoffCalls, 1, reason: manager.headline);
+
+    final latest = preferences.copyWith(localDpiEnabled: false);
+    manager.setRoutingPreferences(latest);
+    expect(await manager.applyRoutingPreferences(latest), isFalse);
+    runtime.handoffRelease!.complete();
+    expect(await applying, isFalse, reason: 'the older replacement did not apply the later edit');
+    expect(manager.snapshot?.phase, RuntimePhase.running);
+    expect(manager.status.routes.profileDirty, isTrue);
+    expect(runtime.calls, isNot(contains('disconnect')));
+
+    expect(await manager.applyRoutingPreferences(latest), isTrue);
+    expect(manager.status.routes.profileDirty, isFalse);
+    expect(runtime.handoffCalls, 2);
   });
 
   test('routing apply stays pending during an in-flight connection', () async {

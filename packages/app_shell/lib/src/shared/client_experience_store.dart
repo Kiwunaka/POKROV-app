@@ -113,6 +113,7 @@ class PokrovClientExperienceState {
     required this.locationsCachedAt,
     required this.cachedNotifications,
     required this.notificationsCachedAt,
+    this.notificationCacheOwner = '',
     this.preferredNodeCode = '',
     this.preferredVariantId = 'direct',
     this.interfaceMode = PokrovInterfaceMode.simple,
@@ -135,6 +136,7 @@ class PokrovClientExperienceState {
         locationsCachedAt = '',
         cachedNotifications = null,
         notificationsCachedAt = '',
+        notificationCacheOwner = '',
         preferredNodeCode = '',
         preferredVariantId = 'direct',
         interfaceMode = PokrovInterfaceMode.simple,
@@ -155,6 +157,7 @@ class PokrovClientExperienceState {
   final String locationsCachedAt;
   final ClientNotificationInbox? cachedNotifications;
   final String notificationsCachedAt;
+  final String notificationCacheOwner;
   final String preferredNodeCode;
   final String preferredVariantId;
   final PokrovInterfaceMode interfaceMode;
@@ -178,8 +181,9 @@ class PokrovClientExperienceState {
     List<PokrovPostConnectShortcut>? postConnectShortcuts,
     ClientLocationsCatalog? cachedLocations,
     String? locationsCachedAt,
-    ClientNotificationInbox? cachedNotifications,
+    Object? cachedNotifications = _unchangedNotifications,
     String? notificationsCachedAt,
+    String? notificationCacheOwner,
     String? preferredNodeCode,
     String? preferredVariantId,
     PokrovInterfaceMode? interfaceMode,
@@ -199,9 +203,12 @@ class PokrovClientExperienceState {
       postConnectShortcuts: postConnectShortcuts ?? this.postConnectShortcuts,
       cachedLocations: cachedLocations ?? this.cachedLocations,
       locationsCachedAt: locationsCachedAt ?? this.locationsCachedAt,
-      cachedNotifications: cachedNotifications ?? this.cachedNotifications,
+      cachedNotifications: identical(cachedNotifications, _unchangedNotifications)
+          ? this.cachedNotifications
+          : cachedNotifications as ClientNotificationInbox?,
       notificationsCachedAt:
           notificationsCachedAt ?? this.notificationsCachedAt,
+      notificationCacheOwner: notificationCacheOwner ?? this.notificationCacheOwner,
       preferredNodeCode: preferredNodeCode ?? this.preferredNodeCode,
       preferredVariantId: preferredVariantId ?? this.preferredVariantId,
       interfaceMode: interfaceMode ?? this.interfaceMode,
@@ -262,6 +269,7 @@ class PokrovClientExperienceState {
           ? null
           : ClientNotificationInbox.fromJson(notificationsJson),
       notificationsCachedAt: _validExperienceIso(json['notificationsCachedAt']),
+      notificationCacheOwner: _boundedExperienceText(json['notificationCacheOwner'], maxLength: 512),
       preferredNodeCode: preferredCodes.isEmpty ? '' : preferredCodes.first,
       preferredVariantId:
           preferredCodes.isEmpty ? 'direct' : preferredVariantId,
@@ -302,6 +310,8 @@ class PokrovClientExperienceState {
         if (cachedNotifications != null)
           'cachedNotifications': cachedNotifications!.toJson(),
         'notificationsCachedAt': notificationsCachedAt,
+        if (notificationCacheOwner.isNotEmpty)
+          'notificationCacheOwner': notificationCacheOwner,
         'interfaceMode': interfaceMode.name,
         if (preferredCountryCode.isNotEmpty)
           'preferredCountryCode': preferredCountryCode,
@@ -323,6 +333,8 @@ class PokrovClientExperienceState {
           'firstRouteScopeMode': firstRouteScopeMode!.name,
       };
 }
+
+const _unchangedNotifications = Object();
 
 String _experienceCountryCode(Object? value) {
   final code = _experienceText(value).toUpperCase();

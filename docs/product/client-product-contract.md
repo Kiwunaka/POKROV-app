@@ -187,6 +187,13 @@ rules; DNS-only leaves the unselected remainder direct. Grants and background
 renewals bind the original routing mode and cannot switch it. Public use still
 requires matching catalog/provider publication, client pins and live acceptance.
 
+The SmartDNS picker shows load errors with retry, clears old options during
+refresh and updates options at policy, permission and capability time boundaries.
+Status and technical success identify a DNS-only connection from its active
+profile digest and captured route, and explain that other traffic stays direct.
+A saved Windows local-DPI setting can be turned off without component readiness;
+turning it on still requires readiness.
+
 With Smart Access enabled, selected services are prepared from a local TUN and
 Direct base before VPN candidate probes or Node profile admission. Fresh account
 access and verified catalog/provider grants bind the exact base profile; selected

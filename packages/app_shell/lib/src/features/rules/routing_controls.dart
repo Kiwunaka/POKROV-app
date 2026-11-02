@@ -25,7 +25,7 @@ class _LocalDpiCard extends StatelessWidget {
         else
           'Применяется при подключении POKROV. При прямом соединении сервис видит ваш IP.',
       ],
-      child: !supportedMode || !runtimeReady ? null : _RoutingToggleRow(
+      child: !supportedMode || (!runtimeReady && !preferences.localDpiEnabled) ? null : _RoutingToggleRow(
         key: const ValueKey('rules-local-dpi'),
         title: 'Включить обход блокировок',
         subtitle: routeMode == RouteMode.allExceptRu
@@ -1125,63 +1125,132 @@ Future<void> _showSmartDnsProviderSheet(BuildContext context, {
   required Future<VerifiedSmartAccessProviderPolicy> Function()? load,
   required ValueChanged<PokrovRoutingPreferences> onChanged,
 }) async {
-  final policy = load?.call();
   final result = await showModalBottomSheet<String>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
     sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
-    builder: (sheetContext) => FutureBuilder<VerifiedSmartAccessProviderPolicy>(
-      future: policy,
-      builder: (context, snapshot) {
-        final p = PokrovPalette.of(context);
-        final providers = snapshot.data == null ? <Map<String, Object?>>[] :
-            availableSmartAccessProviders(policy: snapshot.data!,
-              platform: hostPlatform.name, now: DateTime.now());
-        final selectionAvailable = providers.any((row) => row['provider_id'] == preferences.smartDnsProviderId);
-        return SafeArea(top: false, child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(22, 4, 22, 22),
-          child: Column(mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Text('SmartDNS для сервисов', style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: p.ink, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 8),
-            const Text('Выбор действует при следующем подключении для сервисов с разрешённым SmartDNS. Обычный DNS и AdGuard настраиваются отдельно. Без действующего разрешения сервис идёт через VPN.'),
-            const SizedBox(height: 8),
-            const Text('Выбирая внешнего провайдера, вы разрешаете передавать ему свой IP и домены этих сервисов. Их HTTPS-трафик проходит через его ретранслятор без расшифровки.'),
-            const SizedBox(height: 12),
-            ListTile(key: const ValueKey('rules-smart-dns-provider-automatic'),
-              contentPadding: EdgeInsets.zero, title: const Text('Автоматически'),
-              subtitle: const Text('POKROV по умолчанию; сохраняет текущий выбор и разрешённый резерв.'),
-              trailing: preferences.smartDnsProviderId.isEmpty ? Icon(Icons.check_rounded, color: p.accent) : null,
-              onTap: () => Navigator.of(sheetContext).pop('')),
-            if (snapshot.connectionState == ConnectionState.waiting)
-              const Padding(padding: EdgeInsets.all(12), child: Center(child: CircularProgressIndicator())),
-            if (snapshot.connectionState != ConnectionState.waiting && providers.isEmpty)
-              const Text('Сейчас нет доступных подписанных провайдеров. Можно оставить автоматический выбор.'),
-            if (preferences.smartDnsProviderId.isNotEmpty && !selectionAvailable &&
-                snapshot.connectionState != ConnectionState.waiting)
-              const Text('Сохранённый провайдер сейчас недоступен. До получения действующего разрешения используется VPN.'),
-            for (final provider in providers)
-              ListTile(key: ValueKey('rules-smart-dns-provider-${provider['provider_id']}'),
-                contentPadding: EdgeInsets.zero,
-                title: Text(provider['kind'] == 'owned' ? 'POKROV' : Uri.parse(provider['resolver_url']! as String).host),
-                subtitle: Text(provider['kind'] == 'owned' ? 'Собственный провайдер' : 'Внешний провайдер'),
-                trailing: preferences.smartDnsProviderId == provider['provider_id']
-                    ? Icon(Icons.check_rounded, color: p.accent) : null,
-                onTap: () {
-                  final current = availableSmartAccessProviders(policy: snapshot.data!,
-                    platform: hostPlatform.name, now: DateTime.now());
-                  if (current.any((row) => row['provider_id'] == provider['provider_id'])) {
-                    Navigator.of(sheetContext).pop(provider['provider_id']! as String);
-                  }
-                }),
-          ]),
-        ));
-      },
-    ),
+    builder: (_) => _SmartDnsProviderSheet(preferences: preferences,
+      hostPlatform: hostPlatform, load: load),
   );
-  if (result != null) onChanged(preferences.copyWith(smartDnsProviderId: result));
+  if (result != null && context.mounted) onChanged(preferences.copyWith(smartDnsProviderId: result));
+}
+
+class _SmartDnsProviderSheet extends StatefulWidget {
+  const _SmartDnsProviderSheet({required this.preferences, required this.hostPlatform, required this.load});
+  final PokrovRoutingPreferences preferences;
+  final HostPlatform hostPlatform;
+  final Future<VerifiedSmartAccessProviderPolicy> Function()? load;
+
+  @override
+  State<_SmartDnsProviderSheet> createState() => _SmartDnsProviderSheetState();
+}
+
+class _SmartDnsProviderSheetState extends State<_SmartDnsProviderSheet> {
+  VerifiedSmartAccessProviderPolicy? _policy;
+  bool _loading = true;
+  bool _failed = false;
+  Timer? _expiry;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_refresh());
+  }
+
+  @override
+  void dispose() {
+    _expiry?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _refresh() async {
+    _expiry?.cancel();
+    setState(() { _loading = true; _failed = false; _policy = null; });
+    try {
+      final policy = await widget.load?.call();
+      if (!mounted) return;
+      _policy = policy;
+      if (policy != null) _scheduleBoundary(policy);
+    } on Object {
+      if (mounted) _failed = true;
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _scheduleBoundary(VerifiedSmartAccessProviderPolicy policy) {
+    _expiry?.cancel();
+    final now = DateTime.now().toUtc();
+    final dates = <DateTime>[policy.issuedAt, policy.expiresAt];
+    for (final collection in ['permissions', 'capabilities']) {
+      for (final row in (policy.payload[collection]! as List).cast<Map<String, Object?>>()) {
+        dates.add(DateTime.parse(row[collection == 'permissions' ? 'issued_at' : 'observed_at']! as String));
+        dates.add(DateTime.parse(row['expires_at']! as String));
+      }
+    }
+    final pending = dates.where((date) => date.isAfter(now)).toList()..sort();
+    if (pending.isEmpty) return;
+    _expiry = Timer(pending.first.difference(now), () {
+      if (!mounted) return;
+      setState(() {});
+      _scheduleBoundary(policy);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    final preferences = widget.preferences;
+    final providers = _policy == null ? <Map<String, Object?>>[] :
+        availableSmartAccessProviders(policy: _policy!,
+          platform: widget.hostPlatform.name, now: DateTime.now());
+    final selectionAvailable = providers.any((row) => row['provider_id'] == preferences.smartDnsProviderId);
+    return SafeArea(top: false, child: SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(22, 4, 22, 22),
+      child: Column(mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Text('SmartDNS для сервисов', style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          color: p.ink, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 8),
+        const Text('Выбор действует при следующем подключении для сервисов с разрешённым SmartDNS. Обычный DNS и AdGuard настраиваются отдельно. Без действующего разрешения сервис идёт через VPN.'),
+        const SizedBox(height: 8),
+        const Text('Выбирая внешнего провайдера, вы разрешаете передавать ему свой IP и домены этих сервисов. Их HTTPS-трафик проходит через его ретранслятор без расшифровки.'),
+        const SizedBox(height: 12),
+        ListTile(key: const ValueKey('rules-smart-dns-provider-automatic'),
+          contentPadding: EdgeInsets.zero, title: const Text('Автоматически'),
+          subtitle: const Text('POKROV по умолчанию; сохраняет текущий выбор и разрешённый резерв.'),
+          trailing: preferences.smartDnsProviderId.isEmpty ? Icon(Icons.check_rounded, color: p.accent) : null,
+          onTap: () => Navigator.of(context).pop('')),
+        if (_loading)
+          const Padding(padding: EdgeInsets.all(12), child: Center(child: CircularProgressIndicator())),
+        if (_failed)
+          const Text('Не удалось загрузить SmartDNS-провайдеров. Повторите попытку.'),
+        if (!_loading && !_failed && providers.isEmpty)
+          const Text('Сейчас нет доступных подписанных провайдеров. Можно оставить автоматический выбор.'),
+        if (preferences.smartDnsProviderId.isNotEmpty && !selectionAvailable &&
+            !_loading)
+          const Text('Сохранённый провайдер сейчас недоступен. До получения действующего разрешения используется VPN.'),
+        for (final provider in providers)
+          ListTile(key: ValueKey('rules-smart-dns-provider-${provider['provider_id']}'),
+            contentPadding: EdgeInsets.zero,
+            title: Text(provider['kind'] == 'owned' ? 'POKROV' : Uri.parse(provider['resolver_url']! as String).host),
+            subtitle: Text(provider['kind'] == 'owned' ? 'Собственный провайдер' : 'Внешний провайдер'),
+            trailing: preferences.smartDnsProviderId == provider['provider_id']
+                ? Icon(Icons.check_rounded, color: p.accent) : null,
+            onTap: () {
+              final current = availableSmartAccessProviders(policy: _policy!,
+                platform: widget.hostPlatform.name, now: DateTime.now());
+              if (current.any((row) => row['provider_id'] == provider['provider_id'])) {
+                Navigator.of(context).pop(provider['provider_id']! as String);
+              } else { setState(() {}); }
+            }),
+        TextButton.icon(key: const ValueKey('rules-smart-dns-provider-refresh'),
+          onPressed: _loading || widget.load == null ? null : _refresh,
+          icon: const Icon(Icons.refresh_rounded), label: const Text('Обновить провайдеров')),
+      ]),
+    ));
+  }
 }
 
 Future<void> _showDnsPresetSheet(

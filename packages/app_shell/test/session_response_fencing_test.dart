@@ -170,6 +170,9 @@ class _Fixture {
     } else if (path == '/api/bonuses/wheel/spin') {
       rewards += 1;
       request.response.write('{"ok":true,"reward_days":1}');
+    } else if (path == '/api/channel/subscriber/check' ||
+        path == '/api/bonuses/channel/claim') {
+      request.response.write('{"ok":true,"claim_required":true,"bonus_days":5,"premium_days":5}');
     } else if (path == '/api/client/subscription') {
       if (rejectInitialAccess && authorization == 'Bearer old-access') {
         request.response.statusCode = HttpStatus.unauthorized;
@@ -211,6 +214,20 @@ void main() {
   final changed =
       isA<BootstrapFailure>().having((e) => e.code, 'code', 'session_changed');
 
+  test('notification cache owner follows the local account and install', () async {
+    final f = await _Fixture.create();
+    await f.state('A', 'A-access');
+    final owner = await f.bootstrapper.notificationCacheOwner(hostPlatform: HostPlatform.windows);
+    expect(jsonDecode(owner!), ['A', _Fixture.install]);
+    expect(owner, isNot(contains('A-access')));
+    await f.state('A', 'rotated-access');
+    expect(await f.bootstrapper.notificationCacheOwner(hostPlatform: HostPlatform.windows), owner);
+    await f.state('B', 'B-access');
+    expect(await f.bootstrapper.notificationCacheOwner(hostPlatform: HostPlatform.windows), isNot(owner));
+    await f.state('B', '', loggedOut: true);
+    expect(await f.bootstrapper.notificationCacheOwner(hostPlatform: HostPlatform.windows), isNull);
+  });
+
   test('late cabinet handoff cannot open the previous account', () async {
     final f = await _Fixture.create();
     f.pausedPath = '/api/client/cabinet-token';
@@ -237,6 +254,24 @@ void main() {
     f.release.complete();
     await assertion;
     await f.expectState('B', 'B-access');
+  });
+
+  test('late Telegram bonus replies cannot publish after pairing another account', () async {
+    for (final path in ['/api/channel/subscriber/check', '/api/bonuses/channel/claim']) {
+      final f = await _Fixture.create();
+      f.pausedPath = path;
+      await f.state('A', 'A-access');
+      final pending = path == '/api/channel/subscriber/check'
+          ? f.bootstrapper.checkChannelBonus(hostPlatform: HostPlatform.windows)
+          : f.bootstrapper.claimChannelBonus(hostPlatform: HostPlatform.windows);
+      final assertion = expectLater(pending, throwsA(changed));
+      await f.wait();
+      final paired = await f.bootstrapper.claimDevicePairingCode(
+          hostPlatform: HostPlatform.windows, code: 'ABCD-2345');
+      expect(paired.accountId, 'B');
+      f.release.complete();
+      await assertion;
+    }
   });
 
   test('late bonus history cannot publish the previous account summary', () async {

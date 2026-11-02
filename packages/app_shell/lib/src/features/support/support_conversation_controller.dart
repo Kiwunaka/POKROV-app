@@ -359,12 +359,17 @@ class SupportConversationController extends ChangeNotifier {
       });
       _onMessagesChanged?.call();
       _syncThreadPolling();
+      final requestedVersion = _threadVersion;
       try {
         final thread = await _service.getTicket(
           hostPlatform: _hostPlatform,
           ticketId: receipt.ticketId,
         );
-        if (!_active || thread.messages.isEmpty) {
+        if (!_active ||
+            _sending ||
+            _ticketId != receipt.ticketId ||
+            _threadVersion != requestedVersion ||
+            thread.messages.isEmpty) {
           return;
         }
         _change(() {

@@ -18,6 +18,7 @@ final class PokrovSupportModeView {
     required this.consumedBytes,
     required this.maximumBundles,
     required this.consumedBundles,
+    this.disablePending = false,
   });
 
   const PokrovSupportModeView.inactive()
@@ -27,7 +28,8 @@ final class PokrovSupportModeView {
         maximumTotalBytes = 0,
         consumedBytes = 0,
         maximumBundles = 0,
-        consumedBundles = 0;
+        consumedBundles = 0,
+        disablePending = false;
 
   final bool active;
   final DateTime? expiresAt;
@@ -36,6 +38,7 @@ final class PokrovSupportModeView {
   final int consumedBytes;
   final int maximumBundles;
   final int consumedBundles;
+  final bool disablePending;
 }
 
 final class PokrovPersistentSupportModeBanner extends StatelessWidget {
@@ -60,7 +63,9 @@ final class PokrovPersistentSupportModeBanner extends StatelessWidget {
     return Semantics(
       liveRegion: true,
       container: true,
-      label: 'Включен временный режим поддержки до $expires',
+      label: view.disablePending
+          ? 'Отключение режима поддержки не сохранено'
+          : 'Включен временный режим поддержки до $expires',
       child: Material(
         key: const ValueKey('persistent-support-mode-banner'),
         color: colors.tertiaryContainer,
@@ -79,7 +84,9 @@ final class PokrovPersistentSupportModeBanner extends StatelessWidget {
                   child: InkWell(
                     onTap: onOpenDiagnostics,
                     child: Text(
-                      'Режим поддержки до $expires · ${view.consumedBundles}/${view.maximumBundles} пакетов',
+                      view.disablePending
+                          ? 'Отключение не сохранено. Повторите.'
+                          : 'Режим поддержки до $expires · ${view.consumedBundles}/${view.maximumBundles} пакетов',
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
                             color: colors.onTertiaryContainer,
                             fontWeight: FontWeight.w700,
@@ -90,7 +97,7 @@ final class PokrovPersistentSupportModeBanner extends StatelessWidget {
                 TextButton(
                   key: const ValueKey('persistent-support-mode-disable'),
                   onPressed: onDisable,
-                  child: const Text('Выключить'),
+                  child: Text(view.disablePending ? 'Повторить' : 'Выключить'),
                 ),
               ],
             ),
@@ -129,6 +136,8 @@ final class PokrovSupportModeController extends ChangeNotifier {
   SupportModeUsageLedger? _usage;
   Timer? _expiryTimer;
   bool _loaded = false;
+  bool _disablePending = false;
+  Future<void>? _disableRequest;
 
   bool get loaded => _loaded;
   VerifiedSupportCollectionPolicy? get activePolicy {
@@ -143,7 +152,7 @@ final class PokrovSupportModeController extends ChangeNotifier {
   }
 
   PokrovSupportModeView get view {
-    final policy = activePolicy;
+    final policy = activePolicy ?? (_disablePending ? _activation?.policy : null);
     final usage = _usage;
     if (policy == null || usage == null) {
       return const PokrovSupportModeView.inactive();
@@ -158,6 +167,7 @@ final class PokrovSupportModeController extends ChangeNotifier {
       consumedBytes: usage.consumedBytes,
       maximumBundles: policy.maximumBundles,
       consumedBundles: usage.consumedBundles,
+      disablePending: _disablePending,
     );
   }
 
@@ -284,14 +294,25 @@ final class PokrovSupportModeController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> disable() async {
+  Future<void> disable() {
+    return _disableRequest ??= _disable().whenComplete(() {
+      _disableRequest = null;
+    });
+  }
+
+  Future<void> _disable() async {
     _expiryTimer?.cancel();
     _expiryTimer = null;
     _usage?.disable();
-    _activation = null;
-    _usage = null;
-    await _persist(session: null);
-    notifyListeners();
+    _disablePending = _activation != null;
+    try {
+      await _persist(session: null);
+      _activation = null;
+      _usage = null;
+      _disablePending = false;
+    } finally {
+      notifyListeners();
+    }
   }
 
   Future<VerifiedSupportCollectionPolicy> _verify(
@@ -315,10 +336,10 @@ final class PokrovSupportModeController extends ChangeNotifier {
     }
     final remaining = policy.expiresAt.difference(_clock().toUtc());
     if (remaining <= Duration.zero) {
-      unawaited(disable());
+      unawaited(disable().catchError((Object _) {}));
       return;
     }
-    _expiryTimer = Timer(remaining, () => unawaited(disable()));
+    _expiryTimer = Timer(remaining, () => unawaited(disable().catchError((Object _) {})));
   }
 
   Future<void> _persist({Object? session = _currentSessionMarker}) async {

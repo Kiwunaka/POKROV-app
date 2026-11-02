@@ -5817,6 +5817,19 @@ class AppFirstRuntimeBootstrapper
     return ClientSupportAssistantReply.fromJson(response);
   }
 
+  Future<String?> notificationCacheOwner({
+    required HostPlatform hostPlatform,
+  }) async {
+    try {
+      final state = await _loadState(hostPlatform);
+      if (state == null || !state.hasSession ||
+          state.accountId.isEmpty || state.installId.isEmpty) return null;
+      return jsonEncode([state.accountId, state.installId]);
+    } on BootstrapFailure {
+      return null;
+    }
+  }
+
   Future<Map<String, dynamic>> _requestClientJsonWithSession({
     required HostPlatform hostPlatform,
     required String method,
@@ -5937,116 +5950,43 @@ class AppFirstRuntimeBootstrapper
   Future<ChannelBonusStatus> checkChannelBonus({
     required HostPlatform hostPlatform,
   }) async {
-    var state = await _loadOrCreateState(hostPlatform);
-    final client = _createHttpClient(hostPlatform);
-    try {
-      for (var attempt = 0; attempt < 2; attempt += 1) {
-        if (!state.hasSession) {
-          state = await _startTrial(
-            state: state,
-            hostPlatform: hostPlatform,
-            client: client,
-          );
-        }
-
-        try {
-          final response = await _requestJson(
-            method: 'POST',
-            path: '/api/channel/subscriber/check',
-            client: client,
-            bearerToken: state.sessionToken,
-            hostPlatform: hostPlatform,
-          );
-          return ChannelBonusStatus(
-            ok: response['ok'] == true,
-            subscriber: response['subscriber'] == true,
-            reason: _readText(response['reason']),
-            pointsGranted: _readInt(response['points_granted']),
-            campaignMarked: response['campaign_marked'] == true,
-            linkRequired: response['link_required'] == true,
-            claimRequired: response['claim_required'] == true,
-            alreadyClaimed: response['already_claimed'] == true,
-            bonusDays: _readInt(response['bonus_days']),
-          );
-        } on BootstrapFailure catch (error) {
-          if (attempt == 0 && _isSessionFailure(error.statusCode)) {
-            state = await _startTrial(
-              state: state.copyWith(
-                sessionToken: '',
-              ),
-              hostPlatform: hostPlatform,
-              client: client,
-            );
-            continue;
-          }
-          rethrow;
-        }
-      }
-
-      throw const BootstrapFailure(
-        'POKROV could not check the Telegram bonus.',
-      );
-    } finally {
-      client.close(force: true);
-    }
+    final response = await _requestClientJsonWithSession(
+      method: 'POST',
+      path: '/api/channel/subscriber/check',
+      hostPlatform: hostPlatform,
+    );
+    return ChannelBonusStatus(
+      ok: response['ok'] == true,
+      subscriber: response['subscriber'] == true,
+      reason: _readText(response['reason']),
+      pointsGranted: _readInt(response['points_granted']),
+      campaignMarked: response['campaign_marked'] == true,
+      linkRequired: response['link_required'] == true,
+      claimRequired: response['claim_required'] == true,
+      alreadyClaimed: response['already_claimed'] == true,
+      bonusDays: _readInt(response['bonus_days']),
+    );
   }
 
   Future<ChannelBonusClaimResult> claimChannelBonus({
     required HostPlatform hostPlatform,
   }) async {
-    var state = await _loadOrCreateState(hostPlatform);
-    final client = _createHttpClient(hostPlatform);
-    try {
-      for (var attempt = 0; attempt < 2; attempt += 1) {
-        if (!state.hasSession) {
-          state = await _startTrial(
-            state: state,
-            hostPlatform: hostPlatform,
-            client: client,
-          );
-        }
-
-        try {
-          final response = await _requestJson(
-            method: 'POST',
-            path: '/api/bonuses/channel/claim',
-            client: client,
-            bearerToken: state.sessionToken,
-            hostPlatform: hostPlatform,
-          );
-          return ChannelBonusClaimResult(
-            ok: response['ok'] == true,
-            alreadyClaimed: response['already_claimed'] == true,
-            premiumDays: _readInt(response['premium_days']),
-            claimedAt: _readText(response['claimed_at']),
-            expiryAt: _readText(response['expiry_at']),
-            subType: _readText(response['sub_type']),
-            channel: _readText(response['channel']),
-            linkedTelegramId: _readNullableInt(response['linked_telegram_id']),
-            linkedTelegramUsername:
-                _readText(response['linked_telegram_username']),
-          );
-        } on BootstrapFailure catch (error) {
-          if (attempt == 0 && _isSessionFailure(error.statusCode)) {
-            state = await _startTrial(
-              state: state.copyWith(
-                sessionToken: '',
-              ),
-              hostPlatform: hostPlatform,
-              client: client,
-            );
-            continue;
-          }
-          rethrow;
-        }
-      }
-
-      throw const BootstrapFailure(
-        'POKROV could not activate the Telegram bonus.',
-      );
-    } finally {
-      client.close(force: true);
-    }
+    final response = await _requestClientJsonWithSession(
+      method: 'POST',
+      path: '/api/bonuses/channel/claim',
+      hostPlatform: hostPlatform,
+    );
+    return ChannelBonusClaimResult(
+      ok: response['ok'] == true,
+      alreadyClaimed: response['already_claimed'] == true,
+      premiumDays: _readInt(response['premium_days']),
+      claimedAt: _readText(response['claimed_at']),
+      expiryAt: _readText(response['expiry_at']),
+      subType: _readText(response['sub_type']),
+      channel: _readText(response['channel']),
+      linkedTelegramId: _readNullableInt(response['linked_telegram_id']),
+      linkedTelegramUsername: _readText(response['linked_telegram_username']),
+    );
   }
 
   ClientAppPlatformMetadata _readClientAppPlatformMetadata({

@@ -353,6 +353,12 @@ class _DevicesSheetState extends State<_DevicesSheet> {
           _pairingError = 'Не удалось отменить код устройства.';
         }
       });
+    } on Object {
+      if (mounted) {
+        setState(() {
+          _pairingError = 'Не удалось отменить код устройства.';
+        });
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -397,7 +403,12 @@ class _DevicesSheetState extends State<_DevicesSheet> {
     setState(() {
       _revokingId = device.id;
     });
-    final ok = await widget.onRevokeDevice(device.id);
+    bool ok;
+    try {
+      ok = await widget.onRevokeDevice(device.id);
+    } on Object {
+      ok = false;
+    }
     if (!mounted) {
       return;
     }
@@ -567,6 +578,19 @@ class _DevicesSheetState extends State<_DevicesSheet> {
                 builder: (context, snapshot) {
                   if (snapshot.connectionState != ConnectionState.done) {
                     return const _MotionSkeletonList(rows: 3);
+                  }
+                  if (snapshot.hasError) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Не удалось загрузить устройства.'),
+                        TextButton(
+                          key: const ValueKey('profile-devices-retry'),
+                          onPressed: _reload,
+                          child: const Text('Повторить'),
+                        ),
+                      ],
+                    );
                   }
                   final items =
                       snapshot.data?.items ?? const <ClientDeviceInfo>[];
@@ -783,6 +807,10 @@ class _NotificationsSheet extends StatelessWidget {
                         final ok = await onDismiss(ids);
                         if (ok && context.mounted) {
                           Navigator.of(context).pop();
+                        } else if (context.mounted) {
+                          showPokrovSnack(context,
+                            'Не удалось очистить уведомления. Попробуйте ещё раз.',
+                            tone: PokrovSnackTone.danger);
                         }
                       },
                       child: const Text('Очистить'),
@@ -811,7 +839,9 @@ class _NotificationsSheet extends StatelessWidget {
                     border: Border.all(color: tokens.line),
                   ),
                   child: Text(
-                    'Нет свежих данных. Показываем сохранённые уведомления. ${_locationCacheLabel(cachedAt)}',
+                    notifications.isEmpty
+                        ? 'Не удалось загрузить уведомления.'
+                        : 'Нет свежих данных. Показываем сохранённые уведомления. ${_locationCacheLabel(cachedAt)}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: tokens.muted,
                           height: 1.35,
@@ -820,7 +850,7 @@ class _NotificationsSheet extends StatelessWidget {
                 ),
               ],
               const SizedBox(height: 12),
-              if (notifications.isEmpty)
+              if (notifications.isEmpty && !usingCache)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   child: Text(

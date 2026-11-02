@@ -261,6 +261,18 @@ Support and account requests therefore share the same in-flight session refresh:
 concurrent expired-session responses rotate the refresh credential once, then
 both requests use the saved replacement. Server refresh-reuse rejection remains
 unchanged.
+After a ticket is created, a delayed history read cannot replace a newer chat
+message or a different active ticket.
+Device-list, code-cancellation and device-revocation failures remain visible and
+retryable instead of presenting an empty list or leaving an action in progress.
+Account replacement closes old account screens and clears their in-memory inbox
+and rewards. Saved notifications are restored only for the same local account
+and install; ownerless older caches are ignored. Late account responses cannot
+repopulate the new account's view. Telegram bonus check and claim use the same
+session response fence as other client requests.
+Disabling temporary support mode stops collection immediately. If the local
+disable state cannot be saved, the banner and diagnostics offer a retry until
+the deactivation is persisted.
 
 The native welcome shown before account creation is necessarily install-scoped.
 Once a real app session exists, onboarding continuation and first-connection UX

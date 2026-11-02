@@ -60,6 +60,7 @@ class _ProtectionCenterData {
     required this.shortcuts,
     required this.checkedAt,
     this.confirmedLocationLabel = '',
+    this.dnsOnly = false,
   });
 
   final RuntimeSnapshot? snapshot;
@@ -69,6 +70,7 @@ class _ProtectionCenterData {
   final List<PokrovPostConnectShortcut> shortcuts;
   final DateTime? checkedAt;
   final String confirmedLocationLabel;
+  final bool dnsOnly;
 }
 
 enum _ProtectionCheckTone { success, warning, danger, unknown }
@@ -93,6 +95,7 @@ class _ProtectionCenterSheet extends StatefulWidget {
   const _ProtectionCenterSheet({
     required this.runtimeSnapshot,
     required this.retainsProtection,
+    required this.dnsOnly,
     required this.confirmedLocationLabel,
     required this.onDisconnect,
     required this.initialData,
@@ -109,6 +112,7 @@ class _ProtectionCenterSheet extends StatefulWidget {
   final _ProtectionCenterData initialData;
   final ValueNotifier<RuntimeSnapshot?> runtimeSnapshot;
   final bool Function() retainsProtection;
+  final bool Function() dnsOnly;
   final String Function() confirmedLocationLabel;
   final Future<void> Function() onDisconnect;
   final Future<_ProtectionCenterData> Function() onRefresh;
@@ -139,6 +143,7 @@ class _ProtectionCenterController extends ChangeNotifier {
   _ProtectionCenterController({
     required ValueNotifier<RuntimeSnapshot?> runtimeSnapshot,
     required String Function() confirmedLocationLabel,
+    required bool Function() dnsOnly,
     required _ProtectionCenterData initialData,
     required Future<_ProtectionCenterData> Function() onRefresh,
     required Future<_ProtectionCenterData> Function(
@@ -147,6 +152,7 @@ class _ProtectionCenterController extends ChangeNotifier {
     ) onRepair,
   })  : _runtimeSnapshot = runtimeSnapshot,
         _confirmedLocationLabel = confirmedLocationLabel,
+        _dnsOnly = dnsOnly,
         _data = initialData,
         _onRefresh = onRefresh,
         _onRepair = onRepair {
@@ -155,6 +161,7 @@ class _ProtectionCenterController extends ChangeNotifier {
 
   final ValueNotifier<RuntimeSnapshot?> _runtimeSnapshot;
   final String Function() _confirmedLocationLabel;
+  final bool Function() _dnsOnly;
 
   final Future<_ProtectionCenterData> Function() _onRefresh;
   final Future<_ProtectionCenterData> Function(
@@ -183,6 +190,7 @@ class _ProtectionCenterController extends ChangeNotifier {
         shortcuts: _data.shortcuts,
         checkedAt: _data.checkedAt,
         confirmedLocationLabel: _confirmedLocationLabel(),
+        dnsOnly: _dnsOnly(),
       );
   bool get refreshing => _refreshing;
   bool get repairing => _repairing || _cancellingRepair;
@@ -316,6 +324,7 @@ class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
     _controller = _ProtectionCenterController(
       runtimeSnapshot: widget.runtimeSnapshot,
       confirmedLocationLabel: widget.confirmedLocationLabel,
+      dnsOnly: widget.dnsOnly,
       initialData: widget.initialData,
       onRefresh: widget.onRefresh,
       onRepair: widget.onRepair,
@@ -452,8 +461,10 @@ class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
     return SingleChildScrollView(child: ui.StatusSheet(
       data: ui.StatusViewData(
         phase: healthy ? ui.ConnectionPhase.on : ui.ConnectionPhase.off,
-        title: healthy ? 'Ты под защитой' : 'Защита не подтверждена',
-        subtitle: healthy ? 'POKROV работает на этом устройстве' : 'Проверь соединение или попробуй подключиться',
+        title: healthy ? data.dnsOnly ? 'SmartDNS работает' : 'Ты под защитой' : 'Защита не подтверждена',
+        subtitle: healthy ? data.dnsOnly
+            ? 'Для выбранных сервисов. Остальной трафик идёт напрямую.'
+            : 'POKROV работает на этом устройстве' : 'Проверь соединение или попробуй подключиться',
         rows: [for (final check in checks.take(3)) ui.StatusRow(
           title: check.title,
           detail: check.tone == _ProtectionCheckTone.success ? 'Работает' : 'Пока не подтверждено',
@@ -567,6 +578,7 @@ class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
                 const SizedBox(height: 12),
                 _ProtectionRepairOutcomeCard(
                   outcome: _controller.repairOutcome!,
+                  dnsOnly: data.dnsOnly,
                   onOpenSupport: widget.onOpenSupport,
                 ),
               ],
@@ -669,6 +681,13 @@ _ProtectionSummary _protectionSummary(
 }) {
   final snapshot = data.snapshot;
   if (!retainsProtection && (snapshot?.isCleanlyHealthy ?? false)) {
+    if (data.dnsOnly) {
+      return const _ProtectionSummary(
+        title: 'SmartDNS работает',
+        detail: 'SmartDNS для выбранных сервисов подключён. Остальной трафик идёт напрямую.',
+        tone: _ProtectionSummaryTone.success,
+      );
+    }
     return const _ProtectionSummary(
       title: 'Защита работает',
       detail: 'Туннель, DNS и выход через VPN подтверждены.',
@@ -805,10 +824,12 @@ class _ProtectionRepairProgress extends StatelessWidget {
 class _ProtectionRepairOutcomeCard extends StatelessWidget {
   const _ProtectionRepairOutcomeCard({
     required this.outcome,
+    required this.dnsOnly,
     required this.onOpenSupport,
   });
 
   final _ProtectionRepairOutcome outcome;
+  final bool dnsOnly;
   final VoidCallback onOpenSupport;
 
   @override
@@ -830,7 +851,8 @@ class _ProtectionRepairOutcomeCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            succeeded ? 'Защита восстановлена' : interrupted ? 'Восстановление прервано' : 'Нужна помощь',
+            succeeded ? dnsOnly ? 'SmartDNS восстановлен' : 'Защита восстановлена'
+                : interrupted ? 'Восстановление прервано' : 'Нужна помощь',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   color: color,
                   fontWeight: FontWeight.w700,
@@ -839,7 +861,8 @@ class _ProtectionRepairOutcomeCard extends StatelessWidget {
           const SizedBox(height: 3),
           Text(
             succeeded
-                ? 'Туннель, DNS и выход через VPN подтверждены.'
+                ? dnsOnly ? 'Проверка DNS и TLS выбранного сервиса прошла. Остальной трафик идёт напрямую.'
+                    : 'Туннель, DNS и выход через VPN подтверждены.'
                 : interrupted
                     ? 'Повторное подключение не продолжается. Текущее состояние туннеля показано выше.'
                     : 'Откройте поддержку: диагностические данные будут показаны перед отправкой.',
@@ -867,7 +890,7 @@ class _ProtectionDetailsMeta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
-    final location = data.confirmedLocationLabel.isNotEmpty
+    final location = data.dnsOnly ? 'SmartDNS' : data.confirmedLocationLabel.isNotEmpty
         ? data.confirmedLocationLabel
         : _protectionLiveLocationLabel(data.liveStats);
     final checkedAt = data.checkedAt?.toLocal();
@@ -996,6 +1019,14 @@ List<_ProtectionCheck> _protectionChecks(_ProtectionCenterData data) {
                   tone: _ProtectionCheckTone.unknown,
                 );
 
+  final serviceConnection = _ProtectionCheck(
+    title: 'Соединение с сервисом', value: https.value,
+    detail: snapshot?.coreEgressValidated == true
+        ? 'Проверка DNS и TLS выбранного сервиса прошла. Выход через VPN не используется.'
+        : 'Соединение с выбранным сервисом через SmartDNS пока не подтверждено.',
+    icon: https.icon, tone: https.tone,
+  );
+
   final v4 = snapshot?.ipv4RouteCount;
   final v6 = snapshot?.ipv6RouteCount;
   final routeKnown = v4 != null || v6 != null;
@@ -1032,7 +1063,7 @@ List<_ProtectionCheck> _protectionChecks(_ProtectionCenterData data) {
                   icon: Icons.alt_route_rounded,
                   tone: _ProtectionCheckTone.warning,
                 );
-  return <_ProtectionCheck>[tunnel, dns, https, routes];
+  return <_ProtectionCheck>[tunnel, dns, data.dnsOnly ? serviceConnection : https, routes];
 }
 
 String _consumerTunnelDetail(RuntimeSnapshot? snapshot) {

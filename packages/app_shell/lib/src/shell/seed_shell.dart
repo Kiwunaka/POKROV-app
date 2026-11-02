@@ -383,6 +383,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   PokrovWindowsShellPreferences _windowsShellPreferences =
       const PokrovWindowsShellPreferences();
   ClientNotificationInbox? _notificationsInbox;
+  int _accountUiRevision = 0;
   bool _notificationsBusy = false;
   Future<void>? _notificationsRequest;
   bool _notificationsInboxOpen = false;
@@ -559,6 +560,18 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
+  Future<void> _disableSupportModeFromBanner() async {
+    try {
+      await _supportModeController.disable();
+    } on Object {
+      if (mounted) {
+        showPokrovSnack(context,
+          'Не удалось сохранить отключение режима поддержки. Повторите.',
+          tone: PokrovSnackTone.danger);
+      }
+    }
+  }
+
   Future<void> _consumeAcquisitionUri(Uri uri) async {
     final pairing = PokrovDevicePairingHandoff.tryParse(uri);
     if (pairing != null) {
@@ -665,6 +678,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (!mounted || restoreRevision != _clientExperienceRevision) {
         return;
       }
+      final savedOwner = restored.notificationCacheOwner;
+      final currentOwner = savedOwner.isEmpty
+          ? null
+          : await _currentNotificationsOwner();
+      if (!mounted || restoreRevision != _clientExperienceRevision) return;
+      final notificationCacheMatches = savedOwner.isNotEmpty &&
+          currentOwner != null && savedOwner == currentOwner;
       final preferredCode = restored.preferredNodeCode.trim().toLowerCase();
       final preferredVariantId = preferredCode.isEmpty
           ? 'direct'
@@ -694,6 +714,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           .take(128)
           .toList(growable: false);
       final effectiveState = restored.copyWith(
+        cachedNotifications: notificationCacheMatches ? restored.cachedNotifications : null,
+        notificationsCachedAt: notificationCacheMatches ? restored.notificationsCachedAt : '',
+        notificationCacheOwner: notificationCacheMatches ? savedOwner : '',
         preferredNodeCode: preferredCode,
         preferredVariantId: preferredVariantId,
         automaticNodeQuarantineUntil: <String, String>{
@@ -967,6 +990,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   Future<bool> _refreshSubscriptionInfo({bool showFailure = false}) async {
+    final accountRevision = _accountUiRevision;
     final service = _clientDataService;
     if (service == null) {
       return false;
@@ -980,7 +1004,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       );
       observability?.recordAuthRequestFinished();
       observability?.recordEntitlementRefreshFinished();
-      if (!mounted) {
+      if (!mounted || accountRevision != _accountUiRevision) {
         return false;
       }
       setState(() {
@@ -1000,6 +1024,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
       return true;
     } on Object catch (error) {
+      if (accountRevision != _accountUiRevision) return false;
       final authCode = switch (error) {
         BootstrapFailure failure
             when failure.operationalErrorCode == 'API-004' =>
@@ -1054,13 +1079,32 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
+  Future<String?> _currentNotificationsOwner() async {
+    final bootstrapper = widget.bootstrapper;
+    if (bootstrapper is! AppFirstRuntimeBootstrapper) return null;
+    try {
+      return await bootstrapper.notificationCacheOwner(
+        hostPlatform: widget.appContext.hostPlatform,
+      ).timeout(const Duration(seconds: 2));
+    } on Object {
+      return null;
+    }
+  }
+
   Future<void> _refreshNotifications() {
-    return _notificationsRequest ??= _loadNotifications().whenComplete(() {
-      _notificationsRequest = null;
+    final current = _notificationsRequest;
+    if (current != null) return current;
+    late final Future<void> request;
+    request = _loadNotifications().whenComplete(() {
+      if (identical(_notificationsRequest, request)) {
+        _notificationsRequest = null;
+      }
     });
+    return _notificationsRequest = request;
   }
 
   Future<void> _loadNotifications() async {
+    final accountRevision = _accountUiRevision;
     final service = _clientDataService;
     if (service == null ||
         _notificationsBusy ||
@@ -1076,11 +1120,18 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     _notificationsRefreshTimer?.cancel();
     _notificationsRefreshTimer = null;
     try {
+      final ownerBefore = await _currentNotificationsOwner();
+      if (!mounted || accountRevision != _accountUiRevision) return;
       final inbox = await service.fetchClientNotifications(
         hostPlatform: widget.appContext.hostPlatform,
       );
-      if (!mounted) {
+      final ownerAfter = await _currentNotificationsOwner();
+      if (!mounted || accountRevision != _accountUiRevision) {
         return;
+      }
+      if (ownerBefore != null && ownerBefore != ownerAfter) {
+        throw const BootstrapFailure('Сессия изменилась. Повторите вход.',
+            code: 'session_changed');
       }
       setState(() {
         _notificationsInbox = inbox;
@@ -1088,21 +1139,23 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _notificationsUnread = inbox.unreadCount;
         _notificationsUsingCache = false;
         _clientExperience = _clientExperience.copyWith(
-          cachedNotifications: inbox,
+          cachedNotifications: ownerAfter == null ? null : inbox,
           notificationsCachedAt: DateTime.now().toUtc().toIso8601String(),
+          notificationCacheOwner: ownerAfter ?? '',
         );
       });
       _queueClientExperienceWrite();
     } on Object catch (error) {
+      if (accountRevision != _accountUiRevision) return;
       _stopNotificationsOnSessionFailure(error);
       // Notifications are best-effort; keep the last known inbox.
       if (mounted) {
         setState(() {
-          _notificationsUsingCache = _notificationsInbox != null;
+          _notificationsUsingCache = true;
         });
       }
     } finally {
-      if (mounted) {
+      if (mounted && accountRevision == _accountUiRevision) {
         setState(() {
           _notificationsBusy = false;
         });
@@ -1166,9 +1219,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   Future<void> _openNotificationsInbox() async {
     if (_notificationsInboxOpen) return;
     _notificationsInboxOpen = true;
+    final accountRevision = _accountUiRevision;
     try {
       await _refreshNotifications();
-      if (!mounted || !_notificationsForeground) return;
+      if (!mounted || !_notificationsForeground ||
+          accountRevision != _accountUiRevision) return;
       _markNotificationsRead();
       await _showNotificationsSheet(
         context,
@@ -1181,11 +1236,14 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         onOpenHandoff: _showSeedHandoff,
       );
     } finally {
-      _notificationsInboxOpen = false;
+      if (accountRevision == _accountUiRevision) {
+        _notificationsInboxOpen = false;
+      }
     }
   }
 
   Future<bool> _dismissNotifications(List<String> ids) async {
+    final accountRevision = _accountUiRevision;
     final normalizedIds = ids
         .map((id) => id.trim())
         .where((id) => id.isNotEmpty)
@@ -1203,8 +1261,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         hostPlatform: widget.appContext.hostPlatform,
         ids: normalizedIds,
       );
-      if (!ok || !mounted) {
-        return ok;
+      if (!ok || !mounted || accountRevision != _accountUiRevision) {
+        return false;
       }
       final inbox = _notificationsInbox;
       final remaining = inbox?.items
@@ -1774,6 +1832,34 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
+  void _clearAccountExperience() {
+    _accountUiRevision += 1;
+    _notificationsRefreshTimer?.cancel();
+    _notificationsRefreshTimer = null;
+    _notificationsRequest = null;
+    _notificationsBusy = false;
+    _notificationsInboxOpen = false;
+    _notificationsSessionReady = false;
+    _notificationsInbox = null;
+    _notificationsUnread = 0;
+    _notificationsUsingCache = false;
+    _clientExperience = _clientExperience.copyWith(
+      cachedNotifications: null,
+      notificationsCachedAt: '',
+      notificationCacheOwner: '',
+    );
+    _bonusSummary = null;
+    _bonusSummaryBusy = false;
+    _bonusSummaryRequested = false;
+    _bonusSummaryError = null;
+    _bonusRewardBusy = false;
+    _telegramBonusStatus = 'Получить код';
+    _telegramBonusBusy = false;
+    _telegramLinkVerificationPending = false;
+    _telegramBonusCanClaim = false;
+    _telegramBonusError = null;
+  }
+
   Future<bool> _redeemCodeInApp(String value) async {
     final code = value.trim();
     if (code.isEmpty) {
@@ -1807,6 +1893,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         }
         setState(() {
           if (!paired.existingDevice) {
+            _clearAccountExperience();
             _connectionManager.markProfileDirty();
             _subscriptionInfo = null;
           }
@@ -1814,6 +1901,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
               ? 'Вход подтверждён. Устройство уже связано с этим аккаунтом.'
               : 'Устройство привязано к вашему аккаунту.';
         });
+        if (!paired.existingDevice) {
+          _queueClientExperienceWrite();
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
         unawaited(_loadBonusSummary(force: true));
         final profileUpdated = await _refreshSubscriptionInfo(
           showFailure: true,
@@ -1899,10 +1990,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     );
     if (recovered != true || !mounted) return;
     setState(() {
+      _clearAccountExperience();
       _firstSessionCoordinator.finishRestore(succeeded: true);
       _subscriptionInfo = null;
       _connectionManager.markProfileDirty();
     });
+    _queueClientExperienceWrite();
+    Navigator.of(context).popUntil((route) => route.isFirst);
     unawaited(_firstSessionCoordinator.persistCompletion());
     final updated = await _refreshSubscriptionInfo();
     unawaited(_loadBonusSummary(force: true));
@@ -2000,6 +2094,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   Future<void> _createTelegramLinkInApp() async {
+    final accountRevision = _accountUiRevision;
     final bonusActions = _bonusActionService;
     if (bonusActions == null) {
       await _openSafeHandoff(
@@ -2022,17 +2117,16 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       final result = await bonusActions.createTelegramLink(
         hostPlatform: widget.appContext.hostPlatform,
       );
+      if (!mounted || accountRevision != _accountUiRevision) return;
       final opened =
           result.linked ? true : await _launchExternalHandoff(result.botUrl);
+      if (!mounted || accountRevision != _accountUiRevision) return;
       unawaited(
         bonusActions.reportTelegramLinkEvent(
           hostPlatform: widget.appContext.hostPlatform,
           eventName: opened ? 'handoff_opened' : 'handoff_open_failed',
         ),
       );
-      if (!mounted) {
-        return;
-      }
       setState(() {
         _telegramBonusBusy = false;
         _telegramBonusStatus = result.linked
@@ -2047,10 +2141,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         await _refreshSubscriptionInfo(showFailure: true);
       }
     } on Object {
+      if (!mounted || accountRevision != _accountUiRevision) return;
       unawaited(_reportClientRuntimeError('telegram_link_failed'));
-      if (!mounted) {
-        return;
-      }
       setState(() {
         _telegramBonusBusy = false;
         _telegramBonusError =
@@ -2060,6 +2152,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   Future<void> _verifyTelegramLinkAfterHandoff() async {
+    final accountRevision = _accountUiRevision;
     if (_telegramBonusBusy || !_telegramLinkVerificationPending) {
       return;
     }
@@ -2080,7 +2173,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         ),
       );
       final updated = await _refreshSubscriptionInfo();
-      if (!mounted) {
+      if (!mounted || accountRevision != _accountUiRevision) {
         return;
       }
       final linked = updated && (_subscriptionInfo?.telegramLinked ?? false);
@@ -2095,6 +2188,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         }
       });
     } on Object {
+      if (!mounted || accountRevision != _accountUiRevision) return;
       unawaited(_reportClientRuntimeError('telegram_verify_failed'));
       if (mounted) {
         setState(() {
@@ -2107,6 +2201,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   Future<void> _checkTelegramBonusInApp() async {
+    final accountRevision = _accountUiRevision;
     final bonusActions = _bonusActionService;
     if (bonusActions == null) {
       await _openSafeHandoff(
@@ -2125,7 +2220,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       final status = await bonusActions.checkChannelBonus(
         hostPlatform: widget.appContext.hostPlatform,
       );
-      if (!mounted) {
+      if (!mounted || accountRevision != _accountUiRevision) {
         return;
       }
       setState(() {
@@ -2134,7 +2229,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _telegramBonusStatus = _telegramBonusStatusForStatus(status);
       });
     } on Object {
-      if (!mounted) {
+      if (!mounted || accountRevision != _accountUiRevision) {
         return;
       }
       setState(() {
@@ -2146,6 +2241,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   Future<void> _claimTelegramBonusInApp() async {
+    final accountRevision = _accountUiRevision;
     final bonusActions = _bonusActionService;
     if (bonusActions == null || !_telegramBonusCanClaim) {
       await _checkTelegramBonusInApp();
@@ -2161,7 +2257,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       final result = await bonusActions.claimChannelBonus(
         hostPlatform: widget.appContext.hostPlatform,
       );
-      if (!mounted) {
+      if (!mounted || accountRevision != _accountUiRevision) {
         return;
       }
       setState(() {
@@ -2180,7 +2276,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         tone: PokrovSnackTone.success,
       );
     } catch (error) {
-      if (!mounted) {
+      if (!mounted || accountRevision != _accountUiRevision) {
         return;
       }
       setState(() {
@@ -2195,6 +2291,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   Future<void> _loadBonusSummary({bool force = false}) async {
+    final accountRevision = _accountUiRevision;
     if (_bonusSummaryBusy) {
       return;
     }
@@ -2223,7 +2320,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       final summary = await bonusActions.fetchBonusSummary(
         hostPlatform: widget.appContext.hostPlatform,
       );
-      if (!mounted) {
+      if (!mounted || accountRevision != _accountUiRevision) {
         return;
       }
       setState(() {
@@ -2231,7 +2328,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _bonusSummaryBusy = false;
       });
     } on Object {
-      if (!mounted) {
+      if (!mounted || accountRevision != _accountUiRevision) {
         return;
       }
       setState(() {
@@ -2265,6 +2362,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       AppFirstBonusActionService service,
     ) run,
   }) async {
+    final accountRevision = _accountUiRevision;
     if (_bonusRewardBusy) {
       return null;
     }
@@ -2281,7 +2379,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     try {
       PokrovHaptics.tap();
       final result = await run(bonusActions);
-      if (!mounted) {
+      if (!mounted || accountRevision != _accountUiRevision) {
         return null;
       }
       setState(() {
@@ -2307,7 +2405,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       );
       return result;
     } catch (error) {
-      if (!mounted) {
+      if (!mounted || accountRevision != _accountUiRevision) {
         return null;
       }
       setState(() {
@@ -2453,6 +2551,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         },
         runtimeSnapshot: _protectionRuntimeSnapshot,
         retainsProtection: () => _connectionManager.retainsProtection,
+        dnsOnly: () => _connectionManager._smartAccessRouteProfile?.policy.vpnAvailable == false &&
+            _runtimeSnapshot?.effectiveProfileDigest == _connectionManager._smartAccessRouteProfile?.digest,
         confirmedLocationLabel: () =>
             _runtimeSnapshot?.isCleanlyHealthy == true && _activeNodeCode.isNotEmpty
                 ? _locationLabelForNodeCode(
@@ -3616,7 +3716,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
               PokrovPersistentSupportModeBanner(
                 view: supportModeView,
                 onOpenDiagnostics: _openDiagnostics,
-                onDisable: () => unawaited(_supportModeController.disable()),
+                onDisable: () => unawaited(_disableSupportModeFromBanner()),
               ),
               Expanded(child: shell),
             ],

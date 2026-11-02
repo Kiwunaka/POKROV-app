@@ -15,6 +15,64 @@ import 'package:pokrov_runtime_engine/runtime_engine.dart';
 void main() {
   final now = DateTime.utc(2026, 8, 21, 12);
 
+  test('failed support mode disable stops collection and remains retryable', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-support-disable-');
+    final stateFile = File('${directory.path}/support-mode-state-v1.json');
+    addTearDown(() async {
+      if (await stateFile.exists()) await stateFile.delete();
+      final next = File('${stateFile.path}.next');
+      if (await next.exists()) await next.delete();
+    });
+    final signing = Ed25519();
+    final key = await signing.newKeyPair();
+    final publicKey = _b64((await key.extractPublicKey()).bytes);
+    final payload = <String, Object?>{
+      'allowed_categories': ['build', 'network', 'redaction'],
+      'allowed_collectors': ['build_summary', 'network_summary', 'redaction_report'],
+      'audience': {'app_version': '1.2.0+30', 'build_number': 'candidate-test', 'platform': 'windows'},
+      'expires_at': now.add(const Duration(minutes: 20)).toIso8601String(),
+      'issued_at': now.toIso8601String(),
+      'maximum_bundle_bytes': 1024 * 1024, 'maximum_total_bytes': 2 * 1024 * 1024,
+      'maximum_bundles': 2, 'nonce': 'AAAAAAAAAAAAAAAAAAAAAA',
+      'policy_id': 'spol-0123456789abcdef01234567', 'profile': 'extended',
+      'schema_version': 2, 'type': 'pokrov.support.collection_policy',
+    };
+    final bytes = utf8.encode(jsonEncode(payload));
+    final envelope = <String, Object?>{
+      'algorithm': 'Ed25519', 'key_id': 'root-test', 'payload_b64': _b64(bytes),
+      'schema_version': 1, 'signature_b64': _b64((await signing.sign(bytes, keyPair: key)).bytes),
+    };
+    final policy = await SupportSignedContractVerifier(signingPublicKeysById: {'root-test': publicKey})
+        .verifyCollectionPolicy(envelope, now: now, platform: 'windows',
+          appVersion: '1.2.0+30', buildNumber: 'candidate-test');
+    var failWrite = false;
+    final controller = PokrovSupportModeController(
+      signingPublicKeysById: {'root-test': publicKey}, platform: 'windows',
+      appVersion: '1.2.0+30', buildNumber: 'candidate-test', clock: () => now,
+      directoryResolver: () async {
+        if (failWrite) throw const FileSystemException('synthetic write failure');
+        return directory;
+      },
+    );
+    addTearDown(controller.dispose);
+    await controller.activate(SupportModeActivation(signedPolicy: envelope, policy: policy), userConfirmed: true);
+    expect(controller.activePolicy, isNotNull);
+    failWrite = true;
+    await expectLater(controller.disable(), throwsA(isA<FileSystemException>()));
+    expect(controller.activePolicy, isNull);
+    expect(controller.view.active, isTrue);
+    expect(controller.view.disablePending, isTrue);
+    final prepared = const SupportBundleBuilder().prepare(
+      snapshot: _snapshot(), profile: SupportDiagnosticProfile.summary, now: now,
+    );
+    await expectLater(controller.registerBundle(prepared),
+      throwsA(isA<SupportBundleFailure>().having((e) => e.code, 'code', 'support_mode_inactive')));
+    failWrite = false;
+    await controller.disable();
+    expect(controller.view.active, isFalse);
+    expect((jsonDecode(await stateFile.readAsString()) as Map)['session'], isNull);
+  });
+
   test('restarted service completes saved ciphertext without a fresh preview or key',
       () async {
     final temporary = await Directory.systemTemp.createTemp('pokrov-retry-');

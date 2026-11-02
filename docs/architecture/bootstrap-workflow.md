@@ -617,6 +617,12 @@ While the system default is the VPN, Android candidate-network and trusted-Wi-Fi
 reads follow Core's observed physical uplink. An LTE-to-Wi-Fi handover therefore
 does not retain cellular identity merely because mobile data remains available.
 The selected Wi-Fi still requires its own permission-authorized SSID callback.
+Trusted-Wi-Fi pause requires the ordinary confirmed native stop, including release
+of any retained protection guard. An unconfirmed stop cannot acknowledge Rules
+Apply or start a replacement. A pending SSID read uses the latest pause rule and
+trusted names before stopping the tunnel. Settings edited while a protected
+replacement is settling remain pending until a replacement prepared for those
+settings succeeds.
 Probe journal entries use the validated `verify` stage and typed failure kind;
 a failed candidate is a degraded child event and cannot abort selection.
 The local probe budget and Core data-stall kinds are valid journal values;

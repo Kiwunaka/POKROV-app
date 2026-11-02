@@ -90,6 +90,43 @@ void main() {
     expect(service.requestedIds, [20, 20, 20]);
     controller.setForeground(false);
   });
+
+  testWidgets('late first ticket read cannot replace a newer send', (tester) async {
+    final service = _TicketService(_thread())..noTickets = true;
+    final controller = SupportConversationController(
+      service: service,
+      hostPlatform: HostPlatform.windows,
+      jitterSource: () => 0,
+    );
+    addTearDown(controller.dispose);
+    await controller.loadInitialThread();
+    final staleRead = Completer<SupportTicketThread>();
+    service.pendingRead = staleRead;
+
+    final firstSend = controller.send(
+      text: 'Initial message',
+      routeMode: RouteMode.allExceptRu,
+      attachDiagnostics: false,
+      statusLabel: '',
+      diagnostics: const {},
+    );
+    await tester.pump();
+    expect(controller.ticketId, 20);
+    service.thread = _thread(reply: true, followUp: true);
+    await controller.send(
+      text: 'Thanks, checking now',
+      routeMode: RouteMode.allExceptRu,
+      attachDiagnostics: false,
+      statusLabel: '',
+      diagnostics: const {},
+    );
+    staleRead.complete(_thread());
+    await firstSend;
+
+    expect(controller.messages.map((message) => message.body),
+        ['Initial message', 'Operator answer', 'Thanks, checking now']);
+    controller.setForeground(false);
+  });
 }
 
 SupportTicketThread _thread({int id = 20, bool closed = false, bool reply = false, bool followUp = false}) {
@@ -127,7 +164,22 @@ class _TicketService implements SupportTicketService {
   SupportTicketThread thread;
   final requestedIds = <int>[];
   int listCalls = 0;
+  bool noTickets = false;
   Completer<SupportTicketThread>? pendingRead;
+
+  @override
+  Future<SupportTicketReceipt> createTicket({
+    required HostPlatform hostPlatform,
+    required RouteMode routeMode,
+    required String statusLabel,
+    required String body,
+    String subject = '',
+    Map<String, Object?> diagnostics = const {},
+  }) async => const SupportTicketReceipt(
+        ticketId: 20,
+        statusTitle: '',
+        messageCount: 1,
+      );
 
   @override
   Future<SupportTicketThread> getTicket({
@@ -156,7 +208,7 @@ class _TicketService implements SupportTicketService {
     int limit = 5,
   }) async {
     listCalls++;
-    return [thread];
+    return noTickets ? [] : [thread];
   }
 
   @override

@@ -113,6 +113,55 @@ Future<CandidateRankerComparison> exercise(CandidateRankerShadow shadow) async {
 
 void main() {
   final binding = TestWidgetsFlutterBinding.ensureInitialized();
+  testWidgets('support mode disable can be retried after storage failure', (tester) async {
+    final report = shell.PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: HostPlatform.android, routeMode: RouteMode.fullTunnel,
+      snapshot: null, statusLabel: 'idle', warpState: 'disabled', now: DateTime.utc(2026, 11, 2),
+      appVersion: '1.5.0', buildNumber: 'fixture', releaseChannel: 'private',
+      candidateLabel: 'fixture', encryptedDeliveryAvailable: false,
+    );
+    var attempts = 0;
+    await tester.pumpWidget(MaterialApp(home: shell.PokrovDiagnosticsScreen(
+      initialReport: report, onRefresh: () async => report,
+      onOpenProtection: () {}, onOpenSupport: () {},
+      initialSupportMode: const shell.PokrovSupportModeView(
+        active: true, expiresAt: null, allowedCategories: [],
+        maximumTotalBytes: 100, consumedBytes: 0, maximumBundles: 1, consumedBundles: 0,
+      ),
+      onDisableSupportMode: () async {
+        attempts++;
+        if (attempts == 1) throw StateError('synthetic write failure');
+      },
+    )));
+    final technical = find.byKey(const ValueKey('diagnostics-technical-details'));
+    await tester.ensureVisible(technical);
+    await tester.tap(technical);
+    await tester.pumpAndSettle();
+    final disable = find.byKey(const ValueKey('diagnostics-disable-support-mode'));
+    await tester.scrollUntilVisible(disable, 400, scrollable: find.byType(Scrollable).first);
+    await tester.tap(disable);
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+    expect(find.text('Не удалось сохранить отключение. Повторите.'), findsOneWidget);
+    expect(tester.widget<OutlinedButton>(disable).onPressed, isNotNull);
+    await tester.tap(disable);
+    await tester.pumpAndSettle();
+    expect(attempts, 2);
+    expect(find.text('Выключен'), findsOneWidget);
+    expect(disable, findsNothing);
+
+    await tester.pumpWidget(MaterialApp(home: Scaffold(body: shell.PokrovPersistentSupportModeBanner(
+      view: const shell.PokrovSupportModeView(
+        active: true, expiresAt: null, allowedCategories: [], disablePending: true,
+        maximumTotalBytes: 100, consumedBytes: 0, maximumBundles: 1, consumedBundles: 0,
+      ),
+      onOpenDiagnostics: () {}, onDisable: () => attempts++,
+    ))));
+    expect(find.text('Отключение не сохранено. Повторите.'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('persistent-support-mode-disable')));
+    expect(attempts, 3);
+  });
+
   test('bundled model loads and scores using only the fixed Flutter asset', () async {
     final keys = <String>[];
     final bytes = Uint8List(CandidateRankerModel.byteLength)

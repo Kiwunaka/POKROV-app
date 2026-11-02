@@ -1260,15 +1260,22 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
       _supportModeBusy = true;
       _supportModeError = null;
     });
-    await action();
-    if (!mounted) {
-      return;
+    try {
+      await action();
+      if (!mounted) return;
+      setState(() {
+        _supportMode = const PokrovSupportModeView.inactive();
+      });
+      await _refresh();
+    } on Object {
+      if (mounted) {
+        setState(() {
+          _supportModeError = 'Не удалось сохранить отключение. Повторите.';
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _supportModeBusy = false);
     }
-    setState(() {
-      _supportMode = const PokrovSupportModeView.inactive();
-      _supportModeBusy = false;
-    });
-    await _refresh();
   }
 
   Future<void> _startFirstProviderQa() async {
@@ -1880,7 +1887,9 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _supportMode.active
+                    _supportMode.disablePending
+                        ? 'Отключение не сохранено'
+                        : _supportMode.active
                         ? 'Включен до ${_supportMode.expiresAt?.toLocal().toString().substring(11, 16) ?? '—'}'
                         : 'Выключен',
                     key: const ValueKey('diagnostics-support-mode-status'),
@@ -1888,7 +1897,9 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    _supportMode.active
+                    _supportMode.disablePending
+                        ? 'Сбор остановлен. Повторите отключение, чтобы сохранить его на устройстве.'
+                        : _supportMode.active
                         ? 'Категории: ${_supportMode.allowedCategories.map(_categoryRu).join(', ')}. Использовано ${_supportMode.consumedBytes} из ${_supportMode.maximumTotalBytes} байт и ${_supportMode.consumedBundles} из ${_supportMode.maximumBundles} пакетов.'
                         : 'Код выдаёт оператор для конкретного обращения, платформы и сборки. Режим всегда виден, не выполняет команды и отключится автоматически не позднее чем через 30 минут.',
                     style: theme.textTheme.bodySmall?.copyWith(
@@ -1906,7 +1917,9 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
                       key: const ValueKey('diagnostics-disable-support-mode'),
                       onPressed: _supportModeBusy ? null : _disableSupportMode,
                       icon: const Icon(Icons.stop_circle_outlined),
-                      label: const Text('Выключить режим'),
+                      label: Text(_supportMode.disablePending
+                          ? 'Повторить отключение'
+                          : 'Выключить режим'),
                     )
                   else if (!_supportMode.active &&
                       widget.onActivateSupportMode != null)
