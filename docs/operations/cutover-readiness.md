@@ -5,6 +5,17 @@ is the only current release queue; [Execution section 0](C:/Users/kiwun/Download
 explains how to continue. Dated results below retain their original scope and do
 not create new tasks or permission to repeat accepted checks.
 
+Private **1.5.0+4258** adds the owner-chosen task tabs (Защита, Доступ, Помощь,
+Настройки), home widgets, the Settings search and «ты» copy from App `819c43f3`.
+It reuses the 4257 Core `98af7fd` selection, Zapret2 release file, ranker model
+and transport trust defines. Four production-signed APKs (certificate
+`0A0602A7…`) and the unsigned Windows setup are in
+`E:/POKROV-tools/temp/release-1.5.0-4258` and in the owner-only GitHub draft
+«POKROV 1.5.0+4258 · закрытая сборка» (not published, no tag, no update
+pointer). Analyze and package tests passed; the shell keeps the same eight
+failing tests as `main` before the redesign. No phone, VM, TalkBack or
+Narrator check ran.
+
 Private **1.5.0+4257** contains six packages from App `a4f69339` under
 `E:/POKROV-tools/temp/release-1.5.0-4257`, with Core `98af7fd` (1.2.15/ABI2)
 and the authenticated Slipstream companions on Windows and all three Android ABIs.
