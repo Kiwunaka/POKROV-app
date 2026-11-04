@@ -28,6 +28,10 @@ it. Android recovery uses the native egress completion time for the same profile
 Healthy polling cannot renew proof, and successful egress clears only the previous
 egress failure, leaving other native failures and protected handoff ownership intact.
 
+Explicit Windows Exit, including a close button configured to quit, awaits the
+local clean-exit marker before native teardown. Hiding to the tray keeps the run
+active. Exit does not wait for the release-health network flush.
+
 Session/state reads use the caller's existing preparation or request timeout,
 including time spent waiting for the local state queue before any HTTP request.
 A timeout reports local storage failure (`APP-BOOT-004`) without an HTTP status

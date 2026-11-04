@@ -30,7 +30,8 @@ Future<void> main(List<String> arguments) async {
     releaseHealthService: bootstrapper,
   );
   installPokrovCrashHandlers(observability);
-  await _PokrovWindowsTray.install(shellController);
+  await _PokrovWindowsTray.install(shellController,
+      markCleanExit: observability.markCleanExit);
   if (Platform.isWindows) {
     // Tray-first lifecycle: the ✕ button hides to tray, the VPN keeps
     // running, and only the tray «Выход» actually quits.
@@ -112,6 +113,7 @@ Future<void> pokrovWindowsHandleClose({
   required Future<bool> Function() isPreventClose,
   required Future<bool> Function() closeToTray,
   required Future<void> Function() hide,
+  required Future<void> Function() markCleanExit,
   required Future<void> Function() destroyTray,
   required Future<void> Function() destroyWindow,
 }) async {
@@ -123,20 +125,22 @@ Future<void> pokrovWindowsHandleClose({
     return;
   }
   await pokrovWindowsExit(
+    markCleanExit: markCleanExit,
     destroyTray: destroyTray,
     destroyWindow: destroyWindow,
   );
 }
 
-/// Dispose tray state before requesting native window teardown. This orders
-/// shell shutdown deterministically; exact-artifact runtime and proxy
-/// restoration remains a Windows release check.
+/// Persist the local exit marker and dispose tray state before native teardown.
+/// Runtime and proxy restoration remains an exact-artifact Windows release check.
 @visibleForTesting
 Future<void> pokrovWindowsExit({
+  required Future<void> Function() markCleanExit,
   required Future<void> Function() destroyTray,
   required Future<void> Function() destroyWindow,
 }) async {
   try {
+    await markCleanExit();
     await destroyTray();
   } finally {
     await destroyWindow();
@@ -185,13 +189,17 @@ final class _PokrovWindowsTray with TrayListener, WindowListener {
 
   static final _PokrovWindowsTray _instance = _PokrovWindowsTray._();
   PokrovShellController? _shellController;
+  late Future<void> Function() _markCleanExit;
   Future<void> _menuUpdate = Future<void>.value();
 
-  static Future<void> install(PokrovShellController shellController) async {
+  static Future<void> install(PokrovShellController shellController, {
+    required Future<void> Function() markCleanExit,
+  }) async {
     if (!Platform.isWindows) {
       return;
     }
     _instance._shellController = shellController;
+    _instance._markCleanExit = markCleanExit;
     shellController.addListener(_instance._scheduleMenuUpdate);
     trayManager.addListener(_instance);
     windowManager.addListener(_instance);
@@ -268,6 +276,7 @@ final class _PokrovWindowsTray with TrayListener, WindowListener {
           return preferences.closeToTray;
         },
         hide: windowManager.hide,
+        markCleanExit: _markCleanExit,
         destroyTray: _destroyTray,
         destroyWindow: windowManager.destroy,
       ),
@@ -297,6 +306,7 @@ final class _PokrovWindowsTray with TrayListener, WindowListener {
       case 'exit_app':
         unawaited(
           pokrovWindowsExit(
+            markCleanExit: _markCleanExit,
             destroyTray: _destroyTray,
             destroyWindow: windowManager.destroy,
           ),

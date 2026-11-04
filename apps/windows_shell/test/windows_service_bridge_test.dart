@@ -28,6 +28,44 @@ class _TrayController extends PokrovShellController {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('explicit Windows exit waits for the local clean marker before native teardown', () async {
+    final markerWrite = Completer<void>();
+    final calls = <String>[];
+    final closing = windows.pokrovWindowsExit(
+      markCleanExit: () async {
+        calls.add('marker_started');
+        await markerWrite.future;
+        calls.add('marker_clean');
+      },
+      destroyTray: () async => calls.add('tray_destroyed'),
+      destroyWindow: () async => calls.add('window_destroyed'),
+    );
+    await pumpEventQueue();
+    expect(calls, ['marker_started'], reason: 'native quit cannot cut off a pending marker write');
+    markerWrite.complete();
+    await closing;
+    expect(calls, ['marker_started', 'marker_clean', 'tray_destroyed', 'window_destroyed']);
+  });
+
+  test('Windows close keeps the tray run active and marks only an explicit exit clean', () async {
+    final calls = <String>[];
+    var closeToTray = true;
+    Future<void> close() => windows.pokrovWindowsHandleClose(
+      isPreventClose: () async => true,
+      closeToTray: () async => closeToTray,
+      hide: () async => calls.add('hidden'),
+      markCleanExit: () async => calls.add('marker_clean'),
+      destroyTray: () async => calls.add('tray_destroyed'),
+      destroyWindow: () async => calls.add('window_destroyed'),
+    );
+    await close();
+    expect(calls, ['hidden']);
+    calls.clear();
+    closeToTray = false;
+    await close();
+    expect(calls, ['marker_clean', 'tray_destroyed', 'window_destroyed']);
+  });
+
   test('Windows links retain the last startup URI until the shell listens', () async {
     expect(windows.pokrovWindowsShouldStartHidden(['--startup']), isTrue);
     for (final path in ['', '/']) {
