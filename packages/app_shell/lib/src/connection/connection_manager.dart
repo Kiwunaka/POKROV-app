@@ -4527,7 +4527,7 @@ class ConnectionManager extends ChangeNotifier {
           if (cacheService != null && cachedPayload == null) rethrow;
           usedCachedProfile = true;
         } on BootstrapFailure catch (error) {
-          if (error.statusCode == 401 || error.statusCode == 403) {
+          if (!error.sessionRejected && (error.statusCode == 401 || error.statusCode == 403)) {
             _cachedProfileFallbackGate.markAuthorizationDenied();
           }
           if (!cachedProfileFallbackAllowed ||
@@ -5661,7 +5661,8 @@ class ConnectionManager extends ChangeNotifier {
             smartAccessVpnFallback: smartAccessVpnFallback,
             recoveryCandidateRef: currentRef, excludedCandidateRefs: failedActivations, deadline: _actionTimeout);
       } on Object catch (error) {
-        if (error is BootstrapFailure && (error.statusCode == 401 || error.statusCode == 403)) {
+        if (error is BootstrapFailure && !error.sessionRejected &&
+            (error.statusCode == 401 || error.statusCode == 403)) {
           _cachedProfileFallbackGate.markAuthorizationDenied();
         }
         if (smartAccessFallback != null ||

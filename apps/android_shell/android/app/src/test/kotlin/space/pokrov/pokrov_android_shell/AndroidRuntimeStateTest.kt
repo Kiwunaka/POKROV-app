@@ -737,6 +737,42 @@ class AndroidRuntimeStateTest {
     }
 
     @Test
+    fun egressCompletionRenewsProofWithoutPollingAndClearsOnlyItsOwnFailure() {
+        val profile = "a".repeat(64)
+        AndroidRuntimeState.markProfileStaged("/synthetic/profile.json", profileDigest = profile)
+        AndroidRuntimeState.bindActiveProfile(profile)
+        AndroidRuntimeState.markRunning("synthetic running")
+        AndroidRuntimeState.updateDefaultNetwork("wlan0", 1, true)
+        AndroidRuntimeState.updateCoreEgressValidation(true)
+        val first = AndroidRuntimeState.snapshot()["coreEgressValidatedAt"] as String
+        assertEquals(first, AndroidRuntimeState.snapshot()["coreEgressValidatedAt"])
+
+        AndroidRuntimeState.updateCoreEgressValidation(false)
+        AndroidRuntimeState.markDegraded("core_egress_connect_failed", "egress failed")
+        assertNull(AndroidRuntimeState.snapshot()["coreEgressValidatedAt"])
+        AndroidRuntimeState.updateCoreEgressValidation(true)
+        val recovered = AndroidRuntimeState.snapshot()
+        assertNull(recovered["last_failure_kind"])
+        assertEquals("healthy", recovered["hostHealth"])
+        assertTrue(java.time.Instant.parse(recovered["coreEgressValidatedAt"] as String) >=
+            java.time.Instant.parse(first))
+
+        // A successful periodic check also renews a continuously healthy proof.
+        val previous = "2000-01-01T00:00:00Z"
+        setPrivateField("coreEgressValidatedAt", previous)
+        AndroidRuntimeState.updateCoreEgressValidation(true)
+        assertTrue(java.time.Instant.parse(AndroidRuntimeState.snapshot()["coreEgressValidatedAt"] as String) >
+            java.time.Instant.parse(previous))
+        AndroidRuntimeState.markDegraded("protected_handoff_failed", "replacement failed")
+        AndroidRuntimeState.updateCoreEgressValidation(true)
+        assertEquals("protected_handoff_failed", AndroidRuntimeState.snapshot()["last_failure_kind"])
+        AndroidRuntimeState.bindActiveProfile("b".repeat(64))
+        assertNull(AndroidRuntimeState.snapshot()["coreEgressValidatedAt"])
+        AndroidRuntimeState.updateCoreEgressValidation(true)
+        assertNull(AndroidRuntimeState.snapshot()["coreEgressValidatedAt"])
+    }
+
+    @Test
     fun effectiveIdentityBelongsToTheActiveProfileAndClearsAfterStop() {
         val first = "a".repeat(64)
         val second = "b".repeat(64)
@@ -805,6 +841,7 @@ class AndroidRuntimeStateTest {
         setPrivateField("dnsReady", false)
         setPrivateField("vpnValidated", null)
         setPrivateField("coreEgressValidated", null)
+        setPrivateField("coreEgressValidatedAt", null)
         setPrivateField("lastFailureKind", null)
         setPrivateField("lastFailureSignature", null)
         setPrivateField("lastFailureHints", null)

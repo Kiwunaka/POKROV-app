@@ -17,6 +17,17 @@ first-session events. Delayed best-effort telemetry therefore cannot hold the
 subscription/authentication refresh or leave the access label unresolved.
 The existing session refresh, identity and entitlement rules remain unchanged.
 
+A rejected API session asks the user to sign in again without stopping a healthy
+node-accepted paid tunnel or withdrawing its Quick Settings/always-on profile.
+A confirmed entitlement denial still stops it. Refresh retries a lost response
+once after 500 ms within the server's 60-second unused-successor window; only an
+explicit server auth code clears the saved pair, never an HTML 403/404 alone.
+Transient routing-catalog failures retain the previously verified signed envelope
+within its original expiry and revision floors; explicit disable still withdraws
+it. Android recovery uses the native egress completion time for the same profile.
+Healthy polling cannot renew proof, and successful egress clears only the previous
+egress failure, leaving other native failures and protected handoff ownership intact.
+
 Session/state reads use the caller's existing preparation or request timeout,
 including time spent waiting for the local state queue before any HTTP request.
 A timeout reports local storage failure (`APP-BOOT-004`) without an HTTP status

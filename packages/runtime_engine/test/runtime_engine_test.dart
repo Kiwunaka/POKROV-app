@@ -624,6 +624,38 @@ void main() {
     expect(unavailable.hasSameStateAs(ready), isFalse);
   });
 
+  test('Android proof follows native egress completion without renewal by polling', () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    final firstTime = DateTime.now().toUtc().subtract(const Duration(minutes: 1));
+    final response = <String, Object?>{
+      'phase': 'running', 'hostHealth': 'healthy', 'dnsState': 'healthy',
+      'uplinkState': 'healthy', 'dns_ready': true, 'core_egress_validated': true,
+      'stagedProfileDigest': 'a' * 64, 'effectiveProfileDigest': 'a' * 64,
+      'coreEgressValidatedAt': firstTime.toIso8601String(),
+    };
+    messenger.setMockMethodCallHandler(channel, (call) async => response);
+    final engine = createRuntimeEngine(hostPlatform: HostPlatform.android);
+    final first = await engine.snapshot();
+    expect(first.proofObservedAt, firstTime, reason: 'cold attach uses the real native completion time');
+    expect((await engine.snapshot()).proofObservedAt, firstTime,
+        reason: 'an unchanged healthy snapshot is not a new egress check');
+    final nextTime = DateTime.now().toUtc().subtract(const Duration(seconds: 1));
+    response['coreEgressValidatedAt'] = nextTime.toIso8601String();
+    final renewed = await engine.snapshot();
+    expect(renewed.proofObservedAt, nextTime);
+    expect(first.hasSameStateAs(renewed), isFalse);
+    response.remove('coreEgressValidatedAt');
+    expect((await engine.snapshot()).proofObservedAt, isNull);
+    response['coreEgressValidatedAt'] = DateTime.now().toUtc().add(const Duration(hours: 1)).toIso8601String();
+    expect((await engine.snapshot()).proofObservedAt, isNull);
+    response['coreEgressValidatedAt'] = nextTime.toIso8601String();
+    response['core_egress_validated'] = false;
+    expect((await engine.snapshot()).proofObservedAt, isNull,
+        reason: 'the retained timestamp cannot prove a failed current tunnel');
+  });
+
   test('running egress failure preserves its observation without claiming a stop',
       () async {
     const channel = MethodChannel('space.pokrov/runtime_engine');

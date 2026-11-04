@@ -280,8 +280,8 @@ class RuntimeSnapshot {
   final RuntimeProfileSource? stagedProfileSource;
   final RuntimeProfileSource? effectiveProfileSource;
 
-  /// First observed transition into this proof. Unknown when attaching to an
-  /// already proven service; polling alone never renews this timestamp.
+  /// Native egress completion time on Android; elsewhere the first observed
+  /// transition into this proof. Polling alone never renews this timestamp.
   final DateTime? proofObservedAt;
   final String? lastFailureKind;
   final RuntimeEgressProbeObservation? egressProbeObservation;
@@ -4718,11 +4718,20 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
         resolvedDnsState == RuntimeDiagnosticState.healthy &&
         resolvedUplinkState == RuntimeDiagnosticState.healthy &&
         dnsReady != false && coreEgressValidated == true;
-    if (!fullProof || _lastProofDigest != effectiveDigest) {
-      _proofObservedAt = null;
-    }
-    if (fullProof && _previousFullProof == false) {
-      _proofObservedAt = DateTime.now().toUtc();
+    if (hostPlatform == HostPlatform.android) {
+      final wireTime = response['coreEgressValidatedAt'];
+      final nativeTime = wireTime is String ? DateTime.tryParse(wireTime) : null;
+      _proofObservedAt = fullProof && effectiveDigest != null &&
+              nativeTime != null && nativeTime.isUtc &&
+              !nativeTime.isAfter(DateTime.now().toUtc())
+          ? nativeTime : null;
+    } else {
+      if (!fullProof || _lastProofDigest != effectiveDigest) {
+        _proofObservedAt = null;
+      }
+      if (fullProof && _previousFullProof == false) {
+        _proofObservedAt = DateTime.now().toUtc();
+      }
     }
     _previousFullProof = fullProof;
     _lastProofDigest = effectiveDigest;

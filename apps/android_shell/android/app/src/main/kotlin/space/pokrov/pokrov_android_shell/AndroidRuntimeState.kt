@@ -90,6 +90,7 @@ internal object AndroidRuntimeState {
     private var dnsReady: Boolean = false
     private var vpnValidated: Boolean? = null
     private var coreEgressValidated: Boolean? = null
+    private var coreEgressValidatedAt: String? = null
     private var stagedProfileDigest: String? = null
     private var stagedRequiresBoundConnect: Boolean = false
     private var activeProfileDigest: String? = null
@@ -686,10 +687,20 @@ internal object AndroidRuntimeState {
             activeProfileDigest != null && (activeProfileDigest == stagedProfileDigest ||
                 (phase == AndroidRuntimePhase.RUNNING && stagedProfileDigest == null && stagedConfigPath == null))
         } else validated
+        // Published only after the service accepts a real egress result for its
+        // active profile. Reading a healthy snapshot never renews this proof.
+        coreEgressValidatedAt = if (coreEgressValidated == true) Instant.now().toString() else null
         if (validated == true && coreEgressValidated != true) {
             lastFailureKind = "profile_identity_mismatch"
             lastMessage = AndroidRuntimeSafety.publicFailureMessage("profile_identity_mismatch")
             return
+        }
+        if (coreEgressValidated == true && phase == AndroidRuntimePhase.RUNNING) {
+            when (lastFailureKind) {
+                "core_egress_probe_failed", "core_egress_dns_failed", "core_egress_connect_failed",
+                "core_egress_tls_failed", "core_egress_timeout", "core_egress_probe_unavailable" ->
+                    lastFailureKind = null
+            }
         }
         if (
             validated == true &&
@@ -888,6 +899,9 @@ internal object AndroidRuntimeState {
             "dns_ready" to dnsReady,
             "vpn_validated" to vpnValidated,
             "core_egress_validated" to coreEgressValidated,
+            "coreEgressValidatedAt" to coreEgressValidatedAt?.takeIf {
+                phase == AndroidRuntimePhase.RUNNING && coreEgressValidated == true
+            },
             "last_failure_kind" to lastFailureKind,
             "safe_failure_signature" to lastFailureSignature?.takeIf { lastFailureKind != null },
             "safe_failure_hints" to lastFailureHints?.takeIf { lastFailureSignature != null && lastFailureKind != null },

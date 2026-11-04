@@ -1177,7 +1177,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
   void _stopNotificationsOnSessionFailure(Object error) {
     if (_accountSessionCoordinator.recordSessionFailure(error)) {
-      unawaited(_connectionManager.denyAccess());
+      // A rejected login does not revoke the paid profile already accepted by
+      // the node. Only a confirmed entitlement denial stops that tunnel.
       if (mounted) setState(() {});
     }
     if (error is BootstrapFailure &&

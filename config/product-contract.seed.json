@@ -67,10 +67,10 @@
     "public_urls_sha256": "022f7ba577714bdc0bffd3cc00254309af346ef0c8fc62fe9c52e40d72a0de67",
     "copy_catalog_contract": "copy/catalog.ru.json",
     "copy_catalog_version": "2026-07-23-competitor-style-v2",
-    "copy_catalog_sha256": "d5804cf3351758e6edadcbf734650059f2b69a65da8465fa357bbe740518cc72",
+    "copy_catalog_sha256": "8cebe9ed24b646d636b5fd528b0fb9859267db0b027a6379c0882e4686a65bc2",
     "marketing_governance_contract": "shared/contracts/marketing/marketing-governance.v1.json",
     "marketing_governance_revision": "2026-08-22.1",
-    "marketing_governance_contract_sha256": "97ee8de9cc4abe1456d116f044cccdbe907c1dd1adc95d168c90304f3fba3e38"
+    "marketing_governance_contract_sha256": "bdc10fc261c8092eec898295feb9f67c00706fa79937e9af7aef51bf28901612"
   },
   "apple_publication": {
     "credentials_in_repo": false,

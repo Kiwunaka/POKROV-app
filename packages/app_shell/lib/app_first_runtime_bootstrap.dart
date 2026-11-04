@@ -1135,7 +1135,7 @@ String? portalFailureUserMessage(PortalFailureReason? reason) => switch (reason)
   PortalFailureReason.refreshTokenInvalid || PortalFailureReason.refreshReuseDetected ||
   PortalFailureReason.refreshExpired || PortalFailureReason.sessionRevoked ||
   PortalFailureReason.deviceCredentialChanged || PortalFailureReason.sessionEpochChanged =>
-    'Сессия устройства больше не действует. Открой «Восстановить вход» во вкладке «Доступ». Если код не помогает, используй привязанную почту или напиши в поддержку.',
+    'Войди заново. Открой «Восстановить вход» во вкладке «Доступ». Если код не помогает, используй привязанную почту или напиши в поддержку.',
   PortalFailureReason.accountNotFound || PortalFailureReason.accountUnavailable ||
   PortalFailureReason.accountRestricted =>
     'Аккаунт недоступен. Напиши в поддержку через Telegram или кабинет.',
@@ -5319,7 +5319,7 @@ class AppFirstRuntimeBootstrapper
       await requireSameSession();
       if (error.statusCode == HttpStatus.unauthorized ||
           error.statusCode == HttpStatus.forbidden ||
-          error.code.startsWith('routing_catalog_')) {
+          error.code == 'routing_catalog_disabled') {
         // Known denial/disable wins over cache. Storage failure cannot turn it
         // into a cached success; retained monotonic floors are never deleted.
         try {
@@ -7460,6 +7460,10 @@ class AppFirstRuntimeBootstrapper
               !(error.operationalCode == 'API-002' ||
                 error.operationalCode == 'API-003' ||
                 const {500, 502, 503, 504}.contains(error.statusCode))) rethrow;
+          await _delayScheduler(const Duration(milliseconds: 500));
+          final current = await _loadRefreshSuccessor(hostPlatform, state);
+          if (current.refreshToken != state.refreshToken ||
+              current.sessionToken != state.sessionToken) return current;
         }
       }
       final receipt = response!;
@@ -7516,9 +7520,13 @@ class AppFirstRuntimeBootstrapper
         return nextState;
       });
     } on BootstrapFailure catch (error) {
-      if (error.statusCode == HttpStatus.unauthorized ||
-          error.statusCode == HttpStatus.forbidden ||
-          error.statusCode == HttpStatus.notFound) {
+      if (const {
+        'auth_session_expired', 'fresh_auth_required', 'device_recovery_required',
+        'refresh_token_invalid', 'refresh_reuse_detected', 'refresh_expired',
+        'session_revoked', 'session_state_changed', 'device_revoked',
+        'device_not_found', 'account_not_found', 'account_unavailable',
+        'device_credential_changed', 'session_epoch_changed',
+      }.contains(error.code)) {
         final latest = await _sessionSecretStore.readSessionPair(
           hostPlatform: hostPlatform,
           installId: state.installId,

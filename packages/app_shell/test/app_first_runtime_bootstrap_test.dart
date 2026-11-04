@@ -279,6 +279,68 @@ class _NoConnectBootstrapper implements ManagedProfileBootstrapper {
 }
 
 void main() {
+  test('catalog service failure retains verified policy until its signed expiry or explicit disable', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-catalog-service-failure-');
+    addTearDown(() => directory.delete(recursive: true));
+    const platform = HostPlatform.windows;
+    const installId = 'catalog-outage-install';
+    await File('${directory.path}/app-first-session-windows.json').writeAsString(jsonEncode({
+      'schema_version': 1, 'install_id': installId, 'account_id': 'catalog-account',
+      'session_token_storage': 'secure', 'managed_manifest_path': '/api/client/profile/managed',
+    }));
+    final secrets = MemoryAppFirstSessionSecretStore();
+    await secrets.writeSessionToken(hostPlatform: platform, installId: installId, sessionToken: 'catalog-access');
+    var now = DateTime.now().toUtc();
+    String wire(DateTime value) => '${value.toIso8601String().substring(0, 19)}Z';
+    final key = await Ed25519().newKeyPair();
+    final envelope = await _qaSigned({
+      'schema_version': 'pokrov-routing-catalog-v1', 'revision': 1, 'security_revision': 1,
+      'audience': 'production', 'issued_at': wire(now.subtract(const Duration(seconds: 1))),
+      'expires_at': wire(now.add(const Duration(hours: 1))),
+      'sources': <Object>[], 'evidence': <Object>[], 'services': <Object>[],
+    }, 'pokrov-routing-catalog-v1', key);
+    final store = RoutingCatalogStore(enabled: true, now: () => now,
+      verifier: RoutingCatalogVerifier(publicKeysById: {
+        'qa-test': base64Encode((await key.extractPublicKey()).bytes),
+      }, audience: 'production'));
+    var failureCode = '';
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    server.listen((request) async {
+      await request.drain<void>();
+      expect(request.uri.path, '/api/client/routing-catalog');
+      request.response.headers.contentType = ContentType.json;
+      if (failureCode.isEmpty) {
+        request.response.write(jsonEncode({'schema': 'routing-catalog-response-v1', 'envelope': envelope}));
+      } else {
+        request.response.statusCode = HttpStatus.serviceUnavailable;
+        request.response.headers.set('X-POKROV-Error', failureCode);
+        request.response.write(jsonEncode({'detail': failureCode}));
+      }
+      await request.response.close();
+    });
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/', supportDirectoryResolver: () async => directory,
+      sessionSecretStore: secrets, routingCatalogStore: store, maxRequestAttempts: 1);
+    final accepted = (await bootstrapper.fetchRoutingCatalog(hostPlatform: platform))!;
+    expect(accepted.usingCache, isFalse);
+    failureCode = 'routing_catalog_unavailable';
+    final cached = (await bootstrapper.fetchRoutingCatalog(hostPlatform: platform))!;
+    expect(cached.usingCache, isTrue);
+    expect(cached.catalog.payloadSha256, accepted.catalog.payloadSha256);
+    failureCode = 'routing_catalog_disabled';
+    await expectLater(bootstrapper.fetchRoutingCatalog(hostPlatform: platform),
+      throwsA(isA<BootstrapFailure>().having((error) => error.code, 'disable', failureCode)));
+    expect(await store.read(), isNull, reason: 'explicit disable still withdraws cached authority');
+    failureCode = '';
+    await bootstrapper.fetchRoutingCatalog(hostPlatform: platform);
+    now = now.add(const Duration(hours: 2));
+    failureCode = 'routing_catalog_unavailable';
+    await expectLater(bootstrapper.fetchRoutingCatalog(hostPlatform: platform),
+      throwsA(isA<BootstrapFailure>().having((error) => error.statusCode, 'status', 503)));
+    expect(await store.read(), isNull, reason: 'a service outage cannot extend the signed expiry');
+  });
+
   test('neutral signed catalog keeps VPN defaults and rejects Selective without services', () async {
     final now = DateTime.now().toUtc();
     String wire(DateTime time) => '${time.toIso8601String().substring(0, 19)}Z';
@@ -4019,11 +4081,14 @@ void main() {
     final refreshStarted = Completer<void>();
     final releaseRefresh = Completer<void>();
     final profileDenied = Completer<void>();
+    final retryScheduled = Completer<Duration>();
+    final releaseRetry = Completer<void>();
     var denied = 0;
     var refreshes = 0;
     final authorizedPaths = <String>[];
     addTearDown(() async {
       if (!releaseRefresh.isCompleted) releaseRefresh.complete();
+      if (!releaseRetry.isCompleted) releaseRetry.complete();
       await server.close(force: true);
     });
     server.listen((request) async {
@@ -4073,6 +4138,10 @@ void main() {
       supportDirectoryResolver: () async => directory,
       sessionSecretStore: secrets,
       maxRequestAttempts: 1,
+      delayScheduler: (delay) {
+        retryScheduled.complete(delay);
+        return releaseRetry.future;
+      },
     );
     final support = AppFirstSupportTicketService(bootstrapper: bootstrapper);
     final subscription = bootstrapper.fetchClientSubscription(
@@ -4095,6 +4164,10 @@ void main() {
     await cancelledProfile.timeout(const Duration(seconds: 1));
     expect(refreshes, 1, reason: 'caller cancellation does not abort the pending session rotation');
     releaseRefresh.complete();
+    expect(await retryScheduled.future, const Duration(milliseconds: 500));
+    await pumpEventQueue();
+    expect(refreshes, 1, reason: 'a lost response cannot start an immediate refresh loop');
+    releaseRetry.complete();
     expect((await subscription).lane, 'paid');
     expect((await tickets).single.id, 88);
     expect(await stats, isTrue);
@@ -4230,6 +4303,66 @@ void main() {
         hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel),
     );
     expect(cached?.profileName, payload.profileName);
+  });
+
+  test('HTML refresh denial preserves credentials and allows a later successful refresh', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-refresh-waf-denial-');
+    addTearDown(() => directory.delete(recursive: true));
+    const platform = HostPlatform.windows;
+    const installId = 'refresh-waf-install';
+    await File('${directory.path}/app-first-session-windows.json').writeAsString(jsonEncode({
+      'schema_version': 1, 'install_id': installId, 'account_id': 'refresh-waf-account',
+      'session_token_storage': 'secure', 'managed_manifest_path': '/api/client/profile/managed',
+    }));
+    final secrets = MemoryAppFirstSessionSecretStore();
+    await secrets.writeSessionPair(hostPlatform: platform, installId: installId,
+      pair: const AppFirstSessionCredentials(accessToken: 'expired-access', refreshToken: 'saved-refresh'));
+    var refreshStatus = HttpStatus.forbidden;
+    var refreshes = 0;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    server.listen((request) async {
+      await request.drain<void>();
+      if (request.uri.path == '/api/client/session/refresh') {
+        refreshes++;
+        request.response.statusCode = refreshStatus;
+        if (refreshStatus == HttpStatus.ok) {
+          request.response.headers.contentType = ContentType.json;
+          request.response.write(jsonEncode({'session': {
+            'access_token': 'fresh-access', 'refresh_token': 'rotated-refresh', 'account_id': 'refresh-waf-account',
+          }}));
+        } else {
+          request.response.headers.contentType = ContentType.html;
+          request.response.write('<html>Request blocked</html>');
+        }
+      } else {
+        expect(request.uri.path, '/api/client/subscription');
+        request.response.headers.contentType = ContentType.json;
+        if (request.headers.value(HttpHeaders.authorizationHeader) == 'Bearer expired-access') {
+          request.response.statusCode = HttpStatus.unauthorized;
+          request.response.write('{"detail":"expired"}');
+        } else {
+          request.response.write('{"lane":"paidUnlimited","access_state":"paid_unlimited"}');
+        }
+      }
+      await request.response.close();
+    });
+    final bootstrapper = AppFirstRuntimeBootstrapper(apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => directory, sessionSecretStore: secrets, maxRequestAttempts: 1);
+    for (final status in [HttpStatus.forbidden, HttpStatus.notFound]) {
+      refreshStatus = status;
+      await expectLater(bootstrapper.fetchClientSubscription(hostPlatform: platform),
+        throwsA(isA<BootstrapFailure>()
+          .having((error) => error.statusCode, 'observed status', status)
+          .having((error) => error.sessionRejected, 'definite session rejection', isFalse)));
+      expect((await secrets.readSessionPair(hostPlatform: platform, installId: installId))?.refreshToken,
+        'saved-refresh');
+    }
+    refreshStatus = HttpStatus.ok;
+    expect((await bootstrapper.fetchClientSubscription(hostPlatform: platform)).lane, 'paidUnlimited');
+    expect(refreshes, 3);
+    expect((await secrets.readSessionPair(hostPlatform: platform, installId: installId))?.refreshToken,
+      'rotated-refresh');
   });
 
   test('terminal refresh rejection stops background requests and retains recovery metadata',

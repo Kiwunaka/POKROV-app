@@ -1403,6 +1403,53 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('rejected session keeps the paid healthy tunnel and reusable native profile', (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final mutations = <String>[];
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'runtimeEngine.disconnect' || call.method == 'runtimeEngine.invalidateManagedProfile') {
+        mutations.add(call.method);
+      }
+      return {'phase': 'running', 'supportsLiveConnect': true, 'canInitialize': false, 'canConnect': true,
+        'hostHealth': 'healthy', 'dnsState': 'healthy', 'uplinkState': 'healthy',
+        'dns_ready': true, 'core_egress_validated': true};
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    const paid = ClientSubscriptionInfo(lane: 'paidUnlimited', accessState: 'paid_unlimited',
+      expiresAt: '', daysLeft: 7, autoRenew: false, renewUrl: null, plans: [], trafficPolicy: {});
+    final bootstrapper = _StartupAccountBootstrapper()..subscription = paid;
+    await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: bootstrapper, firstLaunchStore: _FirstLaunchStore(),
+      clientExperienceStore: _CatalogPickerExperience(), themeMode: ThemeMode.light,
+      onThemeModeChanged: (_) {},
+    )));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.tap(find.byKey(const ValueKey('nav-access')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    dynamic profile() => tester.widget(find.byWidgetPredicate(
+        (widget) => widget.runtimeType.toString() == '_ProfileSection'));
+    expect(profile().subscriptionInfo, same(paid));
+    bootstrapper.subscriptionFailure = BootstrapFailure(
+      portalFailureUserMessage(PortalFailureReason.refreshExpired)!,
+      code: 'refresh_expired', statusCode: 401, sessionRejected: true);
+    (tester.state(find.byType(PokrovSeedShell)) as WidgetsBindingObserver)
+        .didChangeAppLifecycleState(AppLifecycleState.resumed);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(profile().loginRecoveryRequired, isTrue);
+    expect(profile().subscriptionInfo, same(paid));
+    expect(profile().connectionPresentation.isVerified, isTrue);
+    expect(profile().runtimeHeadline, isNot(contains('Продли')));
+    expect(mutations, isEmpty, reason: 'a dead API session does not revoke node-accepted paid access');
+    expect(find.text('Нужно восстановить вход'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+  });
+
   test('refresh and resume preserve an in-flight background cache refresh', () async {
     final gate = Completer<void>();
     final bootstrapper = _CachedBootstrapper()
@@ -5713,7 +5760,7 @@ void main() {
   });
 
   for (final platform in [HostPlatform.android, HostPlatform.windows]) {
-  test('fresh ${platform.name} native proof retires a preparation-only recovery failure', () async {
+  test('fresh ${platform.name} native proof retires a preparation-only session rejection', () async {
     final recoveryExperience = _ExperienceStore();
     final runtime = _Runtime(hostPlatform: platform)
       ..supportsCandidates = true
@@ -5745,7 +5792,8 @@ void main() {
     runtime.failedProbeProfiles.addAll(_candidates.map((candidate) => candidate.candidateRef));
     final preparationGate = Completer<void>();
     bootstrapper.gate = preparationGate;
-    bootstrapper.failure = const BootstrapFailure('fixture preparation unavailable', code: 'managed_profile_unavailable');
+    bootstrapper.failure = const BootstrapFailure('fixture login recovery required',
+      code: 'refresh_expired', statusCode: 401, sessionRejected: true);
     final requestsBeforeRecovery = bootstrapper.resolutions.length;
     runtime.warpEgressFailure = true;
     final deadline = DateTime.now().add(const Duration(seconds: 3));
