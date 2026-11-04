@@ -1,6 +1,10 @@
 # Windows acceptance
 
-Current private **1.5.0+4256**, App `4f384ec7`, uses official Zapret2 v1.0.6
+Current private **1.5.0+4262**, App `6117b4d`: package and VM acceptance are
+recorded in the [canonical cutover status](cutover-readiness.md).
+Earlier transport checks below retain their original build scope.
+
+Historical private **1.5.0+4256**, App `4f384ec7`, uses official Zapret2 v1.0.6
 with its matching Lua libraries and retains Core `8079e69` /1.2.15/ABI2.
 It upgraded from 4255 with the encrypted account store and settings retained.
 Both exact CLI/Lua dry-runs passed on the VM. One ordinary Connect ran the owned

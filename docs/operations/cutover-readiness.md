@@ -5,6 +5,18 @@ is the only current release queue; [Execution section 0](C:/Users/kiwun/Download
 explains how to continue. Dated results below retain their original scope and do
 not create new tasks or permission to repeat accepted checks.
 
+Private **1.5.0+4262**, App `6117b4d`, fixes the normal Windows Exit marker.
+Six packages are in `E:/POKROV-tools/temp/release-1.5.0-4262`; standard Android
+and Windows package checks passed. Core `98af7fd` (1.2.15/ABI2), Slipstream,
+Zapret2/Lua, F82 and trust inputs are unchanged; Core was not rebuilt.
+One normal VM upgrade from 4261 passed. Tray Exit wrote `clean` for its current
+run; the next startup completed bootstrap without `app.previous_exit.detected`
+or `APP-BOOT-006`, then a second Tray Exit again wrote `clean` for that run.
+DNS, all 16 routes, proxies and selected settings matched baseline; TUN,
+helpers and guard were absent. The VM is PoweredOff/Unlocked. Session and
+transport acceptance were not repeated; no phone check, upload or publication
+ran. The 4261 packages and host/VM work folders remain intact.
+
 Private **1.5.0+4261**, App `6cf03d0` including auth/cache/proof fix `982599f7`,
 has six packages in `E:/POKROV-tools/temp/release-1.5.0-4261`. Android signing,
 versions/ABIs and the packaged model/runtime passed; Windows version, selected
@@ -15,8 +27,8 @@ rotated the existing pair after access expiry and obtained a current access
 token; the window and ordinary Access entry responded without a recorded crash.
 No VPN connection or customer action was started. Tray Exit stopped the app;
 DNS, all 16 routes, proxies and selected settings matched baseline, with no
-TUN/helpers/guard remaining. The exit marker stayed `active`, so clean-marker
-acceptance is open. The VM is PoweredOff/Unlocked. The new rejection/cache/proof
+TUN/helpers/guard remaining. The exit marker stayed `active`; 4262 above closes
+that separate exit defect. The VM is PoweredOff/Unlocked. The new rejection/cache/proof
 edges have focused source checks, not VM fault acceptance. No phone check,
 upload or publication ran in this packaging task; host and VM work folders remain.
 
