@@ -5,6 +5,14 @@ is the only current release queue; [Execution section 0](C:/Users/kiwun/Download
 explains how to continue. Dated results below retain their original scope and do
 not create new tasks or permission to repeat accepted checks.
 
+Private Android **1.5.0+4263**, App `aedc0c4e` including LocalDPI fix `aa95afdd`,
+has four production-signed, non-debuggable APKs in
+`E:/POKROV-tools/temp/release-1.5.0-4263`. Build checks passed for versions,
+ABIs, bundled F82 model and selected runtime; Core `98af7fd`, shadow mode and
+4262 trust inputs were reused without a Core rebuild. Physical acceptance is
+pending; no phone check, upload or publication ran. Windows packages remain
+**4262** with their existing acceptance scope.
+
 Private **1.5.0+4262**, App `6117b4d`, fixes the normal Windows Exit marker.
 Six packages are in `E:/POKROV-tools/temp/release-1.5.0-4262`; standard Android
 and Windows package checks passed. Core `98af7fd` (1.2.15/ABI2), Slipstream,
