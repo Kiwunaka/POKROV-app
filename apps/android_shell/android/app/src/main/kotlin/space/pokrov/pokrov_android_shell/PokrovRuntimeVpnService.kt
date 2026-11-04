@@ -465,7 +465,8 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     }
 
     private fun cancelRuntimeSession() {
-        val scope = synchronized(serviceCommandLock) {
+        val (scope, localDpi) = synchronized(serviceCommandLock) {
+            val localDpi = activeLocalDpi.also { activeLocalDpi = null }
             activeRuntimeSession.also {
                 if (it != null && AndroidConnectRequestOwner.ownsService(this)) endingBoundSessions.add(it)
                 activeRuntimeSession = null
@@ -473,10 +474,12 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 activeConnectDeadline = null
                 activePromotedUntilElapsed = null
                 activePromotedLeaseRef = null
-            }
+            } to localDpi
         }
         scope?.close()
-        activeLocalDpi = null
+        localDpi?.finalObservationSummary()?.let {
+            logLocalDpiDiagnostic("session_end $it")
+        }
         firstProviderQaProbe.clear()
         if (scope != null) {
             AndroidRuntimeState.endTunnelTrafficSession(scope.generation)

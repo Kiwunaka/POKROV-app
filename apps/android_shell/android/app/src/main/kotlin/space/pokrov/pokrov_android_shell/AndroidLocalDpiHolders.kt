@@ -85,5 +85,12 @@ internal class AndroidLocalDpiHolders(
         // The CommandServer API can throw; still withdraw every captured ID.
         holders.values.forEach { runCatching { withdraw(it) } }
     }
+
+    fun finalObservationSummary(): String? {
+        // Joining the same lock also waits for a concurrent withdrawal. Core
+        // still owns these captured holders until the service closes it.
+        close()
+        return observationSummary()
+    }
 }
 

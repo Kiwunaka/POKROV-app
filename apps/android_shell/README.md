@@ -39,6 +39,8 @@ Android embeds the MIT hufrea ByeDPI implementation as a native SOCKS runtime ow
 
 The opt-in `POKROV-DPIProof` debug log records only the current signed YouTube IPv4 control attempt: its public destination, proxy-side byte counts, first-chunk parser result and whether TLS-record splitting was applied. The upstream count includes any out-of-band byte. It also snapshots TCP state, unacknowledged segments, total retransmissions and acknowledged/received bytes from that proof's uplink when the kernel provides them. Counts are observations, not proof of delivery to the destination, and unavailable fields remain unknown; regular traffic and payloads are not logged.
 
+When an Android VPN session ends, `POKROV-LocalDPI` records one `session_end` summary after withdrawing that session's captured Core holders and before closing Core. It retains the final direct/VPN TCP handoff and rejected-QUIC counts, or explicitly reports unavailable observation; it includes no holder IDs, destinations or payloads. These scoped counters do not establish video playback, quality or browser NetLog acceptance.
+
 Validation lane:
 
 An Android platform resolver callback error or timeout for a known single AAAA question requests the existing selected-route egress recheck without invalidating DNS readiness or resetting working IPv4 connections. A and unknown questions keep the existing transport-failure handling; missing physical uplinks and actual network changes still use the existing reset. Compressed, truncated and multiple raw questions remain unknown. Physical-device acceptance of an AAAA failure alongside working IPv4 remains pending.

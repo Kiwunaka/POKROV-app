@@ -7,6 +7,25 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AndroidLocalDpiFallbackTest {
+    @Test fun finalObservationReadsOnlyCapturedHoldersAfterWithdrawal() {
+        val events = mutableListOf<String>()
+        var currentId = "first-holder"
+        val holders = AndroidLocalDpiHolders(
+            current = { true }, read = { currentId }, admit = { true },
+            withdraw = { events.add("withdraw:$it") },
+            readObservation = {
+                events.add("observe:$it")
+                throw IllegalStateException("synthetic unavailable observation")
+            },
+            onFailure = {},
+        )
+        assertTrue(holders.capture(mapOf("youtube" to "local-dpi")))
+        currentId = "replacement-holder"
+
+        assertEquals("Локальный DPI: наблюдение недоступно", holders.finalObservationSummary())
+        assertEquals(listOf("withdraw:first-holder", "observe:first-holder"), events)
+    }
+
     @Test fun smartSafeRequiresOnlyYouTubeAndProtectedFinal() {
         val direct = LocalDpiVpnOutbound("direct", "direct")
         val vpn = LocalDpiVpnOutbound("vpn", "vless", tlsSecure = true)

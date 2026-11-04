@@ -224,6 +224,8 @@ internal class AndroidLocalDpiAdmission private constructor(
 
     fun observationSummary(): String? = holders?.observationSummary()
 
+    fun finalObservationSummary(): String? = holders?.finalObservationSummary()
+
     private fun resolve(host: String, remaining: () -> Int): InetAddress? {
         if (!current() || remaining() <= 0) return null
         val signal = CancellationSignal()
