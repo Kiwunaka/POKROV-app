@@ -25,10 +25,15 @@ Windows 4268 connected in 11.6 seconds in the same app scope with healthy native
 egress. The active profile routed `pokrov_service.exe` TCP/443 to `api.pokrov.space`
 and `birch.portal-privacy.online` through VPN. A separate native loopback test
 forced primary failure and verified reserve success within the same probe run.
-Ordinary VM failover under fault remains unverified because the primary address
-overlapped an active tunnel peer. The VM was powered off after its preferences,
-16 routes, DNS and proxies matched baseline. Physical IPv6 and phone acceptance
-remain open.
+
+A separate ordinary 4268 connection pinned direct CH VLESS XHTTP in
+`allExceptRu`. The selected leaf and established service sockets on Ethernet
+confirmed a first hop separate from the primary address. A temporary guest
+`/32` through Ethernet forced primary connect error Win32 1231. The same
+periodic check completed the Birch proof in 391 ms, with the exact TLS SNI and
+SYN-ACK on the TUN. The profile and tunnel stayed active. The `/32` was removed,
+preferences, 16 routes, DNS and proxies matched baseline, and the VM was powered
+off. Physical IPv6 and phone acceptance remain open.
 
 Private Android **1.5.0+4266**, App `1e3225db` and Core `791d3cf` (1.2.15/ABI2),
 has four production-signed APKs with production trust in
