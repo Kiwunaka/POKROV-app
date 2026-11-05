@@ -126,7 +126,8 @@ class _Fixture {
       refreshes += 1;
       if (rejectRefresh || refreshes <= rejectRefreshCount) {
         request.response.statusCode = HttpStatus.unauthorized;
-        request.response.write('{"detail":"synthetic_expired"}');
+        request.response.headers.set('X-POKROV-Auth-Error', 'refresh_token_invalid');
+        request.response.write('{"detail":"Invalid refresh token"}');
       } else {
         request.response.write(jsonEncode({
           'session': {
@@ -163,7 +164,8 @@ class _Fixture {
     } else if (path == '/api/bonuses/summary') {
       if (rejectInitialBonusAccess && authorization == 'Bearer $initialBonusAccess') {
         request.response.statusCode = HttpStatus.unauthorized;
-        request.response.write('{"detail":"synthetic_expired"}');
+        request.response.headers.set('X-POKROV-Auth-Error', 'access_expired');
+        request.response.write('{"detail":"Access token expired"}');
       } else {
         request.response.write('{"referral_code":"synthetic-A-bonus"}');
       }
@@ -176,7 +178,8 @@ class _Fixture {
     } else if (path == '/api/client/subscription') {
       if (rejectInitialAccess && authorization == 'Bearer old-access') {
         request.response.statusCode = HttpStatus.unauthorized;
-        request.response.write('{"detail":"synthetic_expired"}');
+        request.response.headers.set('X-POKROV-Auth-Error', 'access_expired');
+        request.response.write('{"detail":"Access token expired"}');
       } else {
         request.response.write(jsonEncode({
           'lane': expiredReply ? 'expiredOrBlocked' : 'paid',

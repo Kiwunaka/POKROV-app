@@ -218,7 +218,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
   }) async {
     final transportCatalog = response.containsKey('transport_catalog')
         ? decodeManagedTransportCatalog(response['transport_catalog'], platform: hostPlatform,
-            clientRelease: '$pokrovClientVersion+$pokrovClientBuildNumber', runtimeFeatures: runtimeFeatures,
+            clientRelease: _managedCatalogClientRelease, runtimeFeatures: runtimeFeatures,
             coreRelease: coreRelease, requestedNodeCode: normalizedPreferredNode,
             requestedCandidateRef: selectedCandidateRef)
         : null;

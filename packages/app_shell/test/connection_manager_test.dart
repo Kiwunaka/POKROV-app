@@ -689,6 +689,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   _Runtime({this.heldOperation, this.hostPlatform = HostPlatform.android});
   final String? heldOperation;
   bool supportsCandidates = false;
+  Iterable<RuntimeTransportFeature> candidateFeatures = RuntimeTransportFeature.values;
   bool supportsSlipstreamClient = true;
   bool coreInitializationPending = false;
   int routingCatalogWindowVersion = 0;
@@ -907,7 +908,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
         transportProofPending: transportProofPending,
         transportCapabilities: supportsCandidates && phase != RuntimePhase.artifactReady && !coreInitializationPending
             ? RuntimeTransportCapabilities.fromWire(jsonEncode({'schema': 1,
-                'features': RuntimeTransportFeature.values.map((feature) => feature.wireName).toList()..sort()})) : null,
+                'features': candidateFeatures.map((feature) => feature.wireName).toList()..sort()})) : null,
         slipstreamClientReady: supportsCandidates && supportsSlipstreamClient &&
             phase != RuntimePhase.artifactReady && !coreInitializationPending,
         coreVersion: phase == RuntimePhase.artifactReady || coreInitializationPending ? null : coreVersion,
@@ -3988,6 +3989,8 @@ void main() {
       FlutterSecureStoragePlatform.instance = originalStorage;
     });
     const profile = 'legacy_reality_fallback';
+    const clientRelease = '1.5.0+4263';
+    const coreRelease = '1.2.15';
     const directRef = 'us:$profile';
     const bridgeRef = 'us:$profile:bridge_mini';
     const baseTag = 'US fixture';
@@ -4054,10 +4057,14 @@ void main() {
       }
     }());
     final bootstrapper = AppFirstRuntimeBootstrapper(apiBaseUrl: 'http://127.0.0.1:${server.port}',
+      managedCatalogClientRelease: clientRelease,
       supportDirectoryResolver: () async => directory, maxRequestAttempts: 1,
       allExceptRuRuleSetUrlsResolver: (_) => const []);
     final runtime = _Runtime(hostPlatform: HostPlatform.windows)
-      ..supportsCandidates = true..coreVersion = '1.2.10'
+      ..supportsCandidates = true
+      ..coreVersion = coreRelease
+      ..candidateFeatures = const {RuntimeTransportFeature.vless, RuntimeTransportFeature.tls,
+        RuntimeTransportFeature.utls, RuntimeTransportFeature.reality}
       ..heldProbeCandidates.add(bridgeRef);
     final experience = _ExperienceStore();
     final manager = _manager(runtime, bootstrapper, experienceStore: experience,
@@ -4089,6 +4096,8 @@ void main() {
     expect((experience.saved.preferredCountryCode, experience.saved.preferredNodeCode,
         experience.saved.preferredCandidateRef, experience.saved.preferredVariantId), ('US', '', '', 'direct'));
     expect(queries.first['selected_country_code'], 'US');
+    expect(queries.first['client_release'], clientRelease);
+    expect(queries.first['core_release'], coreRelease);
     expect(runtime.activeProbes, isEmpty);
   });
 

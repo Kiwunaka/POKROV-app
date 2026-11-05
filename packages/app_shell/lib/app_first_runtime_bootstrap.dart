@@ -3189,6 +3189,7 @@ class AppFirstRuntimeBootstrapper
   AppFirstRuntimeBootstrapper({
     String apiBaseUrl = 'https://app.pokrov.space',
     List<String>? apiFallbackBaseUrls,
+    String managedCatalogClientRelease = '$pokrovClientVersion+$pokrovClientBuildNumber',
     Future<Directory> Function()? supportDirectoryResolver,
     HttpClient Function()? httpClientFactory,
     Future<void> Function(Duration delay)? delayScheduler,
@@ -3212,6 +3213,7 @@ class AppFirstRuntimeBootstrapper
     SmartAccessPolicyStore? smartAccessPolicyStore,
     OfflineInvitationReceiver? invitationReceiver,
   })  : apiBaseUrl = _normalizeApiBaseUrl(apiBaseUrl),
+        _managedCatalogClientRelease = managedCatalogClientRelease,
         _apiBaseUrls = _buildApiBaseUrls(
           apiBaseUrl,
           apiFallbackBaseUrls,
@@ -3242,6 +3244,7 @@ class AppFirstRuntimeBootstrapper
   }
 
   final String apiBaseUrl;
+  final String _managedCatalogClientRelease;
   final List<String> _apiBaseUrls;
   final Future<Directory> Function() _supportDirectoryResolver;
   final HttpClient Function() _httpClientFactory;
@@ -3455,7 +3458,7 @@ class AppFirstRuntimeBootstrapper
           .expand((features) => features).toSet();
       final catalog = value.containsKey('transport_catalog')
           ? decodeManagedTransportCatalog(value['transport_catalog'],
-              platform: inputs.hostPlatform, clientRelease: '$pokrovClientVersion+$pokrovClientBuildNumber',
+              platform: inputs.hostPlatform, clientRelease: _managedCatalogClientRelease,
               runtimeFeatures: runtimeFeatures ?? storedFeatures,
               coreRelease: coreRelease ?? (runtimeFeatures == null ? _readText(value['core_release']) : null))
           : null;
@@ -7671,7 +7674,7 @@ class AppFirstRuntimeBootstrapper
         'catalog_version': '1', 'client_platform': hostPlatform.name,
         'candidate_material_limit': selectedCandidateRef.isNotEmpty ? '1'
             : runtimeFeatures.contains(RuntimeTransportFeature.slipstreamVless) ? '7' : '6',
-        'client_release': '$pokrovClientVersion+$pokrovClientBuildNumber',
+        'client_release': _managedCatalogClientRelease,
         'runtime_features': (runtimeFeatures.map((feature) => feature.wireName).toList()..sort()).join(','),
         if (coreRelease != null && coreRelease.isNotEmpty) 'core_release': coreRelease,
         if (selectedCandidateRef.isNotEmpty) 'selected_candidate_ref': selectedCandidateRef,

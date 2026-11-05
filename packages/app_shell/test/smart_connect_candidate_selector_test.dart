@@ -440,7 +440,7 @@ void main() {
     expect(started, ['ru', 'ru-spb']);
   });
 
-  test('UDP data stalls promote TCP for four minutes', () async {
+  test('UDP data stalls suppress the failed candidates for four minutes', () async {
     var now = DateTime.utc(2026, 9, 27);
     final selector = SmartConnectCandidateSelector(now: () => now);
     final catalog = _catalog([
@@ -458,13 +458,48 @@ void main() {
             : _success(candidate);
       });
     expect((await select(failUdp: true)).profileName, 'de:profile_4');
-    expect(starts.toSet(), hasLength(starts.length));
+    expect(starts, [for (final candidate in catalog.candidates) candidate.candidateRef]);
     starts.clear();
     expect((await select()).profileName, 'de:profile_4');
-    expect(starts, isNot(contains('de:profile_0')));
+    expect(starts, ['de:profile_4']);
     now = now.add(const Duration(minutes: 5));
     starts.clear();
     expect((await select()).profileName, 'de:profile_0');
+  });
+
+  test('a HY2 TLS failure leaves an untried AWG exit ahead of TCP', () async {
+    final selector = SmartConnectCandidateSelector();
+    final hy2 = TransportCandidate(
+      candidateRef: 'de:hy2_lab:endpoint_primary:ipv4:g1', profileRef: 'hy2_lab',
+      nodeCode: 'de', countryCode: 'DE', protocol: 'hysteria2', transport: 'udp',
+      protection: 'tls', priority: 0, network: 'udp', flow: '',
+      minimumClientRelease: '1.5.0', minimumCoreRelease: null,
+      deliveryEndpointId: 'primary', endpointGeneration: 1,
+      platforms: {HostPlatform.windows}, requiredFeatures: const {},
+    );
+    final awg = _candidate(1, node: 'nl', country: 'NL', udp: true);
+    final tcp = _candidate(2);
+    final catalog = _catalog([hy2, awg, tcp]);
+    final started = <String>[];
+
+    await expectLater(selector.select(
+      catalog: catalog, network: 'network-a', platform: HostPlatform.windows,
+      cancelled: Completer<void>().future,
+      excludedCandidateRefs: {awg.candidateRef, tcp.candidateRef},
+      probe: (candidate, cancelled, timeout) async =>
+          const SmartConnectCandidateProbeResult.failure('tls_failed'),
+    ), throwsA(isA<SmartConnectSelectionExhausted>()));
+
+    final result = await selector.select(
+      catalog: catalog, network: 'network-a', platform: HostPlatform.windows,
+      cancelled: Completer<void>().future,
+      probe: (candidate, cancelled, timeout) async {
+        started.add(candidate.candidateRef);
+        return _success(candidate);
+      },
+    );
+    expect(result.profileName, awg.candidateRef);
+    expect(started, isNot(contains(hy2.candidateRef)));
   });
 
   test('invalid profile is reported but does not quarantine its candidate', () async {

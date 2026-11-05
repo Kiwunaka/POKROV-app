@@ -122,7 +122,7 @@ class CandidateRankerShadow {
   Map<String, Object?>? _capture({required int generation,
       required List<TransportCandidate> choices, required List<TransportCandidate> catalog,
       required Iterable<TransportCandidate> committed, required Map<String, int> groups,
-      required Map<String, DateTime> failedUntil, required bool udpFailed,
+      required Map<String, DateTime> failedUntil,
       required String? preferredRef, required String recoveryRef,
       required bool nativeSchedulePending, required Set<String> policyFixedRefs,
       required int parallelism, required DateTime at,
@@ -172,7 +172,9 @@ class CandidateRankerShadow {
           'failed_same_protocol_other_path': otherPath.length / 4,
           'failed_self': failedUntil.containsKey(candidate.candidateRef) ? 1 : 0,
           'failed_same_protocol_path_ttl': ttl(same),
-          'failed_other_protocol_same_path_ttl': ttl(other), 'udp_failed': udpFailed ? 1 : 0,
+          'failed_other_protocol_same_path_ttl': ttl(other),
+          // Keep the capture schema. An exact candidate failure gives no network-wide UDP evidence.
+          'udp_failed': 0,
         }),
       });
     }

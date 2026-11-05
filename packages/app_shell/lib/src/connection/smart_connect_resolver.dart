@@ -114,7 +114,6 @@ class SmartConnectCandidateSelector {
   CandidateRankerShadow? rankerShadow;
   final _successful = <String, String>{};
   final _failedUntil = <(String, String), DateTime>{};
-  final _udpFailedUntil = <String, DateTime>{};
   static const failureMemory = Duration(minutes: 4);
   static const _networkFailureKinds = <String>{
     'connect_failed', 'tls_failed', 'timeout', 'data_stalled',
@@ -165,7 +164,6 @@ class SmartConnectCandidateSelector {
     final capturing = ranker?._capturePath != null;
     final now = _now();
     _failedUntil.removeWhere((_, expires) => !expires.isAfter(now));
-    _udpFailedUntil.removeWhere((_, expires) => !expires.isAfter(now));
     final preferred = recoveryCandidateRef.isNotEmpty
         ? recoveryCandidateRef : _successful[network];
     final ordered = List<TransportCandidate>.of(catalog.candidates)
@@ -195,9 +193,6 @@ class SmartConnectCandidateSelector {
       if (groupOrder != 0) return groupOrder;
       if (a.candidateRef == preferred && b.candidateRef != preferred) return -1;
       if (b.candidateRef == preferred && a.candidateRef != preferred) return 1;
-      if (_udpFailedUntil.containsKey(network) && a.network != b.network) {
-        return a.network == 'tcp' ? -1 : 1;
-      }
       return a.priority.compareTo(b.priority);
     });
     final ipv6Siblings = <String, TransportCandidate>{};
@@ -306,7 +301,6 @@ class SmartConnectCandidateSelector {
           committed: [...fixedPrefix, ...committed.values], groups: priorityGroups,
           failedUntil: {for (final entry in _failedUntil.entries)
             if (entry.key.$1 == network) entry.key.$2: entry.value},
-          udpFailed: _udpFailedUntil.containsKey(network),
           preferredRef: preferred, recoveryRef: recoveryCandidateRef,
           nativeSchedulePending: committed.isNotEmpty,
           policyFixedRefs: {for (final item in fixedPrefix) item.candidateRef,
@@ -366,7 +360,6 @@ class SmartConnectCandidateSelector {
           capturedSuccess = true;
           onProbeResult?.call(candidate, outcome);
           winner = outcome.profile;
-          if (candidate.network == 'udp') _udpFailedUntil.remove(network);
           stop();
           return;
         }
@@ -442,16 +435,6 @@ class SmartConnectCandidateSelector {
           capture: capture);
       onProbeResult?.call(candidate, failed);
       recordFailure(network, candidate.candidateRef, failureKind);
-      if (candidate.network == 'udp' && _networkFailureKinds.contains(failureKind)) {
-        _udpFailedUntil[network] = _now().add(failureMemory);
-        final tcp = candidates.where((item) => item.network == 'tcp').toList();
-        final udp = candidates.where((item) => item.network != 'tcp').toList();
-        candidates.clear();
-        for (final group in groupsSettled.keys) {
-          candidates.addAll(tcp.where((candidate) => priorityGroups[candidate.candidateRef] == group));
-          candidates.addAll(udp.where((candidate) => priorityGroups[candidate.candidateRef] == group));
-        }
-      }
     }
     Duration preferredProbeTime = Duration.zero;
     Future<void> worker() async {
