@@ -7,10 +7,12 @@ are separate; these scripts do not publish a release.
 
 ## Runtime selection
 
-Private Android **4266** uses production trust and
-`E:/POKROV-tools/temp/core-android-localdpi-791d3cf/runtime-artifacts.android-4266.json`.
-Windows **LAB4265** uses the lab catalog for VM testing. The regular private
-Windows package is **4262**.
+Private Windows **4268** and Android **4267** use production trust and share
+`E:/POKROV-tools/temp/core-4267-313c77b/runtime-artifacts.4267.json`.
+Windows pairs it with `E:/POKROV-tools/temp/core-4267-313c77b/windows-release.4267.json`.
+The outputs are in `E:/POKROV-tools/temp/release-1.5.0-4268` for Windows and
+`E:/POKROV-tools/temp/release-1.5.0-4267` for Android. Windows **LAB4265** uses
+the lab catalog for isolated VM testing.
 
 Windows **4209** reuses the accepted Windows Core/guard pair from 4205. Its selection
 is `-RuntimeArtifactsPath E:/POKROV-tools/temp/core-windows-4205/runtime-artifacts.json`

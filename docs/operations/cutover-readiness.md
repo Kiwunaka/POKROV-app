@@ -5,6 +5,31 @@ is the only current release queue; [Execution section 0](C:/Users/kiwun/Download
 explains how to continue. Dated results below retain their original scope and do
 not create new tasks or permission to repeat accepted checks.
 
+The current private production-trust packages are Windows **1.5.0+4268**
+(App `892759cc`) and Android **1.5.0+4267** (App `92f7d1bd`). Both use Core
+`313c77b` (1.2.15/ABI2) and the unchanged F82 model. The unsigned Windows Setup
+and its single-installer ZIP are in `E:/POKROV-tools/temp/release-1.5.0-4268`.
+The four production-signed, non-debuggable APKs are in
+`E:/POKROV-tools/temp/release-1.5.0-4267`. Package checks passed for the selected
+runtime and model, Android version and ABIs, and Windows version and ZIP identity.
+
+With the existing QA session, Windows 4267 received HTTP 200 and
+`Cache-Control: no-store` for catalog revisions 35/36/37 with no flags, Smart
+Safe, and Smart Safe plus Social respectively. Normal Connect accepted signed
+production revision 37. In `selectedApps`, the selected EXE used the VPN exit
+and the control EXE kept its VPN-off exit. The TUN carried a fresh Windows DNS
+query and reply for `example.com`, with zero physical port 53 packets in the
+scoped capture.
+
+Windows 4268 connected in 11.6 seconds in the same app scope with healthy native
+egress. The active profile routed `pokrov_service.exe` TCP/443 to `api.pokrov.space`
+and `birch.portal-privacy.online` through VPN. A separate native loopback test
+forced primary failure and verified reserve success within the same probe run.
+Ordinary VM failover under fault remains unverified because the primary address
+overlapped an active tunnel peer. The VM was powered off after its preferences,
+16 routes, DNS and proxies matched baseline. Physical IPv6 and phone acceptance
+remain open.
+
 Private Android **1.5.0+4266**, App `1e3225db` and Core `791d3cf` (1.2.15/ABI2),
 has four production-signed APKs with production trust in
 `E:/POKROV-tools/temp/release-1.5.0-4266`. Package checks passed for version,
@@ -12,7 +37,7 @@ ABIs, bundled F82 model and Core/Slipstream bytes. Phone acceptance is pending.
 
 Windows **LAB4265** Setup and ZIP in `E:/POKROV-tools/temp/release-1.5.0-4265-lab`
 are for isolated VM testing with the signed lab catalog. The regular private
-Windows package is **4262**. With one normal VPN connection, Edge loaded the
+Windows package was **4262**. With one normal VPN connection, Edge loaded the
 public landing pages for Discord, Instagram, Threads and YouTube with HTTP 200
 over h2. Discord's local TLS proof and Instagram's local HTTP proof failed, so
 both pages used VPN. Threads lost local admission, recorded VPN handoffs and
@@ -25,7 +50,7 @@ has four production-signed, non-debuggable APKs in
 `E:/POKROV-tools/temp/release-1.5.0-4263`. Build checks passed for versions,
 ABIs, bundled F82 model and selected runtime; Core `98af7fd`, shadow mode and
 4262 trust inputs were reused without a Core rebuild. Physical acceptance is
-pending; no phone check, upload or publication ran. Windows packages remain
+pending; no phone check, upload or publication ran. Windows packages remained
 **4262** with their existing acceptance scope.
 
 Private **1.5.0+4262**, App `6117b4d`, fixes the normal Windows Exit marker.
