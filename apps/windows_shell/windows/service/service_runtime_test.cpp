@@ -293,6 +293,9 @@ void TestWindowsLocalDpiStrategyArguments() {
   hints.RecordSuccess("network-a", {youtube, discord}, WindowsLocalDpiStrategy::kFakeMultisplitAlt4);
   Expect(hints.Preferred("network-a", {youtube, discord}) == WindowsLocalDpiStrategy::kFakeMultisplitAlt4,
          "proof for all selected services was not remembered");
+  hints.RecordFailure("network-a", "discord", WindowsLocalDpiStrategy::kFakeMultisplitAlt4);
+  Expect(hints.Preferred("network-a", {youtube, discord}) == WindowsLocalDpiStrategy::kFakeMultisplitAlt4,
+         "one service failure overrode a successful shared strategy");
   for (const char* failure : {"local_dpi_control_connect_failed", "local_dpi_control_tls_failed",
                              "local_dpi_control_http_failed"}) {
     Expect(WindowsLocalDpiRetryableProof(failure), "transport failure lost its bounded strategy retry");

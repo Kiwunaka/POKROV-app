@@ -309,6 +309,8 @@ void main() {
     server.listen((request) async {
       await request.drain<void>();
       expect(request.uri.path, '/api/client/routing-catalog');
+      expect(request.uri.queryParameters['smart_safe_local_dpi'], '1');
+      expect(request.uri.queryParameters['social_local_dpi'], '1');
       request.response.headers.contentType = ContentType.json;
       if (failureCode.isEmpty) {
         request.response.write(jsonEncode({'schema': 'routing-catalog-response-v1', 'envelope': envelope}));
@@ -481,7 +483,7 @@ void main() {
     }
   });
 
-  test('signed YouTube DPI is mode-bound and withdraws with its authority', () async {
+  test('signed service DPI is mode-bound and withdraws with its authority', () async {
     final now = DateTime.now().toUtc();
     String wire(DateTime time) => '${time.toIso8601String().substring(0, 19)}Z';
     final start = wire(now.subtract(const Duration(seconds: 2)));
@@ -560,6 +562,25 @@ void main() {
     expect(await catalogRuntimeRevocations(identity, policy.catalog.payloadSha256, await signed(replacement), now), {'youtube'});
     expect((await signed(replacement)).services.single.localDpiControlHostsByMode.keys.toSet(),
       {CatalogRoutingMode.selective});
+    for (final (id, host) in const [
+      ('discord', 'discord.com'), ('instagram', 'www.instagram.com'), ('threads', 'www.threads.com'),
+    ]) {
+      final candidate = jsonDecode(jsonEncode(payload)) as Map<String, Object?>;
+      final service = (candidate['services'] as List).single as Map;
+      service['service_id'] = id;
+      (candidate['evidence'] as List).single['service_id'] = id;
+      for (final intent in (service['route_intents'] as List).cast<Map>()) {
+        intent['local_dpi_control_host'] = host;
+      }
+      service['domains'] = [
+        <String, Object?>{...(service['domains'] as List).cast<Map<String, dynamic>>().first, 'name': host},
+      ];
+      final policy = await signed(candidate);
+      final compiled = compileCatalogDomainPolicy(policy: policy, mode: CatalogRoutingMode.smartSafe,
+        platform: 'windows', accessState: 'paid_unlimited', vpnAvailable: true, now: now);
+      expect(compiled.localDpiControlHosts, {id: host});
+      expect(compiled.matchDomain(host, now: now)?.action, CatalogRouteAction.vpn);
+    }
     final otherService = jsonDecode(jsonEncode(payload)) as Map<String, Object?>;
     (otherService['services'] as List).single['service_id'] = 'other';
     (otherService['evidence'] as List).single['service_id'] = 'other';
@@ -697,7 +718,6 @@ void main() {
                   'final': 'profile-dns'},
                 'route': {'final': 'proxy'}}};
           case '/api/client/routing-catalog':
-            expect(request.uri.queryParameters['smart_safe_local_dpi'], '1');
             reply = {'schema': 'routing-catalog-response-v1', 'envelope': catalogEnvelope};
           case '/api/client/smart-access/first-provider-qa/claim':
             claimPosts++;

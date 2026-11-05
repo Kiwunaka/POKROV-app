@@ -214,6 +214,10 @@ class RuntimeHost {
                             const std::optional<CandidateNetworkContext>& local_dpi_network = std::nullopt,
                             const CheckInterruption& telegram_interrupted = {});
   bool ClearWindowsLocalDpiAfterCoreStopped();
+  std::vector<WindowsLocalDpiService> ProveAndAdmitWindowsLocalDpi(
+      const std::string& network, const std::string& bind_interface,
+      WindowsLocalDpiStrategy strategy, const std::function<bool()>& owner_current,
+      bool standalone_permit, bool* retryable_proof = nullptr);
   bool WithdrawTelegramWS(const std::string& service_id = "");
   std::string SnapshotBody(const char* pending_phase = nullptr) const;
   std::optional<WindowsLocalDpiRuntimeObservation> ReadLocalDpiRuntimeObservation() const;

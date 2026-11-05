@@ -2330,7 +2330,7 @@ void main() {
     final toggle = find.byKey(const ValueKey('rules-local-dpi'));
     expect(find.byKey(const ValueKey('rules-advanced-open')), findsNothing);
     expect(find.text('Android 10 и новее: ByeDPI.'), findsOneWidget);
-    expect(find.text('YouTube: сначала напрямую, при сбое через VPN.'), findsOneWidget);
+    expect(find.text('Для поддерживаемых сервисов сначала напрямую через оператора, при сбое через VPN.'), findsOneWidget);
     expect((tester.widget(toggle) as dynamic).value, isFalse);
     await tester.tap(toggle);
     await tester.pumpAndSettle();

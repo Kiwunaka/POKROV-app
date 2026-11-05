@@ -70,12 +70,15 @@ internal fun localDpiVpnFallback(
     return tag.takeIf { protected(it, emptySet(), "fallback=root_target_missing") }
 }
 
+private val smartSafeLocalDpiServices = setOf("youtube", "discord", "instagram", "threads")
+
 internal fun localDpiModeAllows(mode: String, services: Set<String>, finalTag: String,
                                 outbounds: List<LocalDpiVpnOutbound>): Boolean = when (mode) {
     "selective" -> outbounds.singleOrNull { it.tag == finalTag }?.let {
         it.type == "direct" && it.detour.isEmpty()
     } == true
-    "smart_safe" -> services == setOf("youtube") && localDpiVpnFallback(outbounds, finalTag) != null
+    "smart_safe" -> services.isNotEmpty() && smartSafeLocalDpiServices.containsAll(services) &&
+        localDpiVpnFallback(outbounds, finalTag) != null
     else -> false
 }
 
@@ -164,8 +167,13 @@ internal class AndroidLocalDpiAdmission private constructor(
                     }
                     val deadline = SystemClock.elapsedRealtime() + remaining() / (strategyOrder.size - index)
                     fun attemptRemaining() = minOf(remaining(), (deadline - SystemClock.elapsedRealtime()).toInt())
-                    for ((service, host) in services) {
-                        if (!current() || !serverCurrent() || attemptRemaining() <= 0) break
+                    for ((serviceIndex, entry) in services.entries.withIndex()) {
+                        val remainingForService = attemptRemaining() / (services.size - serviceIndex)
+                        if (!current() || !serverCurrent() || remainingForService <= 0) break
+                        val (service, host) = entry
+                        val serviceDeadline = SystemClock.elapsedRealtime() + remainingForService
+                        fun serviceRemaining() = minOf(attemptRemaining(),
+                            (serviceDeadline - SystemClock.elapsedRealtime()).toInt())
                         val passed = captured.publish(service) {
                             // Repeat original signature/scope/TTL verification
                             // after Core start, immediately before any proof.
@@ -179,12 +187,12 @@ internal class AndroidLocalDpiAdmission private constructor(
                                     false
                                 }
                                 else -> {
-                                    val address = resolve(host, ::attemptRemaining)
+                                    val address = resolve(host, ::serviceRemaining)
                                     if (address == null) {
                                         logLocalDpiDiagnostic("proof=address_unavailable")
                                         false
                                     } else {
-                                        val proved = runtime!!.proveService(host, address, ::attemptRemaining,
+                                        val proved = runtime!!.proveService(host, address, ::serviceRemaining,
                                             service == "youtube" && host == "www.youtube.com")
                                         if (!proved) logLocalDpiDiagnostic("proof=transport_failed")
                                         proved
@@ -322,6 +330,18 @@ internal class AndroidLocalDpiAdmission private constructor(
                 failureCode = "prepare=envelope_exception"
                 val source = JSONObject(metadata.getString("catalog_envelope")).getJSONObject("payload")
                 val sourceServices = source.getJSONArray("services")
+                // A host used by two signed services keeps its ordinary VPN rule,
+                // even when just one of them is selected for local DPI.
+                val domainOwners = mutableMapOf<Pair<String, String>, MutableSet<String>>()
+                for (index in 0 until sourceServices.length()) {
+                    val service = sourceServices.getJSONObject(index)
+                    val domains = service.getJSONArray("domains")
+                    for (domainIndex in 0 until domains.length()) {
+                        val domain = domains.getJSONObject(domainIndex)
+                        val key = domain.getString("match") to domain.getString("name")
+                        domainOwners.getOrPut(key) { mutableSetOf() }.add(service.getString("service_id"))
+                    }
+                }
                 val controls = linkedMapOf<String, String>()
                 val tags = linkedMapOf<String, String>()
                 val replacements = mutableListOf<Pair<JSONObject, String>>()
@@ -334,6 +354,7 @@ internal class AndroidLocalDpiAdmission private constructor(
                         logLocalDpiDiagnostic("prepare=authority_rejected")
                         continue
                     }
+                    if (domainOwners["exact" to host]?.singleOrNull() != service) continue
                     failureCode = "prepare=rules_exception"
                     val original = (0 until sourceServices.length()).map(sourceServices::getJSONObject)
                         .single { it.getString("service_id") == service }
@@ -355,10 +376,13 @@ internal class AndroidLocalDpiAdmission private constructor(
                             rule.has("domain_regex") || rule.has("domain_keyword") || rule.has("ip_cidr") ||
                             rule.has("ip_is_private") || rule.has("rule_set"))) continue
                         val names = rule.optJSONArray(if (suffix) "domain_suffix" else "domain") ?: continue
-                        if (names.length() != 1 || !(0 until domains.length()).any {
+                        if (names.length() != 1) continue
+                        val name = names.getString(0)
+                        val match = if (suffix) "suffix" else "exact"
+                        if (domainOwners[match to name]?.singleOrNull() != service || !(0 until domains.length()).any {
                             val domain = domains.getJSONObject(it)
-                            domain.getString("name") == names.getString(0) && !domain.getBoolean("shared") &&
-                                domain.getString("match") == if (suffix) "suffix" else "exact"
+                            domain.getString("name") == name && !domain.getBoolean("shared") &&
+                                domain.getString("match") == match
                         }) continue
                         val vpn = localDpiVpnFallback(vpnOutbounds, rule.optString("outbound"), ::logLocalDpiDiagnostic)
                             ?: return unavailable("prepare=fallback_unprotected")
@@ -367,7 +391,7 @@ internal class AndroidLocalDpiAdmission private constructor(
                         if (mode == "smart_safe" && vpn != finalTag)
                             return unavailable("prepare=fallback_mismatch")
                         fallbacks[service] = vpn
-                        controlInScope = controlInScope || !suffix && names.getString(0) == host
+                        controlInScope = controlInScope || !suffix && name == host
                         replacements.add(rule to tag)
                     }
                     if (mode == "smart_safe" && !controlInScope) return unavailable("prepare=control_scope")

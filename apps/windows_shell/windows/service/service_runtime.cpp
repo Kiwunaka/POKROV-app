@@ -1726,6 +1726,7 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
   // Prove the protected fallback before winws intercepts physical TCP/443.
   // The transition guard remains armed through DPI proof and admission.
   std::optional<WindowsLocalDpiStrategy> proved_local_dpi_strategy;
+  std::vector<WindowsLocalDpiService> admitted_local_dpi_services;
   const auto local_dpi_owner_current = [&] {
     return local_dpi_preparation_ &&
         (!interrupted || interrupted() == OperationInterruption::kNone) &&
@@ -1737,19 +1738,8 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
     return local_dpi_owner_current() && local_dpi_executor_->Alive();
   };
   if (local_dpi_preparation_) {
-    const auto record_dpi = [&](LocalDpiStage stage, WindowsLocalDpiStrategy strategy,
-                                const std::string& failure) {
-      if (events_) events_->RecordLocalDpiObservation(stage,
-          static_cast<int>(strategy),
-          failure, local_dpi_executor_->Alive());
-    };
-    const auto dpi_owner_failure = [&] {
-      return local_dpi_owner_current() ? "local_dpi_child_failed" : "local_dpi_owner_changed";
-    };
     const auto strategies = WindowsLocalDpiStrategyOrder(local_dpi_strategy_hints_.Preferred(
         local_dpi_network->selection_key, local_dpi_preparation_->services));
-    bool proved = false;
-    WindowsLocalDpiStrategy successful_strategy = strategies[0];
     for (std::size_t attempt = 0; attempt < strategies.size(); ++attempt) {
       if (!local_dpi_owner_current()) break;
       const auto dpi_start_error = attempt == 0
@@ -1757,54 +1747,29 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
                 local_dpi_network->bind_interface, strategies[attempt], local_dpi_owner_current)
           : local_dpi_executor_->RetryPrepared(local_dpi_preparation_->services,
                 local_dpi_network->bind_interface, strategies[attempt], local_dpi_owner_current);
-      record_dpi(LocalDpiStage::kStart, strategies[attempt], dpi_start_error);
+      if (events_) events_->RecordLocalDpiObservation(LocalDpiStage::kStart,
+          static_cast<int>(strategies[attempt]), dpi_start_error, local_dpi_executor_->Alive());
       if (!dpi_start_error.empty()) break;
       if (attempt == 0) {
         for (auto& service : local_dpi_preparation_->services) {
           service.captured_admission_id = local_dpi_executor_->CapturedAdmissionID(service.outbound_tag);
         }
       }
-      proved = true;
-      std::string proof_failure;
-      for (const auto& service : local_dpi_preparation_->services) {
-        proof_failure = !local_dpi_current() ? dpi_owner_failure() :
-            VerifyWindowsLocalDpiControlHost(service.control_host,
-                local_dpi_network->bind_interface, interrupted);
-        if (!local_dpi_current()) proof_failure = dpi_owner_failure();
-        record_dpi(LocalDpiStage::kProof, strategies[attempt], proof_failure);
-        if (!proof_failure.empty()) {
-          if (WindowsLocalDpiRetryableProof(proof_failure) && local_dpi_current()) {
-            local_dpi_strategy_hints_.RecordFailure(local_dpi_network->selection_key,
-                service.service_id, strategies[attempt]);
-          }
-          proved = false;
-          break;
-        }
+      bool retryable_proof = false;
+      admitted_local_dpi_services = ProveAndAdmitWindowsLocalDpi(local_dpi_network->selection_key,
+          local_dpi_network->bind_interface, strategies[attempt], local_dpi_owner_current, false, &retryable_proof);
+      if (!admitted_local_dpi_services.empty()) {
+        proved_local_dpi_strategy = strategies[attempt];
+        break;
       }
-      if (proved) { successful_strategy = strategies[attempt]; break; }
-      if (!WindowsLocalDpiRetryableProof(proof_failure)) break;
+      if (!retryable_proof) break;
     }
-    // Both trials retain unpublished holders. Publish only after every proof
-    // succeeds; admission failure must never reopen a terminal holder.
-    if (proved) {
-      for (const auto& service : local_dpi_preparation_->services) {
-        const std::string admission_failure = !local_dpi_current() ? dpi_owner_failure() :
-            local_dpi_executor_->AdmitCaptured(service.outbound_tag, local_dpi_current)
-                ? "" : "local_dpi_admission_failed";
-        record_dpi(LocalDpiStage::kAdmit, successful_strategy, admission_failure);
-        if (!admission_failure.empty()) {
-          proved = false;
-          break;
-        }
-      }
-    }
-    if (proved) proved_local_dpi_strategy = successful_strategy;
-    if (!proved && !local_dpi_executor_->Stop()) {
+    if (!proved_local_dpi_strategy && !local_dpi_executor_->Stop()) {
       const auto rollback_error = RollbackRuntime();
       phase_ = rollback_error.empty() ? Phase::kConfigStaged : Phase::kRecoveryRequired;
       return Fail(Status::kNotReady, rollback_error.empty() ? "local_dpi_withdraw_failed" : rollback_error.c_str());
     }
-    if (!proved) local_dpi_disabled_ = true;
+    if (!proved_local_dpi_strategy) local_dpi_disabled_ = true;
     // Keep the signed expiry owner even after failed proof: the prepared
     // catalog rows must never outlive their window into route.final direct.
     if (!WindowsLocalDpiPreparationCurrent(*local_dpi_preparation_)) {
@@ -1878,7 +1843,7 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
     local_dpi_active_strategy_ = std::make_pair(local_dpi_network->selection_key, *proved_local_dpi_strategy);
     local_dpi_bind_interface_ = local_dpi_network->bind_interface;
     local_dpi_strategy_hints_.RecordSuccess(local_dpi_network->selection_key,
-        local_dpi_preparation_->services, *proved_local_dpi_strategy);
+        admitted_local_dpi_services, *proved_local_dpi_strategy);
   }
   return Snapshot();
 }
@@ -2229,6 +2194,56 @@ void RuntimeHost::Shutdown() {
   }
 }
 
+std::vector<WindowsLocalDpiService> RuntimeHost::ProveAndAdmitWindowsLocalDpi(
+    const std::string& network, const std::string& bind_interface,
+    WindowsLocalDpiStrategy strategy, const std::function<bool()>& owner_current,
+    bool standalone_permit, bool* retryable_proof) {
+  const auto current = [&] { return owner_current() && local_dpi_executor_->Alive(); };
+  const auto owner_failure = [&] {
+    return owner_current() ? "local_dpi_child_failed" : "local_dpi_owner_changed";
+  };
+  const auto record = [&](LocalDpiStage stage, const std::string& failure) {
+    if (events_) events_->RecordLocalDpiObservation(stage, static_cast<int>(strategy),
+        failure, local_dpi_executor_->Alive());
+  };
+  const CheckInterruption proof_interrupted = [&] {
+    return current() ? OperationInterruption::kNone : OperationInterruption::kCancelled;
+  };
+  bool any_proof = false;
+  bool transport_failure = false;
+  std::vector<WindowsLocalDpiService> admitted;
+  const auto& services = local_dpi_preparation_->services;
+  constexpr ULONGLONG kProofBudgetMs = 10000;
+  const auto deadline = ::GetTickCount64() + kProofBudgetMs;
+  for (std::size_t index = 0; index < services.size(); ++index) {
+    const auto now = ::GetTickCount64();
+    if (!current() || now >= deadline) break;
+    const auto timeout = (deadline - now) / (services.size() - index);
+    if (timeout == 0) break;
+    const auto& service = services[index];
+    auto failure = VerifyWindowsLocalDpiControlHost(service.control_host, bind_interface,
+        proof_interrupted, standalone_permit, timeout);
+    if (!current()) failure = owner_failure();
+    record(LocalDpiStage::kProof, failure);
+    if (!failure.empty()) {
+      if (WindowsLocalDpiRetryableProof(failure)) {
+        transport_failure = true;
+        local_dpi_strategy_hints_.RecordFailure(network, service.service_id, strategy);
+      }
+      continue;
+    }
+    any_proof = true;
+    const bool published = local_dpi_executor_->AdmitCaptured(service.outbound_tag, current);
+    const std::string admission_failure = current() ? "local_dpi_admission_failed" : owner_failure();
+    record(LocalDpiStage::kAdmit, published ? "" : admission_failure);
+    if (published) admitted.push_back(service);
+  }
+  // Retry the shared child only while no holder has attempted admission.
+  if (retryable_proof) *retryable_proof = transport_failure && !any_proof && current();
+  if (!current()) admitted.clear();
+  return admitted;
+}
+
 RuntimeResult RuntimeHost::MaintainWindowsLocalDpi(const CheckInterruption& interrupted) {
   if (!local_dpi_preparation_ || phase_ != Phase::kRunning) return Snapshot();
   const bool expired = !WindowsLocalDpiPreparationCurrent(*local_dpi_preparation_);
@@ -2255,24 +2270,17 @@ RuntimeResult RuntimeHost::MaintainWindowsLocalDpi(const CheckInterruption& inte
     local_dpi_disabled_ = true;
   }
   if (!local_dpi_disabled_ && local_dpi_active_strategy_) {
-    bool failed = false;
-    bool current_holders = true;
-    for (const auto& service : local_dpi_preparation_->services) {
+    // A replacement changes the shared winws2 strategy. A healthy holder
+    // keeps its proven path while a failed holder uses its VPN fallback.
+    const auto& services = local_dpi_preparation_->services;
+    const bool all_retryable = std::all_of(services.begin(), services.end(), [&](const auto& service) {
       if (service.captured_admission_id.empty() ||
-          core_->ReadLocalDpiAdmissionID(service.outbound_tag) != service.captured_admission_id) {
-        current_holders = false;
-        break;
-      }
+          core_->ReadLocalDpiAdmissionID(service.outbound_tag) != service.captured_admission_id) return false;
       const auto observation = ReadWindowsLocalDpiHolderObservation(
           core_->ReadLocalDpiObservation(service.captured_admission_id));
-      if (!observation || (observation->state != "ready" &&
-                           !WindowsLocalDpiRetryableRuntime(*observation))) {
-        current_holders = false;
-        break;
-      }
-      failed |= WindowsLocalDpiRetryableRuntime(*observation);
-    }
-    if (failed && current_holders) {
+      return observation && WindowsLocalDpiRetryableRuntime(*observation);
+    });
+    if (all_retryable) {
       // Preserve the failed generation's existing closed journal and hint
       // before Core replaces it with fresh unpublished holders.
       ReadLocalDpiRuntimeObservation();
@@ -2284,57 +2292,25 @@ RuntimeResult RuntimeHost::MaintainWindowsLocalDpi(const CheckInterruption& inte
             WindowsLocalDpiPreparationCurrent(*local_dpi_preparation_);
       };
       const auto current = [&] { return owner_current() && local_dpi_executor_->Alive(); };
-      const auto owner_failure = [&] {
-        return owner_current() ? "local_dpi_child_failed" : "local_dpi_owner_changed";
-      };
       const auto strategy = WindowsLocalDpiStrategyOrder(local_dpi_active_strategy_->second)[1];
-      const auto record = [&](LocalDpiStage stage, const std::string& failure) {
-        if (events_) events_->RecordLocalDpiObservation(stage, static_cast<int>(strategy),
-            failure, local_dpi_executor_->Alive());
-      };
       // Failure, cancellation or an exhausted pair leaves this connection on
       // VPN; do not try the same strategy again on the next watcher tick.
       local_dpi_disabled_ = true;
       const auto start_failure = local_dpi_executor_->RetryAfterRuntimeFailure(
-          local_dpi_preparation_->services, local_dpi_bind_interface_, strategy, owner_current);
-      record(LocalDpiStage::kStart, start_failure);
+          services, local_dpi_bind_interface_, strategy, owner_current);
+      if (events_) events_->RecordLocalDpiObservation(LocalDpiStage::kStart,
+          static_cast<int>(strategy), start_failure, local_dpi_executor_->Alive());
       for (auto& service : local_dpi_preparation_->services) {
         service.captured_admission_id = local_dpi_executor_->CapturedAdmissionID(service.outbound_tag);
       }
-      bool proved = start_failure.empty();
-      const CheckInterruption proof_interrupted = [&] {
-        return current() ? OperationInterruption::kNone : OperationInterruption::kCancelled;
-      };
-      if (proved) {
-        for (const auto& service : local_dpi_preparation_->services) {
-          auto proof_failure = !current() ? owner_failure() :
-              VerifyWindowsLocalDpiControlHost(service.control_host, local_dpi_bind_interface_, proof_interrupted,
-                  transition_guard_ && !transition_guard_->IsArmed());
-          if (!current()) proof_failure = owner_failure();
-          record(LocalDpiStage::kProof, proof_failure);
-          if (!proof_failure.empty()) {
-            if (WindowsLocalDpiRetryableProof(proof_failure) && current()) {
-              local_dpi_strategy_hints_.RecordFailure(local_dpi_active_strategy_->first,
-                  service.service_id, strategy);
-            }
-            proved = false;
-            break;
-          }
-        }
-      }
-      if (proved) {
-        for (const auto& service : local_dpi_preparation_->services) {
-          const std::string admission_failure = !current() ? owner_failure() :
-              local_dpi_executor_->AdmitCaptured(service.outbound_tag, current)
-                  ? "" : "local_dpi_admission_failed";
-          record(LocalDpiStage::kAdmit, admission_failure);
-          if (!admission_failure.empty()) { proved = false; break; }
-        }
-      }
-      if (proved && current()) {
+      const auto admitted = start_failure.empty()
+          ? ProveAndAdmitWindowsLocalDpi(local_dpi_active_strategy_->first, local_dpi_bind_interface_,
+                strategy, owner_current, transition_guard_ && !transition_guard_->IsArmed())
+          : std::vector<WindowsLocalDpiService>{};
+      if (!admitted.empty() && current()) {
         local_dpi_active_strategy_->second = strategy;
         local_dpi_strategy_hints_.RecordSuccess(local_dpi_active_strategy_->first,
-            local_dpi_preparation_->services, strategy);
+            admitted, strategy);
         local_dpi_runtime_failure_reported_ = false;
         local_dpi_disabled_ = false;
       } else if (!local_dpi_executor_->Stop()) {

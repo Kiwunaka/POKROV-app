@@ -337,11 +337,12 @@ std::string BoundHttpExchange(const std::string& control_host, const std::string
 std::string VerifyWindowsLocalDpiControlHost(const std::string& control_host,
                                            const std::string& bind_interface,
                                            const CheckInterruption& interrupted,
-                                           bool standalone_permit) {
+                                           bool standalone_permit,
+                                           std::uint64_t timeout_ms) {
   int status = 0;
   const auto failure = BoundHttpExchange(control_host, bind_interface,
       "HEAD / HTTP/1.1\r\nHost: " + control_host + "\r\nConnection: close\r\n\r\n",
-      interrupted, 10000, true, standalone_permit, &status);
+      interrupted, timeout_ms, true, standalone_permit, &status);
   if (!failure.empty()) return failure;
   return status >= 200 && status < 300 ? "" : "local_dpi_control_http_failed";
 }

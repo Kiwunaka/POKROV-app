@@ -11,7 +11,7 @@ const _homeTileDefaults = <String>['country', 'route', 'bypass', 'warp'];
 const _homeTileOptions = <String, (String, String, IconData)>{
   'country': ('Страна', 'Авто или конкретная страна', Icons.public_rounded),
   'route': ('Маршрут', 'Что идёт через POKROV', Icons.alt_route_rounded),
-  'bypass': ('Обход блокировок', 'YouTube и похожее сначала напрямую', Icons.turn_right_rounded),
+  'bypass': ('Обход блокировок', 'Сначала напрямую, при сбое через VPN', Icons.turn_right_rounded),
   'warp': ('WARP', 'Если сайты не открываются', Icons.cloud_outlined),
   'access': ('Доступ', 'Сколько осталось', Icons.vpn_key_outlined),
   'help': ('Помощь', 'ИИ и человек', Icons.help_outline_rounded),

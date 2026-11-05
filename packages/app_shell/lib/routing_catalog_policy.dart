@@ -148,8 +148,10 @@ class RoutingCatalogPolicy {
         }
         final dpiHost = intent['local_dpi_control_host'];
         if (dpiHost != null) {
-          if ((!const {CatalogRoutingMode.selective, CatalogRoutingMode.smartSafe}.contains(mode) ||
-              (mode == CatalogRoutingMode.smartSafe && id != 'youtube')) || action != CatalogRouteAction.vpn ||
+          final modeAllowsDpi = mode == CatalogRoutingMode.selective ||
+              (mode == CatalogRoutingMode.smartSafe &&
+               const {'youtube', 'discord', 'instagram', 'threads'}.contains(id));
+          if (!modeAllowsDpi || action != CatalogRouteAction.vpn ||
               (!platforms.contains('android') && !platforms.contains('windows'))) _fail('local_dpi_authority');
           localDpiControlHosts[mode] = _domain(dpiHost);
         }

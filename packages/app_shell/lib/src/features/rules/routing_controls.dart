@@ -29,8 +29,8 @@ class _LocalDpiCard extends StatelessWidget {
         key: const ValueKey('rules-local-dpi'),
         title: 'Включить обход блокировок',
         subtitle: routeMode == RouteMode.allExceptRu
-            ? 'YouTube: сначала напрямую, при сбое через VPN.'
-            : 'Для разрешённых выбранных сервисов: сначала напрямую, при сбое через VPN.',
+            ? 'Для поддерживаемых сервисов сначала напрямую через оператора, при сбое через VPN.'
+            : 'Для выбранных сервисов с поддержкой обхода сначала напрямую через оператора, при сбое через VPN.',
         value: preferences.localDpiEnabled,
         onChanged: (value) => onChanged(preferences.copyWith(localDpiEnabled: value)),
       ),

@@ -26,11 +26,13 @@ class AndroidLocalDpiFallbackTest {
         assertEquals(listOf("withdraw:first-holder", "observe:first-holder"), events)
     }
 
-    @Test fun smartSafeRequiresOnlyYouTubeAndProtectedFinal() {
+    @Test fun smartSafeRequiresSupportedServicesAndProtectedFinal() {
         val direct = LocalDpiVpnOutbound("direct", "direct")
         val vpn = LocalDpiVpnOutbound("vpn", "vless", tlsSecure = true)
         val outbounds = listOf(direct, vpn)
         assertTrue(localDpiModeAllows("smart_safe", setOf("youtube"), "vpn", outbounds))
+        assertTrue(localDpiModeAllows("smart_safe", setOf("discord", "instagram", "threads"), "vpn", outbounds))
+        assertFalse(localDpiModeAllows("smart_safe", emptySet(), "vpn", outbounds))
         assertFalse(localDpiModeAllows("smart_safe", setOf("youtube", "other"), "vpn", outbounds))
         assertFalse(localDpiModeAllows("smart_safe", setOf("youtube"), "direct", outbounds))
         assertFalse(localDpiModeAllows("smart_safe", setOf("youtube"), "vpn", listOf(vpn.copy(tlsSecure = false))))

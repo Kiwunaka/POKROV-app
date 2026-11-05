@@ -271,25 +271,25 @@ WindowsLocalDpiStrategy WindowsLocalDpiStrategyHints::Preferred(const std::strin
   const auto fallback = WindowsLocalDpiStrategy::kMultidisorderMidsld;
   std::optional<WindowsLocalDpiStrategy> success;
   std::optional<WindowsLocalDpiStrategy> after_failure;
-  bool incomplete = false;
   bool conflicting_success = false;
+  bool conflicting_failure = false;
   for (const auto& service : services) {
     const auto found = hints_.find({network, service.service_id});
-    if (found == hints_.end()) { incomplete = true; continue; }
+    if (found == hints_.end()) continue;
     const auto& hint = found->second;
     const auto candidate = hint.failed
         ? (hint.strategy == fallback ? WindowsLocalDpiStrategy::kFakeMultisplitAlt4 : fallback)
         : hint.strategy;
     if (hint.failed) {
-      if (after_failure && *after_failure != candidate) return fallback;
+      if (after_failure && *after_failure != candidate) conflicting_failure = true;
       after_failure = candidate;
     } else {
       if (success && *success != candidate) conflicting_success = true;
       success = candidate;
     }
   }
-  if (after_failure) return *after_failure;
-  return !incomplete && !conflicting_success ? success.value_or(fallback) : fallback;
+  if (success && !conflicting_success) return *success;
+  return conflicting_failure ? fallback : after_failure.value_or(fallback);
 }
 
 void WindowsLocalDpiStrategyHints::RecordSuccess(const std::string& network,

@@ -80,12 +80,15 @@ and read require this projection; invalid nested policy cannot replace the last
 accepted envelope or advance its revision floors. Network metadata does not
 produce CIDR/ASN routes; Windows identities are not yet matched to installed apps.
 
-Local DPI defaults to Auto only when its saved setting is absent; an explicit
-saved `false` remains off. Smart Safe tries local DPI only for YouTube with an
-explicit signed `smart_safe` VPN intent and exact nonshared control host, then
-falls back to the ordinary VPN in the selected country. Selective limits it to
-selected services with their own signed `selective` VPN intent. Android uses
-ByeDPI and Windows uses Flowseal; Full creates no local DPI executor. Gemini's
+Local DPI defaults to Auto when no setting is saved. Smart Safe can try local
+DPI for YouTube, Discord, Instagram and Threads when the catalog signs a
+`smart_safe` VPN intent and an exact nonshared control host. The catalog request
+advertises `social_local_dpi=1` for the expanded service set. Selective limits it
+to selected services with their own signed `selective` VPN intent. A domain
+listed by two signed services stays on the ordinary VPN. Android uses ByeDPI
+and Windows uses Zapret2. Each service needs its own HTTPS proof and uses its
+VPN route when proof or the direct path fails. Windows keeps the shared Zapret2
+strategy while any service remains admitted. Gemini's
 SmartDNS/US relay authority is unchanged. A first-provider QA attempt disables
 local DPI only in its compiled preference copy, preserving the saved choice.
 The Android host retains

@@ -305,7 +305,7 @@ class _ProfileSection extends StatelessWidget {
       ui.SettingsEntry(group: connection, title: 'Подробнее о WARP', hint: 'Что меняется и как выключить',
         keywords: 'warp cloudflare', icon: Icons.info_outline_rounded, onTap: () => unawaited(onOpenWarp())),
       if (onOpenBypass != null) ui.SettingsEntry(group: connection, title: 'Обход блокировок',
-        hint: 'YouTube и похожее сначала напрямую, при сбое через VPN', value: bypassEnabled ? 'Включён' : 'Выключен',
+        hint: 'Поддерживаемые сервисы сначала напрямую, при сбое через VPN', value: bypassEnabled ? 'Включён' : 'Выключен',
         keywords: 'dpi youtube zapret byedpi', icon: Icons.turn_right_rounded, onTap: onOpenBypass),
       ui.SettingsEntry(group: app, title: 'Виджеты на главной', hint: 'Что показывать на экране «Защита»',
         keywords: 'главная плитки', icon: Icons.dashboard_customize_outlined, onTap: onOpenHomeTiles),
