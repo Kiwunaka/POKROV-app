@@ -401,6 +401,52 @@ void main() {
         .singleWhere((server) => server['tag'] == dns['final']);
       expect(resolver['detour'], full ? 'proxy' : isNull);
     }
+    final appScopeProfile = ManagedProfilePayload(
+      profileName: 'routing-fixture',
+      routeMode: RouteMode.selectedApps,
+      materializedForRuntime: true,
+      configPayload: jsonEncode({
+        'inbounds': [{'type': 'tun', 'auto_route': true, 'strict_route': true}],
+        'outbounds': [
+          {'type': 'direct', 'tag': 'direct'},
+          {'type': 'vless', 'tag': 'proxy'},
+        ],
+        'route': {
+          'final': 'direct',
+          'rules': [
+            {'process_name': ['selected.exe'], 'outbound': 'proxy'},
+          ],
+        },
+        'dns': {
+          'servers': [
+            {'tag': 'dns-remote', 'address': 'tcp://1.1.1.1', 'detour': 'proxy'},
+            {'tag': 'dns-direct', 'address': 'local', 'detour': 'direct'},
+          ],
+          'final': 'dns-remote',
+        },
+      }),
+    );
+    final appScopePolicy = compileCatalogDomainPolicy(
+      policy: policy, mode: CatalogRoutingMode.includeApps, platform: 'windows',
+      accessState: 'paid_unlimited', vpnAvailable: true, now: now,
+    );
+    for (final catalogPolicy in [null, appScopePolicy]) {
+      final configured = jsonDecode(applyPokrovRoutingPreferences(
+        appScopeProfile, const PokrovRoutingPreferences.defaults(),
+        hostPlatform: HostPlatform.windows, catalogPolicy: catalogPolicy,
+        catalogAccessState: 'paid_unlimited', nativeCatalogWindowVersion: 1,
+      ).configPayload) as Map;
+      final rules = (configured['route']['rules'] as List).cast<Map>();
+      expect(rules.take(3), [
+        {'port': 53, 'action': 'hijack-dns'},
+        {'action': 'sniff'},
+        {
+          'domain': ['api.pokrov.space', 'birch.portal-privacy.online'],
+          'network': 'tcp', 'port': [443], 'process_name': ['pokrov_service.exe'],
+          'action': 'route', 'outbound': 'proxy',
+        },
+      ]);
+    }
     expect(() => compileCatalogDomainPolicy(policy: policy, mode: CatalogRoutingMode.selective,
       platform: 'windows', accessState: 'paid_unlimited', vpnAvailable: true, now: now),
       throwsA(isA<RoutingCatalogFailure>().having((error) => error.code, 'code', 'catalog_service_selection_empty')));

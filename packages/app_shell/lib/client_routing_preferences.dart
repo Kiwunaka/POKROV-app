@@ -525,6 +525,9 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
   final route = _routingMap(config['route']);
   final directTag = _findOutboundByType(outbounds, 'direct');
   final proxyTag = _resolveProxyTag(outbounds, endpoints, route);
+  final windowsAppScope = hostPlatform == HostPlatform.windows &&
+      (payload.routeMode == RouteMode.selectedApps ||
+          payload.routeMode == RouteMode.excludedApps);
   if (directTag.isEmpty) {
     throw const FormatException('Managed profile has no direct outbound');
   }
@@ -552,6 +555,9 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
       <String, dynamic>{'port': 53, 'action': 'hijack-dns'},
       <String, dynamic>{'action': 'sniff'},
     ]);
+    if (windowsAppScope) {
+      protectedRules.add(_windowsNativeProbeRoute(proxyTag));
+    }
   }
   final injected = <Map<String, dynamic>>[];
   final safetyTags = outbounds.where((outbound) =>
@@ -652,9 +658,7 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
     config['dns'] = dns;
   }
 
-  if (hostPlatform == HostPlatform.windows &&
-      (payload.routeMode == RouteMode.selectedApps ||
-          payload.routeMode == RouteMode.excludedApps)) {
+  if (windowsAppScope) {
     _protectWindowsAppDns(config, preferences,
         vpn: proxyTag, vpnDns: dnsAddress == null ? 'dns-remote' : 'pokrov-user-dns',
         directDns: 'dns-direct');
@@ -1032,24 +1036,22 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
     manualDns.add({'domain_suffix': _purposeDomains[purpose],
       if (isDirect || policy.vpnAvailable) 'server': isDirect ? directDns : vpnDns else 'action': 'reject'});
   }
-  // Selective mode keeps both owned control origins reachable through the VPN
-  // after startup chooses either one. App-scoped modes retain the native probe.
+  // Selective mode keeps both owned API origins reachable through the VPN.
   final protectedApiDomains = selective
       ? const ['api.pokrov.space', 'app.pokrov.space']
       : const ['api.pokrov.space'];
-  final probeRoute = <String, dynamic>{
+  final selectiveProbeRoute = <String, dynamic>{
     'domain': protectedApiDomains, 'network': 'tcp', 'port': [443],
-    if (windowsAppScope) 'process_name': ['pokrov_service.exe'],
     'action': 'route', 'outbound': vpn,
   };
   route['rules'] = [
     if (windowsAppScope) ...[
       {'port': 53, 'action': 'hijack-dns'},
       {'action': 'sniff'},
-      probeRoute,
+      _windowsNativeProbeRoute(vpn),
       ...appScopeRules,
     ],
-    ...safety, if (selective && policy.vpnAvailable) probeRoute,
+    ...safety, if (selective && policy.vpnAvailable) selectiveProbeRoute,
     if (lanSubnets.isNotEmpty) {'ip_cidr': lanSubnets, 'outbound': direct},
     {'ip_is_private': true, 'action': 'reject'},
     ...manual, ...layer.routeRules, ...remaining,
@@ -1154,6 +1156,15 @@ Set<String> localDpiServiceIdsForPayload(ManagedProfilePayload payload) {
 }
 
 const _windowsProcessKeys = ['process_name', 'process_path', 'process_path_regex'];
+
+Map<String, dynamic> _windowsNativeProbeRoute(String vpn) => {
+  'domain': const ['api.pokrov.space', 'birch.portal-privacy.online'],
+  'network': 'tcp',
+  'port': const [443],
+  'process_name': const ['pokrov_service.exe'],
+  'action': 'route',
+  'outbound': vpn,
+};
 
 List<Map<String, dynamic>> _windowsCatalogAppScopeRules(
     Map<String, dynamic> route, Map<String, dynamic> tun,
