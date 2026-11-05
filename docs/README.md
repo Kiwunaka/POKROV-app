@@ -16,11 +16,11 @@
   [Windows](operations/windows-release-readiness.md).
 - WARP-specific checks: [runtime proof checklist](operations/warp-runtime-proof-checklist.md).
 
-Public **1.4.5**, seven-asset draft **1.5.0+4175**, and private Android/Windows
-**1.5.0+4256** remain separate. Current artifacts,
-manifest selection and acceptance limits belong to
+Current artifacts, manifest selection and acceptance limits belong to
 [cutover readiness](operations/cutover-readiness.md), with packaging mechanics
-in [scripts](../scripts/README.md#runtime-selection).
+in [scripts](../scripts/README.md#runtime-selection). The 2 November 2026
+snapshot distinguished public **1.4.5**, the seven-asset draft **1.5.0+4175**,
+and private Android/Windows **1.5.0+4256**; it is historical.
 See [DESIGN.md](../DESIGN.md) for screen ownership,
 real-data bindings and the Diagnostics boundary.
 Dated candidate receipts are history, not current blockers or permission to
