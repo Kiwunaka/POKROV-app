@@ -489,8 +489,9 @@ int main(int argc, char** argv) {
     expect(server.port != 0, "proof listener failed");
     if (server.port == 0) return 1;
     auto probe = CreateLoopbackEgressProbeForTest(server.port);
-    expect(probe->Verify().empty() == authenticated,
-           "egress accepted invalid proof or rejected authenticated marker");
+    const auto expected = authenticated ? "" : "core_egress_probe_unavailable";
+    expect(probe->Verify() == expected,
+           "egress rejected a valid proof or treated a missing marker as a route failure");
     expect(server.requests == (authenticated ? 2 : 3), "egress retry count changed");
     if (authenticated) {
       expect(server.connections == 1, "startup proof reconnected between 204 and 64K");

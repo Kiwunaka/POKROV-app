@@ -1058,6 +1058,20 @@ void TestRuntimeLifecycle() {
                Contains(host.Snapshot(), "failure=core_egress_dns_failed") &&
                !Contains(host.Snapshot(), "egress_probe_stage="),
            "cancelled recheck attached a new observation to the previous DNS failure");
+    bool timed_out = false;
+    egress->verify_error = "core_egress_probe_unavailable";
+    egress->on_verify = [&] {
+      egress->observation = EgressProbeObservation{EgressProbeStage::kProof,
+          EgressProbeOutcome::kFailed, EgressErrorDomain::kHttpStatus, 503, 3000};
+      timed_out = true;
+    };
+    const auto unavailable_recheck = host.RecheckEgress([&] {
+      return timed_out ? OperationInterruption::kDeadlineExceeded : OperationInterruption::kNone;
+    });
+    Expect(unavailable_recheck.status == Status::kNotReady && host.CanRecheckEgress() &&
+               Contains(unavailable_recheck, "failure=core_egress_probe_unavailable"),
+           "the owner deadline replaced the observed responder failure");
+
     egress->on_verify = {};
     egress->observation.reset();
     egress->verify_error.clear();
@@ -1065,7 +1079,7 @@ void TestRuntimeLifecycle() {
     Expect(recovered_recheck.status == Status::kOk &&
                Contains(recovered_recheck, "core_egress_validated=1") &&
                Contains(recovered_recheck, "failure=none") &&
-               egress->verify_calls == 4,
+               egress->verify_calls == 5,
            "successful egress recheck did not restore proof");
 
     const auto disconnected = host.Disconnect();

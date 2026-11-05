@@ -2426,14 +2426,13 @@ through rollback and its closed IPC failure allowlist. `core_egress_dns_failed`,
 `core_egress_connect_failed` and `core_egress_tls_failed` describe the failed check,
 not a proven failure of the VPN node. TLS negotiation and waiting for a response
 have separate `core_egress_tls_timeout` / `core_egress_response_timeout` values;
-timeouts before those stages remain `core_egress_timeout`. Unknown errors and
-invalid HTTP/proof responses remain `core_egress_probe_failed`. The native
-callback stores only numeric errors and phases, never host names or response
-text. Cancellation remains owned by the connection transaction. These codes
-retain the same failed-egress retry eligibility, three verifier attempts and
-bounded managed fallback; they neither publish protection nor diagnose DPI,
-MTU, ASN or UDP blocking. The UI and native service ship together so their
-closed allowlists agree.
+timeouts before those stages remain `core_egress_timeout`. The ordinary static
+reserve uses the Birch HTTPS responder on CH. The selective-routing verifier
+uses its profile-bound probe targets. A valid reserve proof retains the current
+tunnel. If every attempt fails after a responder returns an invalid HTTP proof,
+the service reports `core_egress_probe_unavailable`.
+The callback stores numeric errors and phases. Cancellation remains owned by the
+connection transaction, and the existing attempt and deadline limits still apply.
 
 Windows ordinary egress failures expose the last completed probe observation in
 the existing service status and runner snapshot: closed stage, outcome and error

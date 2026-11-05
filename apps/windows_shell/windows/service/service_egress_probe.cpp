@@ -35,7 +35,7 @@ struct ProbeTarget {
 
 constexpr ProbeTarget kProbeTargets[] = {
     {kProbeHostname, L"/api/public/authenticated-egress-probe", L"/api/public/egress-probe-64k"},
-    {L"pokrov.space", L"/.well-known/pokrov/egress-probe", L"/.well-known/pokrov/egress-probe-64k.bin"},
+    {L"birch.portal-privacy.online", L"/.well-known/pokrov/egress-probe", L"/.well-known/pokrov/egress-probe-64k.bin"},
 };
 
 constexpr ProbeTarget kApiReserve = {
@@ -558,6 +558,7 @@ const char* ObservedFailure(const ProbeObservation& observation) {
   }
   if (observation.stage == EgressProbeStage::kConnect) return "core_egress_connect_failed";
   if (observation.stage == EgressProbeStage::kTls) return "core_egress_tls_failed";
+  if (observation.stage == EgressProbeStage::kProof) return "core_egress_probe_unavailable";
   return "core_egress_probe_failed";
 }
 
@@ -581,6 +582,7 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
           ? OperationInterruption::kDeadlineExceeded : OperationInterruption::kNone;
     };
     std::string failure = "core_egress_probe_failed";
+    bool invalid_proof_response = false;
     for (int attempt = 0; attempt < 3 && !Interrupted(owner); ++attempt) {
       std::uint64_t target_deadline = deadline_tick;
       if (periodic && deadline_tick != 0 && attempt == 0 && target_count > 1) {
@@ -604,6 +606,7 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
           target_index == 0 ? EgressProbeTarget::kOwnedApi : EgressProbeTarget::kOwnedReserve,
           deadline_tick);
       if (failure.empty() && !Interrupted(owner)) return "";
+      if (failure == "core_egress_probe_unavailable") invalid_proof_response = true;
       // Periodic failover to a different target gets the remaining budget
       // immediately. Startup and same-target retries retain their backoff.
       if (attempt < 2 && (!periodic || target_index + 1 >= target_count)) {
@@ -626,6 +629,7 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
         }
       }
     }
+    if (invalid_proof_response) return "core_egress_probe_unavailable";
     return Interrupted(owner) ? "core_egress_probe_failed" : failure;
   }
 

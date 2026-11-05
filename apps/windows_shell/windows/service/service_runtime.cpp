@@ -2080,8 +2080,9 @@ RuntimeResult RuntimeHost::RecheckEgress(const CheckInterruption& interrupted,
   if (!failure.empty() || interruption == OperationInterruption::kDeadlineExceeded) {
     core_egress_validated_ = false;
     RecordEvent(ServiceEvent::kRuntimeEgressVerify, ServiceEventOutcome::kFailed);
-    return Fail(Status::kNotReady, interruption == OperationInterruption::kDeadlineExceeded
-        ? "core_egress_timeout" : SafeEgressFailure(failure));
+    const bool timed_out = interruption == OperationInterruption::kDeadlineExceeded &&
+        failure != "core_egress_probe_unavailable";
+    return Fail(Status::kNotReady, timed_out ? "core_egress_timeout" : SafeEgressFailure(failure));
   }
   RecordEvent(ServiceEvent::kRuntimeEgressVerify, ServiceEventOutcome::kSucceeded);
   core_egress_validated_ = true;
