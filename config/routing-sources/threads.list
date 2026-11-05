@@ -1,0 +1,7 @@
+# POKROV curated Threads web subset, not a complete service list.
+# Source: https://github.com/v2fly/domain-list-community/blob/6ee52f2c36634aeabeb9c4ba486ca02cd84c3d4f/data/threads
+# Meta migration: https://about.fb.com/news/2025/04/new-features-threads-web-experience/
+# MIT; copyright (c) 2018-2019 V2Ray. See LICENSE in this directory.
+threads.com
+full:www.threads.com
+threads.net

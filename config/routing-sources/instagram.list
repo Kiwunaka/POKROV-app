@@ -1,0 +1,6 @@
+# POKROV curated Instagram web subset, not the complete upstream service list.
+# Source: https://github.com/v2fly/domain-list-community/blob/6ee52f2c36634aeabeb9c4ba486ca02cd84c3d4f/data/instagram
+# MIT; copyright (c) 2018-2019 V2Ray. See LICENSE in this directory.
+# The CDN is shared with Threads and is kept separately; this list gives no CDN routing authority.
+instagram.com
+full:www.instagram.com
