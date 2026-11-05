@@ -1,9 +1,24 @@
 # Client release status
 
-Updated 4 November 2026. The owner's [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
+Updated 5 November 2026. The owner's [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
 is the only current release queue; [Execution section 0](C:/Users/kiwun/Downloads/POKROV_EXECUTION_PLAN_2026-09-24.md)
 explains how to continue. Dated results below retain their original scope and do
 not create new tasks or permission to repeat accepted checks.
+
+Private Android **1.5.0+4266**, App `1e3225db` and Core `791d3cf` (1.2.15/ABI2),
+has four production-signed APKs with production trust in
+`E:/POKROV-tools/temp/release-1.5.0-4266`. Package checks passed for version,
+ABIs, bundled F82 model and Core/Slipstream bytes. Phone acceptance is pending.
+
+Windows **LAB4265** Setup and ZIP in `E:/POKROV-tools/temp/release-1.5.0-4265-lab`
+are for isolated VM testing with the signed lab catalog. The regular private
+Windows package is **4262**. With one normal VPN connection, Edge loaded the
+public landing pages for Discord, Instagram, Threads and YouTube with HTTP 200
+over h2. Discord's local TLS proof and Instagram's local HTTP proof failed, so
+both pages used VPN. Threads lost local admission, recorded VPN handoffs and
+loaded in 6.3 seconds during the same navigation. YouTube then loaded locally
+with its admission intact. Selected preferences, DNS, all 16 routes and
+proxies matched baseline after cleanup. The VM is powered off.
 
 Private Android **1.5.0+4263**, App `aedc0c4e` including LocalDPI fix `aa95afdd`,
 has four production-signed, non-debuggable APKs in
