@@ -635,7 +635,8 @@ void main() {
   });
 
   for (final (serviceId, controlFailure, hostPlatform, comssDns, resolverBootstrapIp) in <(String, String?, HostPlatform, bool, String?)>[
-    for (final failure in const <String?>[null, 'core_egress_tls_failed', 'service_unavailable', 'unknown_private_control_code', 'smart_access_signature_invalid', 'control_deadline'])
+    for (final failure in const <String?>[null, 'core_egress_tls_failed', 'service_unavailable', 'smart_access_runtime_control_unconfirmed',
+      'unknown_private_control_code', 'smart_access_signature_invalid', 'control_deadline'])
       ('gemini', failure, HostPlatform.windows, false, null),
     ('gemini', null, HostPlatform.windows, false, '31.58.216.201'),
     ('chatgpt', null, HostPlatform.windows, false, null),
@@ -647,6 +648,8 @@ void main() {
   ]) {
   test('${hostPlatform.name} explicit first-provider QA uses the signed disabled $serviceId projection through ordinary managed stage${resolverBootstrapIp != null ? ' with resolver bootstrap IP' : comssDns ? ' with Comss DNS' : controlFailure == null ? '' : ' with $controlFailure'}', () async {
     final refreshDuringStart = hostPlatform == HostPlatform.windows && serviceId == 'gemini' && controlFailure == null;
+    final controlClientState = hostPlatform == HostPlatform.windows && controlFailure == 'smart_access_runtime_control_unconfirmed'
+        ? 'protocol_incompatible' : null;
     final httpOverrides = HttpOverrides.current;
     HttpOverrides.global = null;
     addTearDown(() => HttpOverrides.global = httpOverrides);
@@ -984,7 +987,7 @@ void main() {
           }
           if (controlFailure != null) {
             throw PlatformException(code: controlFailure, message: 'private control message',
-              details: const {'capability': 'private control capability'});
+              details: controlClientState ?? const {'capability': 'private control capability'});
           }
           final config = jsonDecode(args['configJson'] as String) as Map;
           expect(config['capability'], startsWith('saqa1.'));
@@ -1092,9 +1095,16 @@ void main() {
       final connected = manager.status.phase;
       await manager.disconnect();
       expect(context?['control_delivery'], 'failed');
-      expect(context?['control_reason'], controlFailure == 'unknown_private_control_code' ? 'unclassified' : controlFailure);
-      if (hostPlatform == HostPlatform.android && controlFailure != 'smart_access_signature_invalid') {
+      final reason = controlFailure == 'unknown_private_control_code' ? 'unclassified' : controlFailure;
+      expect(context?['control_reason'], reason);
+      expect(context?['control_client_state'], controlClientState);
+      if (controlFailure != 'smart_access_signature_invalid') {
         expect(context?['start_error'], contains('qa_start: PlatformException'));
+        final event = experience.saved.protectionEvents.singleWhere((event) => event.kind == 'qa_start_failed');
+        final detail = PokrovProtectionEvent.fromJson(event.toJson()).detail;
+        expect(detail, contains('control_reason=$reason'));
+        if (controlClientState != null) expect(detail, contains('control_client_state=$controlClientState'));
+        expect(detail, isNot(contains('private')));
       }
       expect(jsonEncode(context), isNot(contains('private')));
       expect(context?['proof_current'], isNot(true));

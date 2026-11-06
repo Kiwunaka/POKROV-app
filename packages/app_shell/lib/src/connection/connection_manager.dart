@@ -826,15 +826,23 @@ class ConnectionManager extends ChangeNotifier {
       final detail = _unexpectedConnectionDiagnostic('qa_start', error, stack);
       if (!_disposed && _startedFirstProviderQaAdmissionId == admissionId) {
         final diagnostic = _firstProviderQaControlDiagnostic;
-        final controlReason = diagnostic != null && diagnostic['control_delivery'] == 'failed'
-            ? diagnostic['control_reason'] : null;
+        final controlFailure = diagnostic?['control_delivery'] == 'failed' ? diagnostic : null;
+        final controlReason = controlFailure?['control_reason'];
+        final clientState = controlFailure?['control_client_state'];
         _firstProviderQaControlDiagnostic = Map.unmodifiable({
           'control_delivery': 'failed',
           'control_reason': controlReason ?? 'start_exception',
+          if (clientState != null) 'control_client_state': clientState,
           'start_error': detail,
         });
+        final eventDetail = [
+          if (controlReason != null) 'control_reason=$controlReason',
+          if (clientState != null) 'control_client_state=$clientState',
+          detail,
+        ].join(' · ');
         _recordProtectionEvent(kind: 'qa_start_failed', title: 'Проверка SmartDNS прервана',
-          detail: detail, tone: PokrovProtectionEventTone.error);
+          detail: eventDetail.length <= 180 ? eventDetail : eventDetail.substring(0, 180),
+          tone: PokrovProtectionEventTone.error);
       }
       rethrow;
     } finally {

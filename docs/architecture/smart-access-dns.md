@@ -540,7 +540,9 @@ conflicting bootstrap bindings reject control instead of choosing another DNS.
 An exception escaping QA start retains only the existing closed exception type,
 allowlisted code and up to two local Dart source locations in the QA summary and
 bounded protection history. The summary preserves a classified control failure
-through the outer start error. Android also logs closed QA control failure reasons
+through the outer start error. The protection event keeps that same closed code
+after the QA context is gone. A generic Windows bound-control failure also keeps
+the closed pipe client state. Android logs closed QA control failure reasons
 under `POKROV-SmartDNS`, without profile or connection material. Diagnostics
 refreshes that summary after the error and retains its error card when the pending
 admission disappears. QA context refresh is independent of the general diagnostics

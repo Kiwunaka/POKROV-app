@@ -507,7 +507,7 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
       'catalog_field_invalid', 'catalog_value_invalid',
       'invalid_runtime_control', 'invalid_smart_access_runtime_control',
       'bound_runtime_control_capability_required', 'smart_access_runtime_control_unsupported',
-      'smart_access_profile_changed', 'smart_access_runtime_control_unconfirmed', 'service_unavailable',
+      'smart_access_profile_changed', 'smart_access_runtime_control_unconfirmed', 'service_unavailable', 'deadline_exceeded',
       'core_egress_probe_unavailable', 'core_egress_dns_failed', 'core_egress_connect_failed',
       'core_egress_tls_failed', 'core_egress_timeout', 'core_egress_probe_failed', 'core_smart_access_lease_expired'};
     try {
@@ -567,9 +567,14 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
       if (current() && (error.statusCode == 401 || error.statusCode == 403)) await closeMember();
     } on Object catch (error) {
       final code = error is PlatformException ? error.code : null;
+      final clientState = error is PlatformException && _appContext.hostPlatform == HostPlatform.windows &&
+          code == 'smart_access_runtime_control_unconfirmed' ? error.details : null;
       setDiagnostic({'control_delivery': 'failed',
         'control_reason': controlCodes.contains(code) ? code
-          : _connectionPlatformFailureCode(error) ?? (error is TimeoutException ? 'timeout' : 'unclassified')});
+          : _connectionPlatformFailureCode(error) ?? (error is TimeoutException ? 'timeout' : 'unclassified'),
+        if (const {'unavailable', 'server_untrusted', 'protocol_incompatible', 'service_bootstrap', 'service_ready'}.contains(clientState))
+          'control_client_state': clientState,
+      });
       rethrow;
     } finally {
       _smartAccessRefreshInFlight = false;
