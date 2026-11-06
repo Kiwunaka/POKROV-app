@@ -24,9 +24,13 @@ candidates, leaving one movable after protecting the primary. This is one
 owned-VM smoke, not acceptance across networks.
 
 The focused US country Auto source test passes on the V2 App code: it admits
-the exact bridge before direct. The fixture advertises client 1.5.0+4263 and a
-mock Core 1.2.15; real US connectivity and packaged Core 9edf7d7 were not
-tested by this check.
+the exact bridge before direct. Its fixture advertises client 1.5.0+4263 and a
+mock Core 1.2.15. Separately, one ordinary US country Auto connection on the
+installed Windows 4269 with Core `9edf7d7` recorded a proven US bridge candidate;
+the native service reported egress and DNS ready with TUN active. Attempt order
+was not traced. After Stop and tray Exit, settings, DNS, routes and proxies
+matched baseline and the VM was powered off. This is one owned-VM observation,
+not acceptance across networks.
 
 [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
 owns the V2 queue. [Execution section 0](C:/Users/kiwun/Downloads/POKROV_EXECUTION_PLAN_2026-09-24.md)
