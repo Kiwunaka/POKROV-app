@@ -4502,6 +4502,8 @@ class ConnectionManager extends ChangeNotifier {
                   actionIntent == ConnectionTransitionIntent.reconnect));
       if (shouldRefreshManagedProfile) {
         ManagedProfilePayload? managedProfile;
+        Object? refreshFailure;
+        final refreshClock = Stopwatch()..start();
         try {
           failureOperation = 'managed_profile_refresh';
           failureStage = ConnectionStage.profile;
@@ -4515,7 +4517,8 @@ class ConnectionManager extends ChangeNotifier {
                 : initialProfilePreparation
                     ? _initialProfilePreparationTimeout : _actionTimeout,
           );
-        } on TimeoutException {
+        } on TimeoutException catch (error) {
+          refreshClock.stop();
           if (!cachedProfileFallbackAllowed ||
               !_cachedProfileFallbackGate.canFallback(
                 cachedProfileAvailable: cachedProfileAvailable,
@@ -4525,8 +4528,9 @@ class ConnectionManager extends ChangeNotifier {
           }
           cachedPayload = await readCache();
           if (cacheService != null && cachedPayload == null) rethrow;
-          usedCachedProfile = true;
+          refreshFailure = error;
         } on BootstrapFailure catch (error) {
+          refreshClock.stop();
           if (!error.sessionRejected && (error.statusCode == 401 || error.statusCode == 403)) {
             _cachedProfileFallbackGate.markAuthorizationDenied();
           }
@@ -4540,9 +4544,21 @@ class ConnectionManager extends ChangeNotifier {
           }
           cachedPayload = await readCache();
           if (cacheService != null && cachedPayload == null) rethrow;
-          usedCachedProfile = true;
+          refreshFailure = error;
         }
-        if (usedCachedProfile) await _classifyOfflineFailure(generation);
+        if (refreshFailure != null) {
+          usedCachedProfile = true;
+          final classificationClock = Stopwatch()..start();
+          await _classifyOfflineFailure(generation);
+          if (!_disposed && _connectionCoordinator.ownsOperation(generation) &&
+              profileRevision == _managedProfileRevision) {
+            _observability?._recordManagedProfileFallback(
+              failure: refreshFailure,
+              refreshElapsed: refreshClock.elapsed,
+              offlineClassificationElapsed: classificationClock.elapsed,
+            );
+          }
+        }
         if (usedCachedProfile && cachedPayload != null) {
           // Restore from the protected original, including after process restart
           // or a host clear. Restaging must not renew the cache timestamp.

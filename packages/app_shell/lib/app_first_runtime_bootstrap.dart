@@ -1248,22 +1248,6 @@ class ManagedProfileTimeout extends TimeoutException {
   final Map<String, Object>? preparation;
 }
 
-// Closed preparation metadata travels in the existing candidate runtime report.
-Map<String, Object>? _safeCandidatePreparation(Object? value) {
-  if (value is! Map || value.keys.any((key) =>
-      !const {'stage', 'elapsed_ms', 'http_status'}.contains(key))) return null;
-  final stage = value['stage'];
-  final elapsed = value['elapsed_ms'];
-  final status = value['http_status'];
-  if (!const {'session', 'route_policy', 'candidate_network', 'api_origin',
-      'http_connect', 'http_headers', 'http_body', 'http_retry', 'materialize',
-      'state_read'}.contains(stage) || elapsed is! int || elapsed < 0 ||
-      elapsed > 3600000 || (status != null &&
-      (status is! int || status < 100 || status > 599))) return null;
-  return {'stage': stage as String, 'elapsed_ms': elapsed,
-    if (status != null) 'http_status': status as int};
-}
-
 // Debug QA only: never include exception text, operations, or request material.
 void _traceBootstrap(String stage, String outcome, {
   String reason = 'none',
@@ -4696,7 +4680,9 @@ class AppFirstRuntimeBootstrapper
         safeProbe['probe_error'] = detail;
         latestDetailedProbe = safeProbe;
       }
-      final preparation = !outcome ? _safeCandidatePreparation(probe['preparation']) : null;
+      final preparation = !outcome
+          ? OperationalAttributePolicy.managedProfilePreparation(probe['preparation'])
+          : null;
       if (preparation != null) safeProbe['preparation'] = preparation;
       safeCandidateProbes.add(safeProbe);
     }

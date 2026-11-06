@@ -529,6 +529,37 @@ final class PokrovClientObservability {
     );
   }
 
+  void _recordManagedProfileFallback({
+    required Object failure,
+    required Duration refreshElapsed,
+    required Duration offlineClassificationElapsed,
+  }) {
+    final bootstrapFailure = failure is BootstrapFailure ? failure : null;
+    final preparation = OperationalAttributePolicy.managedProfilePreparation(
+      failure is ManagedProfileTimeout ? failure.preparation : bootstrapFailure?.preparation,
+    );
+    final code = bootstrapFailure?.operationalErrorCode ?? 'API-002';
+    _emitCurrent(
+      name: managedProfileFallbackEventName,
+      subsystem: 'connection',
+      stage: 'prepare',
+      outcome: ObservabilityOutcome.degraded,
+      errorCode: KnownOperationalErrorCodes.contains(code) ? code : null,
+      errorOrigin: bootstrapFailure == null ? ObservabilityErrorOrigin.client : ObservabilityErrorOrigin.portal,
+      attributes: <String, Object?>{
+        'fallback_kind': bootstrapFailure == null ? 'timeout' : 'permitted_transient',
+        'refresh_elapsed_ms': refreshElapsed.inMilliseconds.clamp(0, 86400000),
+        'offline_classification_elapsed_ms': offlineClassificationElapsed.inMilliseconds.clamp(0, 86400000),
+        if (preparation != null) 'preparation': preparation,
+        ...OperationalAttributePolicy.prepareFailureAttributes(
+          reason: bootstrapFailure?.code,
+          httpStatus: bootstrapFailure?.httpStatusForDiagnostics,
+          apiFailureKind: bootstrapFailure?.apiFailureKind,
+        ),
+      },
+    );
+  }
+
   void recordCandidateProbe({
     required String failureKind,
     required Duration duration,

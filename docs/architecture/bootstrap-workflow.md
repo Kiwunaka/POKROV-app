@@ -2530,6 +2530,14 @@ seconds when a matching cached profile exists. Timeout or transient
 the regular host staging transaction, including after app/process restart.
 The cache is checked again after refresh failure for expiry or intervening
 authorization denial. Offline preparation performs no WARP-status API call.
+
+An admitted cached fallback records `app.connection.managed_profile_fallback.finished`
+in the local operational journal. It keeps the closed failure code and any
+validated preparation stage, elapsed time and observed HTTP status. Refresh
+elapsed time measures the whole managed-profile resolution through its failure.
+Offline classification has a separate duration after the cache recheck, including
+any wait for the OS network observation. The event stays out of release health.
+
 Known 401/403 denial and a successful subscription response with lane
 `expiredOrBlocked` clear the protected cache. The subscription denial also
 blocks cached reconnect and stops a running tunnel through normal disconnect;

@@ -4,6 +4,21 @@ import 'package:crypto/crypto.dart';
 import 'package:pokrov_observability_contracts/observability_contracts.dart';
 
 abstract final class OperationalAttributePolicy {
+  static Map<String, Object>? managedProfilePreparation(Object? value) {
+    if (value is! Map || value.keys.any((key) =>
+        !const {'stage', 'elapsed_ms', 'http_status'}.contains(key))) return null;
+    final stage = value['stage'];
+    final elapsed = value['elapsed_ms'];
+    final status = value['http_status'];
+    if (!const {'session', 'route_policy', 'candidate_network', 'api_origin',
+        'http_connect', 'http_headers', 'http_body', 'http_retry', 'materialize',
+        'state_read'}.contains(stage) || elapsed is! int || elapsed < 0 ||
+        elapsed > 3600000 || (status != null &&
+        (status is! int || status < 100 || status > 599))) return null;
+    return {'stage': stage as String, 'elapsed_ms': elapsed,
+      if (status != null) 'http_status': status as int};
+  }
+
   static Map<String, Object>? candidateProbeError(Object? value, {bool allowPrimary = true}) {
     const required = {'operation', 'cause', 'cancel_state', 'target', 'request',
       'elapsed_ms', 'stage_started_ms', 'duration_ms'};
@@ -73,6 +88,8 @@ abstract final class OperationalAttributePolicy {
   };
   static const _integerKeys = <String>{
     'duration_ms',
+    'refresh_elapsed_ms',
+    'offline_classification_elapsed_ms',
     'retry_count',
     'retry_after_ms',
     'effective_mtu',
@@ -113,6 +130,7 @@ abstract final class OperationalAttributePolicy {
     'error_count',
   };
   static final _enums = <String, Set<String>>{
+    'fallback_kind': <String>{'timeout', 'permitted_transient'},
     'api_failure_kind': <String>{
       'origin_socket', 'origin_http', 'origin_tls', 'origin_timeout',
       'origin_content_type', 'origin_http_status', 'origin_json_syntax',
@@ -427,6 +445,10 @@ abstract final class OperationalAttributePolicy {
   }
 
   static void _validateValue(String key, Object? value) {
+    if (key == 'preparation') {
+      if (managedProfilePreparation(value) == null) throw ArgumentError('Invalid profile preparation');
+      return;
+    }
     if (key == 'probe_error') {
       if (candidateProbeError(value) == null) throw ArgumentError('Invalid probe error');
       return;
@@ -451,7 +473,8 @@ abstract final class OperationalAttributePolicy {
       if (key == 'http_status' && (value < 100 || value > 599)) {
         throw ArgumentError.value(value, key, 'HTTP status outside contract');
       }
-      if ((key == 'duration_ms' || key == 'retry_after_ms') &&
+      if ((key == 'duration_ms' || key == 'retry_after_ms' ||
+          key == 'refresh_elapsed_ms' || key == 'offline_classification_elapsed_ms') &&
           value > 86400000) {
         throw ArgumentError.value(value, key, 'Duration outside contract');
       }

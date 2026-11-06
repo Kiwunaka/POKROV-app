@@ -155,7 +155,7 @@ final class _RuntimeStatsRecord {
                 probe.keys.any((key) => !probeFields.contains(key)) ||
                 probe.entries.any((entry) => entry.key == 'probe_error'
                     ? RuntimeCandidateProbeResult.probeErrorFromWire(entry.value) == null
-                    : entry.key == 'preparation' ? _safeCandidatePreparation(entry.value) == null
+                    : entry.key == 'preparation' ? OperationalAttributePolicy.managedProfilePreparation(entry.value) == null
                     : entry.key == 'awg' ? probe['candidate_transport'] != 'awg31' || RuntimeCandidateProbeResult.awgFromWire(entry.value) == null
                     : entry.value is! String && entry.value is! int && entry.value is! bool)))) {
       throw const FormatException('runtime_stats_probes_invalid');

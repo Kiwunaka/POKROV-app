@@ -740,6 +740,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   int handoffCalls = 0;
   bool? networkAvailable = true;
   bool? captivePortal;
+  Future<RuntimeNetworkStatusObservation> Function()? networkAvailabilityProbe;
   String candidateKey = 'network-a';
   String candidateContext = 'context-a';
   String? lastStopReason;
@@ -753,8 +754,12 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   final probeFailureKinds = <String, String>{};
 
   @override
-  Future<RuntimeNetworkStatusObservation> readNetworkAvailability() async => RuntimeNetworkStatusObservation(
+  Future<RuntimeNetworkStatusObservation> readNetworkAvailability() async {
+    final probe = networkAvailabilityProbe;
+    if (probe != null) return probe();
+    return RuntimeNetworkStatusObservation(
       networkAvailable: networkAvailable, captivePortal: captivePortal);
+  }
 
   @override
   Future<RuntimeCandidateNetwork> readCandidateNetwork() async {
@@ -5412,6 +5417,11 @@ void main() {
   });
 
   test('cold Android AWG connects after four seconds with fresh or cached material', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-cached-preparation-');
+    addTearDown(() => _deleteTestDirectory(directory));
+    final observability = await PokrovClientObservability.start(
+      hostPlatform: HostPlatform.android, directoryResolver: () async => directory,
+    );
     final awg = _CachedBootstrapper.alternatives[1];
     final bootstrapper = _CachedBootstrapper()
       ..cacheAvailable = false
@@ -5421,7 +5431,7 @@ void main() {
     final runtime = _Runtime()
       ..supportsCandidates = true
       ..probeDelay = const Duration(seconds: 5);
-    final manager = _manager(runtime, bootstrapper);
+    final manager = _manager(runtime, bootstrapper, observability: observability);
     addTearDown(manager.dispose);
 
     await manager.connect();
@@ -5433,15 +5443,45 @@ void main() {
     await manager.disconnect();
     bootstrapper
       ..cacheAvailable = true
-      ..failure = TimeoutException('managed API unavailable');
+      ..failure = ManagedProfileTimeout('diagnostic-fixture-private-operation', preparation: const {
+        'stage': 'http_body', 'elapsed_ms': 3000, 'http_status': 200,
+      });
     runtime.probeTimeouts.clear();
-    await manager.connect();
+    final networkRead = Completer<void>();
+    final networkStatus = Completer<RuntimeNetworkStatusObservation>();
+    runtime.networkAvailabilityProbe = () {
+      networkRead.complete();
+      return networkStatus.future;
+    };
+    final clock = Stopwatch()..start();
+    final connecting = manager.connect();
+    await networkRead.future.timeout(const Duration(seconds: 2));
+    final beforeClassification = clock.elapsedMilliseconds;
+    const networkReadDelay = Duration(milliseconds: 40);
+    await Future<void>.delayed(networkReadDelay);
+    networkStatus.complete(const RuntimeNetworkStatusObservation());
+    await connecting;
+    expect(bootstrapper.lastProfileTimeout, const Duration(seconds: 3));
     expect(runtime.probeTimeouts, [const Duration(seconds: 12)]);
     expect(manager.status.phase, ConnectionPhase.connected, reason: manager.headline);
     expect(manager.offlineState, ManagedProfileOfflineState.apiUnavailable);
     expect(runtime.probedProtocols, ['awg', 'awg']);
     expect(runtime.activeProbes, isEmpty);
     expect(runtime.connectCalls, 2);
+    await observability.flush();
+    final events = await File(
+      '${directory.path}/pokrov-observability/operational-events.v1.0.jsonl',
+    ).readAsLines();
+    final fallback = events.map((line) => jsonDecode(line) as Map<String, dynamic>)
+        .singleWhere((event) => event['name'] == 'app.connection.managed_profile_fallback.finished');
+    expect(fallback['error'], {'code': 'API-002', 'origin': 'client'});
+    final attributes = fallback['attributes'] as Map;
+    expect(attributes, {
+      'fallback_kind': 'timeout',
+      'preparation': {'stage': 'http_body', 'elapsed_ms': 3000, 'http_status': 200},
+      'refresh_elapsed_ms': inInclusiveRange(0, beforeClassification),
+      'offline_classification_elapsed_ms': greaterThanOrEqualTo(networkReadDelay.inMilliseconds),
+    });
   });
 
   test('pending bundled ranker load blocks neither candidate probes nor cancellation', () async {

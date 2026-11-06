@@ -109,6 +109,7 @@ final class ReleaseHealthMirrorWriter implements OperationalEventWriter {
       );
 
   static bool _isAggregateEligible(OperationalEvent event) =>
+      event.name != managedProfileFallbackEventName &&
       event.outcome != ObservabilityOutcome.started &&
       !event.isSecurity &&
       event.build.platform != 'server';

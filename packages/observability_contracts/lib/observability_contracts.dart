@@ -143,6 +143,8 @@ enum PortalFailureReason {
   }
 }
 
+const managedProfileFallbackEventName = 'app.connection.managed_profile_fallback.finished';
+
 abstract final class ObservabilityAttributeKeys {
   static const allowed = <String>{
     'api_failure_kind',
@@ -161,6 +163,7 @@ abstract final class ObservabilityAttributeKeys {
     'effective_mtu',
     'egress_ready',
     'error_count',
+    'fallback_kind',
     'failure_kind',
     'failure_operation',
     'failure_reason',
@@ -170,10 +173,12 @@ abstract final class ObservabilityAttributeKeys {
     'journal_kind',
     'manifest_version',
     'network_class',
+    'offline_classification_elapsed_ms',
     'operation',
     'os_error_code',
     'permission_state',
     'phase',
+    'preparation',
     'prepare_reason',
     'probe_stage',
     'http_64k_failure',
@@ -181,6 +186,7 @@ abstract final class ObservabilityAttributeKeys {
     'probe_error',
     'queue_depth',
     'reason_class',
+    'refresh_elapsed_ms',
     'retention_days',
     'retry_after_ms',
     'retry_count',
