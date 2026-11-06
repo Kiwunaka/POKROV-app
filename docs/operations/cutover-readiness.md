@@ -7,6 +7,11 @@ fix from `6dc10a9`. Public downloads and update metadata serve **1.4.5** (schema
 minimum supported 1.3.0). The seven-asset **1.5.0+4175** draft
 and the private packages below retain their original versions.
 
+The existing Core `9edf7d7` DLL and AAR passed ABI and manifest/dependency
+checks. The private handoff is
+`E:/POKROV-tools/temp/core-v2-9edf7d7/runtime-artifacts.4269.json`;
+Android and Windows application packages have not been built from it yet.
+
 [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
 owns the V2 queue. [Execution section 0](C:/Users/kiwun/Downloads/POKROV_EXECUTION_PLAN_2026-09-24.md)
 links the retained acceptance criteria. Dated results below apply to the
