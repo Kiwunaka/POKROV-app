@@ -1,13 +1,19 @@
 # POKROV V2 client release status
 
 Updated 6 November 2026. **V2 (2.0.0)** is the next Android and Windows release.
-The private test build is **2.0.0+4269**. Its Core `9edf7d7` includes the DNS reverse-mapping
-fix from `6dc10a9`. Public downloads and update metadata serve **1.4.5** (schema 0,
-minimum supported 1.3.0). The seven-asset **1.5.0+4175** draft
-and the private packages below retain their original versions.
+The private test build **2.0.0+4270** is in
+`E:/POKROV-tools/temp/release-2.0.0-4270`. App `2c77aadd` uses Core `8beba8a`
+through `E:/POKROV-tools/temp/core-v2-8beba8a/runtime-artifacts.4270.json` for
+SmartDNS `SERVFAIL` fallback. The four APKs passed production signer, version,
+ABI and runtime checks. The unsigned Windows Setup and single-installer ZIP
+passed version and identity checks. The build uses the current Auto policy with
+F82 in shadow. Native SmartDNS acceptance on 4270 and physical-device checks
+remain pending. Public downloads and update metadata serve **1.4.5** (schema 0,
+minimum supported 1.3.0). The seven-asset **1.5.0+4175** draft retains its version.
 
-The existing Core `9edf7d7` DLL and AAR passed ABI and manifest/dependency
-checks. The private handoff is
+For the earlier **2.0.0+4269** test build, Core `9edf7d7` includes the DNS
+reverse-mapping fix from `6dc10a9`. Its DLL and AAR passed ABI and
+manifest/dependency checks. The private handoff is
 `E:/POKROV-tools/temp/core-v2-9edf7d7/runtime-artifacts.4269.json`.
 The private V2 test build from App `b01f1eaa` is in
 `E:/POKROV-tools/temp/release-2.0.0-4269`. It uses the current Auto policy with
