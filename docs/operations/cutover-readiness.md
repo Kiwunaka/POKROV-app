@@ -9,8 +9,11 @@ and the private packages below retain their original versions.
 
 The existing Core `9edf7d7` DLL and AAR passed ABI and manifest/dependency
 checks. The private handoff is
-`E:/POKROV-tools/temp/core-v2-9edf7d7/runtime-artifacts.4269.json`;
-Android and Windows application packages have not been built from it yet.
+`E:/POKROV-tools/temp/core-v2-9edf7d7/runtime-artifacts.4269.json`.
+The private V2 test build from App `b01f1eaa` is in
+`E:/POKROV-tools/temp/release-2.0.0-4269`. It uses the current Auto policy with
+F82 in shadow and includes four production-signed APKs, an unsigned Windows
+Setup and its single-installer ZIP. Upgrade and device checks are pending.
 
 [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
 owns the V2 queue. [Execution section 0](C:/Users/kiwun/Downloads/POKROV_EXECUTION_PLAN_2026-09-24.md)
