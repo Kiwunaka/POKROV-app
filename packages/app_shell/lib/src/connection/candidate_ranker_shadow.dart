@@ -45,6 +45,7 @@ class CandidateRankerShadow {
   String? _context, _catalog;
   var _generation = 0;
   final _refs = <String, int>{};
+  final _nodeRefs = <String, int>{};
   final _history = <Map<String, Object?>>[];
   Future<void>? _pending;
   CandidateRankerComparison? lastComparison;
@@ -65,6 +66,7 @@ class CandidateRankerShadow {
       _catalog = catalog;
       _generation++;
       _refs.clear();
+      _nodeRefs.clear();
       _history.clear();
       lastComparison = null;
       lastFailure = null;
@@ -76,6 +78,9 @@ class CandidateRankerShadow {
   Map<String, Object?> _descriptor(TransportCandidate candidate,
       Duration probeBudget, Duration selectionBudget) => {
     'candidate_ref': _refs.putIfAbsent(candidate.candidateRef, () => _refs.length),
+    if (_capturePath != null)
+      'node_ref': candidate.nodeCode.isEmpty ? null :
+          _nodeRefs.putIfAbsent(candidate.nodeCode, () => _nodeRefs.length),
     for (final entry in <String, String>{
       'protocol': candidate.protocol, 'transport': candidate.transport,
       'protection': candidate.protection, 'network': candidate.network,

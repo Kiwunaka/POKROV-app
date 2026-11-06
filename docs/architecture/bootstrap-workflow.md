@@ -298,7 +298,8 @@ at most 256 admitted attempts per process: each completed row pairs the immutabl
 preparation-time queue, path/cohort and existing four-minute selector-memory
 snapshot (`pokrov-preaction-v3`) with only that attempt's completed outcome.
 Candidate/context refs are local numbers; raw node, profile, endpoint and network
-identifiers are omitted. Superseded/cancelled attempts remain control observations.
+identifiers are omitted. The capture-only `node_ref` is a local equality alias,
+reset with the capture context and catalog. Superseded/cancelled attempts remain control observations.
 Rows append asynchronously; a failed sink disables capture and cannot block
 Connect. Capture does not upload data or rank ordinary candidates. Researchers
 must classify natural versus controlled QA conditions and keep post-action

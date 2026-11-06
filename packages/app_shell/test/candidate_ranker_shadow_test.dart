@@ -27,9 +27,9 @@ shell.ConnectionManager manager(Future<CandidateRankerShadow> model) => shell.Co
 
 TransportCandidate candidate(String transport, int priority,
     {String family = 'ipv4', String? bridge, String protocol = 'vless',
-      String network = 'tcp'}) => TransportCandidate(
+      String network = 'tcp', String node = 'private-node'}) => TransportCandidate(
   candidateRef: 'private-node:$transport:$priority', profileRef: 'private-profile',
-  nodeCode: 'private-node', countryCode: 'CH', protocol: protocol,
+  nodeCode: node, countryCode: 'CH', protocol: protocol,
   transport: transport, protection: transport == 'dnstt' ? 'noise' : 'tls',
   priority: priority, network: network, flow: '', minimumClientRelease: '1.5.0',
   minimumCoreRelease: null, family: family, bridgeId: bridge,
@@ -84,6 +84,7 @@ Future<CandidateRankerComparison> exercise(CandidateRankerShadow shadow) async {
   expect(initial.decision['network_class'], 'unknown');
   final descriptors = initial.decision['candidates'] as List<Map<String, Object?>>;
   expect(descriptors.map((item) => item['transport']), ['dnstt', 'slipstream']);
+  expect(descriptors.every((item) => !item.containsKey('node_ref')), isTrue);
   expect(descriptors.every((item) => item['eligible'] == true && item['priority_group'] == 0), isTrue);
   expect(descriptors.every((item) => item['probe_budget_ms'] == 30000), isTrue);
   expect(jsonEncode(initial.decision), isNot(contains('private-')));
@@ -270,14 +271,14 @@ void main() {
     final selector = SmartConnectCandidateSelector(now: () => at, rankerShadow: observer);
     final remembered = candidate('udp', 0, protocol: 'awg', network: 'udp');
     final awg = candidate('udp', 1, protocol: 'awg', network: 'udp');
-    final hy2 = candidate('udp', 2, protocol: 'hysteria2', network: 'udp');
+    final hy2 = candidate('udp', 2, protocol: 'hysteria2', network: 'udp', node: 'private-other-node');
     final catalog = TransportCandidateCatalog(revision: 'private-catalog',
         selectedCandidateRef: remembered.candidateRef, candidates: [remembered, awg, hy2]);
     selector.recordFailure('private-network', remembered.candidateRef, 'connect_failed');
     final admissions = <Map<String, Object?>>[];
-    Future<void> select() => selector.select(catalog: catalog, network: 'private-network',
+    Future<void> select({String context = 'private-generation'}) => selector.select(catalog: catalog, network: 'private-network',
       platform: HostPlatform.windows, cancelled: Completer<void>().future,
-      contextGeneration: 'private-generation', networkClass: 'ethernet', ipv6Available: false,
+      contextGeneration: context, networkClass: 'ethernet', ipv6Available: false,
       prepare: (item, cancelled) async {
         final snapshot = observer.lastPreAction!;
         expect(snapshot.containsKey('outcome'), isFalse);
@@ -298,6 +299,8 @@ void main() {
     expect(first['history'], isEmpty);
     final descriptors = first['candidates'] as List;
     expect(descriptors.map((item) => item['protocol']), ['awg', 'hysteria2']);
+    expect(descriptors.map((item) => item['node_ref']), [0, 1]);
+    expect(firstRows.map((row) => row['outcome']['candidate']['node_ref']), [0, 1]);
     expect(descriptors.first['selector_memory'], {
       'memory_known': 1, 'failed_same_protocol_path': 0.25,
       'failed_same_protocol_path_node': 0.25, 'failed_other_protocol_same_path': 0.0,
@@ -317,7 +320,32 @@ void main() {
     final last = jsonDecode(content.trim().split('\n').last) as Map;
     expect(last['decision']['history'].length, 2);
     expect(last['decision']['candidates'].length, 1);
+    expect(last['decision']['candidates'][0]['node_ref'], 1);
     expect(last['decision']['candidates'][0]['selector_memory']['failed_other_protocol_same_path'], 0.5);
+    at = at.add(const Duration(seconds: 2));
+    await select(context: 'private-generation-2');
+    await observer.settled;
+    final reset = jsonDecode((await file.readAsLines()).last) as Map;
+    expect(reset['decision']['history'], isEmpty);
+    expect(reset['decision']['candidates'][0]['node_ref'], 0);
+    expect(jsonEncode(reset), isNot(contains('private-')));
+    final same1 = candidate('tcp', 3), same2 = candidate('grpc', 4);
+    final other = candidate('xhttp', 5, node: 'private-other-node');
+    Map<String, Object?>? equalitySnapshot;
+    await selector.select(
+      catalog: TransportCandidateCatalog(revision: 'other-catalog',
+          selectedCandidateRef: same1.candidateRef, candidates: [same1, same2, other]),
+      network: 'private-network', platform: HostPlatform.windows,
+      cancelled: Completer<void>().future, contextGeneration: 'private-generation-3',
+      prepare: (item, cancelled) async { equalitySnapshot ??= observer.lastPreAction; },
+      probe: (item, cancelled, timeout) async {
+        await Future<void>.delayed(const Duration(milliseconds: 2));
+        return success(item);
+      });
+    await observer.settled;
+    final choices = equalitySnapshot!['decision'] as Map;
+    expect((choices['candidates'] as List).map((item) => item['node_ref']), [0, 0, 1]);
+    expect(jsonEncode(choices), isNot(contains('private-')));
     expect(observer.lastComparison, isNull);
   });
 
@@ -326,7 +354,7 @@ void main() {
     addTearDown(() => directory.delete(recursive: true));
     final file = File('${directory.path}/attempts.jsonl');
     final observer = CandidateRankerShadow.capture(file.path);
-    final first = candidate('tcp', 0), second = candidate('udp', 1);
+    final first = candidate('tcp', 0, node: ''), second = candidate('udp', 1);
     await SmartConnectCandidateSelector(rankerShadow: observer).select(
       catalog: TransportCandidateCatalog(revision: '1', selectedCandidateRef: first.candidateRef,
           candidates: [first, second]), network: 'network', platform: HostPlatform.windows,
@@ -344,6 +372,7 @@ void main() {
     expect(rows.map((row) => row['outcome']['result']), ['pass', 'control']);
     expect(rows.last['outcome']['failure_kind'], 'owner_superseded');
     expect(rows.last['outcome']['native_started'], isTrue);
+    expect(rows.last['outcome']['candidate']['node_ref'], isNull);
   });
 
   test('local loader rejects an oversized asset instead of accepting its truncated prefix', () async {
