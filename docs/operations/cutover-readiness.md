@@ -1,8 +1,7 @@
 # POKROV V2 client release status
 
 Updated 6 November 2026. **V2 (2.0.0)** is the next Android and Windows release.
-The source target is **2.0.0+4269**. Core `9edf7d7` is selected for the first
-private build after the Auto evaluation. It includes the DNS reverse-mapping
+The private test build is **2.0.0+4269**. Its Core `9edf7d7` includes the DNS reverse-mapping
 fix from `6dc10a9`. Public downloads and update metadata serve **1.4.5** (schema 0,
 minimum supported 1.3.0). The seven-asset **1.5.0+4175** draft
 and the private packages below retain their original versions.
@@ -20,7 +19,7 @@ owns the V2 queue. [Execution section 0](C:/Users/kiwun/Downloads/POKROV_EXECUTI
 links the retained acceptance criteria. Dated results below apply to the
 packages they name.
 
-The current private production-trust packages are Windows **1.5.0+4268**
+The previous private production-trust packages are Windows **1.5.0+4268**
 (App `892759cc`) and Android **1.5.0+4267** (App `92f7d1bd`). Both use Core
 `313c77b` (1.2.15/ABI2) and the unchanged F82 model. The unsigned Windows Setup
 and its single-installer ZIP are in `E:/POKROV-tools/temp/release-1.5.0-4268`.
