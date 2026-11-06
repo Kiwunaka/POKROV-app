@@ -1,9 +1,9 @@
 # POKROV V2 client release status
 
 Updated 6 November 2026. **V2 (2.0.0)** is the next Android and Windows release.
-The source target is **2.0.0+4269**. The first private build will select Core
-`6dc10a9` or a descendant with the DNS reverse-mapping fix after the Auto
-evaluation. Public downloads and update metadata serve **1.4.5** (schema 0,
+The source target is **2.0.0+4269**. Core `9edf7d7` is selected for the first
+private build after the Auto evaluation. It includes the DNS reverse-mapping
+fix from `6dc10a9`. Public downloads and update metadata serve **1.4.5** (schema 0,
 minimum supported 1.3.0). The seven-asset **1.5.0+4175** draft
 and the private packages below retain their original versions.
 
