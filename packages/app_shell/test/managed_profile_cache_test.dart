@@ -6,14 +6,28 @@ import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/src/shell/managed_profile_cache.dart';
 
+class _CountingStorage extends TestFlutterSecureStoragePlatform {
+  _CountingStorage(super.data);
+
+  int reads = 0;
+
+  @override
+  Future<String?> read({required String key, required Map<String, String> options}) {
+    reads++;
+    return super.read(key: key, options: options);
+  }
+}
+
 void main() {
   final originalPlatform = FlutterSecureStoragePlatform.instance;
   late Map<String, String> values;
   late DateTime now;
   late ManagedProfileCache cache;
+  late _CountingStorage storage;
   setUp(() {
     values = <String, String>{};
-    FlutterSecureStoragePlatform.instance = TestFlutterSecureStoragePlatform(values);
+    storage = _CountingStorage(values);
+    FlutterSecureStoragePlatform.instance = storage;
     now = DateTime.utc(2026, 9, 7, 10);
     cache = ManagedProfileCache(now: () => now);
   });
@@ -124,6 +138,12 @@ void main() {
     expect(freshCatalogProof['cache_verified_at'], provenAt);
     expect(freshCatalogProof['proven_network_selection_key'], 'network-fixture');
     await store('de:hy2', candidateOnly: true);
+    final previousReads = storage.reads;
+    final profiles = await cache.readProfiles(platform: 'android', binding: binding,
+        selectedCandidateRefs: {'de:hy2', 'de:missing', 'de:vless'});
+    expect(storage.reads - previousReads, 1);
+    expect(profiles.keys, ['de:hy2', 'de:vless']);
+    expect(profiles.values.map((profile) => profile['cache_entry_id']), ['de:hy2', 'de:vless']);
     expect((await read())?['cache_entry_id'], 'de:vless');
     expect((await cache.read(platform: 'android', binding: binding, selectedCandidateRef: 'de:hy2'))?['cache_entry_id'], 'de:hy2');
     await cache.markProven(platform: 'android', binding: binding, entryId: 'de:hy2');
@@ -139,6 +159,8 @@ void main() {
     final oldGeneration = cache.generation('android');
     await cache.clear('android');
     await store('de:hy2', candidateOnly: true, generation: oldGeneration);
+    expect(await cache.readProfiles(platform: 'android', binding: binding,
+        selectedCandidateRefs: {'de:hy2', 'de:vless'}), isEmpty);
     expect(await read(), isNull);
     await store('de:vless', accountBinding: 'account-B/install-A/route-A');
     await store('de:hy2', candidateOnly: true);

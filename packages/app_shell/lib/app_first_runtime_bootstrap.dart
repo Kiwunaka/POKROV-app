@@ -241,6 +241,12 @@ abstract interface class CachedManagedProfileBootstrapper {
     Set<RuntimeTransportFeature>? runtimeFeatures,
     String? coreRelease,
   });
+  Future<Map<String, ManagedProfilePayload>> loadCachedManagedCandidateProfiles(
+    ManagedProfileCacheInputs inputs, {
+    required Set<String> candidateRefs,
+    Set<RuntimeTransportFeature>? runtimeFeatures,
+    String? coreRelease,
+  });
   Future<void> cacheResolvedManagedProfile(
     ManagedProfileCacheInputs inputs,
     ManagedProfilePayload payload, {
@@ -3416,71 +3422,113 @@ class AppFirstRuntimeBootstrapper
     Set<RuntimeTransportFeature>? runtimeFeatures,
     String? coreRelease,
   }) async {
+    final profiles = await _loadCachedManagedProfiles(inputs,
+      candidateRefs: {selectedCandidateRef}, preferProven: preferProven,
+      runtimeFeatures: runtimeFeatures, coreRelease: coreRelease);
+    return profiles[selectedCandidateRef];
+  }
+
+  @override
+  Future<Map<String, ManagedProfilePayload>> loadCachedManagedCandidateProfiles(
+    ManagedProfileCacheInputs inputs, {
+    required Set<String> candidateRefs,
+    Set<RuntimeTransportFeature>? runtimeFeatures,
+    String? coreRelease,
+  }) => _loadCachedManagedProfiles(inputs, candidateRefs: candidateRefs,
+      preferProven: false, runtimeFeatures: runtimeFeatures, coreRelease: coreRelease);
+
+  Future<Map<String, ManagedProfilePayload>> _loadCachedManagedProfiles(
+    ManagedProfileCacheInputs inputs, {
+    required Set<String> candidateRefs,
+    required bool preferProven,
+    required Set<RuntimeTransportFeature>? runtimeFeatures,
+    required String? coreRelease,
+  }) async {
+    if (candidateRefs.isEmpty) return const {};
     try {
       final state = await _loadState(inputs.hostPlatform);
       if (state == null || !state.hasSession || state.accountId.isEmpty) {
-        return null;
+        return const {};
       }
       final cacheGeneration = _managedProfileCache.generation(inputs.hostPlatform.name);
-      final value = await _managedProfileCache.read(
+      final values = await _managedProfileCache.readProfiles(
         platform: inputs.hostPlatform.name,
         binding: inputs.binding(state.accountId, state.installId),
         preferProven: preferProven,
-        selectedCandidateRef: selectedCandidateRef,
+        selectedCandidateRefs: candidateRefs,
       );
-      if (value == null) return null;
+      if (values.isEmpty) return const {};
       final current = await _loadState(inputs.hostPlatform);
       if (current == null || !current.hasSession || current.accountId != state.accountId ||
           current.installId != state.installId || current.sessionToken != state.sessionToken ||
-          _managedProfileCache.generation(inputs.hostPlatform.name) != cacheGeneration) return null;
-      final config = value['config_payload'];
-      final revision = _readText(value['revision']);
-      if (config is! String || revision.isEmpty ||
-          _readMap(jsonDecode(config))['outbounds'] is! List) return null;
-      final storedFeatures = (value['runtime_features'] is List ? value['runtime_features'] as List : const [])
-          .map((name) => RuntimeTransportFeature.values.where((feature) => feature.wireName == name))
-          .expand((features) => features).toSet();
-      final catalog = value.containsKey('transport_catalog')
-          ? decodeManagedTransportCatalog(value['transport_catalog'],
-              platform: inputs.hostPlatform, clientRelease: _managedCatalogClientRelease,
-              runtimeFeatures: runtimeFeatures ?? storedFeatures,
-              coreRelease: coreRelease ?? (runtimeFeatures == null ? _readText(value['core_release']) : null))
-          : null;
-      final materialRef = _readText(value['material_candidate_ref']);
-      if (materialRef.isNotEmpty &&
-          catalog?.candidates.any((candidate) => candidate.candidateRef == materialRef) != true) return null;
-      final materialCandidate = materialRef.isEmpty ? catalog?.selected
-          : catalog?.candidates.firstWhere((candidate) => candidate.candidateRef == materialRef);
-      _validateDnsttMaterial(config, materialCandidate, value['access'], runtimeFeatures ?? const {});
-      _validateSlipstreamMaterial(config, materialCandidate, value['access'], runtimeFeatures ?? const {});
-      _validateNaiveMaterial(config, materialCandidate, value['access'], runtimeFeatures ?? const {});
-      final warpPolicy = WarpRuntimePolicy.tryParse(value['warp_policy']);
-      return ManagedProfilePayload(
-        cacheEntryId: _readText(value['cache_entry_id']),
-        disableMemoryLimit: inputs.hostPlatform == HostPlatform.windows,
-        provenNetworkSelectionKey: value['proven_network_selection_key'] as String?,
-        profileName: _profileName(
-          hostPlatform: inputs.hostPlatform, profileRevision: revision),
-        configPayload: config,
-        materializedForRuntime: true,
-        source: RuntimeProfileSource(
-          revision: revision, origin: RuntimeProfileSourceOrigin.managedManifest,
-          protocol: _readText(value['protocol'])),
-        tcpFallbackFromRevision: _readText(value['tcp_fallback_from_revision']),
-        routeMode: inputs.routeMode,
-        resolvedNodeCode: _readText(value['resolved_node_code']),
-        smartConnect: SmartConnectProfile.tryParse(value['smart_connect']),
-        transportCatalog: catalog,
-        materialCandidateRef: materialRef,
-        warpPolicy: materialCandidate?.warpMode == 'warp_direct'
-            ? pokrovDirectWarpPolicy(state.installId).withUserConsent(warpPolicy.userConsented)
-            : warpPolicy,
-        freeProfileAccess: FreeProfileAccess.tryParse(
-          access: value['access'], freeCaps: value['free_caps']),
-      );
+          _managedProfileCache.generation(inputs.hostPlatform.name) != cacheGeneration) return const {};
+      final profiles = <String, ManagedProfilePayload>{};
+      for (final entry in values.entries) {
+        try {
+          final profile = _decodeCachedManagedProfile(entry.value, inputs,
+              installId: state.installId, runtimeFeatures: runtimeFeatures, coreRelease: coreRelease);
+          if (profile != null) profiles[entry.key] = profile;
+        } on Object {
+          // A bad candidate entry does not invalidate the other checked material.
+        }
+      }
+      return profiles;
     } on Object {
-      return null;
+      return const {};
     }
+  }
+
+  ManagedProfilePayload? _decodeCachedManagedProfile(
+    Map<String, dynamic> value, ManagedProfileCacheInputs inputs, {
+    required String installId,
+    required Set<RuntimeTransportFeature>? runtimeFeatures,
+    required String? coreRelease,
+  }) {
+    final config = value['config_payload'];
+    final revision = _readText(value['revision']);
+    if (config is! String || revision.isEmpty ||
+        _readMap(jsonDecode(config))['outbounds'] is! List) return null;
+    final storedFeatures = (value['runtime_features'] is List ? value['runtime_features'] as List : const [])
+        .map((name) => RuntimeTransportFeature.values.where((feature) => feature.wireName == name))
+        .expand((features) => features).toSet();
+    final catalog = value.containsKey('transport_catalog')
+        ? decodeManagedTransportCatalog(value['transport_catalog'],
+            platform: inputs.hostPlatform, clientRelease: _managedCatalogClientRelease,
+            runtimeFeatures: runtimeFeatures ?? storedFeatures,
+            coreRelease: coreRelease ?? (runtimeFeatures == null ? _readText(value['core_release']) : null))
+        : null;
+    final materialRef = _readText(value['material_candidate_ref']);
+    if (materialRef.isNotEmpty &&
+        catalog?.candidates.any((candidate) => candidate.candidateRef == materialRef) != true) return null;
+    final materialCandidate = materialRef.isEmpty ? catalog?.selected
+        : catalog?.candidates.firstWhere((candidate) => candidate.candidateRef == materialRef);
+    _validateDnsttMaterial(config, materialCandidate, value['access'], runtimeFeatures ?? const {});
+    _validateSlipstreamMaterial(config, materialCandidate, value['access'], runtimeFeatures ?? const {});
+    _validateNaiveMaterial(config, materialCandidate, value['access'], runtimeFeatures ?? const {});
+    final warpPolicy = WarpRuntimePolicy.tryParse(value['warp_policy']);
+    return ManagedProfilePayload(
+      cacheEntryId: _readText(value['cache_entry_id']),
+      disableMemoryLimit: inputs.hostPlatform == HostPlatform.windows,
+      provenNetworkSelectionKey: value['proven_network_selection_key'] as String?,
+      profileName: _profileName(
+        hostPlatform: inputs.hostPlatform, profileRevision: revision),
+      configPayload: config,
+      materializedForRuntime: true,
+      source: RuntimeProfileSource(
+        revision: revision, origin: RuntimeProfileSourceOrigin.managedManifest,
+        protocol: _readText(value['protocol'])),
+      tcpFallbackFromRevision: _readText(value['tcp_fallback_from_revision']),
+      routeMode: inputs.routeMode,
+      resolvedNodeCode: _readText(value['resolved_node_code']),
+      smartConnect: SmartConnectProfile.tryParse(value['smart_connect']),
+      transportCatalog: catalog,
+      materialCandidateRef: materialRef,
+      warpPolicy: materialCandidate?.warpMode == 'warp_direct'
+          ? pokrovDirectWarpPolicy(installId).withUserConsent(warpPolicy.userConsented)
+          : warpPolicy,
+      freeProfileAccess: FreeProfileAccess.tryParse(
+        access: value['access'], freeCaps: value['free_caps']),
+    );
   }
 
   Future<void> migrateCachedManagedProfileInputs(

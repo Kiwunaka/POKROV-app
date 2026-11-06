@@ -144,6 +144,7 @@ enum PortalFailureReason {
 }
 
 const managedProfileFallbackEventName = 'app.connection.managed_profile_fallback.finished';
+const cachedCandidateMaterialsEventName = 'app.connection.cached_candidate_materials.finished';
 
 abstract final class ObservabilityAttributeKeys {
   static const allowed = <String>{

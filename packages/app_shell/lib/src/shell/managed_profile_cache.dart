@@ -155,7 +155,42 @@ class ManagedProfileCache {
     String selectedCandidateRef = '',
   }) => _serialize(() async {
     try {
+      return await _readLoadedResult(await _load(platform), platform: platform,
+          binding: binding, preferProven: preferProven,
+          selectedCandidateRef: selectedCandidateRef);
+    } on Object {
+      return const ManagedProfileCacheRead();
+    }
+  });
+
+  Future<Map<String, Map<String, dynamic>>> readProfiles({
+    required String platform,
+    required String binding,
+    required Set<String> selectedCandidateRefs,
+    bool preferProven = false,
+  }) => _serialize(() async {
+    try {
       final value = await _load(platform);
+      final profiles = <String, Map<String, dynamic>>{};
+      for (final ref in selectedCandidateRefs) {
+        final result = await _readLoadedResult(value, platform: platform,
+            binding: binding, preferProven: preferProven, selectedCandidateRef: ref);
+        if (result.payload case final payload?) profiles[ref] = payload;
+      }
+      return profiles;
+    } on Object {
+      return const {};
+    }
+  });
+
+  Future<ManagedProfileCacheRead> _readLoadedResult(
+    Map<String, dynamic> value, {
+    required String platform,
+    required String binding,
+    required bool preferProven,
+    required String selectedCandidateRef,
+  }) async {
+    try {
       if (value.isEmpty) return const ManagedProfileCacheRead();
       final now = _now().toUtc();
       final observedValue = value['last_observed_at'];
@@ -248,7 +283,7 @@ class ManagedProfileCache {
       // Unreadable/future state is unavailable and preserved, never guessed.
     }
     return const ManagedProfileCacheRead();
-  });
+  }
 
   /// Rebind only entries admitted by the normal account/expiry/catalog reader.
   /// Keep their original proof time and the latest authoritative access window.

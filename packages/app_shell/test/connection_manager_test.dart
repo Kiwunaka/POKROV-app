@@ -191,6 +191,22 @@ class _CachedBootstrapper extends _Bootstrapper implements CachedManagedProfileB
   ];
 
   @override
+  Future<Map<String, ManagedProfilePayload>> loadCachedManagedCandidateProfiles(
+    ManagedProfileCacheInputs inputs, {
+    required Set<String> candidateRefs,
+    Set<RuntimeTransportFeature>? runtimeFeatures,
+    String? coreRelease,
+  }) async {
+    final profiles = <String, ManagedProfilePayload>{};
+    for (final ref in candidateRefs) {
+      final profile = await loadCachedManagedProfile(inputs, selectedCandidateRef: ref,
+          runtimeFeatures: runtimeFeatures, coreRelease: coreRelease);
+      if (profile != null) profiles[ref] = profile;
+    }
+    return profiles;
+  }
+
+  @override
   Future<ManagedProfilePayload?> loadCachedManagedProfile(ManagedProfileCacheInputs inputs, {
     bool preferProven = false, String selectedCandidateRef = '',
     Set<RuntimeTransportFeature>? runtimeFeatures, String? coreRelease,
@@ -401,6 +417,15 @@ class _QaProfileFailureBootstrapper extends AppFirstRuntimeBootstrapper {
     Set<RuntimeTransportFeature>? runtimeFeatures, String? coreRelease,
   }) => cached.loadCachedManagedProfile(inputs, preferProven: preferProven,
       selectedCandidateRef: selectedCandidateRef, runtimeFeatures: runtimeFeatures, coreRelease: coreRelease);
+
+  @override
+  Future<Map<String, ManagedProfilePayload>> loadCachedManagedCandidateProfiles(
+    ManagedProfileCacheInputs inputs, {
+    required Set<String> candidateRefs,
+    Set<RuntimeTransportFeature>? runtimeFeatures,
+    String? coreRelease,
+  }) => cached.loadCachedManagedCandidateProfiles(inputs, candidateRefs: candidateRefs,
+      runtimeFeatures: runtimeFeatures, coreRelease: coreRelease);
 
   @override
   Future<ManagedProfileOfflineState> classifyManagedProfileFailure(ManagedProfileCacheInputs inputs, {
@@ -3845,7 +3870,8 @@ void main() {
     final runtime = _Runtime(hostPlatform: HostPlatform.windows)
       ..networkAvailable = null..supportsCandidates = true;
     // A fresh bootstrap instance must restore the protected record after restart.
-    final manager = _manager(runtime, bootstrapper(),
+    final restartedBootstrapper = bootstrapper();
+    final manager = _manager(runtime, restartedBootstrapper,
         authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
     addTearDown(manager.dispose);
     await manager.connect();
@@ -3858,12 +3884,23 @@ void main() {
       reason: 'unknown native network status is not evidence of no network');
 
     await manager.disconnect();
+    const candidateRefs = {'de:legacy_reality_fallback', 'ch:hy2_lab'};
+    final sessionKey = protectedValues.keys.singleWhere(
+        (key) => key.startsWith('pokrov.app_first.session.windows.'));
+    final sessionPair = protectedValues.remove(sessionKey)!;
+    expect(await restartedBootstrapper.loadCachedManagedCandidateProfiles(inputs,
+        candidateRefs: candidateRefs, runtimeFeatures: RuntimeTransportFeature.values.toSet()),
+      isEmpty, reason: 'cache material cannot outlive a revoked session');
+    protectedValues[sessionKey] = sessionPair;
     cacheNow = expiry.add(const Duration(hours: 24, seconds: 1));
     runtime.networkAvailable = true;
     await manager.connect();
     expect(manager.status.phase, ConnectionPhase.actionRequired);
     expect(manager.offlineState, ManagedProfileOfflineState.accessEnded);
     expect(runtime.connectCalls, 1, reason: 'an expired cache cannot reuse the already staged host profile');
+    expect(await restartedBootstrapper.loadCachedManagedCandidateProfiles(inputs,
+        candidateRefs: candidateRefs, runtimeFeatures: RuntimeTransportFeature.values.toSet()),
+      isEmpty, reason: 'candidate batching uses the original access expiry');
     runtime.networkAvailable = false;
     await manager.connect();
     expect(manager.offlineState, ManagedProfileOfflineState.noNetwork);

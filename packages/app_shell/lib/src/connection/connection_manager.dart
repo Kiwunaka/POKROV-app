@@ -3208,19 +3208,19 @@ class ConnectionManager extends ChangeNotifier {
       final service = cache as CachedManagedProfileBootstrapper;
       final cachedWarpAllowed = _explicitWarpRuntimeConsent == true;
       final features = _runtimeSnapshot?.availableTransportFeatures ?? const <RuntimeTransportFeature>{};
-      final available = <String, ManagedProfilePayload>{};
-      for (final candidate in catalog.candidates.where((candidate) =>
+      final candidateRefs = catalog.candidates.where((candidate) =>
           (inputs.preferredCandidateRef.isEmpty || candidate.candidateRef == inputs.preferredCandidateRef) &&
           (candidate.warpMode == 'warp_direct' || inputs.preferredCountryCode.isEmpty ||
               candidate.nodeCountryCode(catalog.candidates) == inputs.preferredCountryCode) &&
           (candidate.warpMode == 'warp_direct' || inputs.preferredNodeCode.isEmpty || candidate.nodeCode == inputs.preferredNodeCode) &&
-          (candidate.warpMode == null || cachedWarpAllowed))) {
-        final profile = await service.loadCachedManagedProfile(inputs,
-            selectedCandidateRef: candidate.candidateRef, runtimeFeatures: features,
-            coreRelease: _runtimeSnapshot?.coreVersion);
-        requireCurrent();
-        if (profile != null) available[candidate.candidateRef] = profile;
-      }
+          (candidate.warpMode == null || cachedWarpAllowed))
+          .map((candidate) => candidate.candidateRef).toSet();
+      final materialClock = Stopwatch()..start();
+      final available = await service.loadCachedManagedCandidateProfiles(inputs,
+          candidateRefs: candidateRefs, runtimeFeatures: features,
+          coreRelease: _runtimeSnapshot?.coreVersion);
+      requireCurrent();
+      _observability?._recordCachedCandidateMaterials(materialClock.elapsed);
       final network = await Future.any<RuntimeCandidateNetwork>([
         probing.readCandidateNetwork(),
         cancelled.then<RuntimeCandidateNetwork>((_) => throw const ConnectionOperationSuperseded()),

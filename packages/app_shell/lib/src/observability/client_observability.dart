@@ -560,6 +560,16 @@ final class PokrovClientObservability {
     );
   }
 
+  void _recordCachedCandidateMaterials(Duration elapsed) {
+    _emitCurrent(
+      name: cachedCandidateMaterialsEventName,
+      subsystem: 'connection',
+      stage: 'prepare',
+      outcome: ObservabilityOutcome.observed,
+      attributes: {'duration_ms': elapsed.inMilliseconds.clamp(0, 86400000)},
+    );
+  }
+
   void recordCandidateProbe({
     required String failureKind,
     required Duration duration,

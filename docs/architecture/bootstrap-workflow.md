@@ -2538,6 +2538,13 @@ elapsed time measures the whole managed-profile resolution through its failure.
 Offline classification has a separate duration after the cache recheck, including
 any wait for the OS network observation. The event stays out of release health.
 
+Offline selection loads and decodes the protected cache once to find material
+for the eligible candidates. It checks the session and cache generation around
+the batch, validates each record against the current catalog and expiry, and
+rereads the winner after the native probe. The local
+`app.connection.cached_candidate_materials.finished` event measures the batch
+through material validation, before network context and last-good lookup.
+
 Known 401/403 denial and a successful subscription response with lane
 `expiredOrBlocked` clear the protected cache. The subscription denial also
 blocks cached reconnect and stops a running tunnel through normal disconnect;
