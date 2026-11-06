@@ -14,6 +14,14 @@ ordinary Bezmezhau Connect remains a result for that build. The 4269 Windows
 VPN smokes did not exercise provider traffic. See [Windows acceptance](../operations/windows-release-readiness.md)
 and the [current release queue](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md).
 
+The 6 November private Windows 4270/Core 1.2.15 DNS-AI QA used one
+device-bound, nonrenewable source-only permit for both exact Gemini hosts.
+The server recorded claim and control profile binding, but native runtime-control
+configuration raised a PlatformException; the UI reported the check unavailable.
+Gemini was not opened, so two-host traffic and a feature response remain
+unverified. The permit expired, the VM's VPN stopped with no TUN interface, and
+ordinary provider policy 11 remained unchanged.
+
 Core `8beba8a` handles a signed SmartDNS resolver's `SERVFAIL` by moving DNS
 and new TCP connections to the next eligible provider or the scoped VPN/block
 fallback. The Core Exchange and Lookup regression tests pass for `SERVFAIL` and
