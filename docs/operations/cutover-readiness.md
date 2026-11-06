@@ -12,7 +12,16 @@ checks. The private handoff is
 The private V2 test build from App `b01f1eaa` is in
 `E:/POKROV-tools/temp/release-2.0.0-4269`. It uses the current Auto policy with
 F82 in shadow and includes four production-signed APKs, an unsigned Windows
-Setup and its single-installer ZIP. Upgrade and device checks are pending.
+Setup and its single-installer ZIP. Physical-device checks remain pending.
+
+On the owned Windows VM, a normal 4268 to 4269 upgrade preserved the account,
+install owner and selected settings. Startup refreshed stale Iceland material;
+one Iceland-selected Auto connection reached native DNS and egress readiness.
+Stop and tray Exit restored the baseline DNS, 16 routes, proxies and settings;
+the exit marker was clean, the owned site returned HTTP 200, and the VM was
+powered off. Native Auto A/B was skipped: the cache had only two direct
+candidates, leaving one movable after protecting the primary. This is one
+owned-VM smoke, not acceptance across networks.
 
 [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
 owns the V2 queue. [Execution section 0](C:/Users/kiwun/Downloads/POKROV_EXECUTION_PLAN_2026-09-24.md)
