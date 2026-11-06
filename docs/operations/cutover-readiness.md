@@ -23,6 +23,11 @@ powered off. Native Auto A/B was skipped: the cache had only two direct
 candidates, leaving one movable after protecting the primary. This is one
 owned-VM smoke, not acceptance across networks.
 
+The focused US country Auto source test passes on the V2 App code: it admits
+the exact bridge before direct. The fixture advertises client 1.5.0+4263 and a
+mock Core 1.2.15; real US connectivity and packaged Core 9edf7d7 were not
+tested by this check.
+
 [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
 owns the V2 queue. [Execution section 0](C:/Users/kiwun/Downloads/POKROV_EXECUTION_PLAN_2026-09-24.md)
 links the retained acceptance criteria. Dated results below apply to the
