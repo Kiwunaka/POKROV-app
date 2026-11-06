@@ -11,6 +11,13 @@ F82 in shadow. Native SmartDNS acceptance on 4270 and physical-device checks
 remain pending. Public downloads and update metadata serve **1.4.5** (schema 0,
 minimum supported 1.3.0). The seven-asset **1.5.0+4175** draft retains its version.
 
+The exact public **1.4.5** ARM64 APK and the normal **2.0.0+4270** ARM64 APK
+both passed `apksigner` verification with the same production certificate.
+`aapt` reported application ID `space.pokrov.pokrov_android_shell` and
+`minSdk` 24 for both. `versionCode` increased from 4086 to 4270. This check
+covers APK metadata and signing. A physical phone upgrade remains pending.
+[Public release](https://github.com/Kiwunaka/pokrov/releases/tag/v1.4.5).
+
 For the earlier **2.0.0+4269** test build, Core `9edf7d7` includes the DNS
 reverse-mapping fix from `6dc10a9`. Its DLL and AAR passed ABI and
 manifest/dependency checks. The private handoff is
