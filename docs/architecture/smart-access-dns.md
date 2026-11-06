@@ -2,12 +2,24 @@
 
 ## Current delivery
 
-Opt-in clients receive signed provider policy **9 / security 1 / state 5**;
-legacy policy **5** and catalog **32** remain available. Windows 4246 passed
-ordinary Premium lease and Connect through Bezmezhau. Physical Beeline
-Gemini/RPC, Slipstream/DNSTT via Auto/TUN, and direct ByeDPI YouTube 1080p
-remain unaccepted. See [Windows acceptance](../operations/windows-release-readiness.md)
+On 6 November, catalog **37 / security 2 / state 34** and opt-in provider
+policy **11 / security 1 / state 7** allow both exact Gemini hosts through
+WLrus and Bezmezhau on Windows. DNS-AI's signed scope is Windows,
+current-origin, IPv4 web for `gemini.google.com` only. Its capability and
+permission expire on 17 November 2026 at 19:36:53 UTC. WLrus on Android also
+covers only the primary host. Auto prefers a complete eligible scope. A
+partial scope cannot start a DNS-only profile and uses the catalog VPN path
+when available. These are signed scopes and source checks. Windows 4246's
+ordinary Bezmezhau Connect remains a result for that build. The 4269 Windows
+VPN smokes did not exercise provider traffic. See [Windows acceptance](../operations/windows-release-readiness.md)
 and the [current release queue](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md).
+
+Core `8beba8a` handles a signed SmartDNS resolver's `SERVFAIL` by moving DNS
+and new TCP connections to the next eligible provider or the scoped VPN/block
+fallback. The Core Exchange and Lookup regression tests pass for `SERVFAIL` and
+`REFUSED` and retain the provider on `NXDOMAIN`. Seven focused App tests pass
+for scope selection, policy changes and protected VPN recovery. Provider traffic
+on the exact new V2 package still needs native acceptance.
 
 ## Delivery snapshot — 29 October 2026
 
