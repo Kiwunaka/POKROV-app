@@ -10,7 +10,7 @@ This file is the living client product contract for `POKROV-app/main`.
 
 This repo is the canonical client-development lane for `POKROV`.
 
-- public `v1` scope: `Android + Windows`
+- public platform scope: `Android + Windows`
 - native `iOS` and `macOS`: readiness, packaging, and signing-preparation only in this wave; Apple users keep a platform-owned authenticated compatible-client key path until those clients ship
 - cross-surface product facts inherit from the exact platform owners listed
   below; this client contract must not fork them
@@ -102,7 +102,7 @@ Browser continuation currently starts from app handoff, Telegram, and the eviden
 - legacy client identifier: `POKROV VPN` only where compatibility removal is not yet feasible
 - UX direction: `consumer-first`
 - identity model: `app-first`
-- public `v1` scope: `Android + Windows`
+- public platform scope: `Android + Windows`
 - Apple scope in this wave: readiness only
 - Android and Windows onboarding uses only the official APK/EXE plus managed login; raw subscription keys are reserved for the authenticated Apple compatibility path
 - default runtime core: `sing-box`
@@ -112,9 +112,8 @@ Browser continuation currently starts from app handoff, Telegram, and the eviden
   first payment. Wheel, calendar, and referral rewards remain paid-only. Already-issued
   `+10 days` grants remain grandfathered and must render with their
   backend-returned value
-- public user-facing version line: `1.4.5`; private Android/Windows `1.5.0+4256`
-  and the `1.5.0+4175` draft remain separate. Beta/prerelease candidates never
-  replace stable metadata implicitly
+- public distribution serves `1.4.5`. The next product release is **V2 (2.0.0)**.
+  Private candidates use their own package versions and delivery lane
 - recommended public routing mode: `All except RU`
 - public routing mode set: `All except RU` and `Full tunnel`
 - public recovery order: `POKROV app -> web cabinet -> Telegram fallback`
@@ -261,9 +260,9 @@ the owner's separate verification stage.
 - `Android + Windows` remain the only public release pair for this wave
 - the published `1.0.0-beta` handoff and `2026-05-15` decision pack are retained
   historical exact-candidate evidence; neither is reusable approval for a rebuild
-- Public stable remains `1.4.5`; private `1.5.0+4256` and acceptance are in
-  [cutover readiness](../operations/cutover-readiness.md). Publication is prohibited;
-  F82 stays in shadow and Decider manual, with no active-ML release gate.
+- V2 preparation and exact private package acceptance are tracked in
+  [cutover readiness](../operations/cutover-readiness.md). Public distribution
+  requires the owner's explicit approval after candidate acceptance.
 - Android release builds require the operator-provided production signing
   inputs by default; debug signing is an explicit non-public smoke path only
 - An unsigned Windows installer is accepted for the outside-store beta lane
@@ -1042,12 +1041,9 @@ Release continuity rules:
   `expiredOrBlocked` response is inactive access and must never retain the seed
   trial label or trial day count
 - stable candidates use a strictly newer semantic version. Public Android and
-  Windows remain `1.4.5+4086`; `1.5.0+4175` is a seven-asset draft. The private
-  `1.5.0+4227` pair has four production-checked Android APKs and a Windows setup
-  and single-entry ZIP. The setup is unsigned; Windows 4216 VM acceptance is
-  retained and 4227 was not reinstalled. Exact scope and paths are in
-  [cutover readiness](../operations/cutover-readiness.md). Public release needs
-  the owner's explicit approval.
+  Windows are on `1.4.5+4086`. The V2 source target is `2.0.0+4269`.
+  The retained `1.5.0+4175` draft has seven assets. Private packages and their
+  device results are in [cutover readiness](../operations/cutover-readiness.md).
 - the `2026-05-15` Android handoff explains the retained beta publication but
   does not approve a replacement artifact; new public APK promotion requires
   exact-candidate production-signing evidence and the applicable device gates
@@ -1065,9 +1061,8 @@ Release continuity rules:
 - the shared runtime identity is `pokrovClientVersion`; release builds pass
   `--dart-define=POKROV_APP_VERSION=<host pubspec version without +build>` so
   provisioning, update checks, diagnostics, and visible version text match the
-  package. Production packaging passes the package base version explicitly
-  through `POKROV_APP_VERSION`; public update metadata remains authoritative for
-  `1.4.5`, separate from the private `1.5.0+4227` pair.
+  package. The stable version in `/api/client/apps` advances on an authorized
+  release handoff.
 - a new strict-v2 candidate requires `release.release_notes.summary` and a
   canonical version-matched GitHub release URL. The same manifest version is
   checked against Android, Windows and app-shell package versions before the

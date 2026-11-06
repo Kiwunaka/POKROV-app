@@ -1,6 +1,6 @@
 # Client documents
 
-- Current release queue: [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md).
+- Current V2 release queue: [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md).
   [Execution section 0](C:/Users/kiwun/Downloads/POKROV_EXECUTION_PLAN_2026-09-24.md)
   explains how to continue; its older stages retain criteria, not a second queue.
 - Repository ownership and entrypoints: [folder structure](architecture/folder-structure.md).
@@ -10,7 +10,7 @@
   [platform privilege/runtime contract](architecture/platform-privilege-runtime-contract.md).
 - Runtime package: [runtime engine](../packages/runtime_engine/README.md).
 - Packaging and artifact selection: [scripts](../scripts/README.md).
-- Current release: [cutover readiness](operations/cutover-readiness.md).
+- Current V2 status and prior package acceptance: [cutover readiness](operations/cutover-readiness.md).
 - Android and Windows checks:
   [Android](operations/android-release-audit.md),
   [Windows](operations/windows-release-readiness.md).

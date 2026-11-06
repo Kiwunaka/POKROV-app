@@ -1,6 +1,13 @@
 # Android acceptance
 
-Updated 2 November 2026. Private **1.5.0+4256**, App `4f384ec7`, includes four
+Updated 6 November 2026. The latest private Android package set is
+**1.5.0+4267** with Core 1.2.15/ABI2. Its four production-signed,
+non-debuggable APKs passed package checks. Physical acceptance for V2 still
+needs the owner device for Beeline Gemini, direct ByeDPI YouTube 1080p and
+DNSTT/Slipstream Auto/TUN, plus a network with native IPv6. Exact package
+paths and acceptance boundaries are in [cutover readiness](cutover-readiness.md).
+
+Historical 2 November snapshot. Private **1.5.0+4256**, App `4f384ec7`, includes four
 production-signed/non-debuggable APKs using Android Core `80fc743` /1.2.15/ABI2,
 unchanged Slipstream libraries and shadow F82. All three native ABI bindings and
 packaged libraries match the selected SDK. **4255** was installed on the phone with data retained.
@@ -128,7 +135,7 @@ not repeat unchanged protocol QA on all ABIs.
   On 4144, US VLESS REALITY passed the same traffic checks and an independent US
   country check; Gemini still rejected the country. Neither case accepts SmartDNS
   or subsequent endpoint changes. Expanded SmartDNS acceptance remains outside
-  the mandatory 1.5.0 scope.
+  the accepted scope of that package.
 - US AWG on 4144–4147 and US HY2 on 4144 failed. The 4147 AWG diagnostics retained
   `tls_read` and reserve `egress_204` cancellation before a response; that localized
   cancellation without establishing the underlying cause. Later DE2 AWG and

@@ -56,7 +56,7 @@ part 'src/observability/runtime_stats_outbox.dart';
 /// package base version (without Android's build number).
 const pokrovClientVersion = String.fromEnvironment(
   'POKROV_APP_VERSION',
-  defaultValue: '1.5.0',
+  defaultValue: '2.0.0',
 );
 const pokrovClientBuildNumber = String.fromEnvironment(
   'POKROV_BUILD_NUMBER',

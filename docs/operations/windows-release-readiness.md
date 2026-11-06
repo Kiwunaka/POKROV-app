@@ -1,8 +1,10 @@
 # Windows acceptance
 
-Current private **1.5.0+4262**, App `6117b4d`: package and VM acceptance are
-recorded in the [canonical cutover status](cutover-readiness.md).
-Earlier transport checks below retain their original build scope.
+Latest private **1.5.0+4268**, App `892759cc`, passed ordinary Connect
+and an independent Birch reserve check on the owned VM. The selected-app
+and DNS results for 4267 and package acceptance for 4268 are in
+[cutover readiness](cutover-readiness.md). Earlier results apply to the
+packages they name.
 
 Historical private **1.5.0+4256**, App `4f384ec7`, uses official Zapret2 v1.0.6
 with its matching Lua libraries and retains Core `8079e69` /1.2.15/ABI2.

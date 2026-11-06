@@ -1,9 +1,15 @@
-# Client release status
+# POKROV V2 client release status
 
-Updated 5 November 2026. The owner's [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
-is the only current release queue; [Execution section 0](C:/Users/kiwun/Downloads/POKROV_EXECUTION_PLAN_2026-09-24.md)
-explains how to continue. Dated results below retain their original scope and do
-not create new tasks or permission to repeat accepted checks.
+Updated 6 November 2026. **V2 (2.0.0)** is the next Android and Windows release.
+The source target is **2.0.0+4269**. Its first private build is pending the agreed
+Core and ML changes. Public downloads and update metadata serve **1.4.5**
+(schema 0, minimum supported 1.3.0). The seven-asset **1.5.0+4175** draft
+and the private packages below retain their original versions.
+
+[Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
+owns the V2 queue. [Execution section 0](C:/Users/kiwun/Downloads/POKROV_EXECUTION_PLAN_2026-09-24.md)
+links the retained acceptance criteria. Dated results below apply to the
+packages they name.
 
 The current private production-trust packages are Windows **1.5.0+4268**
 (App `892759cc`) and Android **1.5.0+4267** (App `92f7d1bd`). Both use Core
@@ -158,7 +164,7 @@ Normal Stop and tray Exit restored the selected settings, DNS, all 16 routes,
 user proxy and WinHTTP; App/TUN/winws/winws2/helpers and guard filters were 0.
 QA files were removed; the VM shut down gracefully to PoweredOff/Unlocked.
 
-The phone's last install is 4255 with data retained. Beeline Gemini lacked full
+In the earlier 4255 phone pass, installation retained local data. Beeline Gemini lacked full
 Android SmartDNS scope; DNSTT stopped on a SmartDNS lease 500, and Slipstream
 started before a periodic egress timeout. Direct ByeDPI YouTube had no playback.
 Settings/Wi-Fi and stopped VPN state were restored; the owner took the phone
@@ -169,17 +175,17 @@ new mobile acceptance awaits the phone. Accepted Wi-Fi, Naive and earlier
 Windows checks must not be repeated. Public release, update pointers and all
 new customer contact remain prohibited; automation stays PAUSED.
 
-Public metadata remains **1.4.5 / schema 0 / min-supported 1.3.0**.
-As of 2 November the live routing catalog is **32**, provider policy **9**;
-catalog expiry is **2026-11-17T19:36:53Z**. Active ML is not a 1.5.0 gate.
-**1.5.0+4175 is a draft with seven assets**, not a public release. The
-16 October draft packages contain production-signed universal, arm64-v8a,
+On 2 November, private 4256 used F82 in shadow with routing catalog **32**,
+provider policy **9**, and catalog expiry **2026-11-17T19:36:53Z**.
+
+The 16 October draft **1.5.0+4175** contains seven assets. The draft packages
+contain production-signed universal, arm64-v8a,
 armeabi-v7a and x86_64 APKs plus the unsigned Windows setup, release-index and
 SHA256SUMS. They were built from App 9fc28bc4 / Core 40356d4; the full Core AAR
 contains four native ABIs. Its ARM64 APK installed with data preserved; Windows
 setup exited 0 and app/service/Core 1.2.14 started in the Clean VM. The seven
 assets were checked against the draft; unchanged protocol QA was not repeated.
-Strict-v2 is not required by the current release plan.
+The product release number and release-handoff schema are versioned separately.
 
 Historical 29 October snapshot: provider policy **5/state 4/security 1** was published once with
 WLrus Windows covering both exact Gemini hosts. DNS-AI Windows, WLrus Android

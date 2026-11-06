@@ -2,8 +2,9 @@
 
 Use [AGENTS.md](../AGENTS.md) for working/approval rules and
 [cutover readiness](../docs/operations/cutover-readiness.md) for current results.
-Public **1.4.5**, the seven-asset **1.5.0+4175 draft**, and private packages
-are separate; these scripts do not publish a release.
+The source target for V2 is **2.0.0+4269**. Public distribution is **1.4.5**,
+and the retained seven-asset draft is **1.5.0+4175**. Use these scripts for
+private packaging before the separate publication step.
 
 ## Runtime selection
 

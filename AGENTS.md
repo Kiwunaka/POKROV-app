@@ -4,7 +4,7 @@
 
 - Client repo: Android and Windows are public; iOS and macOS are readiness work only. Main branch: `main`.
 - Platform facts and APIs live in `C:/Users/kiwun/Documents/ai/VPN` (`shared/` and platform docs); do not copy new truth here. Core runtime: `C:/Users/kiwun/Documents/ai/POKROV-core`.
-- Follow the latest explicit owner request, one stage per task. The current 1.5.0 remainder is `C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md`; the execution plan dated 2026-09-24 is a checklist reference. Permissions and acceptance notes in older plans are history, not new authorization.
+- Follow the latest explicit owner request, one stage per task. The current V2 release queue is `C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md`. The execution plan dated 2026-09-24 is a checklist reference. Permissions and acceptance notes in older plans are history, not new authorization.
 - Navigation: [docs index](docs/README.md), [repository map](docs/architecture/folder-structure.md), [packaging and runtime bindings](scripts/README.md), [current readiness](docs/operations/cutover-readiness.md).
 
 ## How To Work

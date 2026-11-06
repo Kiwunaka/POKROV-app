@@ -53,6 +53,6 @@ These `app.*` entries are review baselines. They are not a replacement for state
 | `app.trial.subtitle` | Начните с приложения и получите 5 дней доступа без карты. | `calm` |
 | `app.trial.try_free` | Попробовать бесплатно | `calm` |
 
-The active-client seed pins every platform owner listed above. `validate-seed.ps1` runs the platform synchronizer with `--check`, so digest, generated-document, typed-projection, hardcoded-product-fact, and runtime-consumer drift fails closed without rewriting files.
+From the platform root, `python -B scripts/sync_shared_surface_facts.py --check` verifies the client seed digests, generated document, typed Dart projection and runtime consumers without writing files.
 
 Repository consistency is local evidence only. It does not prove legal approval, campaign authorization, deployed copy, public URL availability, provider prices, signing, store publication, or an exact release candidate.
