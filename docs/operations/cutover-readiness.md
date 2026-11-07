@@ -10,8 +10,15 @@ and the unsigned Windows Setup/single-Setup ZIP passed version, ABI, exact
 native-payload, compiled-App, production-trust, F82 shadow and no-QA-capture
 checks. It includes closed DoH failure reasons and the Windows Access refresh
 button. Native acceptance is pending; no device/server checks or publication
-ran in this build task. The optional source-logging scan exited 1 on 13 matches
-and awaits separate triage.
+ran in this build task. The optional source-logging scan exited 1 on 13 matches;
+triage did not confirm a release secret or privacy leak, and the scan is not PASS.
+
+On the owned Windows VM, 4275 upgraded with identity and settings retained and
+installed components matching the accepted bundle. One manual Access refresh
+showed busy and success. The DNS-AI permit expired unclaimed after accessibility
+navigation errors before Start, so the new Core reasons and DNS-AI feature remain
+unverified. Stop restored baseline, the VM shut down and the lease closed.
+[Windows scope](windows-release-readiness.md).
 
 The previous ordinary private candidate **2.0.0+4274** is in
 `E:/POKROV-tools/temp/release-2.0.0-4274`, built from App `7f104d33` and Core

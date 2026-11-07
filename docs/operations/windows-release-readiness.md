@@ -1,5 +1,22 @@
 # Windows acceptance
 
+The ordinary private candidate **2.0.0+4275**, App `f205164e` / Core
+`34adfca7`, upgraded over 4274 with account, install identity, owner and selected
+settings retained. The installed runner, service, app module and Core matched the
+accepted bundle; the service restarted and remained running. One mouse click on
+«Обновить доступ» at 21:27:34.950 UTC showed the busy state and the successful
+fresh-access notice observed at 21:27:37.802 UTC; this is not a latency or payment result.
+The single 21:26:04–21:36:04 DNS-AI permit was not claimed and no Start occurred:
+an automation marker missed a composite support header, and a subsequent
+technical-screen read raised a wrapped `COMException` before Start. The button
+appeared later but was not pressed. No new Core reason was observed, Gemini was
+not opened and DNS-AI remains **NOT_VERIFIED**. Stop was acknowledged at
+21:31:42.573 UTC before the deadline, the watchdog was removed, and routes, DNS,
+proxies and selected settings matched baseline with TUN 0 and no owned WFP keys
+in a non-transactional read. After Tray Exit the VM shut down normally and was
+confirmed PoweredOff/Unlocked by 21:35:45 UTC. The permit expired, its operator session
+was revoked, and the lease was released at 21:37:00.856 UTC.
+
 The ordinary private candidate **2.0.0+4274**, App `7f104d33` / Core
 `9fa757fa`, upgraded over 4273 with account, install identity and selected
 settings retained. Installed runner, service, app module and Core matched the
