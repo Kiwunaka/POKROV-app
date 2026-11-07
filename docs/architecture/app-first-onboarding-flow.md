@@ -585,6 +585,8 @@ The AI assistant, ticket creation, and ticket message POSTs use a 120-second req
 ### Checkout continuation
 
 - renewal and upgrade begin from the client UI
+- the selected plan is passed to hosted checkout while preserving the account
+  ticket and other handoff parameters
 - mobile opens the canonical hosted checkout in an OS-backed in-app browser
   view; desktop opens it in the external browser
 - the same hosted checkout contract is shared across app, site, and bot flows

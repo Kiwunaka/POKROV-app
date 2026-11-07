@@ -698,8 +698,15 @@ void _showSubscriptionSheet(
       ),
       onSelect: (id) => setRouteState(() => selected = id),
       onPay: () {
+        final checkout = Uri.tryParse(renewTarget);
+        final target = checkout == null || selected.isEmpty
+            ? renewTarget
+            : checkout.replace(queryParameters: {
+                ...checkout.queryParametersAll,
+                'plan': [selected],
+              }).toString();
         Navigator.of(routeContext).pop();
-        onOpenHandoff('checkout', renewTarget);
+        onOpenHandoff('checkout', target);
       },
       onBack: () => Navigator.of(routeContext).pop(),
       onActivationCode: () => _showRedeemSheet(context, hintCode: appContext.redeemHint,

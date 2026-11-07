@@ -2096,13 +2096,13 @@ void main() {
   testWidgets('startup refreshes subscription while app-open telemetry is pending', (tester) async {
     final telemetry = Completer<void>();
     final opened = <Uri>[];
-    final checkout = Uri.parse('https://pay.pokrov.space/checkout?offer=fixture');
+    final checkout = Uri.parse('https://pay.pokrov.space/checkout?checkout_ticket=fixture&source=app&plan=1_month');
     final bootstrapper = _StartupAccountBootstrapper()..appOpenedReportGate = telemetry
       ..subscription = ClientSubscriptionInfo(lane: 'paidUnlimited', accessState: 'paid_unlimited',
         expiresAt: '', daysLeft: 29, autoRenew: false, renewUrl: checkout, trafficPolicy: const {},
         plans: const [
-          ClientSubscriptionPlan(id: 'monthly', title: '1 месяц', price: '379 ₽'),
-          ClientSubscriptionPlan(id: 'quarterly', title: '3 месяца', price: '999 ₽'),
+          ClientSubscriptionPlan(id: '1_month', title: '1 месяц', price: '379 ₽'),
+          ClientSubscriptionPlan(id: '3_months', title: '3 месяца', price: '999 ₽'),
         ]);
     const channel = MethodChannel('space.pokrov/runtime_engine');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (_) async =>
@@ -2140,7 +2140,8 @@ void main() {
     expect(find.text('999 ₽'), findsOneWidget);
     await tester.tap(find.text('Перейти к оплате · 999 ₽'));
     await tester.pumpAndSettle();
-    expect(opened, [checkout], reason: 'the catalog choice must not rewrite the authenticated checkout URL');
+    expect(opened, [checkout.replace(queryParameters: {...checkout.queryParameters, 'plan': '3_months'})],
+      reason: 'checkout must keep the account ticket and the plan selected in the app');
     telemetry.complete();
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
