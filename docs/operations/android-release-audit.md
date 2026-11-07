@@ -1,8 +1,9 @@
 # Android acceptance
 
-The current ordinary private candidate is **2.0.0+4274**, App `7f104d33` with
-Core `9fa757fa` (1.2.15 / ABI2). Its four production-signed APKs passed package
-checks; native and physical-device acceptance of exact 4274 remain pending.
+The current ordinary private candidate is **2.0.0+4275**, App `f205164e` with
+Core `34adfca77` (1.2.15 / ABI2). Its four production-signed APKs passed mandatory
+package checks; native and physical-device acceptance of exact 4275 remain
+**NOT_VERIFIED**.
 Owner-authorized Honor20 checks await working USB/ADB access; no physical PASS
 is claimed.
 [Exact current scope](cutover-readiness.md).
