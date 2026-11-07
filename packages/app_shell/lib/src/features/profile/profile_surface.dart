@@ -29,6 +29,7 @@ class _ProfileSection extends StatelessWidget {
     required this.bonusSummaryBusy,
     required this.bonusSummaryError,
     required this.bonusRewardBusy,
+    required this.onRefreshAccountSummary,
     required this.onRefreshBonusSummary,
     required this.onSpinWheel,
     required this.onCheckInCalendar,
@@ -93,6 +94,7 @@ class _ProfileSection extends StatelessWidget {
   final bool bonusSummaryBusy;
   final String? bonusSummaryError;
   final bool Function() bonusRewardBusy;
+  final Future<void> Function() onRefreshAccountSummary;
   final Future<void> Function() onRefreshBonusSummary;
   final Future<AppFirstBonusRewardResult?> Function() onSpinWheel;
   final Future<void> Function() onCheckInCalendar;
@@ -223,7 +225,9 @@ class _ProfileSection extends StatelessWidget {
       if (subscriptionInfo?.emailVerified == true) 'почта',
     ];
     return RefreshIndicator(
-      onRefresh: () async => Future.wait<void>([onRefreshBonusSummary(), onRefreshNotifications()]),
+      onRefresh: part == _ProfilePart.access
+          ? onRefreshAccountSummary
+          : () async => Future.wait<void>([onRefreshBonusSummary(), onRefreshNotifications()]),
       child: part == _ProfilePart.access
           ? _buildAccess(context, summary, linked)
           : ui.SettingsScreen(entries: _settingsEntries(context)),

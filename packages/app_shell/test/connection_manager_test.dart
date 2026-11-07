@@ -655,11 +655,13 @@ class _StartupAccountBootstrapper extends _StatsBootstrapper implements AppFirst
   int subscriptionReads = 0;
   ClientSubscriptionInfo? subscription;
   BootstrapFailure? subscriptionFailure;
+  Completer<ClientSubscriptionInfo>? subscriptionGate;
 
   @override
   Future<ClientSubscriptionInfo> fetchClientSubscription({required HostPlatform hostPlatform,
     Duration? requestTimeout, Future<void>? cancelled}) async {
     subscriptionReads++;
+    if (subscriptionGate case final gate?) return gate.future;
     if (subscriptionFailure case final failure?) throw failure;
     return subscription ?? const ClientSubscriptionInfo(lane: 'trialPremium', accessState: 'trial_premium',
       expiresAt: '', daysLeft: 1, autoRenew: false, renewUrl: null,
@@ -2143,6 +2145,67 @@ void main() {
     expect(opened, [checkout.replace(queryParameters: {...checkout.queryParameters, 'plan': '3_months'})],
       reason: 'checkout must keep the account ticket and the plan selected in the app');
     telemetry.complete();
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('access pull-to-refresh retries subscription after a temporary failure', (tester) async {
+    const paid = ClientSubscriptionInfo(lane: 'paidUnlimited', accessState: 'paid_unlimited',
+      expiresAt: '', daysLeft: 7, autoRenew: false, renewUrl: null, plans: [], trafficPolicy: {});
+    const renewed = ClientSubscriptionInfo(lane: 'paidUnlimited', accessState: 'paid_unlimited',
+      expiresAt: '', daysLeft: 30, autoRenew: false, renewUrl: null, plans: [], trafficPolicy: {});
+    final bootstrapper = _StartupAccountBootstrapper()..subscription = paid;
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(channel, (_) async =>
+      {'phase': 'initialized', 'supportsLiveConnect': true, 'canInitialize': false, 'canConnect': true});
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(channel, null);
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    tester.view.physicalSize = const Size(400, 700);
+    tester.view.devicePixelRatio = 1;
+    await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: bootstrapper, firstLaunchStore: _FirstLaunchStore(),
+      clientExperienceStore: _CatalogPickerExperience(), themeMode: ThemeMode.light,
+      onThemeModeChanged: (_) {},
+    )));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('nav-access')));
+    await tester.pumpAndSettle();
+    dynamic profile() => tester.widget(find.byWidgetPredicate(
+      (widget) => widget.runtimeType.toString() == '_ProfileSection'));
+    expect(profile().subscriptionInfo, same(paid));
+
+    bootstrapper.subscriptionFailure = const BootstrapFailure(
+      'Сервис временно недоступен. Попробуй ещё раз позже.', statusCode: 503);
+    final pendingBackground = Completer<ClientSubscriptionInfo>();
+    bootstrapper.subscriptionGate = pendingBackground;
+    final beforeBackground = bootstrapper.subscriptionReads;
+    (tester.state(find.byType(PokrovSeedShell)) as WidgetsBindingObserver)
+        .didChangeAppLifecycleState(AppLifecycleState.resumed);
+    await tester.pump();
+    expect(bootstrapper.subscriptionReads, beforeBackground + 1,
+      reason: 'the silent subscription request must already be in flight');
+    final previousReads = bootstrapper.subscriptionReads;
+    await tester.drag(find.byType(ui.AccessScreen), const Offset(0, 400));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    bootstrapper.subscriptionGate = null;
+    pendingBackground.completeError(bootstrapper.subscriptionFailure!);
+    await tester.pumpAndSettle();
+    expect(bootstrapper.subscriptionReads, previousReads + 1);
+    expect(profile().subscriptionInfo, same(paid));
+    expect(find.text('Сервис временно недоступен. Попробуй ещё раз позже.'), findsOneWidget);
+
+    bootstrapper.subscriptionFailure = null;
+    bootstrapper.subscription = renewed;
+    await tester.drag(find.byType(ui.AccessScreen), const Offset(0, 400));
+    await tester.pumpAndSettle();
+    expect(bootstrapper.subscriptionReads, previousReads + 2);
+    expect(profile().subscriptionInfo, same(renewed));
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
   });

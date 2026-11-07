@@ -749,15 +749,27 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
-  Future<void> _refreshAccountSummary() async {
+  Future<void> _refreshAccountSummary({bool showFailure = false}) async {
     await _clientExperienceRestore;
     if (!mounted) return;
-    await _accountSessionCoordinator.refreshSummary(
-        refreshSubscription: _refreshSubscriptionInfo,
+    final accountRevision = _accountUiRevision;
+    var subscriptionRequested = false;
+    Future<void> refreshSummary() => _accountSessionCoordinator.refreshSummary(
+        refreshSubscription: () {
+          subscriptionRequested = true;
+          return _refreshSubscriptionInfo(showFailure: showFailure);
+        },
         refreshBonus: _loadBonusSummary,
         refreshInbox: _refreshNotifications,
         isActive: () => mounted,
       );
+    await refreshSummary();
+    // A manual pull that joined an older read still needs its own fresh result.
+    if (showFailure && !subscriptionRequested && mounted &&
+        accountRevision == _accountUiRevision && !_accountSessionChanging &&
+        !_accountSessionCoordinator.loginRecoveryRequired) {
+      await refreshSummary();
+    }
     await _connectionManager._refreshSmartAccessLeases();
   }
 
@@ -3745,6 +3757,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             bonusSummaryBusy: _bonusSummaryBusy,
             bonusSummaryError: _bonusSummaryError,
             bonusRewardBusy: () => _bonusRewardBusy,
+            onRefreshAccountSummary: () => _refreshAccountSummary(showFailure: true),
             onRefreshBonusSummary: () => _loadBonusSummary(force: true),
             onSpinWheel: _spinBonusWheelInApp,
             onCheckInCalendar: _checkInBonusCalendarInApp,
@@ -3821,6 +3834,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             bonusSummaryBusy: _bonusSummaryBusy,
             bonusSummaryError: _bonusSummaryError,
             bonusRewardBusy: () => _bonusRewardBusy,
+            onRefreshAccountSummary: () => _refreshAccountSummary(showFailure: true),
             onRefreshBonusSummary: () => _loadBonusSummary(force: true),
             onSpinWheel: _spinBonusWheelInApp,
             onCheckInCalendar: _checkInBonusCalendarInApp,

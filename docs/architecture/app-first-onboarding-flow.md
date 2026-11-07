@@ -235,6 +235,9 @@ also wait for the access choice because their session helper can create a trial
 when no app session exists. A failed refresh retains the previously observed
 account view and permits another foreground or
 profile refresh; it does not clear access, claim payment or reset navigation.
+An explicit pull on «Доступ» uses the same ordered reads and shows subscription
+errors without clearing the last confirmed access. If it joins an existing
+summary, it waits and requests one fresh summary while the account remains current.
 These reads use the existing bounded app-first HTTP request path. Native browser,
 tray, upgrade and payment acceptance still require exact installed-package proof.
 
