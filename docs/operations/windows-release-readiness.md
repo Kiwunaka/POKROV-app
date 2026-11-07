@@ -24,6 +24,20 @@ canonical lease was RELEASED / locked=false at 23:14:44.599155 UTC. Source 12
 stayed private; policy 11/state 7, catalog 37/state 34 and flags stayed unchanged.
 No new build or publication occurred.
 
+After QA closure, separate VPN-off diagnostics confirmed `dnsPreset=automatic`.
+UDP bootstrap through `1.1.1.1` returned two public A records for `dns.dns-ai.ru`
+in 7 ms; the first TCP attempt timed out after its five-second budget. A later
+bounded pass obtained a fresh pair in 6 ms and tested each once: both TCP attempts
+timed out (`curl 28`, HTTP status 0), taking 5141 and 5052 ms within a total
+10269 ms / 12-second cap. Curl 8.21 lacked HTTP/2; HTTP/1.1 was requested with
+strict TLS/SNI and `--resolve`, without proxy, retries or redirects, but neither
+TLS nor HTTP was reached. These are independent reachability results from one
+VM; the native address/configuration and ISP/firewall/provider cause remain
+unknown, with no native, Gemini or HTTP/2 acceptance. Afterwards the measured
+baseline matched, retained/TUN/App/curl were 0, and normal guest shutdown was
+confirmed PoweredOff/Unlocked at host 23:37:52.446 UTC. No new QA permit, Core
+change or build followed.
+
 Two preceding 4275 windows had no Start: 22:01–22:11 UTC was interrupted, with
 the old watchdog's timely ACK unconfirmed; 22:45–22:55 UTC stopped at the host
 date guard before refresh and had timely direct Stop. Their baseline, shutdown

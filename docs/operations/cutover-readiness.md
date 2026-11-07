@@ -27,6 +27,8 @@ The diagnostic branch and bootstrap/TCP/TLS/HTTP cause remain unknown. Gemini
 was not opened and DNS-AI remains **NOT_VERIFIED**. Timely Stop restored the
 measured baseline, the VM shut down normally and the canonical lease closed at
 23:14:44 UTC. No new build or publication occurred.
+A separate VPN-off diagnostic found both freshly resolved DNS-AI IPv4 addresses
+timing out at TCP before TLS/HTTP; the native cause and feature remain unverified.
 [Windows result and limits](windows-release-readiness.md).
 
 The previous ordinary private candidate **2.0.0+4274** is in
