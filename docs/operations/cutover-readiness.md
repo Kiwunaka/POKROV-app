@@ -3,13 +3,21 @@
 Updated 7 November 2026. **V2 (2.0.0)** is the next Android and Windows release,
 scheduled by the owner for 9 November at 12:00 Moscow time.
 
-The current ordinary private candidate **2.0.0+4272** is in
-`E:/POKROV-tools/temp/release-2.0.0-4272`, built from App `e55b23bb` and Core
+The current ordinary private candidate **2.0.0+4273** is in
+`E:/POKROV-tools/temp/release-2.0.0-4273`, built from App `6f26211b` and Core
 `8beba8a`. Its four production-signed APKs and unsigned Windows Setup/ZIP passed
 the builder, version, ABI, native-artifact, trust and packaging checks; the ZIP
 contains one Setup, F82 remains in shadow and QA capture is off. Native acceptance
-of 4272 is pending. It includes the selected checkout plan and paid-access refresh
-fixes.
+of exact 4273 is pending. It includes the selected checkout plan, paid-access
+refresh and retained DNS-QA failure stages.
+
+The previous **2.0.0+4272** packages remain in
+`E:/POKROV-tools/temp/release-2.0.0-4272` (App `e55b23bb`, Core `8beba8a`).
+On the owned Windows VM, one Global Auto through cached fallback and ordinary
+Stop passed; a later Locations refresh saved fresh managed material. Online
+bootstrap was not verified. DNS-AI QA returned `core_egress_timeout` and remains
+**NOT_VERIFIED**. These observations do not accept 4273.
+[Windows scope](windows-release-readiness.md).
 
 The previous private candidate **2.0.0+4271** is in
 `E:/POKROV-tools/temp/release-2.0.0-4271`. App `6b3c5383` includes the cached
