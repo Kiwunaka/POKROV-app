@@ -1,5 +1,13 @@
 # Android acceptance
 
+On 7 November, the attempted read-only command `emulator -avd api35gc -snapshot-list`
+unexpectedly booted api35gc. It was shut down normally; userdata,
+`hardware-qemu.ini` and snapshot data changed. The previous bit-for-bit AVD
+state has not been restored. No APK was installed and no app or Auto connection
+was intentionally started; automatic guest activity is unknown. The ADB server
+process changed protocol version from 32 to 41; the previous daemon executable
+path is unknown. This is not native acceptance.
+
 Updated 6 November 2026. The latest private Android package set is
 **1.5.0+4267** with Core 1.2.15/ABI2. Its four production-signed,
 non-debuggable APKs passed package checks. Physical acceptance for V2 still
