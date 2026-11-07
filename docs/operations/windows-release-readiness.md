@@ -1,5 +1,24 @@
 # Windows acceptance
 
+The ordinary private candidate **2.0.0+4274**, App `7f104d33` / Core
+`9fa757fa`, upgraded over 4273 with account, install identity and selected
+settings retained. Installed runner, service, app module and Core matched the
+accepted bundle. The first 19:00 UTC DNS-AI permit expired unclaimed after the
+UI preparation cutoff, with no Start. In the next 19:24:58–19:34:58 window,
+one Start at 19:29:06 reached claim and profile binding, then failed with
+`core_egress_timeout`, `qa_probe_status=failure` and
+`qa_probe_stages=resolver:failure,dns:failure`. The saved event reached its
+180-character limit, but the source places a stage reason before that limit;
+none was present. The DNS/TCP/TLS/HTTP cause remains unknown. The ordinary
+guest could not access the expected staged-config path (`access_denied`). Gemini
+was not opened and DNS-AI remains **NOT_VERIFIED**. Stop was acknowledged at
+19:29:20 before the deadline; routes, DNS, proxies and selected settings
+matched baseline, TUN was 0, and no owned WFP keys appeared in a
+non-transactional read. The permit expired, its operator session was revoked,
+and the lease was released at 19:35:34.692 UTC. After Tray Exit the VM shut
+down normally to PoweredOff/Unlocked at 19:40:52 UTC. Ordinary Global was not
+repeated.
+
 The ordinary private candidate **2.0.0+4273**, App `6f26211b` / Core
 `8beba8a`, upgraded over 4272 with the account, install identity and selected
 settings retained. The installed runner, service, app module and Core matched

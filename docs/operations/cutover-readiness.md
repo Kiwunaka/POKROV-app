@@ -12,6 +12,16 @@ of exact 4274 is pending. It includes Runtime/App diagnostic fixes and corrected
 connection-recovery wording, alongside the selected checkout plan and paid-access
 refresh fixes.
 
+On the owned Windows VM, 4274 upgraded with account, install identity and
+settings retained, and installed App/Core matched the accepted bundle. The
+first DNS-AI permit expired without Start; a later single Start reached claim
+and profile binding but failed with `core_egress_timeout` and
+`resolver:failure,dns:failure`. The underlying cause is unknown, the ordinary
+guest was denied access to the staged-config path, and Gemini was not opened. Timely Stop
+restored baseline, the lease closed, and the VM shut down normally. DNS-AI and
+full native acceptance remain **NOT_VERIFIED**.
+[Windows scope](windows-release-readiness.md).
+
 The previous **2.0.0+4273** packages remain in
 `E:/POKROV-tools/temp/release-2.0.0-4273` (App `6f26211b`, Core `8beba8a`).
 Its Windows upgrade retained the account, install identity and selected settings.
