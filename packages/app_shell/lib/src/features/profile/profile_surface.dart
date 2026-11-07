@@ -29,6 +29,7 @@ class _ProfileSection extends StatelessWidget {
     required this.bonusSummaryBusy,
     required this.bonusSummaryError,
     required this.bonusRewardBusy,
+    required this.accountRefreshBusy,
     required this.onRefreshAccountSummary,
     required this.onRefreshBonusSummary,
     required this.onSpinWheel,
@@ -94,6 +95,7 @@ class _ProfileSection extends StatelessWidget {
   final bool bonusSummaryBusy;
   final String? bonusSummaryError;
   final bool Function() bonusRewardBusy;
+  final bool accountRefreshBusy;
   final Future<void> Function() onRefreshAccountSummary;
   final Future<void> Function() onRefreshBonusSummary;
   final Future<AppFirstBonusRewardResult?> Function() onSpinWheel;
@@ -229,7 +231,24 @@ class _ProfileSection extends StatelessWidget {
           ? onRefreshAccountSummary
           : () async => Future.wait<void>([onRefreshBonusSummary(), onRefreshNotifications()]),
       child: part == _ProfilePart.access
-          ? _buildAccess(context, summary, linked)
+          ? SafeArea(
+              bottom: false,
+              child: Column(children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: OutlinedButton.icon(
+                      key: const ValueKey('access-refresh'),
+                      onPressed: accountRefreshBusy ? null : onRefreshAccountSummary,
+                      icon: const Icon(Icons.refresh),
+                      label: Text(accountRefreshBusy ? 'Обновляем…' : 'Обновить доступ'),
+                    ),
+                  ),
+                ),
+                Expanded(child: _buildAccess(context, summary, linked)),
+              ]),
+            )
           : ui.SettingsScreen(entries: _settingsEntries(context)),
     );
   }

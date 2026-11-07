@@ -241,6 +241,10 @@ summary, it waits and requests one fresh summary while the account remains curre
 These reads use the existing bounded app-first HTTP request path. Native browser,
 tray, upgrade and payment acceptance still require exact installed-package proof.
 
+The Access screen also provides a mouse-accessible refresh button. It disables
+repeat clicks while the manual refresh runs, reports success only after its fresh
+subscription read succeeds, and keeps the last confirmed access on failure.
+
 A paid subscription accepted through the current session guards owns the Home
 and Profile access status. Older free managed-profile metadata, including a
 restored cache, cannot mask that status. The original managed-profile access

@@ -473,6 +473,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   ClientNotificationInbox? _notificationsInbox;
   int _accountUiRevision = 0;
   bool _accountSessionChanging = false;
+  bool _manualAccountRefreshBusy = false;
   bool _notificationsBusy = false;
   Future<void>? _notificationsRequest;
   bool _notificationsInboxOpen = false;
@@ -754,23 +755,39 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     if (!mounted) return;
     final accountRevision = _accountUiRevision;
     var subscriptionRequested = false;
+    var subscriptionRefreshed = false;
     Future<void> refreshSummary() => _accountSessionCoordinator.refreshSummary(
-        refreshSubscription: () {
+        refreshSubscription: () async {
           subscriptionRequested = true;
-          return _refreshSubscriptionInfo(showFailure: showFailure);
+          subscriptionRefreshed = await _refreshSubscriptionInfo(showFailure: showFailure);
+          return subscriptionRefreshed;
         },
         refreshBonus: _loadBonusSummary,
         refreshInbox: _refreshNotifications,
         isActive: () => mounted,
       );
     await refreshSummary();
-    // A manual pull that joined an older read still needs its own fresh result.
+    // A manual refresh that joined an older read still needs its own fresh result.
     if (showFailure && !subscriptionRequested && mounted &&
         accountRevision == _accountUiRevision && !_accountSessionChanging &&
         !_accountSessionCoordinator.loginRecoveryRequired) {
       await refreshSummary();
     }
+    if (showFailure && subscriptionRefreshed && mounted &&
+        accountRevision == _accountUiRevision) {
+      showPokrovSnack(context, 'Данные доступа обновлены', tone: PokrovSnackTone.success);
+    }
     await _connectionManager._refreshSmartAccessLeases();
+  }
+
+  Future<void> _manualRefreshAccountSummary() async {
+    if (_manualAccountRefreshBusy) return;
+    setState(() => _manualAccountRefreshBusy = true);
+    try {
+      await _refreshAccountSummary(showFailure: true);
+    } finally {
+      if (mounted) setState(() => _manualAccountRefreshBusy = false);
+    }
   }
 
   Future<void> _restoreClientExperience() async {
@@ -3757,7 +3774,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             bonusSummaryBusy: _bonusSummaryBusy,
             bonusSummaryError: _bonusSummaryError,
             bonusRewardBusy: () => _bonusRewardBusy,
-            onRefreshAccountSummary: () => _refreshAccountSummary(showFailure: true),
+            accountRefreshBusy: _manualAccountRefreshBusy,
+            onRefreshAccountSummary: _manualRefreshAccountSummary,
             onRefreshBonusSummary: () => _loadBonusSummary(force: true),
             onSpinWheel: _spinBonusWheelInApp,
             onCheckInCalendar: _checkInBonusCalendarInApp,
@@ -3834,7 +3852,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             bonusSummaryBusy: _bonusSummaryBusy,
             bonusSummaryError: _bonusSummaryError,
             bonusRewardBusy: () => _bonusRewardBusy,
-            onRefreshAccountSummary: () => _refreshAccountSummary(showFailure: true),
+            accountRefreshBusy: _manualAccountRefreshBusy,
+            onRefreshAccountSummary: _manualRefreshAccountSummary,
             onRefreshBonusSummary: () => _loadBonusSummary(force: true),
             onSpinWheel: _spinBonusWheelInApp,
             onCheckInCalendar: _checkInBonusCalendarInApp,

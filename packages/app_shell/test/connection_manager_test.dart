@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' show PointerDeviceKind;
 
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pokrov_app_shell/app_shell.dart' hide TransportCandidate;
@@ -2208,6 +2210,83 @@ void main() {
     expect(profile().subscriptionInfo, same(renewed));
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('Windows access button refreshes with a mouse and reports the fresh result', (tester) async {
+    const paid = ClientSubscriptionInfo(lane: 'paidUnlimited', accessState: 'paid_unlimited',
+      expiresAt: '', daysLeft: 7, autoRenew: false, renewUrl: null, plans: [], trafficPolicy: {});
+    const renewed = ClientSubscriptionInfo(lane: 'paidUnlimited', accessState: 'paid_unlimited',
+      expiresAt: '', daysLeft: 30, autoRenew: false, renewUrl: null, plans: [], trafficPolicy: {});
+    final bootstrapper = _StartupAccountBootstrapper()..subscription = paid;
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(channel, (_) async =>
+      {'phase': 'initialized', 'supportsLiveConnect': true, 'canInitialize': false, 'canConnect': true});
+    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(channel, null);
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+      debugDefaultTargetPlatformOverride = null;
+    });
+    tester.view.physicalSize = const Size(400, 700);
+    tester.view.devicePixelRatio = 1;
+    await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+      bootstrapper: bootstrapper, firstLaunchStore: _FirstLaunchStore(),
+      clientExperienceStore: _CatalogPickerExperience(), themeMode: ThemeMode.light,
+      onThemeModeChanged: (_) {},
+    )));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('nav-access')), kind: PointerDeviceKind.mouse);
+    await tester.pumpAndSettle();
+    dynamic profile() => tester.widget(find.byWidgetPredicate(
+      (widget) => widget.runtimeType.toString() == '_ProfileSection'));
+    final button = find.byKey(const ValueKey('access-refresh'));
+    expect(find.text('Обновить доступ'), findsOneWidget);
+    expect(profile().subscriptionInfo, same(paid));
+
+    bootstrapper.subscriptionFailure = const BootstrapFailure(
+      'Сервис временно недоступен. Попробуй ещё раз позже.', statusCode: 503);
+    final background = Completer<ClientSubscriptionInfo>();
+    bootstrapper.subscriptionGate = background;
+    final beforeBackground = bootstrapper.subscriptionReads;
+    (tester.state(find.byType(PokrovSeedShell)) as WidgetsBindingObserver)
+        .didChangeAppLifecycleState(AppLifecycleState.resumed);
+    await tester.pump();
+    expect(bootstrapper.subscriptionReads, beforeBackground + 1);
+    await tester.tap(button, kind: PointerDeviceKind.mouse);
+    await tester.pump();
+    expect(tester.widget<OutlinedButton>(button).onPressed, isNull);
+    expect(find.text('Обновляем…'), findsOneWidget);
+    expect(find.text('Данные доступа обновлены'), findsNothing);
+    bootstrapper.subscriptionGate = null;
+    background.completeError(bootstrapper.subscriptionFailure!);
+    await tester.pumpAndSettle();
+    expect(bootstrapper.subscriptionReads, beforeBackground + 2,
+      reason: 'manual refresh must make a fresh read after the older background request');
+    expect(profile().subscriptionInfo, same(paid));
+    expect(find.text('Сервис временно недоступен. Попробуй ещё раз позже.'), findsOneWidget);
+    expect(find.text('Данные доступа обновлены'), findsNothing);
+
+    ScaffoldMessenger.of(tester.element(find.byType(ui.AccessScreen))).clearSnackBars();
+    await tester.pumpAndSettle();
+    bootstrapper.subscriptionFailure = null;
+    final fresh = Completer<ClientSubscriptionInfo>();
+    bootstrapper.subscriptionGate = fresh;
+    await tester.tap(button, kind: PointerDeviceKind.mouse);
+    await tester.pump();
+    expect(bootstrapper.subscriptionReads, beforeBackground + 3);
+    expect(find.text('Данные доступа обновлены'), findsNothing);
+    expect(tester.widget<OutlinedButton>(button).onPressed, isNull);
+    fresh.complete(renewed);
+    await tester.pumpAndSettle();
+    expect(profile().subscriptionInfo, same(renewed));
+    expect(find.text('Данные доступа обновлены'), findsOneWidget);
+    expect(tester.widget<OutlinedButton>(button).onPressed, isNotNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+    debugDefaultTargetPlatformOverride = null;
   });
 
   testWidgets('subscription failure diagnostics distinguish local denial from an HTTP response', (tester) async {
