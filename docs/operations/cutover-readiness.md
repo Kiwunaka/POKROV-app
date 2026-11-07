@@ -1,9 +1,19 @@
 # POKROV V2 client release status
 
-Updated 7 November 2026. **V2 (2.0.0)** is the next Android and Windows release,
+Updated 8 November 2026. **V2 (2.0.0)** is the next Android and Windows release,
 scheduled by the owner for 9 November at 12:00 Moscow time.
 
-The current ordinary private candidate **2.0.0+4274** is in
+The current ordinary private candidate **2.0.0+4275** is in
+`C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4275/release`, built from App
+`f205164e` and Core `34adfca7` (1.2.15 / ABI2). Four production-signed APKs
+and the unsigned Windows Setup/single-Setup ZIP passed version, ABI, exact
+native-payload, compiled-App, production-trust, F82 shadow and no-QA-capture
+checks. It includes closed DoH failure reasons and the Windows Access refresh
+button. Native acceptance is pending; no device/server checks or publication
+ran in this build task. The optional source-logging scan exited 1 on 13 matches
+and awaits separate triage.
+
+The previous ordinary private candidate **2.0.0+4274** is in
 `E:/POKROV-tools/temp/release-2.0.0-4274`, built from App `7f104d33` and Core
 `9fa757fa` (1.2.15 / ABI2). Its four production-signed APKs and unsigned Windows Setup/ZIP passed
 the builder, version, ABI, native-artifact, trust and packaging checks; the ZIP
