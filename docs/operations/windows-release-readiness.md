@@ -1,6 +1,17 @@
 # Windows acceptance
 
-The ordinary private candidate **2.0.0+4272**, App `e55b23bb` / Core
+The ordinary private candidate **2.0.0+4273**, App `6f26211b` / Core
+`8beba8a`, upgraded over 4272 with the account, install identity and selected
+settings retained. The installed runner, service, app module and Core matched
+the accepted package. One source-only DNS-AI QA failed with
+`core_egress_timeout`; its new readback recorded `qa_probe_status=failure` and
+`qa_probe_stages=none`, without identifying a failed stage. Gemini was not
+opened and the feature remains unverified. Stop completed before the deadline;
+routes, DNS, proxies and selected settings matched the prior baseline, with
+TUN 0 and no owned WFP keys in a non-transactional read. Ordinary Global was
+not repeated for this diagnostics-only change.
+
+The preceding ordinary private candidate **2.0.0+4272**, App `e55b23bb` / Core
 `8beba8a`, passed package checks and one installed Global Auto connection.
 The connection used cached fallback; its online bootstrap remains unverified.
 A later ordinary Locations refresh saved new managed material: its verification
