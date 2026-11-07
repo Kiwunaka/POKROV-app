@@ -1,5 +1,36 @@
 # Windows acceptance
 
+On 7 November, ordinary private candidate **2.0.0+4275**, App `f205164e` / Core `34adfca7`,
+made one actual DNS-AI Start at **23:06:42.851626 UTC** under the
+23:03:19–23:13:19 UTC permit. Server claim at 23:06:43.163246 UTC confirmed
+both profile bindings. A fresh `qa_start_failed` event at guest
+23:06:50.842564 UTC and the separately read complete QA-context field recorded
+`core_egress_timeout`, `qa_probe_status=failure`, `qa_probe_stages=resolver:failure`
+and PlatformException. The event's 180-character clip does not establish the
+whole event's contents; the QA-context stage field was read through its closing
+quote without ellipsis. The synthetic-deadline versus observer branch and
+bootstrap/TCP/TLS/HTTP cause remain unknown. Gemini was not opened; DNS-AI
+remains **NOT_VERIFIED**. IPC error 7 meant `deadlineExceeded`, not Status 1.
+Direct Stop separately returned ACK 1 at guest 23:07:18.5615205 UTC, followed by
+a fresh Status 1 / initialized / retained 0 read. Stop was timely within the
+measured clock intervals; its watchdog was removed. All 16 routes, DNS, user and
+WinHTTP proxies and preferences matched baseline, with TUN 0 and the eight
+specific owned WFP keys absent. The broader WFP transaction remained unavailable
+to this ordinary guest (access denied, 5); no all-WFP result is claimed.
+Tray Exit left App 0 and normal shutdown reached PoweredOff/Unlocked
+at host 23:11:13.281 UTC. The permit expired, the operator session was revoked at
+23:13:38.991028 UTC, fresh FULL ACK 7/API passed at 23:14:44.270553 UTC, and the
+canonical lease was RELEASED / locked=false at 23:14:44.599155 UTC. Source 12
+stayed private; policy 11/state 7, catalog 37/state 34 and flags stayed unchanged.
+No new build or publication occurred.
+
+Two preceding 4275 windows had no Start: 22:01–22:11 UTC was interrupted, with
+the old watchdog's timely ACK unconfirmed; 22:45–22:55 UTC stopped at the host
+date guard before refresh and had timely direct Stop. Their baseline, shutdown
+and closure checks completed. Generic helper receipt handling and the host
+DateTimeOffset guard were corrected and dry-run checked without a mouse action
+before the actual Start; App/Core were unchanged.
+
 The ordinary private candidate **2.0.0+4275**, App `f205164e` / Core
 `34adfca7`, upgraded over 4274 with account, install identity, owner and selected
 settings retained. The installed runner, service, app module and Core matched the

@@ -20,6 +20,15 @@ navigation errors before Start, so the new Core reasons and DNS-AI feature remai
 unverified. Stop restored baseline, the VM shut down and the lease closed.
 [Windows scope](windows-release-readiness.md).
 
+Later on 7 November, the same 4275 made one DNS-AI Start at 23:06:42 UTC.
+Claim and both profile bindings succeeded; fresh diagnostics recorded
+`core_egress_timeout`, failure and a complete `resolver:failure` stage field.
+The diagnostic branch and bootstrap/TCP/TLS/HTTP cause remain unknown. Gemini
+was not opened and DNS-AI remains **NOT_VERIFIED**. Timely Stop restored the
+measured baseline, the VM shut down normally and the canonical lease closed at
+23:14:44 UTC. No new build or publication occurred.
+[Windows result and limits](windows-release-readiness.md).
+
 The previous ordinary private candidate **2.0.0+4274** is in
 `E:/POKROV-tools/temp/release-2.0.0-4274`, built from App `7f104d33` and Core
 `9fa757fa` (1.2.15 / ABI2). Its four production-signed APKs and unsigned Windows Setup/ZIP passed
