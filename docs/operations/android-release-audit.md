@@ -1,8 +1,10 @@
 # Android acceptance
 
-The current ordinary private candidate is **2.0.0+4271** with Core `8beba8a`.
-Its four APKs passed package checks; native VPN and physical-device acceptance
-remain pending. [Exact current scope](cutover-readiness.md).
+The current ordinary private candidate is **2.0.0+4272**, App `e55b23bb` with
+Core `8beba8a`. Its four production-signed APKs passed package checks; native and
+physical-device acceptance of 4272 remain pending. The earlier 4271 install, UI
+and cold-boot checks below do not accept 4272. The affected AVD remains stopped.
+[Exact current scope](cutover-readiness.md).
 
 On 7 November, after the earlier incident below, the existing Android 35 x86_64
 `api35gc` cold-booted without loading or saving a snapshot. The normal 4271 APK
