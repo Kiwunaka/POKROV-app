@@ -2,7 +2,10 @@
 
 The ordinary private candidate **2.0.0+4272**, App `e55b23bb` / Core
 `8beba8a`, passed package checks and one installed Global Auto connection.
-The connection used cached fallback; online bootstrap remains unverified.
+The connection used cached fallback; its online bootstrap remains unverified.
+A later ordinary Locations refresh saved new managed material: its verification
+timestamp advanced from 15:39:46 to 15:41:24 UTC within that action's window.
+This does not measure HTTP latency or the initial connection.
 [Current package](cutover-readiness.md).
 
 The 4272 upgrade retained the account, settings and install identity. The
@@ -17,8 +20,9 @@ control failed with `core_egress_timeout`. Gemini was not opened and the feature
 remains unverified. Stop was acknowledged after the agreed deadline. Routes,
 DNS, proxies and selected settings matched the baseline; TUN was 0 and the
 eight owned WFP keys were absent in a non-transactional read. The permit expired,
-the operator session was revoked, and the app exited through the tray. The VM
-remains on.
+the operator session was revoked, and the app exited through the tray. After
+the separate Locations refresh and baseline check, the VM shut down normally
+and was PoweredOff/Unlocked.
 
 On 7 November, one Global Auto on private QA App `877407e2` / Core `8beba8a`
 reached running with DNS and egress confirmed. Cached material preparation took
