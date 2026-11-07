@@ -4969,7 +4969,7 @@ void main() {
     final home = tester.widget<ui.HomeScreen>(find.byType(ui.HomeScreen));
     expect(home.data.phase, ui.ConnectionPhase.error);
     expect(home.data.actionLabel, 'Отключить');
-    expect(find.text('Трафик заблокирован'), findsOneWidget);
+    expect(find.text('Соединение требует внимания'), findsOneWidget);
     await tester.tap(find.descendant(of: find.byType(ui.WarnCard), matching: find.text('Отключить')));
     await tester.pumpAndSettle();
     expect(disconnects, 1);
@@ -5972,6 +5972,7 @@ void main() {
     expect(manager.snapshot?.protectionRetained, isFalse);
     expect(manager.snapshot?.proofObservedAt, runtime.proofObservedAt);
     expect(manager.retainsProtection, isTrue, reason: 'App protects traffic while preparation fails');
+    expect(manager.presentation.title, 'Соединение требует внимания');
 
     bootstrapper.gate = null;
     bootstrapper.failure = null;

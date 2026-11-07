@@ -222,7 +222,7 @@ final class _PokrovWindowsTray with TrayListener, WindowListener {
     final retainsProtection = controller?.retainsProtection ?? false;
     final busy = controller?.isBusy ?? false;
     await trayManager.setToolTip(
-      retainsProtection ? 'POKROV: трафик заблокирован' :
+      retainsProtection ? 'POKROV: соединение требует внимания' :
           connected ? 'POKROV подключен' : 'POKROV отключен',
     );
     await trayManager.setContextMenu(

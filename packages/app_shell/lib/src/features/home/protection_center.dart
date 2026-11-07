@@ -696,8 +696,8 @@ _ProtectionSummary _protectionSummary(
   }
   if (retainsProtection) {
     return const _ProtectionSummary(
-      title: 'Трафик заблокирован',
-      detail: 'Защита от прямого выхода включена. Восстанови соединение или отключи POKROV.',
+      title: 'Соединение требует внимания',
+      detail: 'Состояние соединения не подтверждено. Попробуй восстановить его или отключи POKROV.',
       tone: _ProtectionSummaryTone.warning,
     );
   }

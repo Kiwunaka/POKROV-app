@@ -299,7 +299,7 @@ class ConnectionPresentation {
     }.contains(phase);
     final retainedFailure = retainsProtection && !transitioning && !verified;
 
-    final title = retainedFailure ? 'Трафик заблокирован' : switch (phase) {
+    final title = retainedFailure ? 'Соединение требует внимания' : switch (phase) {
       ConnectionExperiencePhase.idle => 'Не защищено',
       ConnectionExperiencePhase.permissionRequired => 'Нужен доступ к VPN',
       ConnectionExperiencePhase.preparing => 'Подготавливаем профиль',
@@ -375,7 +375,7 @@ class ConnectionPresentation {
         ConnectionTone.muted,
     };
     final subtitle = retainedFailure
-        ? 'Защита от прямого выхода включена. Восстанови соединение или отключи POKROV.'
+        ? 'Состояние соединения не подтверждено. Попробуй восстановить его или отключи POKROV.'
         : switch (phase) {
       ConnectionExperiencePhase.connectedVerified =>
         'DNS и выход через VPN подтверждены',

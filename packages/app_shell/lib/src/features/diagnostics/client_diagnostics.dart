@@ -30,7 +30,7 @@ String _firstProviderQaAvailabilityLabel(PokrovFirstProviderQaAvailabilityReason
   PokrovFirstProviderQaAvailabilityReason.unconfigured => 'Ключи проверки или каталог не настроены',
   PokrovFirstProviderQaAvailabilityReason.disposed => 'Текущий экран подключения закрыт',
   PokrovFirstProviderQaAvailabilityReason.runtimeBusy => 'Выполняется действие подключения',
-  PokrovFirstProviderQaAvailabilityReason.protectionRetained => 'Сохранена защита предыдущего подключения',
+  PokrovFirstProviderQaAvailabilityReason.protectionRetained => 'Предыдущее подключение требует внимания',
   PokrovFirstProviderQaAvailabilityReason.vpnRunning => 'VPN уже включён',
   PokrovFirstProviderQaAvailabilityReason.connectionPending => 'Подключение ещё выполняется',
   PokrovFirstProviderQaAvailabilityReason.appScope => 'Выбран режим отдельных приложений',

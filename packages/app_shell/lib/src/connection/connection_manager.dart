@@ -2733,7 +2733,7 @@ class ConnectionManager extends ChangeNotifier {
           'Модуль подключения пока не подтвердил поддержку каталога; применение недоступно.',
         if (_appContext.hostPlatform == HostPlatform.windows &&
             (mode == RouteMode.selectedApps || mode == RouteMode.excludedApps))
-          'В Windows общий системный DNS идёт через VPN. При восстановлении защита временно блокирует трафик всего устройства.',
+          'В Windows общий системный DNS идёт через VPN. При восстановлении сеть всего устройства может быть временно недоступна.',
         if (_appContext.hostPlatform == HostPlatform.windows &&
             (mode == RouteMode.selectedApps || mode == RouteMode.excludedApps) &&
             _clientExperience.routingPreferences.effectiveDnsTransport ==

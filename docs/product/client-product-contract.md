@@ -72,6 +72,12 @@ On Windows, cancellation may arrive after the service has completed connect;
 the client reads the actual state and keeps a warning if the tunnel is running,
 the host is busy or its state is unavailable. The existing Disconnect action
 remains available after the running state is observed.
+
+During retained recovery or an uncertain guard readback, Home, the protection
+summary and the Windows tray say the connection needs attention without claiming
+that traffic is blocked. Disconnect remains available in the retained-failure
+state; native guard and recovery behavior are unchanged.
+
 Linux sends cancellation on the same Unix socket as its connect request, waits
 for that request to settle and reads daemon state. Pending network restoration
 remains unconfirmed. This does not expand Linux availability or release support.
