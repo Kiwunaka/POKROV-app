@@ -10,9 +10,15 @@ installed runner, service, app module and Core matched the accepted package;
 POKROVService was running. One Global Auto reached native running with DNS
 and egress confirmed after the online profile request timed out. Cached batch
 preparation took 144 ms and the successful native probe took 873 ms. Stop
-restored the pre-test routes, DNS, proxies and preferences, with TUN 0. The VM
-remains on with the app open and VPN stopped. DNS-AI runtime acceptance remains
-pending.
+restored the pre-test routes, DNS, proxies and preferences, with TUN 0.
+
+One source-only DNS-AI QA reached server claim and profile binding, but runtime
+control failed with `core_egress_timeout`. Gemini was not opened and the feature
+remains unverified. Stop was acknowledged after the agreed deadline. Routes,
+DNS, proxies and selected settings matched the baseline; TUN was 0 and the
+eight owned WFP keys were absent in a non-transactional read. The permit expired,
+the operator session was revoked, and the app exited through the tray. The VM
+remains on.
 
 On 7 November, one Global Auto on private QA App `877407e2` / Core `8beba8a`
 reached running with DNS and egress confirmed. Cached material preparation took
