@@ -1,7 +1,18 @@
 # Windows acceptance
 
-The current ordinary private candidate **2.0.0+4271** passed package checks;
-its exact native acceptance is pending. [Current package](cutover-readiness.md).
+The ordinary private candidate **2.0.0+4272**, App `e55b23bb` / Core
+`8beba8a`, passed package checks and one installed Global Auto connection.
+The connection used cached fallback; online bootstrap remains unverified.
+[Current package](cutover-readiness.md).
+
+The 4272 upgrade retained the account, settings and install identity. The
+installed runner, service, app module and Core matched the accepted package;
+POKROVService was running. One Global Auto reached native running with DNS
+and egress confirmed after the online profile request timed out. Cached batch
+preparation took 144 ms and the successful native probe took 873 ms. Stop
+restored the pre-test routes, DNS, proxies and preferences, with TUN 0. The VM
+remains on with the app open and VPN stopped. DNS-AI runtime acceptance remains
+pending.
 
 On 7 November, one Global Auto on private QA App `877407e2` / Core `8beba8a`
 reached running with DNS and egress confirmed. Cached material preparation took
@@ -15,8 +26,12 @@ DNS, routes and proxies, with no TUN or WFP filters; the VM was powered off.
 DNS-AI QA on `57398779` failed at bound runtime-control configuration before
 Gemini was opened. QA `448a03fe` adds closed error diagnostics but was not
 installed: automatic review rejected temporary VirtualBox credential injection.
-The VM is off and awaits ordinary manual Windows logon. The later cold start
-did not run VPN and returned to baseline; WFP was not read again in that window.
+The VM was later started and the saved test account signed in through the guest
+Windows screen. The visible desktop and its Explorer owner SID matched
+`pokrovtest`. The baseline had IS selected, 16 active routes, four DNS
+interface entries, user proxy off, TUN 0 and none of the eight owned WFP keys
+present in a non-transactional read. The detailed WFP read-only transaction
+returned access denied.
 
 Historical private **1.5.0+4268**, App `892759cc`, passed ordinary Connect
 and an independent Birch reserve check on the owned VM. The selected-app
