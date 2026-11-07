@@ -1,8 +1,34 @@
 # Android acceptance
 
 The current ordinary private candidate is **2.0.0+4271** with Core `8beba8a`.
-Its four APKs passed package checks; native and physical-device acceptance
+Its four APKs passed package checks; native VPN and physical-device acceptance
 remain pending. [Exact current scope](cutover-readiness.md).
+
+On 7 November, after the earlier incident below, the existing Android 35 x86_64
+`api35gc` cold-booted without loading or saving a snapshot. The normal 4271 APK
+installed over 4181 with `install -r`; Android reported 2.0.0/4271 and launch
+`Status: ok`, and the accessibility tree showed the POKROV home controls.
+Notification permission was denied before launch and remained denied; no
+permissions were granted and Connect was not used. The app was force-stopped,
+and the measured guest settings matched their baseline. `emu kill` returned OK
+and the emulator processes ended, but QEMU exited abnormally with `0xc0000602`;
+Windows identified `combase.dll`, while the cause is unknown. This is not a clean
+shutdown. Snapshot filenames, sizes and timestamps matched their pre-test metadata;
+the same ADB server process remained on protocol 41. At that point the installed
+version was not yet checked after exit. The TUN-interface check was blocked by Android
+shell permissions. This accepts only install, launch and UI, not VPN, online,
+SmartDNS or physical-device behavior.
+
+A single subsequent `-no-snapshot` cold boot confirmed that 2.0.0+4271,
+the denied notification permission and the measured guest settings persisted
+after that exit; the app was not opened. Guest `reboot -p` returned Done and exit
+0, but the emulator again ended with `0xc0000602`; Windows logged QEMU and
+`combase.dll`. The emulator processes ended and the same ADB PID/protocol remained.
+Afterward only `ram.img` remained under `snapshots/default_boot`; six files
+observed before this boot were absent. The userdata image still exists, but the
+snapshot is not preserved. No further boot, manual deletion or restoration was
+attempted; the cause and exact time of disappearance are unknown. This is not a
+clean shutdown.
 
 On 7 November, the attempted read-only command `emulator -avd api35gc -snapshot-list`
 unexpectedly booted api35gc. It was shut down normally; userdata,
