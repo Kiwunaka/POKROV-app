@@ -1,6 +1,7 @@
 # POKROV V2 client release status
 
-Updated 6 November 2026. **V2 (2.0.0)** is the next Android and Windows release.
+Updated 7 November 2026. **V2 (2.0.0)** is the next Android and Windows release,
+scheduled by the owner for 9 November at 12:00 Moscow time.
 
 The ordinary private candidate **2.0.0+4271** is in
 `E:/POKROV-tools/temp/release-2.0.0-4271`. App `6b3c5383` includes the cached

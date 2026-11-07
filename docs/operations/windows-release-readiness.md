@@ -1,6 +1,24 @@
 # Windows acceptance
 
-Latest private **1.5.0+4268**, App `892759cc`, passed ordinary Connect
+The current ordinary private candidate **2.0.0+4271** passed package checks;
+its exact native acceptance is pending. [Current package](cutover-readiness.md).
+
+On 7 November, one Global Auto on private QA App `877407e2` / Core `8beba8a`
+reached running with DNS and egress confirmed. Cached material preparation took
+129 ms. Client timestamps placed first native admission 256.59 ms after the
+fallback event, versus 4800.62 ms on QA `57398779`. The pool changed from two
+to three candidates, so this is an observed before/after result, not a paired
+A/B or an ML gain. The successful native probe took 910 ms; the other two
+outcomes were cancelled controls. Stop and Tray Exit restored IS, settings,
+DNS, routes and proxies, with no TUN or WFP filters; the VM was powered off.
+
+DNS-AI QA on `57398779` failed at bound runtime-control configuration before
+Gemini was opened. QA `448a03fe` adds closed error diagnostics but was not
+installed: automatic review rejected temporary VirtualBox credential injection.
+The VM is off and awaits ordinary manual Windows logon. The later cold start
+did not run VPN and returned to baseline; WFP was not read again in that window.
+
+Historical private **1.5.0+4268**, App `892759cc`, passed ordinary Connect
 and an independent Birch reserve check on the owned VM. The selected-app
 and DNS results for 4267 and package acceptance for 4268 are in
 [cutover readiness](cutover-readiness.md). Earlier results apply to the
