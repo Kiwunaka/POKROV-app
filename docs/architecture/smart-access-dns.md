@@ -559,6 +559,9 @@ under `POKROV-SmartDNS`, without profile or connection material. Diagnostics
 refreshes that summary after the error and retains its error card when the pending
 admission disappears. QA context refresh is independent of the general diagnostics
 report, so a report refresh failure cannot hide the retained native rejection.
+The typed readiness reader also accepts the closed reasons `doh_dial`, `doh_tls`,
+`doh_http_exchange` and `doh_http_status`; unknown reasons still reject the read.
+These diagnostic codes do not change readiness or establish a network cause.
 Raw exception
 messages, stack paths and connection material are not displayed or retained.
 The connection observer keeps `ConnectionConnectedUnverified` pending even when

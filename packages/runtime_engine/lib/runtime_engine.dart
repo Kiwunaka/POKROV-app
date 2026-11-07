@@ -1836,7 +1836,8 @@ class RuntimeSmartAccessReadiness {
         (completedAt is! int || completedAt < startedAt)) invalid();
     const stageNames = ['resolver', 'dns', 'tls'];
     const stageFields = {'stage', 'result', 'observed_at_ms', 'duration_ms', 'reason'};
-    const reasons = {'dns_lookup', 'udp_timeout', 'tls_timeout', 'response_timeout'};
+    const reasons = {'dns_lookup', 'udp_timeout', 'tls_timeout', 'response_timeout',
+      'doh_dial', 'doh_tls', 'doh_http_exchange', 'doh_http_status'};
     final stages = <RuntimeSmartAccessReadinessStage>[];
     var previousStage = -1;
     var previousObservedAt = startedAt;

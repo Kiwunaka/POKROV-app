@@ -469,6 +469,17 @@ void main() {
     expect(observed.stages.last.reason, 'dns_lookup');
     expect(observed.fallbackGuardClosed, isTrue);
 
+    stages.first['result'] = 'failure';
+    stages.last.remove('reason');
+    for (final reason in const ['doh_dial', 'doh_tls', 'doh_http_exchange', 'doh_http_status']) {
+      stages.first['reason'] = reason;
+      observed = (await control.readSmartAccessLeases(profileDigest))
+          .selections['gemini']!.readiness!;
+      expect(observed.stages.first.reason, reason);
+      expect(observed.hasCompletedStagePasses, isFalse);
+    }
+    stages.first['result'] = 'pass';
+    stages.first.remove('reason');
     stages.last['reason'] = 'unknown_sensitive_reason';
     await expectLater(control.readSmartAccessLeases(profileDigest), throwsStateError);
     stages.last['reason'] = 'dns_lookup';
