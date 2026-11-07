@@ -494,6 +494,7 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
         _connectionCoordinator.ownsOperation(qa.generation) && _runtimeSnapshot?.phase == RuntimePhase.running &&
         _runtimeSnapshot?.effectiveProfileDigest == digest && elapsed.elapsed < _actionTimeout;
     Duration remaining() => _actionTimeout - elapsed.elapsed;
+    int? nativeProbeRequestedAtMs;
     Future<void> closeMember() async {
       _firstProviderQaProofClosed = true;
       await _retainAndDeliverSmartAccessRevocations(engine as RuntimeSmartAccessControl, binding,
@@ -541,6 +542,7 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
           return;
         }
         setDiagnostic(const {'control_delivery': 'configuring'});
+        nativeProbeRequestedAtMs = DateTime.now().toUtc().millisecondsSinceEpoch;
         final configured = await (engine as RuntimeBoundSmartAccessControl).configureBoundSmartAccessRuntimeControl(
           requestId: qa.requestId!, profileDigest: digest, configJson: config).timeout(remaining());
         if (current() && configured) {
@@ -569,11 +571,50 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
       final code = error is PlatformException ? error.code : null;
       final clientState = error is PlatformException && _appContext.hostPlatform == HostPlatform.windows &&
           code == 'smart_access_runtime_control_unconfirmed' ? error.details : null;
+      final probeDiagnostic = <String, Object>{};
+      if (nativeProbeRequestedAtMs != null && engine is RuntimeSmartAccessBackgroundControl &&
+          const {'core_egress_probe_unavailable', 'core_egress_dns_failed', 'core_egress_connect_failed',
+            'core_egress_tls_failed', 'core_egress_timeout', 'core_egress_probe_failed',
+            'core_smart_access_lease_expired'}.contains(code)) {
+        bool readbackCurrent() => current() && !_runtimeBusy &&
+            _pendingFirstProviderQaAdmissionId == qa.permit.permitId &&
+            identical(_connectionCoordinator.activeSmartAccessLeases, binding) &&
+            qa.profileRevision == _managedProfileRevision &&
+            (_activeCandidateRef ?? _candidateRef) == qa.transportCandidateRef &&
+            _runtimeSnapshot?.coreModuleSha256 == qa.permit.payload['core_module_sha256'] &&
+            _runtimeSnapshot?.isCleanlyHealthy == true && !_accessDenialPending &&
+            !_cachedProfileFallbackGate.authorizationDenied && DateTime.now().toUtc().isBefore(qa.permit.expiresAt) &&
+            !_connectionCoordinator.receivedCatalogRevocation(binding) &&
+            _connectionCoordinator.receivedCatalogServiceRevocations(binding).isEmpty &&
+            _connectionCoordinator.receivedSmartAccessRevocations(binding).isEmpty;
+        if (readbackCurrent()) {
+          try {
+            final native = await (engine as RuntimeSmartAccessBackgroundControl)
+                .readSmartAccessLeases(digest).timeout(remaining());
+            final leaseId = binding.leases.single.leaseId;
+            final selection = native.selections[qa.permit.serviceId];
+            final proof = selection?.readiness;
+            if (readbackCurrent() && native.profileDigest == digest && native.leaseIds.length == 1 &&
+                native.leaseIds.contains(leaseId) && selection != null &&
+                (selection.leaseId.isEmpty || selection.leaseId == leaseId) &&
+                proof != null && proof.status == 'failure' && proof.leaseId == leaseId &&
+                proof.startedAtMs >= nativeProbeRequestedAtMs &&
+                proof.completedAtMs! <= DateTime.now().toUtc().millisecondsSinceEpoch) {
+              probeDiagnostic['qa_probe_status'] = proof.status;
+              probeDiagnostic['qa_probe_stages'] = proof.stages.isEmpty ? 'none' : proof.stages.map((stage) =>
+                  '${stage.stage}:${stage.result}${stage.reason == null ? '' : ':${stage.reason}'}').join(',');
+            }
+          } on Object {
+            // Keep the original control failure if its local readback cannot settle.
+          }
+        }
+      }
       setDiagnostic({'control_delivery': 'failed',
         'control_reason': controlCodes.contains(code) ? code
           : _connectionPlatformFailureCode(error) ?? (error is TimeoutException ? 'timeout' : 'unclassified'),
         if (const {'unavailable', 'server_untrusted', 'protocol_incompatible', 'service_bootstrap', 'service_ready'}.contains(clientState))
           'control_client_state': clientState,
+        ...probeDiagnostic,
       });
       rethrow;
     } finally {

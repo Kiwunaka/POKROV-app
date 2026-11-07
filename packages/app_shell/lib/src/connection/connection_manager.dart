@@ -829,14 +829,20 @@ class ConnectionManager extends ChangeNotifier {
         final controlFailure = diagnostic?['control_delivery'] == 'failed' ? diagnostic : null;
         final controlReason = controlFailure?['control_reason'];
         final clientState = controlFailure?['control_client_state'];
+        final probeStatus = controlFailure?['qa_probe_status'];
+        final probeStages = controlFailure?['qa_probe_stages'];
         _firstProviderQaControlDiagnostic = Map.unmodifiable({
           'control_delivery': 'failed',
           'control_reason': controlReason ?? 'start_exception',
           if (clientState != null) 'control_client_state': clientState,
+          if (probeStatus != null) 'qa_probe_status': probeStatus,
+          if (probeStages != null) 'qa_probe_stages': probeStages,
           'start_error': detail,
         });
         final eventDetail = [
           if (controlReason != null) 'control_reason=$controlReason',
+          if (probeStatus != null) 'qa_probe_status=$probeStatus',
+          if (probeStages != null) 'qa_probe_stages=$probeStages',
           if (clientState != null) 'control_client_state=$clientState',
           detail,
         ].join(' · ');

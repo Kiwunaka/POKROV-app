@@ -639,6 +639,13 @@ response; an unavailable IPC exchange remains `service_unavailable`. Unknown
 codes, exception messages and details do not enter the QA context. A failed
 Smart probe leaves the separate ordinary VPN health unchanged.
 
+During explicit QA Start, a native probe rejection permits one local
+`readSmartAccessLeases` within the remaining control budget. Only a fresh failed
+readiness for the same permit, native owner, profile and lease reaches the existing
+`qa_start_failed` history as `qa_probe_status` and closed `qa_probe_stages`
+(stage/result/reason). A changed owner or binding discards the readback. This
+diagnostic read does not confirm control, activate access or extend the probe deadline.
+
 Windows bound runtime-control IPC budgets its three-second setup allowance
 separately from the unchanged three-second QA Smart probe, then allows the
 existing three-second response transfer tail. Other short controls keep their

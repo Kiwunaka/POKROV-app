@@ -634,19 +634,20 @@ void main() {
       (error) => error.code, 'code', 'catalog_local_dpi_authority')));
   });
 
-  for (final (serviceId, controlFailure, hostPlatform, comssDns, resolverBootstrapIp) in <(String, String?, HostPlatform, bool, String?)>[
-    for (final failure in const <String?>[null, 'core_egress_tls_failed', 'service_unavailable', 'smart_access_runtime_control_unconfirmed',
+  for (final (serviceId, controlFailure, hostPlatform, comssDns, resolverBootstrapIp, staleReadback) in <(String, String?, HostPlatform, bool, String?, bool)>[
+    for (final failure in const <String?>[null, 'core_egress_timeout', 'service_unavailable', 'smart_access_runtime_control_unconfirmed',
       'unknown_private_control_code', 'smart_access_signature_invalid', 'control_deadline'])
-      ('gemini', failure, HostPlatform.windows, false, null),
-    ('gemini', null, HostPlatform.windows, false, '31.58.216.201'),
-    ('chatgpt', null, HostPlatform.windows, false, null),
-    ('gemini', null, HostPlatform.android, false, null),
-    ('gemini', null, HostPlatform.android, true, null),
-    ('gemini', 'smart_access_signature_invalid', HostPlatform.android, false, null),
-    ('gemini', 'smart_access_runtime_control_unconfirmed', HostPlatform.android, false, null),
-    ('gemini', 'unknown_private_control_code', HostPlatform.android, false, null),
+      ('gemini', failure, HostPlatform.windows, false, null, false),
+    ('gemini', 'core_egress_timeout', HostPlatform.windows, false, null, true),
+    ('gemini', null, HostPlatform.windows, false, '31.58.216.201', false),
+    ('chatgpt', null, HostPlatform.windows, false, null, false),
+    ('gemini', null, HostPlatform.android, false, null, false),
+    ('gemini', null, HostPlatform.android, true, null, false),
+    ('gemini', 'smart_access_signature_invalid', HostPlatform.android, false, null, false),
+    ('gemini', 'smart_access_runtime_control_unconfirmed', HostPlatform.android, false, null, false),
+    ('gemini', 'unknown_private_control_code', HostPlatform.android, false, null, false),
   ]) {
-  test('${hostPlatform.name} explicit first-provider QA uses the signed disabled $serviceId projection through ordinary managed stage${resolverBootstrapIp != null ? ' with resolver bootstrap IP' : comssDns ? ' with Comss DNS' : controlFailure == null ? '' : ' with $controlFailure'}', () async {
+  test('${hostPlatform.name} explicit first-provider QA uses the signed disabled $serviceId projection through ordinary managed stage${resolverBootstrapIp != null ? ' with resolver bootstrap IP' : comssDns ? ' with Comss DNS' : controlFailure == null ? '' : ' with $controlFailure'}${staleReadback ? ' with stale owner readback' : ''}', () async {
     final refreshDuringStart = hostPlatform == HostPlatform.windows && serviceId == 'gemini' && controlFailure == null;
     final controlClientState = hostPlatform == HostPlatform.windows && controlFailure == 'smart_access_runtime_control_unconfirmed'
         ? 'protocol_incompatible' : null;
@@ -877,6 +878,9 @@ void main() {
     final bootRef = hostPlatform == HostPlatform.android ? 'android:1' : 'windows:0123456789abcdef0123456789abcdef';
     const networkRef = 'network_0123456789abcdef0123456789abcdef';
     String? nativeBoundRequestId;
+    int? failedProbeStartedAtMs;
+    final failureReadbackEntered = Completer<void>();
+    final failureReadbackResume = Completer<void>();
     var probeId = 1;
     var guardClosed = false;
     var failBoundConnect = false;
@@ -969,14 +973,23 @@ void main() {
             return {'schema': 1, 'requestId': nativeBoundRequestId, 'snapshot': {...phase}};
           }
         case 'runtimeEngine.readSmartAccessLeases':
-          final startedAt = DateTime.parse((permitEnvelope!['payload'] as Map)['issued_at'] as String).millisecondsSinceEpoch + 1;
+          if (staleReadback) {
+            failureReadbackEntered.complete();
+            await failureReadbackResume.future;
+          }
+          final failedProbe = failedProbeStartedAtMs != null;
+          final startedAt = failedProbeStartedAtMs ??
+              DateTime.parse((permitEnvelope!['payload'] as Map)['issued_at'] as String).millisecondsSinceEpoch + 1;
+          final completedAt = failedProbe ? DateTime.now().toUtc().millisecondsSinceEpoch : startedAt + 3;
           return {'schema': 1, 'profileDigest': args['profileDigest'], 'leaseIdsJson': jsonEncode({'schema': 1,
             'lease_ids': [leaseId], 'selections': [{'service_id': serviceId, 'lease_id': leaseId, 'selection_index': 0,
               'state': 'gateway', 'available': true, 'readiness': {'probe_id': probeId, 'lease_id': leaseId,
-                'started_at_ms': startedAt, 'completed_at_ms': startedAt + 3,
-                'status': guardClosed ? 'failure' : 'pass', 'fallback_guard_closed': guardClosed,
-                'stages': [for (var i = 0; i < 3; i++) {'stage': ['resolver', 'dns', 'tls'][i], 'result': 'pass',
-                  'observed_at_ms': startedAt + i + 1, 'duration_ms': 1}]}}]})};
+                'started_at_ms': startedAt, 'completed_at_ms': completedAt,
+                'status': guardClosed || failedProbe ? 'failure' : 'pass', 'fallback_guard_closed': guardClosed || failedProbe,
+                'stages': [for (var i = 0; i < 3; i++) {'stage': ['resolver', 'dns', 'tls'][i],
+                  'result': failedProbe && i == 2 ? 'failure' : 'pass',
+                  'observed_at_ms': failedProbe ? completedAt : startedAt + i + 1, 'duration_ms': 1,
+                  if (failedProbe && i == 2) 'reason': 'tls_timeout'}]}}]})};
         case 'runtimeEngine.configureBoundSmartAccessRuntimeControl':
           if (hostPlatform == HostPlatform.android) {
             expect(postStartProofObserved, isTrue);
@@ -986,6 +999,9 @@ void main() {
             throw PlatformException(code: 'connect_owner_changed');
           }
           if (controlFailure != null) {
+            if (controlFailure == 'core_egress_timeout') {
+              failedProbeStartedAtMs = DateTime.now().toUtc().millisecondsSinceEpoch;
+            }
             throw PlatformException(code: controlFailure, message: 'private control message',
               details: controlClientState ?? const {'capability': 'private control capability'});
           }
@@ -1084,6 +1100,29 @@ void main() {
       });
       return;
     }
+    if (staleReadback) {
+      final failedStart = expectLater(manager.startFirstProviderQa(admission),
+        throwsA(isA<PlatformException>().having((error) => error.code, 'code', 'core_egress_timeout')));
+      try {
+        await failureReadbackEntered.future.timeout(const Duration(seconds: 5));
+        // The native owner ends without changing the manager's operation generation.
+        await runtime.disconnect();
+        expect((runtime as RuntimeConnectCancellation).activeConnectRequestId, isNull);
+      } finally {
+        failureReadbackResume.complete();
+      }
+      await failedStart;
+      final context = await manager.readFirstProviderQaContext();
+      expect(context?['qa_probe_status'], isNull);
+      expect(context?['qa_probe_stages'], isNull);
+      expect(context?['proof_current'], isNot(true));
+      final event = experience.saved.protectionEvents.singleWhere((event) => event.kind == 'qa_start_failed');
+      expect(event.detail, isNot(contains('qa_probe_')));
+      expect(nativeCalls.where((method) => method == 'runtimeEngine.readSmartAccessLeases'), hasLength(1));
+      await manager.readSnapshot();
+      await manager.disconnect();
+      return;
+    }
     if (controlFailure != null) {
       if (controlFailure == 'smart_access_signature_invalid') {
         await manager.startFirstProviderQa(admission);
@@ -1103,6 +1142,12 @@ void main() {
         final event = experience.saved.protectionEvents.singleWhere((event) => event.kind == 'qa_start_failed');
         final detail = PokrovProtectionEvent.fromJson(event.toJson()).detail;
         expect(detail, contains('control_reason=$reason'));
+        if (controlFailure == 'core_egress_timeout') {
+          expect(context?['qa_probe_status'], 'failure');
+          expect(context?['qa_probe_stages'], contains('tls:failure:tls_timeout'));
+          expect(detail, contains('tls:failure:tls_timeout'));
+          expect(nativeCalls.where((method) => method == 'runtimeEngine.readSmartAccessLeases'), hasLength(1));
+        }
         if (controlClientState != null) expect(detail, contains('control_client_state=$controlClientState'));
         expect(detail, isNot(contains('private')));
       }
