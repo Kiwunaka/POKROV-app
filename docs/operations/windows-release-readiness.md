@@ -9,7 +9,9 @@ the accepted package. One source-only DNS-AI QA failed with
 opened and the feature remains unverified. Stop completed before the deadline;
 routes, DNS, proxies and selected settings matched the prior baseline, with
 TUN 0 and no owned WFP keys in a non-transactional read. Ordinary Global was
-not repeated for this diagnostics-only change.
+not repeated for this diagnostics-only change. The permit expired, its
+operator session was revoked, and after Tray Exit the VM shut down normally to
+PoweredOff/Unlocked.
 
 The preceding ordinary private candidate **2.0.0+4272**, App `e55b23bb` / Core
 `8beba8a`, passed package checks and one installed Global Auto connection.
