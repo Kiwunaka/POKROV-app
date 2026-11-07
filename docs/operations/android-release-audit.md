@@ -1,13 +1,15 @@
 # Android acceptance
 
-The current ordinary private candidate is **2.0.0+4273**, App `6f26211b` with
-Core `8beba8a`. Its four production-signed APKs passed package checks; native and
-physical-device acceptance of exact 4273 remain pending. Owner-authorized Honor20
-checks await working USB/ADB access; no physical PASS is claimed.
+The current ordinary private candidate is **2.0.0+4274**, App `7f104d33` with
+Core `9fa757fa` (1.2.15 / ABI2). Its four production-signed APKs passed package
+checks; native and physical-device acceptance of exact 4274 remain pending.
+Owner-authorized Honor20 checks await working USB/ADB access; no physical PASS
+is claimed.
 [Exact current scope](cutover-readiness.md).
 
-The retained 4272 set (App `e55b23bb`, Core `8beba8a`) passed package checks.
-The earlier 4271 install, UI and cold-boot checks below do not accept 4273.
+The retained 4273 (App `6f26211b`) and 4272 (App `e55b23bb`) sets with Core
+`8beba8a` passed package checks. The earlier 4271 install, UI and cold-boot checks
+below do not accept 4274.
 The affected AVD remains stopped.
 
 On 7 November, after the earlier incident below, the existing Android 35 x86_64

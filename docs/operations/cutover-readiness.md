@@ -3,20 +3,29 @@
 Updated 7 November 2026. **V2 (2.0.0)** is the next Android and Windows release,
 scheduled by the owner for 9 November at 12:00 Moscow time.
 
-The current ordinary private candidate **2.0.0+4273** is in
-`E:/POKROV-tools/temp/release-2.0.0-4273`, built from App `6f26211b` and Core
-`8beba8a`. Its four production-signed APKs and unsigned Windows Setup/ZIP passed
+The current ordinary private candidate **2.0.0+4274** is in
+`E:/POKROV-tools/temp/release-2.0.0-4274`, built from App `7f104d33` and Core
+`9fa757fa` (1.2.15 / ABI2). Its four production-signed APKs and unsigned Windows Setup/ZIP passed
 the builder, version, ABI, native-artifact, trust and packaging checks; the ZIP
 contains one Setup, F82 remains in shadow and QA capture is off. Native acceptance
-of exact 4273 is pending. It includes the selected checkout plan, paid-access
-refresh and retained DNS-QA failure stages.
+of exact 4274 is pending. It includes Runtime/App diagnostic fixes and corrected
+connection-recovery wording, alongside the selected checkout plan and paid-access
+refresh fixes.
+
+The previous **2.0.0+4273** packages remain in
+`E:/POKROV-tools/temp/release-2.0.0-4273` (App `6f26211b`, Core `8beba8a`).
+Its Windows upgrade retained the account, install identity and selected settings.
+DNS-AI QA failed with `core_egress_timeout`, `qa_probe_status=failure` and
+`qa_probe_stages=none`; no failed stage was identified and Gemini was not opened.
+Stop restored the measured baseline. Ordinary Global was not repeated.
+This does not establish DNS-AI feature acceptance or native acceptance of 4274.
 
 The previous **2.0.0+4272** packages remain in
 `E:/POKROV-tools/temp/release-2.0.0-4272` (App `e55b23bb`, Core `8beba8a`).
 On the owned Windows VM, one Global Auto through cached fallback and ordinary
 Stop passed; a later Locations refresh saved fresh managed material. Online
 bootstrap was not verified. DNS-AI QA returned `core_egress_timeout` and remains
-**NOT_VERIFIED**. These observations do not accept 4273.
+**NOT_VERIFIED**. These observations apply only to 4272.
 [Windows scope](windows-release-readiness.md).
 
 The previous private candidate **2.0.0+4271** is in
