@@ -1,6 +1,17 @@
 # POKROV V2 client release status
 
 Updated 6 November 2026. **V2 (2.0.0)** is the next Android and Windows release.
+
+The ordinary private candidate **2.0.0+4271** is in
+`E:/POKROV-tools/temp/release-2.0.0-4271`. App `6b3c5383` includes the cached
+candidate batch and the closed SmartDNS QA diagnostics. Both platforms reuse
+Core `8beba8a` from `runtime-artifacts.4270.json` with the same production trust
+and F82 in shadow. All four APKs passed production signer, package, version,
+ABI and runtime checks. The unsigned Windows Setup and its ZIP passed version
+and payload checks. Compiled App revisions match and QA capture is disabled.
+Native acceptance is pending on both platforms, including Windows DNS-AI
+runtime control.
+
 The private test build **2.0.0+4270** is in
 `E:/POKROV-tools/temp/release-2.0.0-4270`. App `2c77aadd` uses Core `8beba8a`
 through `E:/POKROV-tools/temp/core-v2-8beba8a/runtime-artifacts.4270.json` for
