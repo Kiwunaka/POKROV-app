@@ -22,6 +22,18 @@ Gemini was not opened, so two-host traffic and a feature response remain
 unverified. The permit expired, the VM's VPN stopped with no TUN interface, and
 ordinary provider policy 11 remained unchanged.
 
+On 7 November, ordinary Windows **2.0.0+4272 / Core `8beba8a`** used one
+device-bound DNS-AI permit from **15:22:01 to 15:32:01 UTC**. Claim and profile
+binding succeeded; the client recorded `core_egress_timeout` with a
+PlatformException, without establishing a provider cause. Gemini was not opened,
+so feature acceptance remains unverified. Stop missed its 15:26:45 UTC deadline;
+the exact VM baseline was restored and Tray Exit left no App process. The permit
+expired, the operator session was revoked and the common lease closed at
+15:33:37 UTC. Ordinary policy 11 stayed unchanged and source revision 12 stayed
+private. A QA permit is capped at 600 seconds; its runtime capability is separately
+bounded by the client parent session. The former 660-second helper threshold was
+operational headroom, not a security guard.
+
 Core `8beba8a` handles a signed SmartDNS resolver's `SERVFAIL` by moving DNS
 and new TCP connections to the next eligible provider or the scoped VPN/block
 fallback. The Core Exchange and Lookup regression tests pass for `SERVFAIL` and
