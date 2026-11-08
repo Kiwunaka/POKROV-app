@@ -3,16 +3,33 @@
 Updated 8 November 2026. **V2 (2.0.0)** is the next Android and Windows release,
 scheduled by the owner for 9 November at 12:00 Moscow time.
 
-The prepared ordinary private **2.0.0+4276** is in
+The current prepared ordinary private beta candidate **2.0.0+4276** is in
 `C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4276-ordinary/release`, compiled from
 App `19757ceb` with the accepted Core `34adfca77` (1.2.15 / ABI2), without a Core
 rebuild. It includes the Auto deadline/retry fix. Four production-signed APKs
 and the unsigned Windows Setup/single-Setup ZIP passed package, signing,
 version/ABI, exact native-payload, compiled-App, production-trust, F82 shadow
-and no-QA-capture checks; Android minSdk is 24. Physical/native acceptance is
-**NOT_VERIFIED**. The separate capture-on QA 4276 and its START0 window are not
-native acceptance. Accepted 4275 and draft **438139848** remain the fallback;
-no 4276 GitHub upload or publication occurred.
+and no-QA-capture checks; Android minSdk is 24. Root accepted this private
+preparation under the owner's 8 November general GO. Physical/native acceptance
+of these ordinary packages remains **NOT_VERIFIED**.
+
+The current [private GitHub draft 438229411](https://github.com/Kiwunaka/pokrov/releases/tag/untagged-654a7f38dfb553af034a)
+uses canonical `v2.0.0`, with `draft=true`, `prerelease=true` and
+`published_at=null`. All seven canonical assets passed server digest, size and
+uploaded-state readback against the stage; the release notes matched exactly.
+One anonymous range request to the new ARM64 asset returned **404 in 0.304 s**.
+This checks only that asset's anonymous availability, not product-wide privacy.
+GitHub latest and the public Android/Windows API remain **1.4.5**; no publication
+or runtime switch occurred. Retain `prerelease=true` and `make_latest=false`
+after publication; APP_* uses the exact v2.0.0 URLs. Current backend-only fixes
+do not change these App/Core package inputs and require no App rebuild.
+
+The separate capture-on QA 4276 first had a START0 window without native
+admission; one later Global Connect through cached fallback reached verified
+running with DNS and egress PASS, followed by Stop and baseline restoration.
+This does not verify fresh online catalog admission or transfer device acceptance
+to the ordinary packages. Physical Android, Gemini through DNS-AI and an ML gain
+remain **NOT_VERIFIED**.
 
 The accepted ordinary private candidate **2.0.0+4275** remains available in
 `C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4275/release`, built from App
@@ -28,14 +45,12 @@ On 8 November, the owner accepted exact ordinary **4275** for the direct public
 beta scheduled for 9 November at 12:00 Moscow time, as a new exception to
 unfinished Android acceptance. This does not reuse the May owner attestation or
 establish native/physical PASS, acceptance of Gemini through DNS-AI or an ML gain.
-The [private GitHub draft](https://github.com/Kiwunaka/pokrov/releases/tag/untagged-563e7abf677cf8d3ceb2)
-is **438139848**, with `draft=true`, `prerelease=true` and `published_at=null`.
-All seven canonical assets are uploaded; names, sizes and valid server SHA-256
-digests match the accepted staged files. Anonymous asset access was not verified:
-the first check returned 504 and one bounded retry timed out. GitHub latest and
-the public Android/Windows API remain **1.4.5**; no runtime switch occurred.
-This beta keeps prerelease status and `latest=false` after publication; its
-APP_* handoff uses the exact v2.0.0 URLs.
+That acceptance remains historical. The preserved [4275 draft 438139848](https://github.com/Kiwunaka/pokrov/releases/tag/untagged-50ba2c159af50a4e9db5)
+now uses `private-v2.0.0-4275`, with `draft=true`, `prerelease=true` and
+`published_at=null`; all seven original asset IDs, sizes and server digests are
+unchanged. Its frozen index contains historical canonical v2.0.0 URLs and must
+not be used as the current fallback manifest. The public rollback remains
+**1.4.5**.
 
 On the owned Windows VM, 4275 upgraded with identity and settings retained and
 installed components matching the accepted bundle. One manual Access refresh
