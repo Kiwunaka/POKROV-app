@@ -3,7 +3,18 @@
 Updated 8 November 2026. **V2 (2.0.0)** is the next Android and Windows release,
 scheduled by the owner for 9 November at 12:00 Moscow time.
 
-The current ordinary private candidate **2.0.0+4275** is in
+The prepared ordinary private **2.0.0+4276** is in
+`C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4276-ordinary/release`, compiled from
+App `19757ceb` with the accepted Core `34adfca77` (1.2.15 / ABI2), without a Core
+rebuild. It includes the Auto deadline/retry fix. Four production-signed APKs
+and the unsigned Windows Setup/single-Setup ZIP passed package, signing,
+version/ABI, exact native-payload, compiled-App, production-trust, F82 shadow
+and no-QA-capture checks; Android minSdk is 24. Physical/native acceptance is
+**NOT_VERIFIED**. The separate capture-on QA 4276 and its START0 window are not
+native acceptance. Accepted 4275 and draft **438139848** remain the fallback;
+no 4276 GitHub upload or publication occurred.
+
+The accepted ordinary private candidate **2.0.0+4275** remains available in
 `C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4275/release`, built from App
 `f205164e` and Core `34adfca7` (1.2.15 / ABI2). Four production-signed APKs
 and the unsigned Windows Setup/single-Setup ZIP passed version, ABI, exact
