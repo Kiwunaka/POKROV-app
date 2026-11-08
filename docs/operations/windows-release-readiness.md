@@ -1,5 +1,11 @@
 # Windows acceptance
 
+On 8 November, the owner accepted exact **2.0.0+4275** for the direct public beta
+on 9 November at 12:00 Moscow time, retaining the unsigned installer and its
+SmartScreen warning. Its private GitHub prerelease draft contains seven uploaded assets;
+the runtime and DNS-AI acceptance limits below remain unchanged.
+[Draft status and anonymous-check limit](cutover-readiness.md).
+
 On 7 November, ordinary private candidate **2.0.0+4275**, App `f205164e` / Core `34adfca7`,
 made one actual DNS-AI Start at **23:06:42.851626 UTC** under the
 23:03:19–23:13:19 UTC permit. Server claim at 23:06:43.163246 UTC confirmed

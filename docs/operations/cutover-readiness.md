@@ -13,6 +13,19 @@ button. Native acceptance is pending; no device/server checks or publication
 ran in this build task. The optional source-logging scan exited 1 on 13 matches;
 triage did not confirm a release secret or privacy leak, and the scan is not PASS.
 
+On 8 November, the owner accepted exact ordinary **4275** for the direct public
+beta scheduled for 9 November at 12:00 Moscow time, as a new exception to
+unfinished Android acceptance. This does not reuse the May owner attestation or
+establish native/physical PASS, acceptance of Gemini through DNS-AI or an ML gain.
+The [private GitHub draft](https://github.com/Kiwunaka/pokrov/releases/tag/untagged-563e7abf677cf8d3ceb2)
+is **438139848**, with `draft=true`, `prerelease=true` and `published_at=null`.
+All seven canonical assets are uploaded; names, sizes and valid server SHA-256
+digests match the accepted staged files. Anonymous asset access was not verified:
+the first check returned 504 and one bounded retry timed out. GitHub latest and
+the public Android/Windows API remain **1.4.5**; no runtime switch occurred.
+This beta keeps prerelease status and `latest=false` after publication; its
+APP_* handoff uses the exact v2.0.0 URLs.
+
 On the owned Windows VM, 4275 upgraded with identity and settings retained and
 installed components matching the accepted bundle. One manual Access refresh
 showed busy and success. The DNS-AI permit expired unclaimed after accessibility

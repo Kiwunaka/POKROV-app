@@ -8,6 +8,12 @@ Owner-authorized Honor20 checks await working USB/ADB access; no physical PASS
 is claimed.
 [Exact current scope](cutover-readiness.md).
 
+On 8 November, the owner accepted exact **4275** for the direct public beta on
+9 November at 12:00 Moscow time as a new exception to unfinished Android
+acceptance. This is not a reuse of the May attestation or a native/physical
+audit PASS. The GitHub prerelease remains a closed draft; publication and the
+runtime switch have not occurred. The physical-device boundary above remains.
+
 The retained 4273 (App `6f26211b`) and 4272 (App `e55b23bb`) sets with Core
 `8beba8a` passed package checks. The earlier 4271 install, UI and cold-boot checks
 below do not accept 4274.
