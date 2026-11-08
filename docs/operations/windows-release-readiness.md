@@ -1,5 +1,23 @@
 # Windows acceptance
 
+On 8 November, private Windows QA **2.0.0+4276**, App `19757ceb` / Core
+`34adfca7` (1.2.15 / ABI2), upgraded over 4275 with selector capture enabled.
+The installer retained the identity and owner, and installed components matched
+the QA bundle. This is a QA build, not a public candidate. Its ordinary Global
+window had no Connect and no armed watchdog: `INSUFFICIENT_ARM_RUNWAY` stopped
+before arm or click. The host clock sample began at 10:41:30.603 UTC and the next
+tool call arrived at 10:41:51.090, 0.49 seconds past the reserved arm cutoff;
+the sample and arm were separated by a tool/model boundary.
+
+Direct Stop returned Status 1 with a receipt at guest 10:42:11.141–10:42:11.554 UTC.
+The original Iceland selection and `allExceptRu` were restored; all 16 routes,
+DNS, user and WinHTTP proxies and preferences matched baseline, with TUN 0 and
+the eight owned WFP filters absent. Tray Exit left App 0 and the VM reached
+PoweredOff / Unlocked at host 10:49:06.713 UTC. The ordinary lease was released
+at 10:44:47.085747 UTC after fresh FULL ACK 7 / API passed. An atomic one-exec
+caller passed syntax checking; its complete live dry-run is **NOT_RUN**. No
+native connection result or ML gain was established.
+
 On 8 November, the owner accepted exact **2.0.0+4275** for the direct public beta
 on 9 November at 12:00 Moscow time, retaining the unsigned installer and its
 SmartScreen warning. Its private GitHub prerelease draft contains seven uploaded assets;
