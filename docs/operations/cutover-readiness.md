@@ -3,7 +3,7 @@
 Updated 9 November 2026. **V2 (2.0.0)** is the next Android and Windows release,
 scheduled by the owner for 9 November at 12:00 Moscow time.
 
-The local ordinary **2.0.0+4277** packages are ready for Root review in
+The local ordinary **2.0.0+4277** packages are ready for private draft staging in
 `C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4277-ordinary/release`, compiled from
 App `237f0878` with accepted Core `34adfca77` (1.2.15 / ABI2), without a Core
 rebuild and with capture OFF. Four production-signed APKs and the unsigned
@@ -11,14 +11,22 @@ Windows Setup/single-Setup ZIP passed the new package and native-payload gates.
 The sibling `publish-stage` has seven canonical assets (five binaries plus
 index/checksums) and beta notes; `rollback-1.4.5.json` is byte-exact to the
 preserved 4276 rollback.
-Physical Android and native material-origin acceptance remain **NOT_VERIFIED**.
+Physical Android and full native acceptance remain **NOT_VERIFIED**.
 
-The separate capture-on QA 4277 was installed, but its planned native receipt
-run was cancelled by the owner's decision to retire Iceland before dry-run,
-arm or Connect (all 0), not by a client failure. The VM was left OFF; residual
-lease closure remains with Root/writer. The API catalog now has six nodes after
-Iceland retirement; its Netcup replacement is pending. Public 1.4.5 and private
-4276 draft **438229411** remain unchanged; 4277 has no GitHub upload/publication.
+An earlier capture-on QA 4277 receipt window was cancelled by the owner's
+Iceland-retirement decision before dry-run, arm or Connect (all 0), not by a
+client failure. A later single UI Global Connect positively recorded
+`cached_fallback` (profile 5151 ms, online `API-002` after 3003 ms, native probe
+890 ms), and the whole attempt succeeded before the first IPC Stop. Stable Stop
+**FAILED** with two reentries after direct backend Stop; normal UI Stop was not
+invoked and a product regression is not established. The third Stop and normal
+shutdown reached PoweredOff at 21:53:24 UTC, with the lease closed at 21:56:37
+UTC. A later AppOff read-only baseline PASS and shutdown at 22:12:55 UTC do not
+change that result. The [Windows acceptance record](windows-release-readiness.md)
+owns the details and required Stop → Tray Exit / App 0 → final Stop / baseline →
+watchdog-disarm closure. Three capture rows (two PASS, one censored, singleton
+prior) do not establish an ML gain. Private draft preparation is a separate
+writer task; public 1.4.5 remains unchanged.
 
 The accepted prepared ordinary private beta fallback **2.0.0+4276** remains in
 `C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4276-ordinary/release`, compiled from
@@ -30,8 +38,8 @@ and no-QA-capture checks; Android minSdk is 24. Root accepted this private
 preparation under the owner's 8 November general GO. Physical/native acceptance
 of these ordinary packages remains **NOT_VERIFIED**.
 
-The current [private GitHub draft 438229411](https://github.com/Kiwunaka/pokrov/releases/tag/untagged-654a7f38dfb553af034a)
-uses canonical `v2.0.0`, with `draft=true`, `prerelease=true` and
+At the 4276 preparation checkpoint, [private GitHub draft 438229411](https://github.com/Kiwunaka/pokrov/releases/tag/untagged-654a7f38dfb553af034a)
+used canonical `v2.0.0`, with `draft=true`, `prerelease=true` and
 `published_at=null`. All seven canonical assets passed server digest, size and
 uploaded-state readback against the stage; the release notes matched exactly.
 One anonymous range request to the new ARM64 asset returned **404 in 0.304 s**.

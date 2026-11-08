@@ -1,19 +1,59 @@
 # Windows acceptance
 
 Current local ordinary **2.0.0+4277**, compiled App `237f0878` / accepted Core
-`34adfca77` (1.2.15 / ABI2), is ready for Root review under
+`34adfca77` (1.2.15 / ABI2), is ready for private draft staging under
 `C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4277-ordinary/release` with capture
 OFF. The unsigned Setup and one-Setup ZIP passed version and packaging checks;
-all 12 staged runtime files match the accepted manifest. This is package
-readiness, not native material-origin acceptance, which remains **NOT_VERIFIED**.
+all 12 staged runtime files match the accepted manifest. The later QA run
+confirmed the cached material-origin receipt, but full native acceptance remains
+**NOT_VERIFIED** because stable Stop failed as recorded below.
 
-The separate capture-on QA 4277 was installed. The owner's Iceland-retirement
-decision cancelled its planned receipt run before dry-run, arm or Connect
-(all 0); this was not a client failure. The VM was left OFF and Root/writer owns
-the residual lease closure. Public 1.4.5 and private 4276 draft **438229411** are
-unchanged; no 4277 GitHub upload/publication occurred. The API catalog now has
-six nodes; the Netcup replacement remains pending. Physical Android, DNS-AI and
-ML gain are not accepted by this Windows package task.
+The separate capture-on QA 4277 was installed. An earlier planned receipt run
+was cancelled by the owner's Iceland-retirement decision before dry-run, arm or
+Connect (all 0); this was not a client failure. At that preparation checkpoint,
+the API catalog had six nodes and the Netcup replacement was pending. The later
+Connect below is a separate window. Private GitHub staging is handled separately;
+public 1.4.5 remains the release/runtime baseline. Physical Android, DNS-AI and
+ML gain are not accepted by these Windows observations.
+
+On 8 November, one UI Global Connect in QA 4277 reached native running, DNS and
+egress readiness. `profile.finished` succeeded with
+`material_origin=cached_fallback` in 5151 ms: online preparation had returned
+`API-002` at `http_headers` after 3003 ms, cached materials took 103 ms, and the
+initial native probe passed in 890 ms. The whole attempt succeeded at guest
+21:48:30.152754 UTC, before the first direct IPC Stop attempt at
+21:48:31.156377 UTC. This positively confirms cached material use, not fresh
+online admission. The selector capture contains three rows: two PASS and one
+censored, with a singleton prior; it does not establish an ML gain.
+
+**Stable Stop FAILED.** The first IPC Stop ACK completed by 21:48:32.047 UTC;
+same-attempt/generation cached preparation (284 ms) and a successful native
+probe (924 ms) followed. After the second ACK completed by 21:51:35.209 UTC,
+cached preparation (296 ms) and another successful probe (840 ms) followed.
+There were two runtime reentries without another Connect click. The third Stop
+at 21:53:01–21:53:03 UTC was followed by normal guest shutdown, reaching
+PoweredOff / Unlocked at host 21:53:24.305 UTC. The lease closed at 21:56:37 UTC
+after FULL ACK 6.
+
+The initial-attempt-in-flight hypothesis was not supported: terminal success
+preceded the first Stop. Source `237f0878` permits recovery after an unexpected
+native stop; direct backend IPC Stop does not run the App's disconnect/cancel
+command or invalidate its recovery context. Normal UI Stop was not invoked, so
+these observations do not establish a UI Stop bug or justify a product patch or
+rebuild. The harness must retain the first safety Stop, then use Tray Exit and
+confirm App 0, issue a final IPC Stop and verify the stopped network baseline,
+and only then disarm the watchdog. Tray Exit alone does not disconnect an
+accepted native lease.
+
+A subsequent AppOff read-only boot at 22:05–22:12 UTC had AppLaunch / GET /
+Connect all 0. Routes 16, DNS, proxies and the known Global / `allExceptRu`
+preference subset matched baseline, with TUN 0, eight owned WFP filters absent,
+App 0, IPC 1, running 0 and retained 0. One independent DNS preflight returned
+two A records over UDP in 6 ms; both TCP 443 attempts timed out (5041 / 5018 ms,
+5000 ms budget each), with TLS / HTTP 0 and 10135 ms total. Baseline still
+matched after that probe. Normal shutdown returned helper exit 0 and reached
+PoweredOff / Unlocked at host 22:12:55.371 UTC. This retrospective baseline PASS
+does not change the failed stable Stop in the original Connect window.
 
 On 8 November, the post-`d1471aa` profile-only observation did not start.
 At 16:54:35 UTC the VM entered `gurumeditation` with `VERR_NO_PAGE_MEMORY`;
