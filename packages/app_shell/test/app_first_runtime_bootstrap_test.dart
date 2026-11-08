@@ -2704,6 +2704,97 @@ void main() {
       ManagedProfileOfflineState.captivePortal);
   });
 
+  test('managed profile deadline and cancellation stop retry backoff', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-profile-retry-');
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    Completer<void>? retryStarted;
+    Completer<void>? releaseRetry;
+    var profileReply = 'ready';
+    var profileRequests = 0;
+    var retryWaits = 0;
+    addTearDown(() async {
+      if (releaseRetry?.isCompleted == false) releaseRetry!.complete();
+      await server.close(force: true);
+      await directory.delete(recursive: true);
+    });
+    unawaited(() async {
+      await for (final request in server) {
+        await request.drain<void>();
+        request.response.headers.contentType = ContentType.json;
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response.write(jsonEncode({
+            'session': {'access_token': 'retry-fixture-token', 'account_id': 'retry-fixture-account'},
+          }));
+        } else if (request.uri.path == '/api/client/route-policy') {
+          request.response.write('{"ok":true}');
+        } else if (request.uri.path == '/api/client/profile/managed') {
+          profileRequests++;
+          if (profileReply == 'stall') continue;
+          if (profileReply == 'unavailable') {
+            request.response.statusCode = HttpStatus.serviceUnavailable;
+            request.response.write('{}');
+          } else {
+            request.response.write(jsonEncode({..._readyManagedProfile('retry-ready'),
+              'access': {'expiry_at': DateTime.now().toUtc().add(const Duration(days: 2)).toIso8601String(),
+                'access_state': 'paid_unlimited'},
+            }));
+          }
+        }
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => directory,
+      sessionSecretStore: MemoryAppFirstSessionSecretStore(),
+      delayScheduler: (_) {
+        retryWaits++;
+        if (retryStarted?.isCompleted == false) retryStarted!.complete();
+        return releaseRetry?.future ?? Future<void>.value();
+      },
+    );
+    const inputs = ManagedProfileCacheInputs(hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel);
+    final original = await bootstrapper.resolveManagedProfile(hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode);
+    Future<ManagedProfilePayload> resolve({Duration? timeout, Future<void>? cancelled}) =>
+        bootstrapper.resolveManagedProfile(hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode,
+            timeout: timeout, cancelled: cancelled);
+    Matcher deadlineAt(String stage) => isA<ManagedProfileTimeout>()
+        .having((error) => error.operation, 'deadline operation', 'managed_fetch')
+        .having((error) => error.preparation?['stage'], 'frozen stage', stage);
+
+    profileReply = 'stall';
+    releaseRetry = Completer<void>();
+    try {
+      await expectLater(resolve(timeout: const Duration(milliseconds: 200)).timeout(const Duration(seconds: 1)),
+          throwsA(deadlineAt('http_headers')));
+      expect(retryWaits, 0, reason: 'closing HTTP at the owner deadline must not schedule another retry');
+    } finally {
+      releaseRetry.complete();
+    }
+
+    profileReply = 'unavailable';
+    retryStarted = Completer<void>();
+    releaseRetry = Completer<void>();
+    final timedOut = expectLater(resolve(timeout: const Duration(milliseconds: 200)), throwsA(deadlineAt('http_retry')));
+    await retryStarted.future.timeout(const Duration(seconds: 1));
+    await timedOut.timeout(const Duration(seconds: 1));
+    expect(profileRequests, 3, reason: 'expiry during backoff cannot start another GET');
+    releaseRetry.complete();
+
+    retryStarted = Completer<void>();
+    releaseRetry = Completer<void>();
+    final cancelled = Completer<void>();
+    final stopped = expectLater(resolve(timeout: const Duration(seconds: 5), cancelled: cancelled.future),
+        throwsA(isA<Exception>().having((error) => error.toString(), 'cancellation', 'managed_profile_cancelled')));
+    await retryStarted.future.timeout(const Duration(seconds: 1));
+    cancelled.complete();
+    await stopped.timeout(const Duration(seconds: 1));
+    releaseRetry.complete();
+    await pumpEventQueue();
+    expect(profileRequests, 4, reason: 'cancellation during backoff cannot start another GET');
+    expect((await bootstrapper.loadCachedManagedProfile(inputs))?.cacheEntryId, original.cacheEntryId);
+  });
+
   test('default API origin is owned and arbitrary fallbacks are rejected', () {
     expect(
       AppFirstRuntimeBootstrapper().apiBaseUrl,

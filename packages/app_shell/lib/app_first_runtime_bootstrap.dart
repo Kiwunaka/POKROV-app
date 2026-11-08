@@ -3852,6 +3852,7 @@ class AppFirstRuntimeBootstrapper
     var accessPreparing = false;
     String? currentOperation;
     String? deadlineOperation;
+    Map<String, Object>? deadlinePreparation;
     var preparationStage = 'session';
     int? preparationHttpStatus;
     Map<String, Object> preparation() => {
@@ -3862,7 +3863,15 @@ class AppFirstRuntimeBootstrapper
       preparationStage = stage;
       if (status != null) preparationHttpStatus = status;
     }
-    Map<String, Object>? deadlinePreparation;
+    Future<void> waitForRetry(Duration delay) {
+      requests.requireActive();
+      if (timedOut) throw ManagedProfileTimeout(deadlineOperation, preparation: deadlinePreparation);
+      return requests.wait(Future.any<void>([
+        _delayScheduler(delay),
+        preparationExpired.future.then<void>((_) =>
+            throw ManagedProfileTimeout(deadlineOperation, preparation: deadlinePreparation)),
+      ]));
+    }
     void expireProfile() {
       if (!timedOut) {
         deadlineOperation = currentOperation;
@@ -3925,6 +3934,7 @@ class AppFirstRuntimeBootstrapper
             preferredCountryCode: preferredCountryCode,
             client: client,
             profileTimeout: timeout,
+            waitForRetry: waitForRetry,
             onAccessPreparing: () => accessPreparing = true,
             onProgress: progress,
             onMaterialize: () { currentOperation = 'materialize'; progress('materialize', null); },
@@ -3972,6 +3982,7 @@ class AppFirstRuntimeBootstrapper
                       state: state, hostPlatform: hostPlatform, routeMode: routeMode,
                       selectedApps: normalizedSelectedApps, preferredNodeCode: selectedNodeCode,
                       preferredVariantId: 'direct', client: client,
+                      waitForRetry: waitForRetry,
                       onAccessPreparing: () {
                         if (waitingForManifest) accessPreparing = true;
                       },
@@ -4011,6 +4022,7 @@ class AppFirstRuntimeBootstrapper
                       preferredNodeCode: selectedNodeCode,
                       preferredVariantId: 'direct',
                       client: client,
+                      waitForRetry: waitForRetry,
                       onAccessPreparing: () {
                         if (waitingForManifest) accessPreparing = true;
                       },
@@ -7682,6 +7694,7 @@ class AppFirstRuntimeBootstrapper
     String selectedCandidateRef = '',
     String preferredCountryCode = '',
     Duration? profileTimeout,
+    Future<void> Function(Duration)? waitForRetry,
     void Function()? onAccessPreparing,
     void Function()? onMaterialize,
     void Function(String, int?)? onProgress,
@@ -7745,6 +7758,7 @@ class AppFirstRuntimeBootstrapper
         headers: {'X-POKROV-Access-Preparing': '1',
           if (carrierHeader != null) 'X-Portal-Carrier': carrierHeader},
         onProgress: onProgress,
+        waitForRetry: waitForRetry,
       );
       if (response['status'] != 'access_preparing') break;
       onAccessPreparing?.call();
@@ -7756,7 +7770,7 @@ class AppFirstRuntimeBootstrapper
       }
       final retrySeconds = response['retry_after_seconds'];
       final seconds = retrySeconds is int ? retrySeconds.clamp(1, 5) : 2;
-      await _delayScheduler(Duration(seconds: seconds));
+      await (waitForRetry ?? _delayScheduler)(Duration(seconds: seconds));
     }
     onMaterialize?.call();
     return _decodeManagedManifestResponse(response, state: state, hostPlatform: hostPlatform,
@@ -10542,6 +10556,7 @@ class AppFirstRuntimeBootstrapper
     Map<String, dynamic> Function(String)? responseDecoder,
     bool requireHttps = false,
     void Function(String, int?)? onProgress,
+    Future<void> Function(Duration)? waitForRetry,
   }) async {
     if (_invitationReceiver != null) {
       await (_invitationDeferInitialization ??= _loadState(hostPlatform).then<void>((_) {}));
@@ -10660,7 +10675,7 @@ class AppFirstRuntimeBootstrapper
           if (traceStage != null) _traceBootstrap(traceStage, 'fail',
             reason: traceReason, status: traceStatus, error: failure);
           onProgress?.call('http_retry', null);
-          await _delayScheduler(_retryDelayForAttempt(attempt));
+          await (waitForRetry ?? _delayScheduler)(_retryDelayForAttempt(attempt));
           continue;
         }
 
@@ -10759,7 +10774,7 @@ class AppFirstRuntimeBootstrapper
       }
 
       onProgress?.call('http_retry', null);
-      await _delayScheduler(_retryDelayForAttempt(attempt));
+      await (waitForRetry ?? _delayScheduler)(_retryDelayForAttempt(attempt));
     }
 
     throw lastFailure ??

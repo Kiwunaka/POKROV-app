@@ -2530,6 +2530,9 @@ seconds when a matching cached profile exists. Timeout or transient
 the regular host staging transaction, including after app/process restart.
 The cache is checked again after refresh failure for expiry or intervening
 authorization denial. Offline preparation performs no WARP-status API call.
+Managed-profile HTTP retry backoff and access-preparing polling stop on that
+same preparation deadline or owner cancellation. Closing an expired HTTP request
+does not schedule another retry or postpone the protected-cache fallback.
 
 An admitted cached fallback records `app.connection.managed_profile_fallback.finished`
 in the local operational journal. It keeps the closed failure code and any
