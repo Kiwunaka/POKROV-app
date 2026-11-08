@@ -1,5 +1,32 @@
 # Windows acceptance
 
+On 8 November, the same private capture-on QA **4276** passed the complete
+atomic caller dry-run without a click, then made one ordinary Global Connect at
+host 11:32:48.341 UTC. Managed-profile preparation used cached fallback:
+`http_headers` elapsed 3003 ms, refresh elapsed 3003 ms, and cached materials
+took 205 ms. The native probe passed in 968 ms and profile preparation took
+6074 ms. At guest 11:32:54.399 UTC, verification and the whole attempt succeeded;
+running, egress and DNS readiness were confirmed with no failure. This establishes
+the cached path, not an online managed-profile PASS or full acceptance of the
+separate capture-off ordinary 4276 package.
+
+Before Connect, model readiness was **UNKNOWN**: automatic review rejected
+opening the diagnostic item «Отправить отчёт, Код для поддержки и сводка без ключей»
+because it might send diagnostic data externally and its destination and
+payload were unknown. The item was not retried or bypassed. The later valid
+capture confirmed the observer ran: two rows, two candidates initially admitted
+with four workers, and no queued movable challenger. No ML gain was established.
+
+Direct Stop returned Status 1 with a receipt at guest
+11:33:46.092–11:33:46.990 UTC, before the watchdog fire. The reserve watchdog
+also returned Status 1 at guest 11:34:18.933–11:34:19.299 UTC. Fresh runtime was
+stopped with retained 0 and TUN 0; the original Iceland selection and
+`allExceptRu`, all 16 routes, DNS, user and WinHTTP proxies and preferences
+matched baseline, and the eight owned WFP filters were absent. Tray Exit left
+App 0. Normal shutdown reached PoweredOff / Unlocked at host 11:41:22.840 UTC.
+The ordinary lease was released at 11:36:03.155461 UTC after fresh FULL ACK 7 /
+API passed.
+
 On 8 November, private Windows QA **2.0.0+4276**, App `19757ceb` / Core
 `34adfca7` (1.2.15 / ABI2), upgraded over 4275 with selector capture enabled.
 The installer retained the identity and owner, and installed components matched
@@ -14,9 +41,10 @@ The original Iceland selection and `allExceptRu` were restored; all 16 routes,
 DNS, user and WinHTTP proxies and preferences matched baseline, with TUN 0 and
 the eight owned WFP filters absent. Tray Exit left App 0 and the VM reached
 PoweredOff / Unlocked at host 10:49:06.713 UTC. The ordinary lease was released
-at 10:44:47.085747 UTC after fresh FULL ACK 7 / API passed. An atomic one-exec
-caller passed syntax checking; its complete live dry-run is **NOT_RUN**. No
-native connection result or ML gain was established.
+at 10:44:47.085747 UTC after fresh FULL ACK 7 / API passed. At that window's
+closure, the atomic one-exec caller had passed syntax checking; its complete
+live dry-run was **NOT_RUN**. No native connection result or ML gain was
+established in that window.
 
 On 8 November, the owner accepted exact **2.0.0+4275** for the direct public beta
 on 9 November at 12:00 Moscow time, retaining the unsigned installer and its
