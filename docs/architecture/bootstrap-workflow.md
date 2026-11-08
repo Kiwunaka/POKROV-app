@@ -293,8 +293,11 @@ remains available for explicit owned QA with its bounded file read. The bundled
 shadow is a release feature, not evidence of a real-network improvement.
 
 Owned QA can also set `POKROV_SELECTOR_QA_CAPTURE_PATH` to an existing writable
-local directory's JSONL file, with or without the v1 model. The observer records
-at most 256 admitted attempts per process: each completed row pairs the immutable
+local directory's JSONL file. The installed shell attaches this observer only
+after the bundled v1 model loads successfully; the capture-only constructor is
+available separately for source QA. Missing capture therefore does not prove
+that no probes ran. The observer records at most 256 admitted attempts per
+process: each completed row pairs the immutable
 preparation-time queue, path/cohort and existing four-minute selector-memory
 snapshot (`pokrov-preaction-v3`) with only that attempt's completed outcome.
 Candidate/context refs are local numbers; raw node, profile, endpoint and network
@@ -339,6 +342,24 @@ in 4170 ms. The remote helper took 8927 ms through the source probe boundary,
 exceeding its 8000 ms budget, so the scheduler kept a control outcome. The QA
 result keeps raw Core and source outcomes separately: native proof passed,
 source admission did not. No production timeout or ordering rule was changed.
+
+On 8 November, one installed Windows QA **4276**, compiled App `19757ceb` /
+Core `34adfca77`, produced [two genuine capture rows](C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4276-qa/selector-capture.jsonl).
+Closed App events confirmed cached fallback after `http_headers`/refresh timed
+out at **3003 ms**, followed by **205 ms** cached-material loading; online admission
+was not established. Both VLESS/TCP/IPv4 bridge candidates entered in the same
+millisecond within **four workers**, with **zero prior observations** and identical
+F82 and F102 encoded inputs in the initial queue. One completed `http_64k` PASS
+took **968 ms**; the sibling was censored as `owner_superseded`, not a network
+failure. There was **no queued challenger** to advance. This case stays separate
+from the earlier three PASS/four censored captures: local aliases do not establish
+a shared physical context across runs or a paired training dataset. The capture
+has one context generation during this Connect; continuity after Stop was not
+measured, and App exit discards its in-memory history. No ML gain was shown and
+no fit, activation or paid model call was performed. The next active experiment
+requires a corrected online HTTP path and an actual movable queue with relevant
+completed pre-action outcomes; repeating this fully admitted cached wave is not
+an informative ML comparison.
 
 When the API is unavailable, the cache selector keeps the online WARP order and
 budgets: a currently enabled manual chain first, ordinary paths after its failure,
