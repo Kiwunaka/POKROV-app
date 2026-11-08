@@ -1,5 +1,20 @@
 # Windows acceptance
 
+On 8 November, the post-`d1471aa` profile-only observation did not start.
+At 16:54:35 UTC the VM entered `gurumeditation` with `VERR_NO_PAGE_MEMORY`;
+the session remained locked and Guest Additions run level was 0. The VM was
+not PoweredOff. Two guest baseline reads failed because the execution service
+was not ready. No ACPI signal, forced power-down, reset, saved state, App launch,
+profile GET, Connect or coordinator was initiated. The VirtualBox boot log at
+16:54 UTC recorded 63.8 GiB host RAM total, 17.9 GiB available and 4 GiB
+configured for the guest; these are historical readings, not current values.
+Host CIM memory reading was denied, so current totals are unknown. A separate
+Dart process also reported OOM before focused tests, without an established
+common cause. App and Core versions and the 4276 artifacts were unchanged.
+Resolve the specific resource condition and establish a
+safe VM state before another start; do not use a blind boot loop or change host,
+pagefile or VM RAM settings.
+
 On 8 November, a coupled profile-only observation used an atomic ready signal
 and file waiter for one ordinary Global choice, with Connect 0. In the sampled
 server window 15:23:37.890250–15:24:22.828198 UTC, one managed-profile HTTP 200
