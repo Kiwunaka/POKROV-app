@@ -1,5 +1,20 @@
 # Windows acceptance
 
+On 8 November, two subsequent profile-only observations each used one App
+launch and one ordinary Global choice, with Connect 0. In the server window
+12:13:30.767136–12:15:52.133031 UTC after phase logging, two managed-profile
+HTTP 200 results took 2859–5932 ms total, including 2425–5828 ms in catalog.
+After `ac55306`, the separate window 12:45:40.215519–12:47:47.177980 UTC had
+two HTTP 200 results at 1525–5703 ms total and 1011–5636 ms in catalog; both
+had all ten phases complete, and the catalog tail remained. The fresh guest
+cache timestamps were 12:15:12.012912 and 12:47:16.249415 UTC, with six cached
+candidates and 96 catalog entries in each summary; timestamps do not identify
+specific server requests. These observations are not a paired performance gain
+or a native connection PASS. After each, Iceland / `allExceptRu` and the network
+baseline were restored, App and runtime stopped, and the VM reached PoweredOff /
+Unlocked at host 12:18:53.907 and 12:51:29.659 UTC respectively. The ordinary
+leases closed at 12:19:57.398305 and 12:51:26.968884 UTC.
+
 On 8 November, the same private capture-on QA **4276** passed the complete
 atomic caller dry-run without a click, then made one ordinary Global Connect at
 host 11:32:48.341 UTC. Managed-profile preparation used cached fallback:
