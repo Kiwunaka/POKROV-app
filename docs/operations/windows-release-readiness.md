@@ -1,5 +1,30 @@
 # Windows acceptance
 
+On 8 November, a coupled profile-only observation used an atomic ready signal
+and file waiter for one ordinary Global choice, with Connect 0. In the sampled
+server window 15:23:37.890250–15:24:22.828198 UTC, one managed-profile HTTP 200
+took 5443 ms total, including 5358 ms in catalog and 0 ms pending. There were 55
+handler stack observations; this count is not CPU usage, milliseconds or a
+request identity. The fresh cache summary had six cached candidates and 96
+catalog entries, without request identity. Stop returned ACK 1 and Iceland /
+`allExceptRu`, routes, DNS, proxies and preferences matched baseline, with TUN 0
+and the eight owned WFP filters absent. Guest shutdown without `/f` reached
+PoweredOff / Unlocked at host 15:31:10.152 UTC; separate pre-shutdown Tray Exit
+and App 0 were not confirmed. Fresh FULL ACK 7 / API passed and the lease closed
+at 15:31:11.887819 UTC. The file waiter, atomic signal, explicit date parsing,
+post-signal fresh clock and pre-guard receipt were checked for this scope; this
+is not a native connection PASS.
+
+Earlier attempts remained separate: a 13:41 window was cancelled after an SSH
+timeout before worker roles were confirmed; its lease closed at 13:48:53.582276
+UTC. In STACK2, Global 0 followed `HOST_CUTOFF_REACHED`; the exact host attempt
+time was not saved, handler coverage was 0, and the lease closed at
+14:14:26.171941 UTC. The next waiter exceeded the command-line length before
+arming; its lease closed at 14:55:48.079504 UTC. A later approval review timed
+out before App launch (AppLaunch 0); its lease closed at 15:13:48.830477 UTC.
+One authorized retry through the same review succeeded at guest 15:20:13.554790
+UTC and preceded the coupled observation above.
+
 On 8 November, two subsequent profile-only observations each used one App
 launch and one ordinary Global choice, with Connect 0. In the server window
 12:13:30.767136–12:15:52.133031 UTC after phase logging, two managed-profile
