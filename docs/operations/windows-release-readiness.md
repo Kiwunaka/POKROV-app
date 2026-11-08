@@ -1,5 +1,20 @@
 # Windows acceptance
 
+Current local ordinary **2.0.0+4277**, compiled App `237f0878` / accepted Core
+`34adfca77` (1.2.15 / ABI2), is ready for Root review under
+`C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4277-ordinary/release` with capture
+OFF. The unsigned Setup and one-Setup ZIP passed version and packaging checks;
+all 12 staged runtime files match the accepted manifest. This is package
+readiness, not native material-origin acceptance, which remains **NOT_VERIFIED**.
+
+The separate capture-on QA 4277 was installed. The owner's Iceland-retirement
+decision cancelled its planned receipt run before dry-run, arm or Connect
+(all 0); this was not a client failure. The VM was left OFF and Root/writer owns
+the residual lease closure. Public 1.4.5 and private 4276 draft **438229411** are
+unchanged; no 4277 GitHub upload/publication occurred. The API catalog now has
+six nodes; the Netcup replacement remains pending. Physical Android, DNS-AI and
+ML gain are not accepted by this Windows package task.
+
 On 8 November, the post-`d1471aa` profile-only observation did not start.
 At 16:54:35 UTC the VM entered `gurumeditation` with `VERR_NO_PAGE_MEMORY`;
 the session remained locked and Guest Additions run level was 0. The VM was

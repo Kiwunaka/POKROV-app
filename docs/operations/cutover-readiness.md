@@ -1,9 +1,26 @@
 # POKROV V2 client release status
 
-Updated 8 November 2026. **V2 (2.0.0)** is the next Android and Windows release,
+Updated 9 November 2026. **V2 (2.0.0)** is the next Android and Windows release,
 scheduled by the owner for 9 November at 12:00 Moscow time.
 
-The current prepared ordinary private beta candidate **2.0.0+4276** is in
+The local ordinary **2.0.0+4277** packages are ready for Root review in
+`C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4277-ordinary/release`, compiled from
+App `237f0878` with accepted Core `34adfca77` (1.2.15 / ABI2), without a Core
+rebuild and with capture OFF. Four production-signed APKs and the unsigned
+Windows Setup/single-Setup ZIP passed the new package and native-payload gates.
+The sibling `publish-stage` has seven canonical assets (five binaries plus
+index/checksums) and beta notes; `rollback-1.4.5.json` is byte-exact to the
+preserved 4276 rollback.
+Physical Android and native material-origin acceptance remain **NOT_VERIFIED**.
+
+The separate capture-on QA 4277 was installed, but its planned native receipt
+run was cancelled by the owner's decision to retire Iceland before dry-run,
+arm or Connect (all 0), not by a client failure. The VM was left OFF; residual
+lease closure remains with Root/writer. The API catalog now has six nodes after
+Iceland retirement; its Netcup replacement is pending. Public 1.4.5 and private
+4276 draft **438229411** remain unchanged; 4277 has no GitHub upload/publication.
+
+The accepted prepared ordinary private beta fallback **2.0.0+4276** remains in
 `C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4276-ordinary/release`, compiled from
 App `19757ceb` with the accepted Core `34adfca77` (1.2.15 / ABI2), without a Core
 rebuild. It includes the Auto deadline/retry fix. Four production-signed APKs
