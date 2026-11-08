@@ -47,6 +47,7 @@ class CandidateRankerShadow {
   final _refs = <String, int>{};
   final _nodeRefs = <String, int>{};
   final _history = <Map<String, Object?>>[];
+  final _historyCandidates = <TransportCandidate>[];
   Future<void>? _pending;
   CandidateRankerComparison? lastComparison;
   /// Immutable metadata for the most recent admission, available synchronously
@@ -68,6 +69,7 @@ class CandidateRankerShadow {
       _refs.clear();
       _nodeRefs.clear();
       _history.clear();
+      _historyCandidates.clear();
       lastComparison = null;
       lastFailure = null;
       _lastPreAction = null;
@@ -116,8 +118,12 @@ class CandidateRankerShadow {
       'ipv6_available': ipv6Available,
     });
     _history.add(observation);
+    _historyCandidates.add(candidate);
     _writeCapture(capture, observation, nativeStarted: nativeStarted);
-    if (_history.length > 8) _history.removeAt(0);
+    if (_history.length > 8) {
+      _history.removeAt(0);
+      _historyCandidates.removeAt(0);
+    }
   }
 
   static String _pathKind(TransportCandidate candidate) =>
@@ -136,12 +142,20 @@ class CandidateRankerShadow {
     if (_capturePath == null || _captured >= 256) return null;
     final now = at.millisecondsSinceEpoch;
     final group = groups[choices.first.candidateRef];
+    // Ordinary and DNS pools arrive separately. Retain path facts for only the
+    // same eight completed observations, reset by the physical context/catalog.
+    final knownCandidates = {
+      for (var index = 0; index < _history.length; index++)
+        if ((_history[index]['completed_at_ms'] as int) < now)
+          _historyCandidates[index].candidateRef: _historyCandidates[index],
+      for (final candidate in catalog) candidate.candidateRef: candidate,
+    }.values;
     Map<String, Object?> descriptor(TransportCandidate candidate) {
       final peers = {for (final peer in committed)
         if (peer.candidateRef != candidate.candidateRef && groups[peer.candidateRef] == group)
           peer.candidateRef: peer}.values;
       final same = <DateTime>[], sameNode = <DateTime>[], other = <DateTime>[], otherPath = <DateTime>[];
-      for (final failed in catalog) {
+      for (final failed in knownCandidates) {
         final expires = failedUntil[failed.candidateRef];
         if (expires == null) continue;
         final protocol = failed.protocol == candidate.protocol;
@@ -170,7 +184,10 @@ class CandidateRankerShadow {
         'cohort_same_tuple_count': peers.where((peer) =>
             (peer.protocol, peer.transport, peer.protection) ==
             (candidate.protocol, candidate.transport, candidate.protection)).length,
+        'selector_memory_scope': 'current_pool_and_prior_window',
         'selector_memory': Map<String, Object?>.unmodifiable({
+          // Known means this visible projection was read, not that descriptors
+          // exist for every ref retained in the broader selector failure map.
           'memory_known': 1, 'failed_same_protocol_path': same.length / 4,
           'failed_same_protocol_path_node': sameNode.length / 4,
           'failed_other_protocol_same_path': other.length / 4,

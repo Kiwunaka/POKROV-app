@@ -304,6 +304,15 @@ Rows append asynchronously; a failed sink disables capture and cannot block
 Connect. Capture does not upload data or rank ordinary candidates. Researchers
 must classify natural versus controlled QA conditions and keep post-action
 `outcome` outside model/advice inputs; the other candidates have no outcome label.
+The capture's `selector_memory_scope=current_pool_and_prior_window` means failure
+counts join the current pool with candidate descriptors from the same eight
+completed history entries, strictly before the decision timestamp. This preserves
+known paths when ordinary selection hands over to the DNS pool. It is a bounded
+visible projection, not the entire four-minute failure map; `memory_known=1`
+means that projection was read. Context/catalog changes and expired history
+entries discard those extra descriptors; late results from another generation
+cannot restore them. The selector order, failure-memory policy and F82 inputs
+are unchanged.
 The opt-in `candidate_ranker_native_capture_test.dart` runs this source selector
 against a caller-supplied owned native helper and sanitized local catalog through
 `POKROV_SELECTOR_QA_CATALOG`, `POKROV_SELECTOR_QA_PROBE_SCRIPT` and

@@ -349,6 +349,92 @@ void main() {
     expect(observer.lastComparison, isNull);
   });
 
+  test('capture retains completed path facts across candidate pools only in the same context', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-capture-pools-');
+    addTearDown(() => directory.delete(recursive: true));
+    final observer = CandidateRankerShadow.capture('${directory.path}/attempts.jsonl');
+    var at = DateTime.utc(2026, 11, 8);
+    final selector = SmartConnectCandidateSelector(now: () => at, rankerShadow: observer);
+    final bridge = candidate('tcp', 0, bridge: 'private-bridge');
+    final udp = candidate('udp', 1, protocol: 'awg', network: 'udp');
+    final dns = candidate('dnstt', 2);
+    Future<Map> select(List<TransportCandidate> pool, {bool fails = false,
+        String context = 'physical-1', String revision = 'catalog-1'}) async {
+      Map? snapshot;
+      at = at.add(const Duration(seconds: 1));
+      final attempt = selector.select(
+        catalog: TransportCandidateCatalog(revision: revision,
+            selectedCandidateRef: pool.first.candidateRef, candidates: pool),
+        network: 'shared-asn', contextGeneration: context, platform: HostPlatform.windows,
+        cancelled: Completer<void>().future,
+        prepare: (item, cancelled) async { snapshot ??= observer.lastPreAction; },
+        probe: (item, cancelled, timeout) async => fails
+            ? const SmartConnectCandidateProbeResult.failure('connect_failed',
+                duration: Duration(milliseconds: 12), probeStage: 'proxy_dial')
+            : success(item),
+      );
+      if (fails) {
+        await expectLater(attempt, throwsA(isA<SmartConnectSelectionExhausted>()));
+      } else {
+        await attempt;
+      }
+      await observer.settled;
+      return snapshot!['decision'] as Map;
+    }
+    Map memory(Map decision) => decision['candidates'][0]['selector_memory'] as Map;
+    // ConnectionManager passes ordinary and DNS pools separately, with the
+    // same catalog revision and physical context. Both failures completed first.
+    await select([bridge, udp], fails: true);
+    final observed = await select([dns]);
+    expect((observed['history'] as List).map((row) => row['result']),
+        ['network_failure', 'network_failure']);
+    expect(memory(observed)['failed_same_protocol_other_path'], 0.25);
+    expect(memory(observed)['failed_other_protocol_same_path'], 0.25);
+    expect(observed['candidates'][0]['selector_memory_scope'], 'current_pool_and_prior_window');
+    expect(jsonEncode(observed), isNot(contains('private-')));
+
+    for (var index = 0; index < 8; index++) {
+      await select([candidate('grpc', 10 + index)]);
+    }
+    final retained = await select([dns]);
+    expect(retained['history'], hasLength(8));
+    expect(memory(retained)['failed_same_protocol_other_path'], 0);
+    expect(memory(retained)['failed_other_protocol_same_path'], 0);
+
+    // Native failure memory may still share an ASN bucket. Descriptors learned
+    // in another physical generation must not extend the current pool's facts.
+    final moved = await select([dns], context: 'physical-2');
+    expect(moved['history'], isEmpty);
+    expect(memory(moved)['failed_same_protocol_other_path'], 0);
+    expect(memory(moved)['failed_other_protocol_same_path'], 0);
+    await select([bridge], context: 'physical-2', fails: true);
+    final changedCatalog = await select([dns], context: 'physical-2', revision: 'catalog-2');
+    expect(changedCatalog['history'], isEmpty);
+    expect(memory(changedCatalog)['failed_same_protocol_other_path'], 0);
+
+    final started = Completer<void>(), released = Completer<void>();
+    final late = selector.select(
+      catalog: TransportCandidateCatalog(revision: 'catalog-2',
+          selectedCandidateRef: bridge.candidateRef, candidates: [bridge]),
+      network: 'shared-asn', contextGeneration: 'physical-3', platform: HostPlatform.windows,
+      cancelled: Completer<void>().future,
+      probe: (item, cancelled, timeout) async {
+        started.complete();
+        await released.future;
+        return const SmartConnectCandidateProbeResult.failure('connect_failed',
+            duration: Duration(milliseconds: 12), probeStage: 'proxy_dial');
+      },
+    );
+    await started.future;
+    await select([dns], context: 'physical-4', revision: 'catalog-2');
+    final lateSettled = expectLater(late, throwsA(isA<SmartConnectSelectionExhausted>()));
+    released.complete();
+    await lateSettled;
+    final afterLate = await select([dns], context: 'physical-4', revision: 'catalog-2');
+    expect((afterLate['history'] as List).map((row) => row['result']), ['pass']);
+    expect(memory(afterLate)['failed_same_protocol_other_path'], 0);
+  });
+
   test('a settled losing native probe is captured as control and never a network label', () async {
     final directory = await Directory.systemTemp.createTemp('pokrov-capture-cancel-');
     addTearDown(() => directory.delete(recursive: true));
