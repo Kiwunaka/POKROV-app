@@ -14,6 +14,15 @@ or a native connection PASS. After each, Iceland / `allExceptRu` and the network
 baseline were restored, App and runtime stopped, and the VM reached PoweredOff /
 Unlocked at host 12:18:53.907 and 12:51:29.659 UTC respectively. The ordinary
 leases closed at 12:19:57.398305 and 12:51:26.968884 UTC.
+A third profile-only window after `d42648c`, 13:08:43.756657–13:11:32.198748
+UTC, also used one App launch and Global choice with Connect 0. Two HTTP 200
+results took 1070–5004 ms total and 936–4933 ms in catalog; `catalog_pending_ms`
+was 0 for both (complete 2, unknown 0). The fresh cache summary had six cached
+candidates and 96 catalog entries; request identity, paired performance gain and
+native connection PASS remain unproven. Stop returned ACK 1;
+Iceland / `allExceptRu` and network baseline were restored, App was 0, and the VM
+reached PoweredOff / Unlocked at host 13:14:34.210 UTC. The lease closed at
+13:13:54.474645 UTC.
 
 On 8 November, the same private capture-on QA **4276** passed the complete
 atomic caller dry-run without a click, then made one ordinary Global Connect at
