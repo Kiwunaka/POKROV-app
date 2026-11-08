@@ -144,6 +144,7 @@ final class OperationalAttemptTimeline {
     String? apiFailureKind,
     int? osErrorCode,
     PortalFailureReason? failureReason,
+    String materialOrigin = 'unknown',
   }) {
     _requireActive();
     final open = _open;
@@ -154,6 +155,8 @@ final class OperationalAttemptTimeline {
     final attributes = <String, Object?>{
       'phase': _phaseAttribute(phase),
       'duration_ms': _boundedDuration(open.startedAtUtc, now),
+      if (phase == OperationalTimelinePhase.profile)
+        'material_origin': outcome == ObservabilityOutcome.succeeded ? materialOrigin : 'unknown',
       ...?proofs?.toAttributes(),
       if (phase == OperationalTimelinePhase.profile &&
           outcome == ObservabilityOutcome.failed)

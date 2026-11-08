@@ -2798,6 +2798,7 @@ class ConnectionManager extends ChangeNotifier {
     String recoveryCandidateRef = '',
     Set<String> excludedCandidateRefs = const {},
     bool smartAccessVpnFallback = false,
+    void Function(String)? onMaterialOrigin,
   }) async {
     final generation = ownerGeneration ?? _connectionCoordinator.operationGeneration;
     final profileRevision = _managedProfileRevision;
@@ -3136,6 +3137,7 @@ class ConnectionManager extends ChangeNotifier {
         smartAccessVpnFallback: smartAccessVpnFallback,
         suppressWarpRuntime: suppressWarpRuntime || invitation != null, ownerGeneration: generation);
     requireCurrent();
+    if (invitation == null) onMaterialOrigin?.call('managed_get');
     return prepared;
   }
 
@@ -4248,6 +4250,9 @@ class ConnectionManager extends ChangeNotifier {
         _withRuntimeActionTimeout(operation, action,
             ownerGeneration: generation);
     final completion = Completer<void>();
+    final profileAttempt = _observability?._attempt;
+    var materialOrigin = 'unknown';
+    var materialStageAcknowledged = false;
     if (actionIntent != ConnectionTransitionIntent.disconnect) {
       _primaryConnectCompletion = completion;
     }
@@ -4523,6 +4528,7 @@ class ConnectionManager extends ChangeNotifier {
           failureStage = ConnectionStage.profile;
           managedProfile = await _resolveManagedProfile(
             ownerGeneration: generation,
+            onMaterialOrigin: (origin) => materialOrigin = origin,
             initialProfilePreparation: initialProfilePreparation,
             coldConnect: actionIntent == ConnectionTransitionIntent.connect,
             smartAccessVpnFallback: smartAccessVpnFallback,
@@ -4581,6 +4587,7 @@ class ConnectionManager extends ChangeNotifier {
           managedProfile = await _prepareManagedProfile(cachedPayload,
               offline: true, ownerGeneration: generation,
               smartAccessVpnFallback: smartAccessVpnFallback);
+          materialOrigin = 'cached_fallback';
         }
         final resolvedProfile = managedProfile;
         if (resolvedProfile != null) {
@@ -4605,6 +4612,9 @@ class ConnectionManager extends ChangeNotifier {
           }
           final stagedPolicy = _preparedCatalogPolicies[resolvedProfile];
           final stagedBinding = _connectionCoordinator.stagedSmartAccessLeases;
+          materialStageAcknowledged = current.phase == RuntimePhase.configStaged &&
+              current.canConnect && current.lastFailureKind == null && current.stagedProfileDigest != null &&
+              stagedBinding?.profileDigest == current.stagedProfileDigest;
           _smartAccessRouteProfile = stagedPolicy != null && stagedBinding != null &&
               (!stagedPolicy.vpnAvailable || smartAccessVpnFallback ||
                   (_localSmartAccessSelected && stagedPolicy.smartAccessProfile == null))
@@ -4649,6 +4659,10 @@ class ConnectionManager extends ChangeNotifier {
         _activeConnectUsedWarp = warpRuntimeAttempted;
         failureOperation = 'core_connect';
         failureStage = ConnectionStage.coreStart;
+        if (materialStageAcknowledged && !_disposed && _connectionCoordinator.ownsOperation(generation) &&
+            profileRevision == _managedProfileRevision) {
+          _observability?._completeProfileMaterialStage(profileAttempt, materialOrigin: materialOrigin);
+        }
         _setPhase(ConnectionPhase.activating, generation);
         Future<RuntimeSnapshot> Function() connectAction = _runtimeEngine.connect;
         final qa = _activeFirstProviderQa;

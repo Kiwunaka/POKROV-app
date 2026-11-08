@@ -130,6 +130,7 @@ abstract final class OperationalAttributePolicy {
     'error_count',
   };
   static final _enums = <String, Set<String>>{
+    'material_origin': <String>{'managed_get', 'cached_fallback', 'unknown'},
     'fallback_kind': <String>{'timeout', 'permitted_transient'},
     'api_failure_kind': <String>{
       'origin_socket', 'origin_http', 'origin_tls', 'origin_timeout',
@@ -418,6 +419,9 @@ abstract final class OperationalAttributePolicy {
   ) {
     if (attributes.length > 12) {
       throw ArgumentError.value(attributes.length, 'attributes');
+    }
+    if (attributes.containsKey('material_origin') && privacyClass != ObservabilityPrivacyClass.localOperational) {
+      throw ArgumentError('Material origin requires local operational privacy');
     }
     if (attributes.containsKey('http_64k_observation') && (attributes['failure_kind'] != 'probe_failed' ||
         attributes['probe_stage'] != 'http_64k' ||

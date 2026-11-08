@@ -16,7 +16,7 @@ abstract final class PokrovObservabilityContracts {
   static const event = ObservabilityContractDescriptor(
     id: 'observability-event',
     version: '1.0.0',
-    sha256: 'edbb04c740e78bdff0c385aa47252246c049e27e79fb352ee53d85d2c8dfa8e7',
+    sha256: 'bc54f03e91135e6fc017f484fdb628bd0e089308891964a26f0e1303efdce238',
   );
 
   static const errorCatalog = ObservabilityContractDescriptor(
@@ -173,6 +173,7 @@ abstract final class ObservabilityAttributeKeys {
     'interface_ready',
     'journal_kind',
     'manifest_version',
+    'material_origin',
     'network_class',
     'offline_classification_elapsed_ms',
     'operation',

@@ -2564,6 +2564,16 @@ Managed-profile HTTP retry backoff and access-preparing polling stop on that
 same preparation deadline or owner cancellation. Closing an expired HTTP request
 does not schedule another retry or postpone the protected-cache fallback.
 
+The material-origin change is source-only, pending package/native validation; it is not
+in the current 4276 packages. The existing `app.connection.profile.finished`
+event gains only the closed
+`material_origin`: `managed_get`, `cached_fallback` or `unknown`. A positive
+origin belongs to the current attempt's resolved material and acknowledged
+native stage; it is completed at the existing transition to activation, not at
+fetch completion. Cancelled, superseded, failed or unacknowledged stages cannot
+publish a positive receipt. Reused stages and offline invitations remain
+`unknown`; timestamps and absence of a fallback event do not prove online origin.
+
 An admitted cached fallback records `app.connection.managed_profile_fallback.finished`
 in the local operational journal. It keeps the closed failure code and any
 validated preparation stage, elapsed time and observed HTTP status. Refresh

@@ -758,6 +758,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   String? activeDisplayNodeCode;
   bool? transportProofPending;
   Object? connectFailure;
+  Object? stageFailure;
   bool restoredHandoffGuard = false;
   final probeRelease = Completer<void>();
   final probeStarted = Completer<void>();
@@ -1018,6 +1019,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
     expectSync(activeProbes, isEmpty, reason: 'all candidate workers must settle before the single TUN owner starts');
     stagedProfile = payload.profileName;
     stagedPayloads.add(payload);
+    if (stageFailure != null) throw stageFailure!;
     return mutate('stage', RuntimePhase.configStaged);
   }
   @override
@@ -5610,6 +5612,7 @@ void main() {
           selectedCandidateRef: awg.candidateRef, candidates: [awg]);
     final runtime = _Runtime()
       ..supportsCandidates = true
+      ..profileDigest = 'e' * 64
       ..probeDelay = const Duration(seconds: 5);
     final manager = _manager(runtime, bootstrapper, observability: observability);
     addTearDown(manager.dispose);
@@ -5654,6 +5657,13 @@ void main() {
     ).readAsLines();
     final fallback = events.map((line) => jsonDecode(line) as Map<String, dynamic>)
         .singleWhere((event) => event['name'] == 'app.connection.managed_profile_fallback.finished');
+    final profiles = events.map((line) => jsonDecode(line) as Map<String, dynamic>)
+        .where((event) => event['name'] == 'app.connection.profile.finished' && event['outcome'] == 'succeeded' &&
+            (event['attributes'] as Map)['material_origin'] != 'unknown')
+        .toList();
+    expect(profiles.map((event) => (event['attributes'] as Map)['material_origin']),
+        ['managed_get', 'cached_fallback']);
+    expect(profiles[0]['correlation']['attempt_id'], isNot(profiles[1]['correlation']['attempt_id']));
     expect(fallback['error'], {'code': 'API-002', 'origin': 'client'});
     final attributes = fallback['attributes'] as Map;
     expect(attributes, {
@@ -5662,6 +5672,56 @@ void main() {
       'refresh_elapsed_ms': inInclusiveRange(0, beforeClassification),
       'offline_classification_elapsed_ms': greaterThanOrEqualTo(networkReadDelay.inMilliseconds),
     });
+  });
+
+  test('failed native stage has no positive material receipt', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-stage-origin-failed-');
+    addTearDown(() => _deleteTestDirectory(directory));
+    final observability = await PokrovClientObservability.start(
+      hostPlatform: HostPlatform.android, directoryResolver: () async => directory);
+    final runtime = _Runtime()..profileDigest = 'e' * 64
+      ..stageFailure = const BootstrapFailure('stage rejected');
+    final manager = _manager(runtime, _Bootstrapper(), observability: observability);
+    addTearDown(manager.dispose);
+    await manager.connect();
+    expect(runtime.stagedPayloads, hasLength(1));
+    expect(runtime.connectCalls, 0);
+    await observability.flush();
+    final events = (await File('${directory.path}/pokrov-observability/operational-events.v1.0.jsonl')
+        .readAsLines()).map((line) => jsonDecode(line) as Map<String, dynamic>);
+    final profiles = events.where((event) => event['name'] == 'app.connection.profile.finished');
+    expect(profiles, isNotEmpty);
+    expect(profiles.every((event) => (event['attributes'] as Map)['material_origin'] == 'unknown'), isTrue);
+  });
+
+  test('late stage ACK cannot mark the replaced attempt material origin', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-stage-origin-replaced-');
+    addTearDown(() => _deleteTestDirectory(directory));
+    final observability = await PokrovClientObservability.start(
+      hostPlatform: HostPlatform.android, directoryResolver: () async => directory);
+    final runtime = _Runtime(heldOperation: 'stage')..profileDigest = 'e' * 64;
+    final manager = _manager(runtime, _Bootstrapper(), observability: observability);
+    addTearDown(manager.dispose);
+    final first = manager.connect();
+    await runtime.operationEntered.future;
+    final cancellation = manager.cancel();
+    final replacement = manager.connect();
+    runtime.releaseOperation.complete();
+    await Future.wait([first, cancellation, replacement]);
+    expect(runtime.connectCalls, 1);
+    expect(manager.presentation.isVerified, isTrue);
+    await observability.flush();
+    final events = (await File('${directory.path}/pokrov-observability/operational-events.v1.0.jsonl')
+        .readAsLines()).map((line) => jsonDecode(line) as Map<String, dynamic>).toList();
+    final positive = events.where((event) => event['name'] == 'app.connection.profile.finished' &&
+        (event['attributes'] as Map)['material_origin'] == 'managed_get').toList();
+    expect(positive, hasLength(1));
+    final intent = events.lastWhere((event) => event['name'] == 'app.connection.intent.received');
+    expect(positive.single['correlation']['attempt_id'], intent['correlation']['attempt_id']);
+    expect(positive.single['correlation']['generation'], intent['correlation']['generation']);
+    expect(events.where((event) => event['name'] == 'app.connection.profile.finished' &&
+        event['correlation']['attempt_id'] != intent['correlation']['attempt_id'])
+        .every((event) => (event['attributes'] as Map)['material_origin'] == 'unknown'), isTrue);
   });
 
   test('pending bundled ranker load blocks neither candidate probes nor cancellation', () async {

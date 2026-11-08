@@ -493,6 +493,13 @@ final class PokrovClientObservability {
     }
   }
 
+  void _completeProfileMaterialStage(OperationalAttemptTimeline? attempt, {required String materialOrigin}) {
+    if (attempt == null || !identical(_attempt, attempt) || attempt.isTerminal ||
+        attempt.activePhase != OperationalTimelinePhase.profile) return;
+    attempt.complete(OperationalTimelinePhase.profile,
+        outcome: ObservabilityOutcome.succeeded, materialOrigin: materialOrigin);
+  }
+
   void recordConnectionFailure({
     required ConnectionStage stage,
     required String errorCode,

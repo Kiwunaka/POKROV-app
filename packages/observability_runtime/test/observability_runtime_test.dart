@@ -12,6 +12,19 @@ void main() {
   });
 
   group('typed privacy contract', () {
+    test('profile material origin accepts only the closed local enum', () {
+      expect(() => _event(1, attributes: const {'material_origin': 'managed_get'}), returnsNormally);
+      expect(() => _event(1, attributes: const {'material_origin': 'cached_fallback'}), returnsNormally);
+      expect(() => _event(1, attributes: const {'material_origin': 'unknown'}), returnsNormally);
+      expect(() => _event(1, attributes: const {'material_origin': 'https://private.invalid/profile'}),
+          throwsArgumentError);
+      for (final privacyClass in [ObservabilityPrivacyClass.releaseHealth,
+          ObservabilityPrivacyClass.supportBundle, ObservabilityPrivacyClass.serverSecurityAudit]) {
+        expect(() => _event(1, privacyClass: privacyClass,
+            attributes: const {'material_origin': 'managed_get'}), throwsArgumentError);
+      }
+    });
+
     test('rejects unknown fields and privacy-mode widening', () {
       final reason = _event(1, attributes: const {'failure_reason': 'device_limit_reached'});
       expect(OperationalBreadcrumb.fromEvent(reason).failureReason, PortalFailureReason.deviceLimitReached);
