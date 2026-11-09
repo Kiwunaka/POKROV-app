@@ -11,6 +11,7 @@
 #include <cwchar>
 #include <set>
 #include <cmath>
+#include <string_view>
 
 namespace pokrov::service {
 namespace {
@@ -177,6 +178,22 @@ ComPtr<IJsonObject> Tagged(const std::vector<ComPtr<IJsonObject>>& rows, const s
   return result;
 }
 
+bool IsVpnProbeTarget(IJsonObject* profile, const std::vector<ComPtr<IJsonObject>>& outbounds,
+                      const std::string& tag) {
+  const auto target = Tagged(outbounds, tag);
+  const auto endpoints = Rows(Array(profile, L"endpoints").Get());
+  const auto endpoint = Tagged(endpoints, tag);
+  const auto type = target ? String(target.Get(), L"type") : endpoint ? String(endpoint.Get(), L"type") : "";
+  return !type.empty() &&
+      (endpoint || (type != "direct" && type != "block" && type != "dns" && type != "pokrov-smart-access"));
+}
+
+bool ProbeHostMatchesSuffix(std::string_view host, std::string_view suffix) {
+  if (suffix.empty() || suffix.size() > host.size()) return false;
+  const auto offset = host.size() - suffix.size();
+  return host.substr(offset) == suffix && (offset == 0 || host[offset - 1] == '.');
+}
+
 bool DirectDoh(IJsonObject* server, const std::string& direct) {
   const auto detour = String(server, L"detour");
   if (!detour.empty() && detour != direct) return false;
@@ -300,8 +317,9 @@ std::string CancelWindowsCandidateProbeResult(const std::string& encoded,
 }
 
 std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& encoded,
-    bool first_provider_qa, EgressProbeReserve* egress_reserve) {
+    bool first_provider_qa, EgressProbeReserve* egress_reserve, std::string* selected_vpn_tag) {
   if (egress_reserve) *egress_reserve = EgressProbeReserve::kStatic;
+  if (selected_vpn_tag) selected_vpn_tag->clear();
   JsonApartment apartment;
   if (!apartment.Ready()) return std::string{};
   const auto profile = ParseObject(encoded);
@@ -312,18 +330,48 @@ std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& 
   if (final_tag.empty()) return std::nullopt;
   const auto direct = Tagged(outbounds, final_tag);
   if (!direct || String(direct.Get(), L"type") != "direct") {
-    // The app-scoped producer pins only this service's API request. Its
-    // other requests can match a process Direct rule before the VPN final.
-    if (egress_reserve && route) {
-      const auto routes = Rows(Array(route.Get(), L"rules").Get());
-      const bool service_api_only = std::any_of(routes.begin(), routes.end(), [](const auto& rule) {
-        return Fields(rule.Get(), 6) &&
-            Strings(Array(rule.Get(), L"domain").Get()) == std::optional<std::vector<std::string>>{{"api.pokrov.space"}} &&
-            Strings(Array(rule.Get(), L"process_name").Get()) == std::optional<std::vector<std::string>>{{"pokrov_service.exe"}} &&
-            String(rule.Get(), L"network") == "tcp" && SingleNumber(rule.Get(), L"port", 443) &&
-            String(rule.Get(), L"action") == "route" && !String(rule.Get(), L"outbound").empty();
-      });
-      if (service_api_only) *egress_reserve = EgressProbeReserve::kNone;
+    if (!egress_reserve && !selected_vpn_tag) return std::nullopt;
+    const auto routes = Rows(Array(route.Get(), L"rules").Get());
+    constexpr char api_host[] = "api.pokrov.space";
+    constexpr char reserve_host[] = "birch.portal-privacy.online";
+    enum class ProbeRoute { kUnmatched, kPinned, kDirect };
+    ProbeRoute api = ProbeRoute::kUnmatched;
+    ProbeRoute reserve = ProbeRoute::kUnmatched;
+    bool api_only = false;
+    // The first matching generated pin or Direct override settles each host.
+    for (const auto& rule : routes) {
+      if (Fields(rule.Get(), 6) &&
+          Strings(Array(rule.Get(), L"process_name").Get()) == std::optional<std::vector<std::string>>{{"pokrov_service.exe"}} &&
+          String(rule.Get(), L"network") == "tcp" && SingleNumber(rule.Get(), L"port", 443) &&
+          String(rule.Get(), L"action") == "route") {
+        const auto hosts = Strings(Array(rule.Get(), L"domain").Get());
+        const auto tag = String(rule.Get(), L"outbound");
+        const bool single = hosts == std::optional<std::vector<std::string>>{{api_host}};
+        const bool paired = hosts == std::optional<std::vector<std::string>>{{api_host, reserve_host}};
+        if (single && !tag.empty()) api_only = true;
+        if (selected_vpn_tag && (single || paired) && tag == final_tag &&
+            IsVpnProbeTarget(profile.Get(), outbounds, tag)) {
+          if (api == ProbeRoute::kUnmatched) api = ProbeRoute::kPinned;
+          if (paired && reserve == ProbeRoute::kUnmatched) reserve = ProbeRoute::kPinned;
+        }
+        continue;
+      }
+      // App emits explicit domain overrides as a suffix and an outbound.
+      if (!selected_vpn_tag || !Fields(rule.Get(), 2)) continue;
+      const auto suffixes = Strings(Array(rule.Get(), L"domain_suffix").Get());
+      if (!suffixes) continue;
+      const auto target = Tagged(outbounds, String(rule.Get(), L"outbound"));
+      if (!target || String(target.Get(), L"type") != "direct") continue;
+      for (const auto& suffix : *suffixes) {
+        if (api == ProbeRoute::kUnmatched && ProbeHostMatchesSuffix(api_host, suffix)) api = ProbeRoute::kDirect;
+        if (reserve == ProbeRoute::kUnmatched && ProbeHostMatchesSuffix(reserve_host, suffix)) reserve = ProbeRoute::kDirect;
+      }
+    }
+    // Legacy app-scoped profiles pin only the API and never probe the reserve.
+    if (egress_reserve && api_only) *egress_reserve = EgressProbeReserve::kNone;
+    if (selected_vpn_tag && (api == ProbeRoute::kDirect || (!api_only && reserve == ProbeRoute::kDirect))) {
+      if (!IsVpnProbeTarget(profile.Get(), outbounds, final_tag)) return std::string{};
+      *selected_vpn_tag = final_tag;
     }
     return std::nullopt;
   }
@@ -362,17 +410,11 @@ std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& 
     const auto& rr = owned_routes.front(); const auto& dr = owned_dns.front();
     const auto tag = String(rr.Get(), L"outbound");
     const auto resolver = Tagged(servers, String(dr.Get(), L"server"));
-    const auto target = Tagged(outbounds, tag);
-    const auto endpoints = Rows(Array(profile.Get(), L"endpoints").Get());
-    const auto endpoint = Tagged(endpoints, tag);
-    const auto type = target ? String(target.Get(), L"type") : endpoint ? String(endpoint.Get(), L"type") : "";
-    const bool protected_proxy = !type.empty() &&
-        (endpoint || (type != "direct" && type != "block" && type != "dns" && type != "pokrov-smart-access"));
     HString cache_name;
     boolean disabled = false;
     if (!(Fields(rr.Get(), 5) && exact_owned(rr.Get()) && String(rr.Get(), L"network") == "tcp" &&
         SingleNumber(rr.Get(), L"port", 443) && String(rr.Get(), L"action") == "route" &&
-        tag != final_tag && protected_proxy &&
+        tag != final_tag && IsVpnProbeTarget(profile.Get(), outbounds, tag) &&
         Fields(dr.Get(), 5) && Strings(Array(dr.Get(), L"domain").Get()) ==
             Strings(Array(rr.Get(), L"domain").Get()) && String(dr.Get(), L"action") == "route" &&
         cache_name.Set(L"disable_cache") && SUCCEEDED(dr->GetNamedBoolean(cache_name.value, &disabled)) && disabled &&

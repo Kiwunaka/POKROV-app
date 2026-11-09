@@ -52,8 +52,11 @@ bool WindowsTelegramWSPreparationCurrent(const WindowsTelegramWSPreparation& val
 // First-provider QA selects the service only behind a valid owned VPN boundary.
 // Optional reserve selection follows the same native profile: Full VPN keeps
 // the static target, exact API pairs use app, and API-only scopes use no reserve.
+// An explicit Direct override of a probe host also requires the VPN final's
+// selected leaf to pass its own liveness check after the ordinary TUN proof.
 std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& profile,
-    bool first_provider_qa = false, EgressProbeReserve* egress_reserve = nullptr);
+    bool first_provider_qa = false, EgressProbeReserve* egress_reserve = nullptr,
+    std::string* selected_vpn_tag = nullptr);
 // Purpose check only; Core validates the complete worker config before admission.
 bool IsWindowsFirstProviderQaRuntimeControl(const std::string& config);
 // Override only cancellation status; retain the trusted Core's completed stages.

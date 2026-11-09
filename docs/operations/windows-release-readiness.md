@@ -1,7 +1,10 @@
 # Windows acceptance
 
-Ordinary **2.0.0+4277** is the public Windows beta, published on 9 November
-2026 at 09:01:50 UTC. [GitHub release](https://github.com/Kiwunaka/pokrov/releases/tag/v2.0.0).
+The public Windows beta **2.0.1+4278** predates the Smart Safe fix in App source.
+When a Direct override can win for a readiness host, Windows requires a `HEAD`
+`204` through the selected VPN outbound. This confirms outbound reachability.
+The startup TUN probe still reads 64 KiB on the system route. The focused native
+regression passed. [Public beta](https://github.com/Kiwunaka/pokrov/releases/tag/v2.0.1).
 
 The capture-off local packages at
 `C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4277-ordinary/release` were compiled

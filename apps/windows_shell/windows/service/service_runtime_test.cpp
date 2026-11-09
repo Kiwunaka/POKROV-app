@@ -1418,6 +1418,86 @@ void TestEgressFailureStopsCoreAndIsSanitized() {
   RemoveTestRoot(root);
 }
 
+void TestDirectReadinessOverrideRequiresSelectedVpn() {
+  using namespace pokrov::service;
+  const auto root = CreateTestRoot();
+  if (root.empty()) {
+    Expect(false, "Direct readiness override test root was not created");
+    return;
+  }
+  auto core = std::make_unique<FakeCoreRuntime>();
+  auto* native = core.get();
+  native->smart_probe_version = 1;
+  native->smart_probe_error = "core_egress_connect_failed";
+  auto probe = std::make_unique<FakeEgressProbe>();
+  auto* tun = probe.get();
+  RuntimeHost host(std::move(core), std::move(probe), std::make_unique<FakeRecovery>(), root, false);
+  const std::string profile = R"({"outbounds":[{"type":"selector","tag":"selected-vpn"},
+    {"type":"direct","tag":"user-direct"}],"route":{"final":"selected-vpn","rules":[)";
+  const std::string api_direct = R"({"domain_suffix":["api.pokrov.space"],"outbound":"user-direct"})";
+  const std::string reserve_direct = R"({"domain_suffix":["birch.portal-privacy.online"],"outbound":"user-direct"})";
+  const auto app_pin = [](const std::string& domains) {
+    return R"({"domain":)" + domains + R"(,"network":"tcp","port":[443],
+      "process_name":["pokrov_service.exe"],"action":"route","outbound":"selected-vpn"})";
+  };
+  const auto paired_pin = app_pin(R"(["api.pokrov.space","birch.portal-privacy.online"])");
+  const auto legacy_pin = app_pin(R"(["api.pokrov.space"])");
+  const auto expect_app_scope = [&](const std::string& rules, EgressProbeReserve expected_reserve,
+                                    const std::string& expected_tag, const char* message) {
+    EgressProbeReserve reserve = EgressProbeReserve::kStatic;
+    std::string selected_tag;
+    const auto target = ReadWindowsSmartAccessProbeTarget(profile + rules + "]}}", false, &reserve, &selected_tag);
+    Expect(!target && reserve == expected_reserve && selected_tag == expected_tag, message);
+  };
+  expect_app_scope(paired_pin + "," + api_direct + "," + reserve_direct, EgressProbeReserve::kStatic, "",
+                   "earlier app-scope pin of both hosts still required a supplemental probe");
+  expect_app_scope(legacy_pin + "," + api_direct + "," + reserve_direct, EgressProbeReserve::kNone, "",
+                   "legacy app-scope pin checked an unused reserve");
+  expect_app_scope(api_direct + "," + paired_pin, EgressProbeReserve::kStatic, "selected-vpn",
+                   "later app-scope pin masked an earlier Direct override");
+
+  Expect(host.Initialize().status == Status::kOk &&
+             host.StageProfile("0\n" + profile + "]}}").status == Status::kOk,
+         "Global profile did not stage");
+  Expect(host.Connect(StagedDigest(host)).status == Status::kOk &&
+             tun->verify_calls == 1 && native->smart_probe_calls == 0,
+         "Global profile without an override changed its TUN-only proof");
+  host.Disconnect();
+
+  Expect(host.StageProfile("0\n" + profile + api_direct + "]}}").status == Status::kOk,
+         "Direct API override did not stage");
+  const auto failure = host.Connect(StagedDigest(host));
+  Expect(failure.status == Status::kNotReady && Contains(failure, "failure=core_egress_connect_failed") &&
+             Contains(failure, "core_egress_validated=0;dns_ready=0") && tun->verify_calls == 2 &&
+             native->smart_probe_calls == 1 && native->smart_probe_tag == "selected-vpn" &&
+             native->smart_probe_periodic,
+         "a Direct TUN response hid the selected VPN failure or used the wrong probe");
+
+  native->smart_probe_error.clear();
+  Expect(host.Connect(StagedDigest(host)).status == Status::kOk && native->smart_probe_calls == 2,
+         "TUN and selected VPN proof did not admit the Direct override profile");
+  const auto expired = host.RecheckEgress({}, ::GetTickCount64());
+  Expect(expired.status == Status::kNotReady && Contains(expired, "failure=core_egress_timeout") &&
+             native->smart_probe_calls == 2,
+         "expired egress proof started the supplemental selected VPN check");
+
+  bool cancelled = false;
+  const CheckInterruption owner = [&] {
+    return cancelled ? OperationInterruption::kCancelled : OperationInterruption::kNone;
+  };
+  tun->on_verify = [&] { cancelled = true; };
+  host.RecheckEgress(owner);
+  Expect(native->smart_probe_calls == 2, "cancelled TUN proof started the selected VPN check");
+  tun->on_verify = {};
+  cancelled = false;
+  native->on_smart_probe = [&] { cancelled = true; };
+  const auto cancelled_result = host.RecheckEgress(owner);
+  Expect(native->smart_probe_calls == 3 && Contains(cancelled_result, "core_egress_validated=0;dns_ready=0"),
+         "cancelled selected VPN result promoted stale egress proof");
+  host.Disconnect();
+  RemoveTestRoot(root);
+}
+
 void TestPendingRecoveryStopsCoreBeforeRuntimeReady() {
   using namespace pokrov::service;
   const auto root = CreateTestRoot();
@@ -2097,6 +2177,7 @@ int main(int argc, char** argv) {
   }
   if (argc == 2 && std::string(argv[1]) == "--smart-access-admission") {
     TestEgressFailureStopsCoreAndIsSanitized();
+    TestDirectReadinessOverrideRequiresSelectedVpn();
     return failures == 0 ? 0 : 1;
   }
   TestReleasedCoreDescriptorCompatibility();
@@ -2115,6 +2196,7 @@ int main(int argc, char** argv) {
   TestBundledRuleSetsAreStagedInsideProtectedWorkingDirectory();
   TestCoreErrorsAreSanitized();
   TestEgressFailureStopsCoreAndIsSanitized();
+  TestDirectReadinessOverrideRequiresSelectedVpn();
   TestPendingRecoveryStopsCoreBeforeRuntimeReady();
   TestStartupRecoveryIsEagerOnlyWhenJournalIsPending();
   TestFailedStartupRecoveryRemainsRetryable();

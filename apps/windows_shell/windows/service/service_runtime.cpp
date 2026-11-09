@@ -2045,7 +2045,9 @@ std::string RuntimeHost::VerifyEgress(bool periodic, const CheckInterruption& in
                                     std::uint64_t deadline_tick) {
   egress_failure_observation_.reset();
   EgressProbeReserve reserve = EgressProbeReserve::kStatic;
-  const auto target = ReadWindowsSmartAccessProbeTarget(staged_runtime_config_, false, &reserve);
+  std::string selected_vpn_tag;
+  const auto target = ReadWindowsSmartAccessProbeTarget(staged_runtime_config_, false, &reserve,
+                                                      &selected_vpn_tag);
   if (target) {
     if (target->empty()) return "profile_payload_invalid";
     if (core_->SmartAccessProbeVersion() != 1) return "core_egress_probe_unavailable";
@@ -2060,8 +2062,26 @@ std::string RuntimeHost::VerifyEgress(bool periodic, const CheckInterruption& in
       // Copy before rollback can stop Core and cancel its outstanding DNS work.
       egress_failure_observation_->first_owned_dns_state = core_->FirstOwnedDnsObservation();
     }
+    return failure;
   }
-  return failure;
+  if (selected_vpn_tag.empty()) return "";
+
+  const CheckInterruption owner = [&] {
+    const auto reason = interrupted ? interrupted() : OperationInterruption::kNone;
+    if (reason != OperationInterruption::kNone) return reason;
+    return deadline_tick != 0 && ::GetTickCount64() >= deadline_tick
+        ? OperationInterruption::kDeadlineExceeded : OperationInterruption::kNone;
+  };
+  auto reason = owner();
+  if (reason == OperationInterruption::kNone) {
+    if (core_->SmartAccessProbeVersion() != 1) return "core_egress_probe_unavailable";
+    // The cancellable ABI verifies the selected leaf's HTTPS liveness. The
+    // ordinary TUN probe above still owns the startup payload check.
+    const auto selected_failure = core_->ProbeSmartAccess(selected_vpn_tag, true, owner);
+    reason = owner();
+    if (reason == OperationInterruption::kNone) return selected_failure;
+  }
+  return reason == OperationInterruption::kDeadlineExceeded ? "core_egress_timeout" : "core_egress_probe_failed";
 }
 
 RuntimeResult RuntimeHost::RecheckEgress(const CheckInterruption& interrupted,
