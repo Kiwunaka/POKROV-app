@@ -20,8 +20,10 @@ QA 4277 confirmed the cached material receipt on one UI Global Connect. Stable
 Stop failed after direct backend Stop; actual UI Disconnect was not tested. In
 the later direct profile-only window after platform `0a9e758`, Refresh remained
 **UNKNOWN**. The exact baseline, VM shutdown and lease closure passed in that
-separate window. The [Windows acceptance record](windows-release-readiness.md)
-has the diagnostic details and the limits of the timing observation.
+separate window. The next Windows QA window ended during UI preparation, with
+Connect and UI Disconnect both 0. VM shutdown and lease closure passed, and
+the post-Stop baseline remains **UNKNOWN**. See the
+[Windows acceptance record](windows-release-readiness.md).
 
 The accepted prepared ordinary private beta fallback **2.0.0+4276** remains in
 `C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4276-ordinary/release`, compiled from

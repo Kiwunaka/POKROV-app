@@ -32,6 +32,16 @@ window contained one managed-profile HTTP 200 (5135 ms to headers, catalog
 This closure leaves the earlier stable Stop failure unchanged. UI Disconnect
 remains unverified, and the timing does not establish a speed gain.
 
+A separate 9 November Windows QA window ended during UI preparation. The App
+launched once, and the Home Connect control and tray Exit were identified.
+After Escape, the guest MSAA read returned `COMException` with
+`DISP_E_MEMBERNOTFOUND` (`0x80020003`) before the focus and capture checks.
+The failing COM call and its cause remain unknown. Connect, watchdog arm and
+UI Disconnect were all 0. First IPC Stop returned ACK, and normal shutdown
+reached PoweredOff / Unlocked at 05:08:02.536 UTC. The post-Stop baseline
+remains **UNKNOWN**. Guard 9 and fresh FULL ACK 6/API passed. The lease closed
+at 05:08:41.051694 UTC.
+
 The separate capture-on QA 4277 was installed. An earlier planned receipt run
 was cancelled by the owner's Iceland-retirement decision before dry-run, arm or
 Connect (all 0); this was not a client failure. At that preparation checkpoint,
