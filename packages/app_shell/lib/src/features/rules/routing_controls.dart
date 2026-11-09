@@ -1158,9 +1158,10 @@ class _SmartDnsProviderSheet extends StatefulWidget {
 }
 
 class _SmartDnsProviderSheetState extends State<_SmartDnsProviderSheet> {
+  static const _loadFailure = 'Не удалось загрузить SmartDNS-провайдеров. Попробуй ещё раз.';
   VerifiedSmartAccessProviderPolicy? _policy;
   bool _loading = true;
-  bool _failed = false;
+  String? _failureMessage;
   Timer? _expiry;
 
   @override
@@ -1177,14 +1178,20 @@ class _SmartDnsProviderSheetState extends State<_SmartDnsProviderSheet> {
 
   Future<void> _refresh() async {
     _expiry?.cancel();
-    setState(() { _loading = true; _failed = false; _policy = null; });
+    setState(() { _loading = true; _failureMessage = null; _policy = null; });
     try {
       final policy = await widget.load?.call();
       if (!mounted) return;
       _policy = policy;
       if (policy != null) _scheduleBoundary(policy);
+    } on BootstrapFailure catch (error) {
+      if (mounted) {
+        _failureMessage = error.statusCode == HttpStatus.forbidden &&
+            error.operation == 'GET /api/client/smart-access/providers?resolver_bootstrap_ip=1'
+            ? error.message : _loadFailure;
+      }
     } on Object {
-      if (mounted) _failed = true;
+      if (mounted) _failureMessage = _loadFailure;
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -1235,9 +1242,8 @@ class _SmartDnsProviderSheetState extends State<_SmartDnsProviderSheet> {
           onTap: () => Navigator.of(context).pop('')),
         if (_loading)
           const Padding(padding: EdgeInsets.all(12), child: Center(child: CircularProgressIndicator())),
-        if (_failed)
-          const Text('Не удалось загрузить SmartDNS-провайдеров. Попробуй ещё раз.'),
-        if (!_loading && !_failed && providers.isEmpty)
+        if (_failureMessage case final message?) Text(message),
+        if (!_loading && _failureMessage == null && providers.isEmpty)
           const Text('Сейчас нет доступных подписанных провайдеров. Можно оставить автоматический выбор.'),
         if (preferences.smartDnsProviderId.isNotEmpty && !selectionAvailable &&
             !_loading)

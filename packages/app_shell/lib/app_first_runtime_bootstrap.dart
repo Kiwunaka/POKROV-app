@@ -10654,12 +10654,29 @@ class AppFirstRuntimeBootstrapper
             (method == 'POST' && path == '/api/client/runtime/stats' &&
                 response.statusCode != HttpStatus.ok)) {
           traceReason = _bootstrapHttpReason(response);
-          final responseCode = _platformErrorCode(response, body: text);
+          final smartAccessDenial = switch ((response.statusCode, method, requestUri.path)) {
+            (HttpStatus.forbidden, 'GET', '/api/client/smart-access/providers') => (
+              code: 'smart_access_access_denied',
+              message: 'Для SmartDNS нужен действующий Premium. Проверь статус во вкладке «Доступ».',
+            ),
+            (HttpStatus.forbidden, 'POST', '/api/client/smart-access/control') => (
+              code: 'smart_access_device_unavailable',
+              message: 'Не удалось подтвердить устройство для SmartDNS. Проверь, что оно активно в кабинете.',
+            ),
+            _ => null,
+          };
+          final responseCode = _platformErrorCode(response, body: text, legacyDetailCode: smartAccessDenial?.code);
+          final reason = PortalFailureReason.fromCode(responseCode);
           final responseRequestId = response.headers.value('X-Request-ID');
           final requestId = PortalCorrelationScope.isValid(responseRequestId) ? responseRequestId : null;
-          final message = _errorMessageForResponse(text, response.statusCode, code: responseCode);
+          final message = switch (smartAccessDenial) {
+            null => _errorMessageForResponse(text, response.statusCode, code: responseCode),
+            (code: final code, message: final copy) when code == responseCode => copy,
+            _ => portalFailureUserMessage(reason) ??
+              'Сервер не подтвердил доступ к SmartDNS. Проверь статус доступа в кабинете.',
+          };
           final failure = BootstrapFailure(
-            PortalFailureReason.fromCode(responseCode) == null && requestId != null
+            smartAccessDenial == null && reason == null && requestId != null
                 ? '$message Код обращения: $requestId.' : message,
             statusCode: response.statusCode,
             operation: operation,
@@ -11031,15 +11048,22 @@ class AppFirstRuntimeBootstrapper
       statusCode == HttpStatus.serviceUnavailable ||
       statusCode == HttpStatus.gatewayTimeout;
 
-  String _platformErrorCode(HttpClientResponse response, {String body = ''}) {
-    final normalized = (response.headers.value('X-POKROV-Error') ??
+  String _platformErrorCode(HttpClientResponse response, {String body = '', String? legacyDetailCode}) {
+    final serviceCode = response.headers.value('X-POKROV-Error');
+    final normalized = (serviceCode ??
             response.headers.value(_platformErrorCodeHeader) ?? '')
         .trim()
         .toLowerCase();
-    if (_platformErrorCodePattern.hasMatch(normalized)) return normalized;
+    final validHeader = _platformErrorCodePattern.hasMatch(normalized);
+    // Older servers add a generic auth header to these string-detail denials.
+    if (validHeader && (legacyDetailCode == null || serviceCode != null || normalized != 'forbidden')) {
+      return normalized;
+    }
     try {
       final decoded = jsonDecode(body);
       final detail = decoded is Map ? decoded['detail'] : null;
+      if (legacyDetailCode != null && detail == legacyDetailCode) return legacyDetailCode;
+      if (validHeader) return normalized;
       final code = detail is Map ? detail['code'] : null;
       if (code is String) {
         final normalizedCode = code.trim().toLowerCase();
@@ -11048,7 +11072,7 @@ class AppFirstRuntimeBootstrapper
     } on FormatException {
       // Error pages without a JSON reason keep their original HTTP status.
     }
-    return '';
+    return validHeader ? normalized : '';
   }
 
   String _bootstrapHttpReason(HttpClientResponse response) {

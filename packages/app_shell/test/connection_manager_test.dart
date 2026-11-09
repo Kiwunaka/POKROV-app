@@ -480,6 +480,7 @@ class _SmartDnsBootstrapper extends _QaProfileFailureBootstrapper {
   final VerifiedRoutingCatalog catalog;
   final VerifiedSmartAccessProviderPolicy providers;
   final Future<VerifiedSmartAccessLease> Function(String) issueLease;
+  Future<VerifiedSmartAccessProviderPolicy> Function()? loadProviders;
   int providerReads = 0;
   int leaseRequests = 0;
 
@@ -525,7 +526,7 @@ class _SmartDnsBootstrapper extends _QaProfileFailureBootstrapper {
       required bool Function() operationIsCurrent, required Duration remainingBudget,
       required Future<void> cancelled}) async {
     providerReads++;
-    return providers;
+    return await loadProviders?.call() ?? providers;
   }
   @override
   Future<VerifiedSmartAccessLease> requestSmartAccessLease({required HostPlatform hostPlatform,
@@ -2785,7 +2786,12 @@ void main() {
         'access_state': 'trial_premium', 'smart_access_eligible': true})
       ..providerLoader = () async {
         reads++;
-        if (reads == 1 || reads == 5) throw const RoutingCatalogFailure('smart_access_budget_exhausted');
+        if (reads == 1) throw const RoutingCatalogFailure('smart_access_budget_exhausted');
+        if (reads == 5) {
+          throw const BootstrapFailure('Для SmartDNS нужен действующий Premium. Проверь статус во вкладке «Доступ».',
+            statusCode: HttpStatus.forbidden, code: 'smart_access_access_denied',
+            operation: 'GET /api/client/smart-access/providers?resolver_bootstrap_ip=1');
+        }
         return reads < 4 ? policies.available : policies.withdrawn;
       };
     await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
@@ -2829,7 +2835,8 @@ void main() {
     expect(reads, 4);
     await tester.tap(refresh);
     await tester.pumpAndSettle();
-    expect(find.text('Не удалось загрузить SmartDNS-провайдеров. Попробуй ещё раз.'), findsOneWidget);
+    expect(find.text('Для SmartDNS нужен действующий Premium. Проверь статус во вкладке «Доступ».'), findsOneWidget);
+    expect(find.text('smart_access_access_denied'), findsNothing);
     expect(ownProvider, findsNothing);
     final nextPolicy = Completer<VerifiedSmartAccessProviderPolicy>();
     bootstrapper.providerLoader = () => nextPolicy.future;
@@ -6816,7 +6823,7 @@ void main() {
     expect(runtime.connectCalls, 2, reason: 'signature failure cannot fall through to the VPN cache');
   });
 
-  test('ordinary SmartDNS delivery opts in to signed resolver bootstrap IPs', () async {
+  test('ordinary SmartDNS delivery reads signed resolver pins and scopes 403 denials', () async {
     final originalHttpOverrides = HttpOverrides.current;
     HttpOverrides.global = null;
     addTearDown(() => HttpOverrides.global = originalHttpOverrides);
@@ -6847,6 +6854,8 @@ void main() {
     await secrets.writeSessionToken(hostPlatform: HostPlatform.windows,
       installId: 'synthetic-install', sessionToken: 'synthetic-session');
     var published = false;
+    String? providerDenial;
+    var sendProviderDenialHeader = false;
     final requests = <String>[];
     unawaited(() async {
       await for (final request in server) {
@@ -6857,8 +6866,21 @@ void main() {
           expect(request.method, 'GET');
           expect(request.uri.queryParameters, {'resolver_bootstrap_ip': '1'});
           await request.drain<void>();
-          reply = {'schema': 'smart-access-providers-response-v1',
-            'envelope': published ? pinnedEnvelope : legacyEnvelope};
+          if (providerDenial case final detail?) {
+            request.response.statusCode = HttpStatus.forbidden;
+            request.response.headers.set('X-POKROV-Auth-Error', 'forbidden');
+            if (sendProviderDenialHeader) request.response.headers.set('X-POKROV-Error', detail);
+            reply = {'detail': detail};
+          } else {
+            reply = {'schema': 'smart-access-providers-response-v1',
+              'envelope': published ? pinnedEnvelope : legacyEnvelope};
+          }
+        } else if (request.uri.path == '/api/client/smart-access/control') {
+          expect(request.method, 'POST');
+          await request.drain<void>();
+          request.response.statusCode = HttpStatus.forbidden;
+          request.response.headers.set('X-POKROV-Auth-Error', 'forbidden');
+          reply = {'detail': 'smart_access_device_unavailable'};
         } else {
           expect(request.method, 'POST');
           expect(request.uri.path, '/api/client/smart-access/lease');
@@ -6904,6 +6926,56 @@ void main() {
       {'enabled': true, 'server_name': 'dns.example.test'});
     expect(requests, hasLength(3));
     expect(requests.any((request) => request.contains('first-provider-qa')), isFalse);
+
+    final managerDirectory = await Directory('${directory.path}/manager').create();
+    final managerBootstrapper = _SmartDnsBootstrapper(managerDirectory, fixture.catalog, fixture.providers,
+      (_) async => throw StateError('A denied provider policy must not request a lease'))
+      ..cached.failure = null
+      ..loadProviders = fetch;
+    final account = AccountSessionCoordinator(accountActions: null)
+      ..updateSubscriptionInfo(await managerBootstrapper.fetchClientSubscription(hostPlatform: HostPlatform.windows));
+    final runtime = _SmartDnsRuntime();
+    final manager = _manager(runtime, managerBootstrapper, accountSessionCoordinator: account,
+      authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    addTearDown(manager.dispose);
+    manager.selectRouteMode(RouteMode.allExceptRu);
+
+    Future<void> expectSignedFallback() async {
+      await manager.connect();
+      expect(manager.status.phase, ConnectionPhase.connected,
+        reason: '${sendProviderDenialHeader ? 'service header' : 'string detail'} / ${manager.headline}');
+      final fallback = jsonDecode(runtime.stagedPayloads.last.configPayload) as Map;
+      expect((fallback['outbounds'] as List).cast<Map>().any((row) => row['type'] == 'pokrov-smart-access'), isFalse);
+      expect(((fallback['route'] as Map)['rules'] as List).cast<Map>().any((row) =>
+        (row['domain'] as List?)?.contains('gemini.google.com') == true && row['outbound'] == 'proxy'), isTrue);
+      await manager.disconnect();
+    }
+
+    providerDenial = 'smart_access_access_denied';
+    sendProviderDenialHeader = true;
+    await expectSignedFallback();
+    sendProviderDenialHeader = false;
+    await expectSignedFallback();
+    await expectLater(fetch(), throwsA(isA<BootstrapFailure>()
+      .having((failure) => failure.code, 'code', 'smart_access_access_denied')
+      .having((failure) => failure.operationalErrorCode, 'technical code', 'API-005')
+      .having((failure) => failure.message, 'message',
+        'Для SmartDNS нужен действующий Premium. Проверь статус во вкладке «Доступ».')));
+
+    providerDenial = 'unrelated_forbidden';
+    await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.actionRequired);
+    expect(manager.headline, 'Сервер не подтвердил доступ к SmartDNS. Проверь статус доступа в кабинете.');
+    expect(runtime.connectCalls, 2);
+    expect(runtime.stagedPayloads, hasLength(2));
+    expect(managerBootstrapper.leaseRequests, 0);
+
+    await expectLater(bootstrapper.fetchSmartAccessControl(hostPlatform: HostPlatform.windows,
+      profileDigest: profile, operationIsCurrent: () => true,
+      remainingBudget: const Duration(seconds: 5), cancelled: cancelled.future), throwsA(isA<BootstrapFailure>()
+        .having((failure) => failure.code, 'code', 'smart_access_device_unavailable')
+        .having((failure) => failure.message, 'message',
+          'Не удалось подтвердить устройство для SmartDNS. Проверь, что оно активно в кабинете.')));
   });
 
   test('SmartDNS resolver bootstrap pins preserve TLS identity and bind renewal scope', () async {

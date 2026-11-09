@@ -14,6 +14,12 @@ ordinary Bezmezhau Connect remains a result for that build. The 4269 Windows
 VPN smokes did not exercise provider traffic. See [Windows acceptance](../operations/windows-release-readiness.md)
 and the [current release queue](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md).
 
+If the provider lookup rejects stale Premium eligibility, ordinary Connect keeps
+the existing signed VPN or block route. The provider picker asks the user to
+check their access. The client recognizes this denial and the control endpoint's
+device denial in both the closed header and the older exact response body.
+Unrelated access denials keep their existing authorization handling.
+
 The 6 November private Windows 4270/Core 1.2.15 DNS-AI QA used one
 device-bound, nonrenewable source-only permit for both exact Gemini hosts.
 The server recorded claim and control profile binding, but native runtime-control
