@@ -3,8 +3,11 @@
 Updated 9 November 2026. **V2 (2.0.0)** is the next Android and Windows release,
 scheduled by the owner for 9 November at 12:00 Moscow time.
 
-The local ordinary **2.0.0+4277** packages are ready for private draft staging in
-`C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4277-ordinary/release`, compiled from
+Ordinary **2.0.0+4277** is in [verified private draft 438562626](https://github.com/Kiwunaka/pokrov/releases/tag/untagged-62bc0915d0bad3f9a1a0)
+under canonical `v2.0.0`, with `draft=true`, `prerelease=true` and
+`published_at=null`. All seven assets passed digest, size and uploaded-state
+readback, and the notes matched. The local packages in
+`C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4277-ordinary/release` were compiled from
 App `237f0878` with accepted Core `34adfca77` (1.2.15 / ABI2), without a Core
 rebuild and with capture OFF. Four production-signed APKs and the unsigned
 Windows Setup/single-Setup ZIP passed the new package and native-payload gates.
@@ -13,20 +16,10 @@ index/checksums) and beta notes; `rollback-1.4.5.json` is byte-exact to the
 preserved 4276 rollback.
 Physical Android and full native acceptance remain **NOT_VERIFIED**.
 
-An earlier capture-on QA 4277 receipt window was cancelled by the owner's
-Iceland-retirement decision before dry-run, arm or Connect (all 0), not by a
-client failure. A later single UI Global Connect positively recorded
-`cached_fallback` (profile 5151 ms, online `API-002` after 3003 ms, native probe
-890 ms), and the whole attempt succeeded before the first IPC Stop. Stable Stop
-**FAILED** with two reentries after direct backend Stop; normal UI Stop was not
-invoked and a product regression is not established. The third Stop and normal
-shutdown reached PoweredOff at 21:53:24 UTC, with the lease closed at 21:56:37
-UTC. A later AppOff read-only baseline PASS and shutdown at 22:12:55 UTC do not
-change that result. The [Windows acceptance record](windows-release-readiness.md)
-owns the details and required Stop → Tray Exit / App 0 → final Stop / baseline →
-watchdog-disarm closure. Three capture rows (two PASS, one censored, singleton
-prior) do not establish an ML gain. Private draft preparation is a separate
-writer task; public 1.4.5 remains unchanged.
+QA 4277 confirmed the cached material receipt on one UI Global Connect. Stable
+Stop failed after direct backend Stop. The later profile-only Refresh and final
+baseline remain **UNKNOWN**. The [Windows acceptance record](windows-release-readiness.md)
+records those outcomes, the offline diagnostic fix and the required closure.
 
 The accepted prepared ordinary private beta fallback **2.0.0+4276** remains in
 `C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4276-ordinary/release`, compiled from
@@ -38,12 +31,11 @@ and no-QA-capture checks; Android minSdk is 24. Root accepted this private
 preparation under the owner's 8 November general GO. Physical/native acceptance
 of these ordinary packages remains **NOT_VERIFIED**.
 
-At the 4276 preparation checkpoint, [private GitHub draft 438229411](https://github.com/Kiwunaka/pokrov/releases/tag/untagged-654a7f38dfb553af034a)
-used canonical `v2.0.0`, with `draft=true`, `prerelease=true` and
-`published_at=null`. All seven canonical assets passed server digest, size and
-uploaded-state readback against the stage; the release notes matched exactly.
-One anonymous range request to the new ARM64 asset returned **404 in 0.304 s**.
-This checks only that asset's anonymous availability, not product-wide privacy.
+The preserved [private 4276 draft 438229411](https://github.com/Kiwunaka/pokrov/releases/tag/untagged-9f7cae4961f424eebed9)
+now uses `private-v2.0.0-4276` and retains all seven original assets and notes.
+At preparation, its asset readback and notes matched, and one anonymous range
+request for its ARM64 asset returned **404 in 0.304 s**. Its frozen index keeps
+the historical canonical URLs.
 GitHub latest and the public Android/Windows API remain **1.4.5**; no publication
 or runtime switch occurred. Retain `prerelease=true` and `make_latest=false`
 after publication; APP_* uses the exact v2.0.0 URLs. Current backend-only fixes

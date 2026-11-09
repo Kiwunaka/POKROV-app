@@ -1,20 +1,31 @@
 # Windows acceptance
 
-Current local ordinary **2.0.0+4277**, compiled App `237f0878` / accepted Core
-`34adfca77` (1.2.15 / ABI2), is ready for private draft staging under
-`C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4277-ordinary/release` with capture
-OFF. The unsigned Setup and one-Setup ZIP passed version and packaging checks;
-all 12 staged runtime files match the accepted manifest. The later QA run
-confirmed the cached material-origin receipt, but full native acceptance remains
-**NOT_VERIFIED** because stable Stop failed as recorded below.
+Ordinary **2.0.0+4277** is in [verified private draft 438562626](https://github.com/Kiwunaka/pokrov/releases/tag/untagged-62bc0915d0bad3f9a1a0)
+under `v2.0.0`. The capture-off local packages at
+`C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4277-ordinary/release` were compiled
+from App `237f0878` and accepted Core `34adfca77` (1.2.15 / ABI2). The unsigned
+Setup and one-Setup ZIP passed version and packaging checks. All 12 staged
+runtime files match the accepted manifest. QA confirmed the cached material
+receipt. Full native acceptance remains **NOT_VERIFIED** after the failed
+stable Stop recorded below.
+
+The current Windows QA controller is `v2_vm_controller_fresh_terra`. On
+9 November, both stack samplers exited 0 in the 01:38:18–01:39:05 UTC
+profile-only window. The Refresh result was `CALLER_ERROR` with click
+**UNKNOWN**, and Connect was 0. First Stop returned ACK and normal shutdown
+reached PoweredOff at host 01:40:35 UTC. The lease closed at 01:41:37 UTC.
+Final baseline remains **UNKNOWN**. The original receipt omitted the guest
+stage and HRESULT, leaving the cause unknown. The harness now preserves fixed
+stage, reason and guard names, a bounded CLR exception name, and a numeric
+HRESULT or null. Offline checks verified the diagnostic receipt before and
+after entry to Click, including a null HRESULT. Verification is offline only.
 
 The separate capture-on QA 4277 was installed. An earlier planned receipt run
 was cancelled by the owner's Iceland-retirement decision before dry-run, arm or
 Connect (all 0); this was not a client failure. At that preparation checkpoint,
 the API catalog had six nodes and the Netcup replacement was pending. The later
-Connect below is a separate window. Private GitHub staging is handled separately;
-public 1.4.5 remains the release/runtime baseline. Physical Android, DNS-AI and
-ML gain are not accepted by these Windows observations.
+Connect below is a separate window. Public 1.4.5 remains the release/runtime
+baseline. Physical Android, DNS-AI and ML gain remain unverified.
 
 On 8 November, one UI Global Connect in QA 4277 reached native running, DNS and
 egress readiness. `profile.finished` succeeded with
