@@ -1,7 +1,9 @@
 # Windows acceptance
 
-Ordinary **2.0.0+4277** is in [verified private draft 438562626](https://github.com/Kiwunaka/pokrov/releases/tag/untagged-62bc0915d0bad3f9a1a0)
-under `v2.0.0`. The capture-off local packages at
+Ordinary **2.0.0+4277** is the public Windows beta, published on 9 November
+2026 at 09:01:50 UTC. [GitHub release](https://github.com/Kiwunaka/pokrov/releases/tag/v2.0.0).
+
+The capture-off local packages at
 `C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4277-ordinary/release` were compiled
 from App `237f0878` and accepted Core `34adfca77` (1.2.15 / ABI2). The unsigned
 Setup and one-Setup ZIP passed version and packaging checks. All 12 staged

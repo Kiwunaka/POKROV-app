@@ -1,12 +1,15 @@
 # POKROV V2 client release status
 
-Updated 9 November 2026. **V2 (2.0.0)** is the next Android and Windows release,
-scheduled by the owner for 9 November at 12:00 Moscow time.
+Updated 9 November 2026. Ordinary **2.0.0+4277** is the public Android and
+Windows beta. Release 438562626 has `draft=false`, `prerelease=true` and
+`published_at=2026-11-09T09:01:50Z`. All seven assets passed digest, size and
+uploaded-state readback, and the notes matched. [GitHub release](https://github.com/Kiwunaka/pokrov/releases/tag/v2.0.0).
 
-Ordinary **2.0.0+4277** is in [verified private draft 438562626](https://github.com/Kiwunaka/pokrov/releases/tag/untagged-62bc0915d0bad3f9a1a0)
-under canonical `v2.0.0`, with `draft=true`, `prerelease=true` and
-`published_at=null`. All seven assets passed digest, size and uploaded-state
-readback, and the notes matched. The local packages in
+The app feed and WebApp switched to 2.0.0. The marketing export stayed in place.
+All seven anonymous assets and 13 public checks passed. The production lease
+was released at 09:09:57.497573 UTC after fresh FULL ACK 6 and API checks.
+
+The local packages in
 `C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4277-ordinary/release` were compiled from
 App `237f0878` with accepted Core `34adfca77` (1.2.15 / ABI2), without a Core
 rebuild and with capture OFF. Four production-signed APKs and the unsigned
@@ -48,10 +51,11 @@ now uses `private-v2.0.0-4276` and retains all seven original assets and notes.
 At preparation, its asset readback and notes matched, and one anonymous range
 request for its ARM64 asset returned **404 in 0.304 s**. Its frozen index keeps
 the historical canonical URLs.
-GitHub latest and the public Android/Windows API remain **1.4.5**; no publication
-or runtime switch occurred. Retain `prerelease=true` and `make_latest=false`
-after publication; APP_* uses the exact v2.0.0 URLs. Current backend-only fixes
-do not change these App/Core package inputs and require no App rebuild.
+During 4276 preparation, GitHub Latest and the public Android/Windows API
+still served **1.4.5**. No publication or runtime switch occurred for 4276.
+The beta plan specified `prerelease=true`, `make_latest=false` and exact
+v2.0.0 asset URLs in APP_*. The backend-only fixes left these App/Core package
+inputs intact and required no App rebuild.
 
 The separate capture-on QA 4276 first had a START0 window without native
 admission; one later Global Connect through cached fallback reached verified
