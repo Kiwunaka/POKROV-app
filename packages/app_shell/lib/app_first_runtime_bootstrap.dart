@@ -10667,16 +10667,26 @@ class AppFirstRuntimeBootstrapper
           };
           final responseCode = _platformErrorCode(response, body: text, legacyDetailCode: smartAccessDenial?.code);
           final reason = PortalFailureReason.fromCode(responseCode);
+          final accessDenialMessage = switch ((response.statusCode, method, requestUri.path)) {
+            (HttpStatus.forbidden, 'GET', '/api/client/profile/managed') =>
+              'Сервер отклонил запрос настроек VPN. Проверь доступ во вкладке «Доступ». Если доступ активен, отправь отчёт из «Диагностики».',
+            (HttpStatus.forbidden, 'GET', '/api/client/subscription') =>
+              'Сервер отклонил проверку доступа. Проверь, что выбран нужный аккаунт POKROV. Если ошибка повторится, отправь отчёт из «Диагностики».',
+            (HttpStatus.forbidden, 'POST', '/api/client/session/refresh') =>
+              'Сервер отклонил обновление входа. Обнови доступ в приложении. Если ошибка повторится, отправь отчёт из «Диагностики».',
+            _ => null,
+          };
           final responseRequestId = response.headers.value('X-Request-ID');
           final requestId = PortalCorrelationScope.isValid(responseRequestId) ? responseRequestId : null;
           final message = switch (smartAccessDenial) {
+            null when accessDenialMessage != null => portalFailureUserMessage(reason) ?? accessDenialMessage,
             null => _errorMessageForResponse(text, response.statusCode, code: responseCode),
             (code: final code, message: final copy) when code == responseCode => copy,
             _ => portalFailureUserMessage(reason) ??
               'Сервер не подтвердил доступ к SmartDNS. Проверь статус доступа в кабинете.',
           };
           final failure = BootstrapFailure(
-            smartAccessDenial == null && reason == null && requestId != null
+            smartAccessDenial == null && accessDenialMessage == null && reason == null && requestId != null
                 ? '$message Код обращения: $requestId.' : message,
             statusCode: response.statusCode,
             operation: operation,

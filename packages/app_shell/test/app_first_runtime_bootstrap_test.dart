@@ -3484,6 +3484,8 @@ void main() {
     });
 
     final requests = <String>[];
+    String? profileDenialCode;
+    const requestId = '11111111-1111-4111-8111-111111111111';
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(server.close);
     unawaited(() async {
@@ -3538,6 +3540,18 @@ void main() {
             request.headers.value(HttpHeaders.authorizationHeader),
             'Bearer session-token-1',
           );
+          if (profileDenialCode case final code?) {
+            request.response
+              ..statusCode = HttpStatus.forbidden
+              ..headers.contentType = ContentType.json
+              ..headers.set('X-Request-ID', requestId)
+              ..headers.set('X-POKROV-Auth-Error', 'forbidden');
+            if (code != 'forbidden') request.response.headers.set('X-POKROV-Error', code);
+            request.response.write(jsonEncode({'detail': code == 'forbidden'
+              ? 'Authenticated device is unavailable' : 'Transport access unavailable'}));
+            await request.response.close();
+            continue;
+          }
           request.response
             ..headers.contentType = ContentType.json
             ..write(
@@ -3641,11 +3655,12 @@ void main() {
       deviceNameResolver: (_) async => 'Surface Laptop',
     );
 
-    final payload = await bootstrapper.resolveManagedProfile(
+    Future<ManagedProfilePayload> fetchProfile() => bootstrapper.resolveManagedProfile(
       hostPlatform: HostPlatform.windows,
       routeMode: RouteMode.selectedApps,
       selectedApps: const ['pokrov-test.exe'],
     );
+    final payload = await fetchProfile();
 
     expect(payload.profileName, 'pokrov-windows-rev-007');
     expect(payload.source?.revision, 'rev-007');
@@ -3697,6 +3712,18 @@ void main() {
       'session-token-1',
     );
     expect(state['managed_manifest_path'], '/api/client/profile/managed');
+    profileDenialCode = 'forbidden';
+    await expectLater(fetchProfile(), throwsA(isA<BootstrapFailure>()
+      .having((failure) => failure.operationalErrorCode, 'technical code', 'API-005')
+      .having((failure) => failure.httpStatusForDiagnostics, 'observed HTTP', 403)
+      .having((failure) => failure.requestId, 'support request ID', requestId)
+      .having((failure) => failure.message, 'user copy',
+        'Сервер отклонил запрос настроек VPN. Проверь доступ во вкладке «Доступ». Если доступ активен, отправь отчёт из «Диагностики».')));
+    profileDenialCode = 'active_access_required';
+    await expectLater(fetchProfile(), throwsA(isA<BootstrapFailure>()
+      .having((failure) => failure.reason?.wireValue, 'known reason', 'active_access_required')
+      .having((failure) => failure.message, 'specific action', contains('нужен действующий доступ'))));
+    expect(requests.where((request) => request == 'POST /api/client/session/start-trial'), hasLength(1));
   });
 
   test(
@@ -4531,6 +4558,8 @@ void main() {
       pair: const AppFirstSessionCredentials(accessToken: 'expired-access', refreshToken: 'saved-refresh'));
     var refreshStatus = HttpStatus.forbidden;
     var refreshes = 0;
+    var subscriptionDenied = false;
+    const requestId = '11111111-1111-4111-8111-111111111111';
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(() => server.close(force: true));
     server.listen((request) async {
@@ -4545,6 +4574,7 @@ void main() {
           }}));
         } else {
           request.response.headers.contentType = ContentType.html;
+          request.response.headers.set('X-Request-ID', requestId);
           request.response.write('<html>Request blocked</html>');
         }
       } else {
@@ -4553,6 +4583,11 @@ void main() {
         if (request.headers.value(HttpHeaders.authorizationHeader) == 'Bearer expired-access') {
           request.response.statusCode = HttpStatus.unauthorized;
           request.response.write('{"detail":"expired"}');
+        } else if (subscriptionDenied) {
+          request.response.statusCode = HttpStatus.forbidden;
+          request.response.headers.set('X-POKROV-Auth-Error', 'forbidden');
+          request.response.headers.set('X-Request-ID', requestId);
+          request.response.write('{"detail":"Access denied"}');
         } else {
           request.response.write('{"lane":"paidUnlimited","access_state":"paid_unlimited"}');
         }
@@ -4563,15 +4598,28 @@ void main() {
       supportDirectoryResolver: () async => directory, sessionSecretStore: secrets, maxRequestAttempts: 1);
     for (final status in [HttpStatus.forbidden, HttpStatus.notFound]) {
       refreshStatus = status;
-      await expectLater(bootstrapper.fetchClientSubscription(hostPlatform: platform),
-        throwsA(isA<BootstrapFailure>()
-          .having((error) => error.statusCode, 'observed status', status)
-          .having((error) => error.sessionRejected, 'definite session rejection', isFalse)));
+      var failure = isA<BootstrapFailure>()
+        .having((error) => error.statusCode, 'observed status', status)
+        .having((error) => error.sessionRejected, 'definite session rejection', isFalse);
+      if (status == HttpStatus.forbidden) {
+        failure = failure
+          .having((error) => error.operationalErrorCode, 'technical code', 'API-005')
+          .having((error) => error.requestId, 'support request ID', requestId)
+          .having((error) => error.message, 'user copy',
+            'Сервер отклонил обновление входа. Обнови доступ в приложении. Если ошибка повторится, отправь отчёт из «Диагностики».');
+      }
+      await expectLater(bootstrapper.fetchClientSubscription(hostPlatform: platform), throwsA(failure));
       expect((await secrets.readSessionPair(hostPlatform: platform, installId: installId))?.refreshToken,
         'saved-refresh');
     }
     refreshStatus = HttpStatus.ok;
     expect((await bootstrapper.fetchClientSubscription(hostPlatform: platform)).lane, 'paidUnlimited');
+    subscriptionDenied = true;
+    await expectLater(bootstrapper.fetchClientSubscription(hostPlatform: platform), throwsA(isA<BootstrapFailure>()
+      .having((error) => error.operationalErrorCode, 'technical code', 'API-005')
+      .having((error) => error.requestId, 'support request ID', requestId)
+      .having((error) => error.message, 'user copy',
+        'Сервер отклонил проверку доступа. Проверь, что выбран нужный аккаунт POKROV. Если ошибка повторится, отправь отчёт из «Диагностики».')));
     expect(refreshes, 3);
     expect((await secrets.readSessionPair(hostPlatform: platform, installId: installId))?.refreshToken,
       'rotated-refresh');
