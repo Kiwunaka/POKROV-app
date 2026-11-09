@@ -60,6 +60,15 @@ and watchdog removal all passed. The VM reached PoweredOff / Unlocked at
 05:48:30.154 UTC. Guard 9, current 6 and fresh FULL ACK 6/API passed. The lease
 closed at 05:49:05.613837 UTC.
 
+The offline Connect guard proposal uses one host monotonic timer across the
+initial guest clock sample and the gate. The two call intervals must admit a
+common offset. The conservative lower bound on the offset change must be at
+least −2 s. At the final check, both reply age and the combined backward clock
+change plus age must fit within 9 s. The absolute cutoffs and watchdog still
+apply. Missing or ambiguous replies block dispatch. Later clock steps and
+input delivery remain outside the proof. The remaining UI and closure guards
+still use wall-clock lag.
+
 The separate capture-on QA 4277 was installed. An earlier planned receipt run
 was cancelled by the owner's Iceland-retirement decision before dry-run, arm or
 Connect (all 0); this was not a client failure. At that preparation checkpoint,
