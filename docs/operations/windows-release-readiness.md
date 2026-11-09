@@ -9,16 +9,28 @@ runtime files match the accepted manifest. QA confirmed the cached material
 receipt. Full native acceptance remains **NOT_VERIFIED** after the failed
 stable Stop recorded below.
 
-The current Windows QA controller is `v2_vm_controller_fresh_terra`. On
-9 November, both stack samplers exited 0 in the 01:38:18–01:39:05 UTC
-profile-only window. The Refresh result was `CALLER_ERROR` with click
-**UNKNOWN**, and Connect was 0. First Stop returned ACK and normal shutdown
-reached PoweredOff at host 01:40:35 UTC. The lease closed at 01:41:37 UTC.
-Final baseline remains **UNKNOWN**. The original receipt omitted the guest
-stage and HRESULT, leaving the cause unknown. The harness now preserves fixed
-stage, reason and guard names, a bounded CLR exception name, and a numeric
-HRESULT or null. Offline checks verified the diagnostic receipt before and
-after entry to Click, including a null HRESULT. Verification is offline only.
+On 9 November, both stack samplers exited 0 in the 01:38:18–01:39:05 UTC
+profile-only window with controller `v2_vm_controller_fresh_terra`. Refresh
+returned `CALLER_ERROR` with click **UNKNOWN**, and Connect was 0. First Stop
+returned ACK and normal shutdown reached PoweredOff at host 01:40:35 UTC.
+The lease closed at 01:41:37 UTC. Final baseline in that window remains
+**UNKNOWN**. The original receipt omitted the guest stage and HRESULT, leaving
+the cause unknown. The harness now preserves fixed stage, reason and guard
+names, a bounded CLR exception name, and a numeric HRESULT or null. Offline
+checks verified the diagnostic receipt before and after entry to Click,
+including a null HRESULT. Verification is offline only.
+
+In the later direct profile-only window after platform `0a9e758`, the waiter
+returned `CALLER_ERROR`: click **UNKNOWN**, host `RuntimeException` with
+HRESULT `-2146233087`, and no guest receipt. Refresh and the failure cause
+remain unknown. First IPC Stop ACK, guarded Tray Exit and App absence, final
+IPC Stop ACK with runtime stopped, exact baseline and watchdog removal all
+passed. The VM reached PoweredOff / Unlocked at 02:38:10.694 UTC. Guard 9 and
+fresh FULL ACK 6/API passed; the lease closed at 02:38:57.946992 UTC. The server
+window contained one managed-profile HTTP 200 (5135 ms to headers, catalog
+4977 ms, pending 0 ms), without request identity or a paired measurement.
+This closure leaves the earlier stable Stop failure unchanged. UI Disconnect
+remains unverified, and the timing does not establish a speed gain.
 
 The separate capture-on QA 4277 was installed. An earlier planned receipt run
 was cancelled by the owner's Iceland-retirement decision before dry-run, arm or

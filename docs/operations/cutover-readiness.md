@@ -17,9 +17,11 @@ preserved 4276 rollback.
 Physical Android and full native acceptance remain **NOT_VERIFIED**.
 
 QA 4277 confirmed the cached material receipt on one UI Global Connect. Stable
-Stop failed after direct backend Stop. The later profile-only Refresh and final
-baseline remain **UNKNOWN**. The [Windows acceptance record](windows-release-readiness.md)
-records those outcomes, the offline diagnostic fix and the required closure.
+Stop failed after direct backend Stop; actual UI Disconnect was not tested. In
+the later direct profile-only window after platform `0a9e758`, Refresh remained
+**UNKNOWN**. The exact baseline, VM shutdown and lease closure passed in that
+separate window. The [Windows acceptance record](windows-release-readiness.md)
+has the diagnostic details and the limits of the timing observation.
 
 The accepted prepared ordinary private beta fallback **2.0.0+4276** remains in
 `C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4276-ordinary/release`, compiled from
