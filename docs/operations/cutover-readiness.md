@@ -9,6 +9,13 @@ The app feed and WebApp switched to 2.0.0. The marketing export stayed in place.
 All seven anonymous assets and 13 public checks passed. The production lease
 was released at 09:09:57.497573 UTC after fresh FULL ACK 6 and API checks.
 
+The local ordinary **2.0.1+4278** candidate uses App `ee64b91d` and the accepted
+Core 1.2.15/ABI2. The app explains known SmartDNS access denials and can use the
+signed fallback when available. Managed profile and session access errors give
+a recovery step and show `API-005` in details. Four production-signed APKs and
+the unsigned Windows Setup and single-Setup ZIP passed package checks with
+production trust and capture off. Native device behavior remains unverified.
+
 The local packages in
 `C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4277-ordinary/release` were compiled from
 App `237f0878` with accepted Core `34adfca77` (1.2.15 / ABI2), without a Core
