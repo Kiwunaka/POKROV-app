@@ -50,6 +50,16 @@ Unlocked at 05:22:48.504 UTC. The post-Stop baseline remains **UNKNOWN**.
 Guard 9, current 6 and fresh FULL ACK 6/API passed. The lease closed at
 05:23:25.404380 UTC.
 
+One tray Open POKROV action restored Home, confirmed by ReadConnect and a
+fresh frame. The genuine parent gate passed with 487 seconds remaining. The
+watchdog armed, and the sole failed Connect guard was `clock_lag` at 9.757 s
+against a 9 s limit. `ClickAttempted=false` and `Clicked=false`. Connect and
+UI Disconnect were 0, and the selector capture and App log deltas were 0.
+First IPC Stop ACK, Tray Exit, App absence, final IPC Stop ACK, exact baseline
+and watchdog removal all passed. The VM reached PoweredOff / Unlocked at
+05:48:30.154 UTC. Guard 9, current 6 and fresh FULL ACK 6/API passed. The lease
+closed at 05:49:05.613837 UTC.
+
 The separate capture-on QA 4277 was installed. An earlier planned receipt run
 was cancelled by the owner's Iceland-retirement decision before dry-run, arm or
 Connect (all 0); this was not a client failure. At that preparation checkpoint,
