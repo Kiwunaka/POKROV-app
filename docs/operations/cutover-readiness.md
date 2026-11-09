@@ -16,14 +16,22 @@ index/checksums) and beta notes; `rollback-1.4.5.json` is byte-exact to the
 preserved 4276 rollback.
 Physical Android and full native acceptance remain **NOT_VERIFIED**.
 
-QA 4277 confirmed the cached material receipt on one UI Global Connect. Stable
-Stop failed after direct backend Stop; actual UI Disconnect was not tested. In
-the later direct profile-only window after platform `0a9e758`, Refresh remained
-**UNKNOWN**. The exact baseline, VM shutdown and lease closure passed in that
-separate window. The next Windows QA window ended during UI preparation, with
-Connect and UI Disconnect both 0. VM shutdown and lease closure passed, and
-the post-Stop baseline remains **UNKNOWN**. See the
-[Windows acceptance record](windows-release-readiness.md).
+On 9 November, capture-on QA 4277 reached verified running, DNS and egress
+on one Global UI Connect. Profile preparation finished in 7805 ms using
+`cached_fallback`. Two stopped readbacks followed one UI Disconnect before any
+external IPC Stop. The exact baseline was measured after the first external
+Stop, Tray Exit and final Stop. The watchdog was disarmed, the VM shut down
+and the lease closed. Fresh online admission, DNS-AI and ML gain remain
+unverified.
+
+On 8 November, QA 4277 confirmed the cached material receipt on one UI Global
+Connect. Stable Stop failed after direct backend Stop. That run did not
+exercise UI Disconnect. In the later direct profile-only window after platform
+`0a9e758`, Refresh remained **UNKNOWN**. The exact baseline, VM shutdown and
+lease closure passed in that separate window. The next Windows QA window
+ended during UI preparation, with Connect and UI Disconnect both 0. VM
+shutdown and lease closure passed, and the post-Stop baseline remains
+**UNKNOWN**. See the [Windows acceptance record](windows-release-readiness.md).
 
 The accepted prepared ordinary private beta fallback **2.0.0+4276** remains in
 `C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4276-ordinary/release`, compiled from

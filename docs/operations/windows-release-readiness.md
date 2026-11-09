@@ -5,9 +5,30 @@ under `v2.0.0`. The capture-off local packages at
 `C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4277-ordinary/release` were compiled
 from App `237f0878` and accepted Core `34adfca77` (1.2.15 / ABI2). The unsigned
 Setup and one-Setup ZIP passed version and packaging checks. All 12 staged
-runtime files match the accepted manifest. QA confirmed the cached material
-receipt. Full native acceptance remains **NOT_VERIFIED** after the failed
-stable Stop recorded below.
+runtime files match the accepted manifest. Full native acceptance remains
+**NOT_VERIFIED**.
+
+On 9 November, the separate capture-on QA 4277 made one Global UI Connect at
+host 07:31:34.3675 UTC. The causal guard passed with upper bounds of 2.459 s
+for reply age and 3.135 s for age plus clock drift. The 10.108 s wall-clock lag
+was diagnostic. The native runtime was running with DNS and egress verified.
+`profile.finished` succeeded with `material_origin=cached_fallback` in 7805 ms.
+
+One UI Disconnect was invoked at guest 07:31:45.816–07:31:46.027 UTC. Readbacks
+at 07:31:48.409 and 07:31:49.705 showed running 0, retained 0 and TUN 0. The
+watchdog was alive and the external Stop and watchdog receipts were absent.
+The first external IPC Stop began at 07:31:50.408. The bounded App log slice
+had one Connect intent and one profile completion before that Stop, and zero
+of either after it.
+
+Technical closure received the first IPC Stop ACK, confirmed App 0 after
+Tray Exit and received the final Stop ACK. The subsequent readback verified
+the exact routes, DNS, proxy and preferences baseline, TUN 0 and absence of
+the eight owned WFP filters. The watchdog was disarmed at guest 07:32:03.382
+UTC. Normal shutdown reached PoweredOff / Unlocked at host 07:35:02.932 UTC.
+Guard 9, current 6 and fresh FULL ACK 6/API passed. The lease closed at
+07:35:38.367381 UTC. Fresh online admission, DNS-AI, physical Android and ML
+gain remain unverified.
 
 On 9 November, both stack samplers exited 0 in the 01:38:18–01:39:05 UTC
 profile-only window with controller `v2_vm_controller_fresh_terra`. Refresh
@@ -29,8 +50,8 @@ passed. The VM reached PoweredOff / Unlocked at 02:38:10.694 UTC. Guard 9 and
 fresh FULL ACK 6/API passed; the lease closed at 02:38:57.946992 UTC. The server
 window contained one managed-profile HTTP 200 (5135 ms to headers, catalog
 4977 ms, pending 0 ms), without request identity or a paired measurement.
-This closure leaves the earlier stable Stop failure unchanged. UI Disconnect
-remains unverified, and the timing does not establish a speed gain.
+This closure leaves the earlier stable Stop failure unchanged. This
+profile-only window did not exercise UI Disconnect or establish a speed gain.
 
 A separate 9 November Windows QA window ended during UI preparation. The App
 launched once, and the Home Connect control and tray Exit were identified.
