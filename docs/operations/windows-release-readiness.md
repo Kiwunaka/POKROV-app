@@ -6,6 +6,9 @@ When a Direct override can win for a readiness host, Windows requires a `HEAD`
 The startup TUN probe still reads 64 KiB on the system route. The focused native
 regression passed. [Public beta](https://github.com/Kiwunaka/pokrov/releases/tag/v2.0.1).
 
+The source-only Home fix updates status text immediately when tickers are muted.
+The connecting-to-off widget regression passes.
+
 The capture-off local packages at
 `C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4277-ordinary/release` were compiled
 from App `237f0878` and accepted Core `34adfca77` (1.2.15 / ABI2). The unsigned

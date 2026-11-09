@@ -246,9 +246,11 @@ class _StatusPill extends StatelessWidget {
                   ),
                   SizedBox(width: 8),
                   Flexible(
-                    child: AnimatedSwitcher(
-                      duration: PokrovMotion.quick,
-                      child: Text(data.statusLabel ?? text, key: ValueKey(data.statusLabel ?? text), textAlign: TextAlign.center, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: fg)),
+                    // Show the current status even when tickers are muted.
+                    child: Text(
+                      data.statusLabel ?? text,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: fg),
                     ),
                   ),
                   Icon(Icons.chevron_right_rounded, size: 18, color: fg),

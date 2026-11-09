@@ -61,6 +61,34 @@ void main() {
     });
   }
 
+  testWidgets('home updates the connection status while tickers are muted', (tester) async {
+    final phase = ValueNotifier(ConnectionPhase.connecting);
+    addTearDown(phase.dispose);
+    await _pump(
+      tester,
+      TickerMode(
+        enabled: false,
+        child: ValueListenableBuilder<ConnectionPhase>(
+          valueListenable: phase,
+          builder: (context, value, child) => HomeScreen(
+            data: HomeViewData(phase: value),
+            onToggle: _noop,
+            onOpenStatus: _noop,
+            onOpenAccess: _noop,
+          ),
+        ),
+      ),
+    );
+    expect(find.text('Подключаемся'), findsOneWidget);
+
+    phase.value = ConnectionPhase.off;
+    await tester.pump();
+
+    expect(find.text('Подключить'), findsOneWidget);
+    expect(find.text('Защита выключена'), findsOneWidget);
+    expect(find.text('Подключаемся'), findsNothing);
+  });
+
   testWidgets('home shows the observed failure and the available action', (tester) async {
     var actions = 0;
     await _pump(tester, HomeScreen(
