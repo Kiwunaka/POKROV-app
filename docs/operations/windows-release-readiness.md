@@ -30,6 +30,18 @@ Guard 9, current 6 and fresh FULL ACK 6/API passed. The lease closed at
 07:35:38.367381 UTC. Fresh online admission, DNS-AI, physical Android and ML
 gain remain unverified.
 
+The 9 November selector delta has one PASS and three `owner_superseded` censored
+outcomes. Six eligible candidates shared one priority group and four workers;
+two candidates remained queued. The first admission was mandatory
+last-good, and later admissions were blocked from advice by
+`native_schedule_pending`. F82/F102 inputs were identical within each snapshot,
+with no failure memory or completed pre-action history; the PASS finished after
+all admissions. This supplies a real queued tail, but no distinguishing signal
+or completed challenger outcome. The ordinary TCP bridge pool did not exercise
+bundled F82's DNS-only comparison. ML gain and activation remain unproven;
+shadow is not the final solution, and these rows do not justify fit, paid advice
+or repeating the same Connect.
+
 On 9 November, both stack samplers exited 0 in the 01:38:18–01:39:05 UTC
 profile-only window with controller `v2_vm_controller_fresh_terra`. Refresh
 returned `CALLER_ERROR` with click **UNKNOWN**, and Connect was 0. First Stop
