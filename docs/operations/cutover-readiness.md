@@ -1,20 +1,34 @@
 # POKROV V2 client release status
 
-Updated 9 November 2026. Ordinary **2.0.0+4277** is the public Android and
-Windows beta. Release 438562626 has `draft=false`, `prerelease=true` and
+Updated 9 November 2026 (UTC). Ordinary **2.0.1+4278** is the public Android
+and Windows beta. Prerelease `439382254` was published at 17:02:08 UTC. Brain
+applied the app feed at 17:06:09.059913 UTC. The production lease closed at
+17:11:47.297866 UTC. GitHub intentionally keeps **1.4.5** as Latest.
+[GitHub beta](https://github.com/Kiwunaka/pokrov/releases/tag/v2.0.1).
+
+The published beta uses App `ee64b91d` and accepted Core `34adfca77`
+(1.2.15 / ABI2). The app explains known SmartDNS access denials and can use the
+signed fallback when available. Managed profile and session access errors give
+a recovery step and show `API-005` in details. Four production-signed APKs and
+the unsigned Windows Setup and single-Setup ZIP passed package checks with
+production trust and capture off. Native device behavior remains unverified.
+
+Private ordinary **2.0.2+4279** uses App `cdfc100f` and accepted Core `34adfca77`
+(1.2.15 / ABI2), with capture off. Four production-signed APKs, unsigned
+Windows Setup and the single-Setup ZIP passed package, staged native payload
+and production trust checks. The seven local publish assets and notes are in
+`C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4279-ordinary/release/publish-stage`.
+The full ordinary Windows cycle, physical Android, native DNS-AI/Gemini and
+ML gain remain unverified. The F82 model runs in shadow only.
+
+The earlier ordinary **2.0.0+4277** Android and Windows beta was published on
+9 November. Release 438562626 has `draft=false`, `prerelease=true` and
 `published_at=2026-11-09T09:01:50Z`. All seven assets passed digest, size and
 uploaded-state readback, and the notes matched. [GitHub release](https://github.com/Kiwunaka/pokrov/releases/tag/v2.0.0).
 
 The app feed and WebApp switched to 2.0.0. The marketing export stayed in place.
 All seven anonymous assets and 13 public checks passed. The production lease
 was released at 09:09:57.497573 UTC after fresh FULL ACK 6 and API checks.
-
-The local ordinary **2.0.1+4278** candidate uses App `ee64b91d` and the accepted
-Core 1.2.15/ABI2. The app explains known SmartDNS access denials and can use the
-signed fallback when available. Managed profile and session access errors give
-a recovery step and show `API-005` in details. Four production-signed APKs and
-the unsigned Windows Setup and single-Setup ZIP passed package checks with
-production trust and capture off. Native device behavior remains unverified.
 
 The local packages in
 `C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4277-ordinary/release` were compiled from
