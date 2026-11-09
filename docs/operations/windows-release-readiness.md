@@ -42,6 +42,14 @@ reached PoweredOff / Unlocked at 05:08:02.536 UTC. The post-Stop baseline
 remains **UNKNOWN**. Guard 9 and fresh FULL ACK 6/API passed. The lease closed
 at 05:08:41.051694 UTC.
 
+A second preparation window ended at the neutral title bar guard. The tray
+menu was still visible after Escape, and the specific failed check remains
+**UNKNOWN**. Title bar click, Connect, watchdog arm and UI Disconnect were all
+0. First IPC Stop returned ACK, and normal shutdown reached PoweredOff /
+Unlocked at 05:22:48.504 UTC. The post-Stop baseline remains **UNKNOWN**.
+Guard 9, current 6 and fresh FULL ACK 6/API passed. The lease closed at
+05:23:25.404380 UTC.
+
 The separate capture-on QA 4277 was installed. An earlier planned receipt run
 was cancelled by the owner's Iceland-retirement decision before dry-run, arm or
 Connect (all 0); this was not a client failure. At that preparation checkpoint,
