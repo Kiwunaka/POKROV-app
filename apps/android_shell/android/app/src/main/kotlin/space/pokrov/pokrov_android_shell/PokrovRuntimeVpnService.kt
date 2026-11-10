@@ -760,7 +760,13 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 override fun autoDetectInterfaceControl(fd: Int) = protectSocketForSession(fd, session)
                 override fun openTun(options: TunOptions): Int = openTunForSession(options, session)
                 override fun startDefaultInterfaceMonitor(listener: InterfaceUpdateListener) {
+                    val profile = activeUplinkProfile
                     if (ownsRuntimeSession(session)) {
+                        val ownsInitialPublication: (() -> Boolean)? = if (profile?.bindDnsCarrier == true) {
+                            { ownsRuntimeSession(session) && activeUplinkProfile === profile }
+                        } else {
+                            null
+                        }
                         AndroidDefaultNetworkMonitor.start(
                             this@PokrovRuntimeVpnService,
                             listener,
@@ -770,6 +776,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                             resetCoreNetwork = {
                                 if (ownsRuntimeSession(session)) resetActiveCoreNetworkAfterLinkChange(session)
                             },
+                            ownsInitialPublication = ownsInitialPublication,
                         )
                     }
                 }

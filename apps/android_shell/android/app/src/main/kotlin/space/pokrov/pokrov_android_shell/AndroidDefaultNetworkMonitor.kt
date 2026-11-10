@@ -86,6 +86,7 @@ internal object AndroidDefaultNetworkMonitor {
     private var resolvedInterfaceIndex: Int? = null
     private var interfaceResolutionGeneration: Long? = null
     private var lastPublishedInterfaceName: String? = null
+    private var initialPublicationGeneration: Long? = null
     private var contextInvalidated: (() -> Unit)? = null
 
     fun onContextInvalidated(action: () -> Unit): AutoCloseable {
@@ -173,10 +174,41 @@ internal object AndroidDefaultNetworkMonitor {
         listener: InterfaceUpdateListener,
         resetRuntimeNetwork: () -> Unit,
         resetCoreNetwork: () -> Unit,
+        ownsInitialPublication: (() -> Boolean)? = null,
     ) {
-        this.listener = listener
-        this.resetRuntimeNetwork = resetRuntimeNetwork
-        this.resetCoreNetwork = resetCoreNetwork
+        val initial = ownsInitialPublication?.let { ownsPublication ->
+            check(ownsPublication()) { "android: initial interface owner changed" }
+            ensureStarted(context)
+            val snapshot = requireInitialInterface(ownsPublication)
+            // Core registers its reset callback as soon as this method returns.
+            AndroidPlatformRuntimeBridge.publishInitialNetworkInterface(
+                requestGeneration = snapshot.generation,
+                currentGeneration = { if (ownsPublication()) contextGeneration() else null },
+                updateInterface = {
+                    listener.updateDefaultInterface(
+                        snapshot.name, snapshot.index, snapshot.expensive, snapshot.constrained,
+                    )
+                },
+            )
+            snapshot
+        }
+        val capabilitiesChanged = synchronized(networkLock) {
+            check(initial == null || initial.generation == currentNetworkGeneration) {
+                "android: initial physical interface changed"
+            }
+            this.listener = listener
+            this.resetRuntimeNetwork = resetRuntimeNetwork
+            this.resetCoreNetwork = resetCoreNetwork
+            initialPublicationGeneration = initial?.generation
+            initial != null && (initial.expensive != (currentNetworkIsExpensive ?: false) ||
+                initial.constrained != (currentNetworkIsConstrained ?: false))
+        }
+        if (initial != null) {
+            if (capabilitiesChanged) {
+                publishInterfaceState(initial.name, initial.index, dnsReady = true, expectedGeneration = initial.generation)
+            }
+            return
+        }
         ensureStarted(context)
         val network = currentNetwork ?: activeNetwork()
         if (network != null) {
@@ -206,13 +238,36 @@ internal object AndroidDefaultNetworkMonitor {
         }
     }
 
+    private fun requireInitialInterface(ownsPublication: () -> Boolean): InitialInterfaceSnapshot =
+        AndroidPlatformRuntimeBridge.awaitValue(
+            currentValue = {
+                check(ownsPublication()) { "android: initial interface owner changed" }
+                synchronized(networkLock) {
+                    val name = resolvedInterfaceName
+                    val index = resolvedInterfaceIndex
+                    if (currentNetwork == null || name == null || index == null) null else {
+                        InitialInterfaceSnapshot(
+                            currentNetworkGeneration, name, index,
+                            currentNetworkIsExpensive ?: false, currentNetworkIsConstrained ?: false,
+                        )
+                    }
+                }
+            },
+            refreshValue = { null },
+            waitForSignal = { waitForNetworkUpdate(it, requireInterface = true) },
+        ) ?: error("android: initial physical interface unavailable")
+
     fun stop(listener: InterfaceUpdateListener?) {
-        if (listener == null || this.listener === listener) {
-            this.listener = null
-            resetRuntimeNetwork = null
-            resetCoreNetwork = null
+        val hasListener = synchronized(networkLock) {
+            if (listener == null || this.listener === listener) {
+                this.listener = null
+                resetRuntimeNetwork = null
+                resetCoreNetwork = null
+                initialPublicationGeneration = null
+            }
+            this.listener != null
         }
-        if (this.listener == null) {
+        if (!hasListener) {
             unregister()
             appContext = null
             registered = false
@@ -252,7 +307,7 @@ internal object AndroidDefaultNetworkMonitor {
                     }
                 } ?: currentNetwork
             },
-            waitForSignal = ::waitForNetworkUpdate,
+            waitForSignal = { waitForNetworkUpdate(it) },
         )
         if (network != null) {
             return network
@@ -492,40 +547,13 @@ internal object AndroidDefaultNetworkMonitor {
         interfaceName: String?,
         interfaceIndex: Int?,
         dnsReady: Boolean,
-    ) {
-        val activeGeneration: Long
-        val isCurrentNetwork: Boolean
-        synchronized(networkLock) {
-            activeGeneration = currentNetworkGeneration
-            isCurrentNetwork = currentNetwork == network
-            if (
-                isCurrentNetwork &&
-                generation == activeGeneration &&
-                dnsReady &&
-                interfaceName != null &&
-                interfaceIndex != null
-            ) {
-                resolvedInterfaceName = interfaceName
-                resolvedInterfaceIndex = interfaceIndex
-                interfaceResolutionGeneration = null
-            }
-        }
-        if (
-            AndroidPlatformRuntimeBridge.canPublishNetworkResolution(
-                requestGeneration = generation,
-                activeGeneration = activeGeneration,
-                isCurrentNetwork = isCurrentNetwork,
-            )
-        ) {
-            publishInterfaceState(
-                interfaceName,
-                interfaceIndex,
-                dnsReady,
-                resetRuntimeNetworkAfterUpdate = dnsReady,
-                expectedGeneration = generation,
-            )
-        }
-    }
+    ) = publishInterfaceState(
+        interfaceName,
+        interfaceIndex,
+        dnsReady,
+        expectedGeneration = generation,
+        resolutionNetwork = network,
+    )
 
     private fun markInterfaceResolvingIfCurrent(
         network: Network,
@@ -608,8 +636,8 @@ internal object AndroidDefaultNetworkMonitor {
         interfaceName: String?,
         interfaceIndex: Int?,
         dnsReady: Boolean,
-        resetRuntimeNetworkAfterUpdate: Boolean = false,
         expectedGeneration: Long? = null,
+        resolutionNetwork: Network? = null,
     ) {
         val targetListener: InterfaceUpdateListener?
         val targetRuntimeReset: (() -> Unit)?
@@ -622,18 +650,32 @@ internal object AndroidDefaultNetworkMonitor {
         synchronized(networkLock) {
             if (expectedGeneration != null && expectedGeneration != currentNetworkGeneration) return
             publicationGeneration = currentNetworkGeneration
+            if (resolutionNetwork != null) {
+                if (!AndroidPlatformRuntimeBridge.canPublishNetworkResolution(
+                        requestGeneration = checkNotNull(expectedGeneration),
+                        activeGeneration = publicationGeneration,
+                        isCurrentNetwork = currentNetwork == resolutionNetwork,
+                        initialPublicationGeneration = initialPublicationGeneration,
+                    )) return
+                if (dnsReady && interfaceName != null && interfaceIndex != null) {
+                    resolvedInterfaceName = interfaceName
+                    resolvedInterfaceIndex = interfaceIndex
+                    interfaceResolutionGeneration = null
+                    networkLock.notifyAll()
+                }
+            }
             targetListener = listener
             targetRuntimeReset = resetRuntimeNetwork
             targetCoreReset = resetCoreNetwork
             isExpensive = currentNetworkIsExpensive ?: false
             isConstrained = currentNetworkIsConstrained ?: false
-            shouldResetRuntimeNetwork = resetRuntimeNetworkAfterUpdate &&
+            shouldResetRuntimeNetwork = resolutionNetwork != null &&
                 shouldReloadRuntimeForInterfaceChange(
                     previousInterfaceName = lastPublishedInterfaceName,
                     nextInterfaceName = interfaceName,
                     dnsReady = dnsReady,
                 )
-            shouldResetCoreNetwork = resetRuntimeNetworkAfterUpdate &&
+            shouldResetCoreNetwork = resolutionNetwork != null &&
                 shouldResetCoreNetworkForLinkChange(
                     previousInterfaceName = lastPublishedInterfaceName,
                     nextInterfaceName = interfaceName,
@@ -677,9 +719,9 @@ internal object AndroidDefaultNetworkMonitor {
         }
     }
 
-    private fun waitForNetworkUpdate(waitMillis: Long) {
+    private fun waitForNetworkUpdate(waitMillis: Long, requireInterface: Boolean = false) {
         synchronized(networkLock) {
-            if (currentNetwork == null) {
+            if (currentNetwork == null || (requireInterface && resolvedInterfaceIndex == null)) {
                 runCatching {
                     networkLock.wait(waitMillis)
                 }.onFailure { error ->
@@ -698,6 +740,14 @@ internal object AndroidDefaultNetworkMonitor {
         // Never enter the request/service owner while holding networkLock.
         AndroidConnectRequestOwner.cancelIfNetworkChanged()
     }
+
+    private data class InitialInterfaceSnapshot(
+        val generation: Long,
+        val name: String,
+        val index: Int,
+        val expensive: Boolean,
+        val constrained: Boolean,
+    )
 
     private data class DefaultNetworkUpdate(
         val generation: Long,

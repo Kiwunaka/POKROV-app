@@ -80,6 +80,52 @@ class AndroidPlatformRuntimeBridgeTest {
     }
 
     @Test
+    fun initialDnsInterfaceArrivesBeforeCoreRegistersAndOnlyNewGenerationResets() {
+        var generation = 1L
+        var initialPublicationGeneration: Long? = null
+        var coreCallbackRegistered = false
+        val queued = java.util.ArrayDeque<() -> Unit>()
+        val delivered = mutableListOf<String>()
+        fun enqueueResolution() {
+            val requested = generation
+            queued.add {
+                if (AndroidPlatformRuntimeBridge.canPublishNetworkResolution(
+                        requestGeneration = requested,
+                        activeGeneration = generation,
+                        isCurrentNetwork = true,
+                        initialPublicationGeneration = initialPublicationGeneration,
+                    )) {
+                    AndroidPlatformRuntimeBridge.deliverNetworkUpdate(
+                        requestGeneration = requested,
+                        currentGeneration = { generation },
+                        updateInterface = { delivered += "resolved:$requested" },
+                        resetNetwork = { delivered += "reset:$requested" },
+                    )
+                }
+            }
+        }
+        enqueueResolution()
+
+        AndroidPlatformRuntimeBridge.publishInitialNetworkInterface(
+            requestGeneration = generation,
+            currentGeneration = { generation },
+            updateInterface = {
+                assertFalse(coreCallbackRegistered)
+                delivered += "initial:$generation"
+            },
+        )
+        initialPublicationGeneration = generation
+        coreCallbackRegistered = true
+        queued.removeFirst().invoke()
+        assertEquals(listOf("initial:1"), delivered)
+
+        generation++
+        enqueueResolution()
+        queued.removeFirst().invoke()
+        assertEquals(listOf("initial:1", "resolved:2", "reset:2"), delivered)
+    }
+
+    @Test
     fun transientUplinkLossDoesNotPublishAfterReplacementArrives() {
         assertFalse(
             AndroidPlatformRuntimeBridge.shouldPublishMissingNetwork(

@@ -59,7 +59,19 @@ internal object AndroidPlatformRuntimeBridge {
         requestGeneration: Long,
         activeGeneration: Long,
         isCurrentNetwork: Boolean,
-    ): Boolean = isCurrentNetwork && requestGeneration == activeGeneration
+        initialPublicationGeneration: Long? = null,
+    ): Boolean = isCurrentNetwork && requestGeneration == activeGeneration &&
+        requestGeneration != initialPublicationGeneration
+
+    fun publishInitialNetworkInterface(
+        requestGeneration: Long,
+        currentGeneration: () -> Long?,
+        updateInterface: () -> Unit,
+    ) {
+        check(requestGeneration == currentGeneration()) { "android: initial physical interface changed" }
+        updateInterface()
+        check(requestGeneration == currentGeneration()) { "android: initial physical interface changed" }
+    }
 
     fun bindUplinkSocket(network: Network, fd: Int) {
         // The wrapper owns a duplicate. Core retains its original socket.
