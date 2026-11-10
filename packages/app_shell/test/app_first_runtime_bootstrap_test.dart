@@ -4667,7 +4667,7 @@ void main() {
           refreshes += 1;
           request.response
             ..statusCode = HttpStatus.unauthorized
-            ..headers.set('X-POKROV-Auth-Error', 'fresh_auth_required');
+            ..headers.set('X-POKROV-Auth-Error', 'session_identity_changed');
         } else {
           request.response.statusCode = HttpStatus.notFound;
         }
@@ -4695,7 +4695,7 @@ void main() {
             .having(
               (error) => error.code,
               'code',
-              'fresh_auth_required',
+              'session_identity_changed',
             )
             .having((error) => error.sessionRejected, 'definite rejection', isTrue),
       ),
