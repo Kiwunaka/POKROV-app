@@ -1,11 +1,19 @@
 # Android acceptance
 
-The current ordinary private candidate is **2.0.0+4275**, App `f205164e` with
+On 10 November at 09:20 UTC, the returned Huawei was updated in place from
+1.5.0+4262 to public **2.0.1+4278**. At 09:21 UTC, readback showed the same
+package, ACTIVATE_VPN allowed, no always-on VPN, lockdown off, and no POKROV
+process, VPN service or VPN network agent. The app was not opened and Connect
+was not used. Battery was 6% and charging; the phone was then put to sleep
+(wakefulness asleep; display state unavailable). Native Android acceptance remains
+unverified and further QA waits for charge.
+
+The ordinary private candidate on 8 November was **2.0.0+4275**, App `f205164e` with
 Core `34adfca77` (1.2.15 / ABI2). Its four production-signed APKs passed mandatory
 package checks; native and physical-device acceptance of exact 4275 remain
 **NOT_VERIFIED**.
-Owner-authorized Honor20 checks await working USB/ADB access; no physical PASS
-is claimed.
+At that time, owner-authorized Honor20 checks awaited working USB/ADB access;
+no physical PASS was claimed.
 [Exact current scope](cutover-readiness.md).
 
 On 8 November, the owner accepted exact **4275** for the direct public beta on
