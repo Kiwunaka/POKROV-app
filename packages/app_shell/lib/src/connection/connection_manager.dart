@@ -6537,12 +6537,11 @@ class ConnectionManager extends ChangeNotifier {
       return;
     }
     final wasConnected = _runtimeSnapshot?.phase == RuntimePhase.running;
+    final useSelectedApps = _selectedRouteMode != RouteMode.excludedApps &&
+        _appContext.runtimeProfile.supportedRouteModes.contains(RouteMode.selectedApps);
     _update(() {
       _selectedAppIds.add(normalized);
-      if (_selectedRouteMode != RouteMode.excludedApps &&
-          _appContext.runtimeProfile.supportedRouteModes.contains(
-            RouteMode.selectedApps,
-          )) {
+      if (useSelectedApps) {
         _selectedRouteMode = RouteMode.selectedApps;
       }
       _managedProfileDirty = true;
@@ -6550,6 +6549,8 @@ class ConnectionManager extends ChangeNotifier {
       _clientExperience = _clientExperience.copyWith(
         selectedAppIds: List<String>.unmodifiable(_selectedAppIds),
         catalogVerifiedRuPreset: false,
+        firstRouteScopeConfirmed: useSelectedApps ? true : null,
+        firstRouteScopeMode: useSelectedApps ? RouteMode.selectedApps : null,
       );
     });
     _recordAndroidSelectedAppCount();

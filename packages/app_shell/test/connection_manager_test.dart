@@ -6639,6 +6639,34 @@ void main() {
     expect(manager.presentation.isVerified, isFalse);
   });
 
+  test('Windows restores selected-app routing after adding an app and restarting', () async {
+    final store = _ExperienceStore();
+    final original = _manager(_Runtime(hostPlatform: HostPlatform.windows),
+        _Bootstrapper(), experienceStore: store);
+    addTearDown(original.dispose);
+    original.restoreConnectionPreferences(const PokrovClientExperienceState.empty().copyWith(
+        firstRouteScopeConfirmed: true, firstRouteScopeMode: RouteMode.allExceptRu), const {});
+    original.addSelectedAppId('msedge.exe');
+    await Future<void>.delayed(Duration.zero);
+    expect(store.saved.selectedAppIds, ['msedge.exe']);
+
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows);
+    final bootstrapper = _Bootstrapper()..materialConfigPayload = '''{
+      "inbounds": [{"type":"tun","tag":"tun-in"}],
+      "outbounds": [{"type":"socks","tag":"proxy","server":"127.0.0.1","server_port":1080},
+        {"type":"direct","tag":"direct"}],
+      "dns": {"servers":[{"type":"https","tag":"dns-remote","server":"1.1.1.1","detour":"proxy"}],
+        "final":"dns-remote"},
+      "route": {"final":"proxy"}
+    }''';
+    final restarted = _manager(runtime, bootstrapper,
+        authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    addTearDown(restarted.dispose);
+    restarted.restoreConnectionPreferences(store.saved, const {});
+    await restarted.connect();
+    expect(runtime.stagedPayloads.single.routeMode, RouteMode.selectedApps);
+  });
+
   test('manual app modes tolerate unavailable catalog but verified RU scope stays closed', () async {
     final runtime = _Runtime()..supportsCandidates = true;
     final bootstrapper = _CatalogFailureBootstrapper()
