@@ -5226,12 +5226,16 @@ class ConnectionManager extends ChangeNotifier {
         connectedSnapshot.coreEgressValidated == true) {
       return;
     }
-    // Observe every Android transport through the 55-second host watchdog.
-    // An AWG failure can arrive after the normal group-probe window, while its
-    // TUN is still running; the result must reach the bounded TCP fallback.
+    final staged = _stagedCandidateVariant;
+    final usesDnsCarrier = staged != null &&
+        staged.generation == _connectionCoordinator.operationGeneration &&
+        const {'vless_dnstt_noise', 'vless_slipstream_tls'}
+            .contains(_candidateTransport(_reportedCandidate(staged.candidateRef)));
+    // Keep observing through the Android host watchdog (65 s for a DNS carrier,
+    // 55 s otherwise), so a failed probe reaches the existing recovery path.
     _diagnosticsCoordinator.startHealthPolling(
       interval: const Duration(milliseconds: 750),
-      pollCount: 76,
+      pollCount: usesDnsCarrier ? 90 : 76,
       canContinue: () => !_disposed,
       onPoll: (generation) => unawaited(
         _refreshPostConnectHostHealth(connectedSnapshot, generation),

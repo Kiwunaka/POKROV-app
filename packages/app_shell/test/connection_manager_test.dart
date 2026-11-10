@@ -902,6 +902,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   bool releaseConnectOnCancel = false;
   bool overlappingMutation = false;
   bool pendingFirstEgress = false;
+  bool resolveFirstEgressOnSnapshot = true;
   bool connectionPending = false;
   String statusMessage = '';
   bool warpEgressFailure = false;
@@ -996,7 +997,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
       operationEntered.complete();
       await releaseOperation.future;
     }
-    if (phase == RuntimePhase.running) pendingFirstEgress = false;
+    if (phase == RuntimePhase.running && resolveFirstEgressOnSnapshot) pendingFirstEgress = false;
     if (cancelled.isNotEmpty && releaseStopRead != null) {
       if (!stopReadEntered.isCompleted) stopReadEntered.complete();
       await releaseStopRead!.future;
@@ -4137,12 +4138,15 @@ void main() {
     expect(manager.status.phase, ConnectionPhase.connected);
   });
 
-  test('manually selected Android DNS candidate has its full proof budget', () async {
+  testWidgets('Android DNS startup proof stays observed after the ordinary deadline', (tester) async {
     final dns = TransportCandidate(candidateRef: 'de:dnstt_vless', profileRef: 'dnstt_vless',
       nodeCode: 'de', countryCode: 'DE', protocol: 'vless', transport: 'dnstt', protection: 'noise',
       priority: 100, network: 'tcp', flow: '', minimumClientRelease: '1.5.0', minimumCoreRelease: null,
       platforms: {HostPlatform.android}, requiredFeatures: {RuntimeTransportFeature.dnsttVless});
-    final runtime = _Runtime()..supportsCandidates = true;
+    final runtime = _Runtime()
+      ..supportsCandidates = true
+      ..pendingFirstEgress = true
+      ..resolveFirstEgressOnSnapshot = false;
     final bootstrapper = _Bootstrapper(catalog: true, bundle: true)..candidates = [dns];
     final manager = _manager(runtime, bootstrapper);
     addTearDown(manager.dispose);
@@ -4154,8 +4158,20 @@ void main() {
 
     await manager.connect();
 
-    expect(runtime.stagedProfile, dns.candidateRef);
+    expect(runtime.stagedProfile, dns.candidateRef, reason: manager.headline);
     expect(runtime.probeTimeouts.single.inMilliseconds, inInclusiveRange(59000, 60000));
+    await tester.pump(const Duration(seconds: 60));
+    expect(manager.snapshot?.phase, RuntimePhase.running);
+    expect(manager.presentation.isVerified, isFalse);
+
+    runtime.phase = RuntimePhase.configStaged;
+    runtime.lastStopReason = 'core_egress_probe_unavailable';
+    await tester.pump(const Duration(milliseconds: 750));
+    await tester.pump();
+
+    expect(manager.snapshot?.phase, RuntimePhase.configStaged);
+    expect(manager.status.phase, ConnectionPhase.actionRequired);
+    expect(runtime.connectCalls, 1);
   });
 
   test('country Auto resolves an admitted AWG missing from a partial bundle', () async {
