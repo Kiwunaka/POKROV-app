@@ -9,12 +9,85 @@ regression passed. [Public beta](https://github.com/Kiwunaka/pokrov/releases/tag
 The source-only Home fix updates status text immediately when tickers are muted.
 The connecting-to-off widget regression passes.
 
+Ordinary Windows Selective requires complete Gemini coverage to start local
+SmartDNS. With the retained one-host DNS-AI capability, it uses the signed VPN
+fallback for DNS and HTTPS on `gemini.google.com` and
+`geminiweb-pa.clients6.google.com`. This path can be checked after US VPN
+acceptance. DNS-AI source 12 still needs separate native acceptance.
+
 The capture-off local packages at
 `C:/Users/kiwun/AppData/Local/Temp/pokrov-v2-4277-ordinary/release` were compiled
 from App `237f0878` and accepted Core `34adfca77` (1.2.15 / ABI2). The unsigned
 Setup and one-Setup ZIP passed version and packaging checks. All 12 staged
 runtime files match the accepted manifest. Full native acceptance remains
 **NOT_VERIFIED**.
+
+Two later US preparation windows stopped before UI or Connect. The lease closed
+at 20:27:14.977382 UTC after a host `Math.Min` overload error before the guest
+snapshot. The 20:35:23.483608 UTC closure followed `clock_interval`; its raw
+host–guest lag was 8.8074607 s, but the interval bounds were not retained. Each
+window launched the App once, received First Stop ACK and reached PoweredOff /
+Unlocked. Both leases closed unlocked with FULL ACK 6 and API passing.
+
+A subsequent AppOff-only clock diagnostic passed with the same running
+Stopwatch: anchor 0.0000026–0.8063809 s, read 0.8066414–1.6300994 s, adoption
+1.6306884 s, guest elapsed 0.9521722 s, drift bounds −0.9519117–0.6779246 s,
+age upper 0.824047 s and combined upper 0.6785136 s. The VM shut down normally.
+These later readings do not explain the earlier `clock_interval`.
+
+The 21:17 UTC preparation stopped at a positive drift lower bound after about
+185 seconds of host-side preparation. The 21:41 UTC window stopped at the drift
+lower-bound guard, about −4.54 seconds, while the interval still included zero.
+Neither reached UI or Connect. A later AppOff-only diagnostic with the refined
+transport bounds also failed the unchanged −2-second guard at −4.2818 seconds.
+The subsequent READY/GO AppOff diagnostic timed out at the anchor; its
+already-running worker later returned `GUEST_TIMING_DEADLINE`. No sample was
+accepted, and an independent read confirmed the VM PoweredOff / Unlocked.
+The next AppOff diagnostic passed its anchor but timed out in the sample after
+READY and GO, before any payload bytes arrived. The VM was independently
+PoweredOff / Unlocked at 23:21:19.6466533 UTC; VPN acceptance was not exercised.
+
+On 10 November, a same-stamp AppOff diagnostic passed, with drift bounds
+−0.0518071–0.3627224 s and age upper 4.3378262 s. A later preparation stopped
+at host argument binding before the initial clock read; First Stop ACK was not
+confirmed, and normal shutdown reached PoweredOff / Unlocked. Its coordinator
+closed at 01:17:06.121849 UTC. The binding fix was checked offline.
+
+The next window passed the initial clock and stopped-state snapshot, but the
+first tray read timed out before any UI input. The completed worker reported
+`GUEST_TIMING_DEADLINE` while waiting for stamp READY, with zero READY or payload
+bytes; the underlying pre-stamp cause remains **UNKNOWN**. No Connect occurred.
+First Stop returned ACK, normal shutdown reached PoweredOff / Unlocked, and the
+coordinator closed at 01:34:45.034513 UTC with FULL ACK 6 and API passing.
+
+In window D, the initial clock, stopped-state snapshot and scoped tray read
+passed, but the next icon snapshot hit the host timeout before the menu or
+Connect. Overflow expansion remains unknown. The retained worker's last
+stdout was 4.1705702 s before its frozen deadline; its later returned result
+was not accepted and did not establish normal process termination. First Stop
+returned ACK, the VM reached PoweredOff / Unlocked, and the coordinator closed
+at 01:51:17.486435 UTC with FULL ACK 6 and API passing.
+
+In the later E window, the App launched once and the initial clock read failed
+with `GUEST_TIMING_INVALID` before snapshot, tray or Connect. The specific
+failure stage remains **UNKNOWN**. First Stop returned status 5 (`kNotReady`)
+without ACK; normal shutdown reached PoweredOff / Unlocked, but full cleanup
+was not verified. The coordinator closed at 02:08:13.042776 UTC with FULL ACK
+6 and API passing.
+
+In the subsequent F window, the initial clock read timed out before READY,
+snapshot, tray or Connect. The completed worker reported `GUEST_TIMING_DEADLINE`
+at `ready`, `StartWait=1`, six stdout reads in 8,755 ms (the last 8,643 ms),
+and six stderr reads in 28 ms. READY, payload and stderr bytes were zero;
+`GoBytes` was null. The frozen monotonic deadline was 8.9993528 s; the host
+deadline was 02:23:25.6042075 UTC. Helper elapsed time was 9,765 ms. On the
+same stopwatch, file close was 9.0215254 s, file removal 9.1508136 s, session
+close 9.7767676 s, unlock 9.7778468 s and final helper observation 9.7780079 s.
+Process exit observation, process status and worker completion time were null.
+First Stop returned ACK and the VM reached PoweredOff / Unlocked. The coordinator
+closed at 02:24:40.995524 UTC with FULL ACK 6 and API passing. The host VM log
+recorded seven `VERR_TIMEOUT` entries but does not identify the failed guest
+operation; its cause remains **UNKNOWN**.
 
 On 9 November, the separate capture-on QA 4277 made one Global UI Connect at
 host 07:31:34.3675 UTC. The causal guard passed with upper bounds of 2.459 s
