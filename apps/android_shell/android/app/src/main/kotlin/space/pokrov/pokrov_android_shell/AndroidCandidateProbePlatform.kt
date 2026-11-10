@@ -43,8 +43,7 @@ internal class AndroidCandidateProbePlatform(
     override fun autoDetectInterfaceControl(fd: Int) {
         check(!isCancelled()) { "candidate cancelled" }
         PokrovRuntimeVpnService.protectCandidateSocket(fd)
-        // fromFd duplicates the descriptor; closing this wrapper does not close Core's socket.
-        ParcelFileDescriptor.fromFd(fd).use { network.bindSocket(it.fileDescriptor) }
+        AndroidPlatformRuntimeBridge.bindUplinkSocket(network, fd)
     }
 
     override fun openTun(options: TunOptions): Int = error("candidate probes cannot own a TUN")

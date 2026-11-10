@@ -9,6 +9,48 @@ import org.junit.Test
 
 class AndroidPlatformRuntimeBridgeTest {
     @Test
+    fun dnsUplinkBindingRejectsStoppedOwnersAndChangedNetworks() {
+        var ownsProfile = true
+        var network = 7L to 1L
+        val operations = mutableListOf<String>()
+        fun bind(onProtect: () -> Unit = {}, onBind: () -> Unit = {}) {
+            AndroidPlatformRuntimeBridge.protectAndBindDnsUplink(
+                ownsProfile = { ownsProfile },
+                currentNetwork = { network },
+                protectSocket = { operations += "protect"; onProtect() },
+                bindSocket = { handle -> operations += "bind:$handle"; onBind() },
+            )
+        }
+        bind()
+        assertEquals(listOf("protect", "bind:7"), operations)
+
+        operations.clear()
+        ownsProfile = false
+        assertTrue(runCatching { bind() }.exceptionOrNull() is IllegalStateException)
+        assertTrue(operations.isEmpty())
+
+        ownsProfile = true
+        assertTrue(runCatching { bind(onProtect = { network = 7L to 2L }) }
+            .exceptionOrNull() is IllegalStateException)
+        assertEquals(listOf("protect"), operations)
+
+        operations.clear()
+        assertTrue(runCatching { bind(onBind = { ownsProfile = false }) }
+            .exceptionOrNull() is IllegalStateException)
+        assertEquals(listOf("protect", "bind:7"), operations)
+    }
+
+    @Test
+    fun profileReplacementRetiresTheOldCoreOnlyAcrossDnsProfiles() {
+        val dns = AndroidRuntimeUplinkProfile("dns", true)
+        val ordinary = AndroidRuntimeUplinkProfile("ordinary", false)
+        assertTrue(dns.requiresCoreCloseBefore(ordinary))
+        assertTrue(ordinary.requiresCoreCloseBefore(dns))
+        assertFalse(ordinary.requiresCoreCloseBefore(ordinary.copy(digest = "another")))
+        assertFalse(dns.requiresCoreCloseBefore(dns))
+    }
+
+    @Test
     fun delayedNetworkUpdateCannotPublishOrResetAfterUplinkReplacement() {
         var generation = 1L
         val queued = java.util.ArrayDeque<() -> Unit>()

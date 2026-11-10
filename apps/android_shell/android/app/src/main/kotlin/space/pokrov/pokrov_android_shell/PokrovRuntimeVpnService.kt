@@ -11,6 +11,7 @@ import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
+import android.net.Network
 import android.net.VpnService
 import android.graphics.Color
 import android.os.Handler
@@ -75,6 +76,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     private val serviceCommandLock = Any()
     @Volatile private var activeServiceCommandGeneration = 0L
     @Volatile private var activeStartupProfileDigest: String? = null
+    @Volatile private var activeUplinkProfile: AndroidRuntimeUplinkProfile? = null
     @Volatile private var activeStartupCommitted = false
     @Volatile private var activeCoreStartCompleted = false
     @Volatile private var activeConnectRequestId: String? = null
@@ -470,6 +472,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             activeRuntimeSession.also {
                 if (it != null && AndroidConnectRequestOwner.ownsService(this)) endingBoundSessions.add(it)
                 activeRuntimeSession = null
+                activeUplinkProfile = null
                 activeCoreStartCompleted = false
                 activeConnectDeadline = null
                 activePromotedUntilElapsed = null
@@ -742,6 +745,10 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 onNaiveFallback = { localDpiFallbackSummary = "Локальный DPI: naive_fallback_vpn" })
             activeLocalDpi = dpi
             val dpiContent = runtimeConfig.toString()
+            val uplinkProfile = runtimeUplinkProfile(persistedProfile, expectedDigest, dpiContent)
+            if (uplinkProfile.bindDnsCarrier) AndroidDefaultNetworkMonitor.require()
+            if (!ownsRuntimeSession(session)) throw SupersededRuntimeStart()
+            activeUplinkProfile = uplinkProfile
             val handler = object : CommandServerHandler by this@PokrovRuntimeVpnService {
                 override fun serviceReload() = reloadRuntime(session)
                 override fun serviceStop() = stopRuntimeFromCore(session)
@@ -750,6 +757,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 }
             }
             val platform = object : PlatformInterface by this@PokrovRuntimeVpnService {
+                override fun autoDetectInterfaceControl(fd: Int) = protectSocketForSession(fd, session)
                 override fun openTun(options: TunOptions): Int = openTunForSession(options, session)
                 override fun startDefaultInterfaceMonitor(listener: InterfaceUpdateListener) {
                     if (ownsRuntimeSession(session)) {
@@ -850,12 +858,25 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 check(runtimeProfileMatchesIntent(profile, profile.configDigest, profile.configPath, profile.routeMode, raw))
                 val content = prepareRuntimeConfig(raw, profile.routeMode).toString()
                 check(protectedHandoff.owns(request) && ownsServiceCommand(generation))
+                val server = checkNotNull(commandServer)
+                val uplinkProfile = runtimeUplinkProfile(profile, profile.configDigest, content)
                 healthGeneration.incrementAndGet()
                 pendingCoreEgressProbeGeneration = null
                 releaseDnsFailureToken()
+                if (activeCoreStartCompleted && activeUplinkProfile?.requiresCoreCloseBefore(uplinkProfile) == true) {
+                    // The shared platform callback cannot identify the old Core.
+                    // Keep the host TUN while retiring that Core before changing its socket policy.
+                    activeUplinkProfile = null
+                    server.closeService()
+                    check(ownsRuntimeSession(session) && protectedHandoff.owns(request))
+                    AndroidDefaultNetworkMonitor.ensureStarted(this)
+                    if (uplinkProfile.bindDnsCarrier) AndroidDefaultNetworkMonitor.require()
+                    check(ownsRuntimeSession(session) && protectedHandoff.owns(request))
+                }
                 activeConnectRequestId = request
                 acceptedConnectRequestId = request
                 activeStartupProfileDigest = profile.configDigest
+                activeUplinkProfile = uplinkProfile
                 activeCoreStartCompleted = false
                 activeSelectedAppsMode = profile.routeMode == ROUTE_MODE_SELECTED_APPS
                 activeCoreEgressProbeRequired = profile.coreEgressProbeRequired
@@ -864,7 +885,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 activeConfigContent = content
                 activeVariantConfigContent = raw
                 val oldTun = activeTun
-                commandServer!!.startOrReloadService(content, OverrideOptions())
+                server.startOrReloadService(content, OverrideOptions())
                 check(protectedHandoff.owns(request) && ownsServiceCommand(generation))
                 check(activeTun != null && activeTun !== oldTun)
                 activeCoreStartCompleted = true
@@ -884,6 +905,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         healthGeneration.incrementAndGet()
         pendingCoreEgressProbeGeneration = null
         releaseDnsFailureToken()
+        activeUplinkProfile = null
         runCatching { commandServer?.closeService() }
         activeCoreStartCompleted = false
         activeConfigContent = null
@@ -1332,7 +1354,35 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         startForeground(NOTIFICATION_ID, notification)
     }
 
-    override fun autoDetectInterfaceControl(fd: Int) {
+    private fun runtimeUplinkProfile(profile: PersistedRuntimeProfile?, digest: String, content: String) =
+        AndroidRuntimeUplinkProfile(digest, profile?.lanScopeVersion == 1 && !profile.requiresBoundConnect &&
+            !profile.catalogAppIdentityRequired && activeLocalDpi == null &&
+            AndroidCoreEgressProbe.finalTarget(content)?.bindsDnsUplink == true)
+
+    private fun protectSocketForSession(fd: Int, session: AndroidLifecycleTaskScope) {
+        val profile = activeUplinkProfile ?: error("android: uplink profile unavailable")
+        if (!profile.bindDnsCarrier) {
+            check(ownsRuntimeSession(session) && activeUplinkProfile?.bindDnsCarrier == false) {
+                "android: uplink profile changed"
+            }
+            autoDetectInterfaceControl(fd)
+            return
+        }
+        AndroidPlatformRuntimeBridge.protectAndBindDnsUplink(
+            ownsProfile = { ownsRuntimeSession(session) && activeUplinkProfile === profile &&
+                activeStartupProfileDigest == profile.digest },
+            currentNetwork = AndroidDefaultNetworkMonitor::localDpiNetwork,
+            protectSocket = { protectRuntimeUplinkSocket(fd, session.generation) },
+            bindSocket = { handle ->
+                AndroidPlatformRuntimeBridge.bindUplinkSocket(Network.fromNetworkHandle(handle), fd)
+            },
+        )
+        android.util.Log.i("POKROV-Egress", "dns_uplink_bound")
+    }
+
+    override fun autoDetectInterfaceControl(fd: Int) = protectRuntimeUplinkSocket(fd, activeRuntimeSession?.generation)
+
+    private fun protectRuntimeUplinkSocket(fd: Int, generation: Long?) {
         val protected = protect(fd)
         AndroidOperationalJournal.record(
             AndroidOperationalEvent.UPLINK_SOCKET,
@@ -1341,7 +1391,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             } else {
                 AndroidOperationalOutcome.DENIED
             },
-            activeRuntimeSession?.generation,
+            generation,
         )
         if (!protected) {
             error("android: failed to protect uplink socket")

@@ -1,9 +1,16 @@
 package space.pokrov.pokrov_android_shell
 
+import android.net.Network
 import android.os.Build
+import android.os.ParcelFileDescriptor
 import java.net.Inet6Address
 import java.net.InetAddress
 import kotlin.math.min
+
+internal data class AndroidRuntimeUplinkProfile(val digest: String, val bindDnsCarrier: Boolean) {
+    fun requiresCoreCloseBefore(next: AndroidRuntimeUplinkProfile): Boolean =
+        this != next && (bindDnsCarrier || next.bindDnsCarrier)
+}
 
 internal object AndroidPlatformRuntimeBridge {
     const val DEFAULT_NETWORK_WAIT_TIMEOUT_MILLIS = 5_000L
@@ -53,6 +60,29 @@ internal object AndroidPlatformRuntimeBridge {
         activeGeneration: Long,
         isCurrentNetwork: Boolean,
     ): Boolean = isCurrentNetwork && requestGeneration == activeGeneration
+
+    fun bindUplinkSocket(network: Network, fd: Int) {
+        // The wrapper owns a duplicate. Core retains its original socket.
+        ParcelFileDescriptor.fromFd(fd).use { network.bindSocket(it.fileDescriptor) }
+    }
+
+    fun protectAndBindDnsUplink(
+        ownsProfile: () -> Boolean,
+        currentNetwork: () -> Pair<Long, Long>?,
+        protectSocket: () -> Unit,
+        bindSocket: (Long) -> Unit,
+    ) {
+        check(ownsProfile()) { "android: uplink profile changed" }
+        val network = currentNetwork() ?: error("android: physical uplink unavailable")
+        fun requireCurrent() {
+            check(ownsProfile() && currentNetwork() == network) { "android: physical uplink changed" }
+        }
+        requireCurrent()
+        protectSocket()
+        requireCurrent()
+        bindSocket(network.first)
+        requireCurrent()
+    }
 
     fun deliverNetworkUpdate(
         requestGeneration: Long,

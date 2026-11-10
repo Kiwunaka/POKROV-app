@@ -139,6 +139,7 @@ internal data class AndroidCoreEgressProbeTarget(
     val captureSafeFailureCategory: Boolean = false,
     val protocol: String = "unknown",
     val usesDnsCarrier: Boolean = false,
+    val bindsDnsUplink: Boolean = false,
 ) {
     // Allow the single 60-second Core call to finish and publish its result.
     val startupWatchdogMillis: Long
@@ -248,13 +249,16 @@ internal object AndroidCoreEgressProbe {
                     endpointTypes[endpointTag] = endpoint.optString("type")
                 }
             }
+            val dnsCarrier = usesDnsCarrier(tag, outboundTypes, outboundDetours, selectorMembers)
             resolveFinalTarget(
                 finalTag = tag,
                 outboundTypes = outboundTypes,
                 endpointTypes = endpointTypes,
             )?.copy(
                 protocol = unambiguousProtocol(tag, outboundTypes, endpointTypes, selectorMembers),
-                usesDnsCarrier = usesDnsCarrier(tag, outboundTypes, outboundDetours, selectorMembers),
+                usesDnsCarrier = dnsCarrier,
+                bindsDnsUplink = dnsCarrier && outboundTypes.size == outbounds.length() &&
+                    isDnsUplinkGraph(outboundTypes.values, endpoints?.length() ?: 0),
             )
         }.getOrNull()
     }
@@ -617,6 +621,16 @@ internal object AndroidCoreEgressProbe {
             }
         }
         return false
+    }
+
+    // The shared platform callback has no outbound identity. Allow binding only
+    // when the graph has one VLESS DNS carrier and no other protected handler.
+    internal fun isDnsUplinkGraph(outboundTypes: Collection<String>, endpointCount: Int): Boolean {
+        val allowed = setOf("selector", "vless", "dnstt", "slipstream", "direct", "block", "dns")
+        return endpointCount == 0 && outboundTypes.count { it == "selector" } == 1 &&
+            outboundTypes.count { it == "vless" } == 1 &&
+            outboundTypes.count { it == "dnstt" || it == "slipstream" } == 1 &&
+            outboundTypes.all { it in allowed }
     }
 
     /** Exact Core strings and standard class categories only; never raw error text. */
