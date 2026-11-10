@@ -602,7 +602,8 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
                 proof.completedAtMs! <= DateTime.now().toUtc().millisecondsSinceEpoch) {
               probeDiagnostic['qa_probe_status'] = proof.status;
               probeDiagnostic['qa_probe_stages'] = proof.stages.isEmpty ? 'none' : proof.stages.map((stage) =>
-                  '${stage.stage}:${stage.result}${stage.reason == null ? '' : ':${stage.reason}'}').join(',');
+                  '${stage.stage}:${stage.result}${stage.reason == null ? '' : ':${stage.reason}'}'
+                  '${_appContext.hostPlatform == HostPlatform.windows ? ':${stage.durationMs}ms' : ''}').join(',');
             }
           } on Object {
             // Keep the original control failure if its local readback cannot settle.

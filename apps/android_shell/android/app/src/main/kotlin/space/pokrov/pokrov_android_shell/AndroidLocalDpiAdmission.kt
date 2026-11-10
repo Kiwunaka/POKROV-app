@@ -73,12 +73,12 @@ internal fun localDpiVpnFallback(
 private val smartSafeLocalDpiServices = setOf("youtube", "discord", "instagram", "threads")
 
 internal fun localDpiModeAllows(mode: String, services: Set<String>, finalTag: String,
-                                outbounds: List<LocalDpiVpnOutbound>): Boolean = when (mode) {
+                                outbounds: List<LocalDpiVpnOutbound>, onFallbackRejected: (String) -> Unit = {}): Boolean = when (mode) {
     "selective" -> outbounds.singleOrNull { it.tag == finalTag }?.let {
         it.type == "direct" && it.detour.isEmpty()
     } == true
     "smart_safe" -> services.isNotEmpty() && smartSafeLocalDpiServices.containsAll(services) &&
-        localDpiVpnFallback(outbounds, finalTag) != null
+        localDpiVpnFallback(outbounds, finalTag, onFallbackRejected) != null
     else -> false
 }
 
@@ -295,7 +295,7 @@ internal class AndroidLocalDpiAdmission private constructor(
 
         fun prepare(context: Context, config: JSONObject, metadata: JSONObject?, parent: AndroidLifecycleTaskScope,
                     ownsProfile: () -> Boolean, protect: (Int) -> Boolean, handler: Handler,
-                    proofBudgetMillis: () -> Int): AndroidLocalDpiAdmission? {
+                    proofBudgetMillis: () -> Int, onNaiveFallback: () -> Unit): AndroidLocalDpiAdmission? {
             if (metadata == null) return unavailable("prepare=metadata_absent")
             if (!BuildConfig.POKROV_ROUTING_CATALOG_ENABLED) return unavailable("prepare=build_disabled")
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return unavailable("prepare=android_unsupported")
@@ -324,7 +324,11 @@ internal class AndroidLocalDpiAdmission private constructor(
                 val wanted = metadata.getJSONObject("services")
                 val serviceIDs = wanted.keys().asSequence().toSet()
                 val finalTag = route.optString("final")
-                if (!localDpiModeAllows(mode, serviceIDs, finalTag, vpnOutbounds))
+                fun reportFallback(reason: String) {
+                    logLocalDpiDiagnostic(reason)
+                    if (reason == "fallback=type_naive") onNaiveFallback()
+                }
+                if (!localDpiModeAllows(mode, serviceIDs, finalTag, vpnOutbounds, ::reportFallback))
                     return unavailable("prepare=mode_scope")
                 if ((config.optJSONArray("endpoints")?.length() ?: 0) != 0) return unavailable("prepare=endpoints_present")
                 failureCode = "prepare=envelope_exception"
@@ -384,7 +388,7 @@ internal class AndroidLocalDpiAdmission private constructor(
                             domain.getString("name") == name && !domain.getBoolean("shared") &&
                                 domain.getString("match") == match
                         }) continue
-                        val vpn = localDpiVpnFallback(vpnOutbounds, rule.optString("outbound"), ::logLocalDpiDiagnostic)
+                        val vpn = localDpiVpnFallback(vpnOutbounds, rule.optString("outbound"), ::reportFallback)
                             ?: return unavailable("prepare=fallback_unprotected")
                         if (fallbacks[service] != null && fallbacks[service] != vpn)
                             return unavailable("prepare=fallback_conflict")

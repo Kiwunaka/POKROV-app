@@ -395,6 +395,10 @@ class ConnectionManager extends ChangeNotifier {
   static const _initialProfilePreparationTimeout = Duration(seconds: 40);
   static const _dnsCandidateSelectionTimeout = Duration(seconds: 30);
   static const _nativeConnectSettlementTimeout = Duration(seconds: 81);
+  Duration _dnsCandidateTimeoutFor(ManagedProfileCacheInputs inputs) =>
+      inputs.hostPlatform == HostPlatform.android && inputs.preferredCandidateRef.isNotEmpty
+          ? const Duration(seconds: 60)
+          : _dnsCandidateSelectionTimeout;
   ({int command, Stopwatch clock, Duration timeout, Completer<void> expired,
     void Function() expire, void Function() close})? _connectDeadline;
 
@@ -3007,7 +3011,7 @@ class ConnectionManager extends ChangeNotifier {
             identical(group, warpCandidates) && group.length > 3;
         // DNS handshakes plus the unchanged 64 KiB proof need their own budget.
         final selectionTimeout = identical(group, dnsCandidates)
-            ? _dnsCandidateSelectionTimeout
+            ? _dnsCandidateTimeoutFor(inputs)
             : identical(group, directWarpCandidates)
             ? const Duration(seconds: 4)
             : identical(group, warpCandidates)
@@ -3029,7 +3033,7 @@ class ConnectionManager extends ChangeNotifier {
             recoveryCandidateRef: recoveryCandidateRef,
             excludedCandidateRefs: excludedCandidateRefs,
             probeTimeout: identical(group, dnsCandidates)
-                ? _dnsCandidateSelectionTimeout
+                ? selectionTimeout
                 : initialProfilePreparation &&
                     _appContext.hostPlatform == HostPlatform.android &&
                     identical(group, ordinaryCandidates)
@@ -3292,7 +3296,7 @@ class ConnectionManager extends ChangeNotifier {
               cancelled: _connectionCoordinator.whenOperationEnds(generation),
               recoveryCandidateRef: recoveryCandidateRef, excludedCandidateRefs: excludedCandidateRefs,
               selectionTimeout: _withinConnectBudget(identical(group, dnsCandidates)
-                  ? _dnsCandidateSelectionTimeout
+                  ? _dnsCandidateTimeoutFor(inputs)
                   : identical(group, directWarpCandidates)
                   ? const Duration(seconds: 4)
                   : identical(group, warpCandidates)
@@ -3303,7 +3307,7 @@ class ConnectionManager extends ChangeNotifier {
               excludeProbeCleanupFromBudget: twoWaveWarp,
               probeSettlementTimeout: _candidateWorkTimeout,
               probeTimeout: identical(group, dnsCandidates)
-                  ? _dnsCandidateSelectionTimeout
+                  ? _dnsCandidateTimeoutFor(inputs)
                   : coldConnect && inputs.hostPlatform == HostPlatform.android &&
                       group.every((candidate) => candidate.warpMode == null)
                   ? const Duration(seconds: 12)

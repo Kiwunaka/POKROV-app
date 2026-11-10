@@ -36,6 +36,10 @@ class AndroidLocalDpiFallbackTest {
         assertFalse(localDpiModeAllows("smart_safe", setOf("youtube", "other"), "vpn", outbounds))
         assertFalse(localDpiModeAllows("smart_safe", setOf("youtube"), "direct", outbounds))
         assertFalse(localDpiModeAllows("smart_safe", setOf("youtube"), "vpn", listOf(vpn.copy(tlsSecure = false))))
+        val reasons = mutableListOf<String>()
+        assertFalse(localDpiModeAllows("smart_safe", setOf("youtube"), "vpn",
+            listOf(vpn.copy(type = "naive"))) { reasons.add(it) })
+        assertEquals(listOf("fallback=type_naive"), reasons)
         assertTrue(localDpiModeAllows("selective", setOf("other"), "direct", outbounds))
         assertFalse(localDpiModeAllows("selective", setOf("other"), "vpn", outbounds))
         assertFalse(localDpiModeAllows("full", setOf("youtube"), "vpn", outbounds))

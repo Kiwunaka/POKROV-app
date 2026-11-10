@@ -1144,8 +1144,10 @@ void main() {
         expect(detail, contains('control_reason=$reason'));
         if (controlFailure == 'core_egress_timeout') {
           expect(context?['qa_probe_status'], 'failure');
-          expect(context?['qa_probe_stages'], contains('tls:failure:tls_timeout'));
-          expect(detail, contains('tls:failure:tls_timeout'));
+          final stage = hostPlatform == HostPlatform.windows
+              ? 'tls:failure:tls_timeout:1ms' : 'tls:failure:tls_timeout';
+          expect(context?['qa_probe_stages'], contains(stage));
+          expect(detail, contains(stage));
           expect(nativeCalls.where((method) => method == 'runtimeEngine.readSmartAccessLeases'), hasLength(1));
         }
         if (controlClientState != null) expect(detail, contains('control_client_state=$controlClientState'));

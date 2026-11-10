@@ -4137,6 +4137,27 @@ void main() {
     expect(manager.status.phase, ConnectionPhase.connected);
   });
 
+  test('manually selected Android DNS candidate has its full proof budget', () async {
+    final dns = TransportCandidate(candidateRef: 'de:dnstt_vless', profileRef: 'dnstt_vless',
+      nodeCode: 'de', countryCode: 'DE', protocol: 'vless', transport: 'dnstt', protection: 'noise',
+      priority: 100, network: 'tcp', flow: '', minimumClientRelease: '1.5.0', minimumCoreRelease: null,
+      platforms: {HostPlatform.android}, requiredFeatures: {RuntimeTransportFeature.dnsttVless});
+    final runtime = _Runtime()..supportsCandidates = true;
+    final bootstrapper = _Bootstrapper(catalog: true, bundle: true)..candidates = [dns];
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+    manager.restoreConnectionPreferences(
+      const PokrovClientExperienceState.empty().copyWith(
+        interfaceMode: PokrovInterfaceMode.advanced, preferredCandidateRef: dns.candidateRef),
+      const {},
+    );
+
+    await manager.connect();
+
+    expect(runtime.stagedProfile, dns.candidateRef);
+    expect(runtime.probeTimeouts.single.inMilliseconds, inInclusiveRange(59000, 60000));
+  });
+
   test('country Auto resolves an admitted AWG missing from a partial bundle', () async {
     final vless = _candidates.first;
     final awg = _CachedBootstrapper.alternatives[1];

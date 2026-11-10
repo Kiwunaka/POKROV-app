@@ -5077,10 +5077,15 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
     if (parts.length != 1 || parts.single.length > 512) return null;
     final summary = parts.single;
     if (summary == 'Локальный DPI: наблюдение недоступно') return summary;
+    if (summary == 'Локальный DPI: naive_fallback_vpn') {
+      return 'Локальный DPI: для выбранных сервисов используется VPN. Для прямого доступа выбери VLESS Reality.';
+    }
     const reason = r'(?:connect_timeout_ipv4|connect_timeout_ipv6|connect_error_ipv4|connect_error_ipv6|early_read|early_write)';
+    const earlyReadCause = r'(?:timeout|remote_closed|reset|other)';
     final shape = RegExp(r'^Локальный DPI: готово \d{1,20}, ожидание \d{1,20}, сбой \d{1,20}, отключено \d{1,20}; '
         r'TCP напрямую \d{1,20}, через VPN \d{1,20}; отклонено соединений QUIC \d{1,20}'
-        '(?:; причина $reason(?:, $reason)*)?\$');
+        '(?:; причина $reason(?:, $reason)*)?'
+        '(?: · early_read_cause=$earlyReadCause(?:, $earlyReadCause)*)?\$');
     return shape.hasMatch(summary) ? summary : null;
   }
 

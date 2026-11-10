@@ -503,13 +503,16 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             (activeStartupCommitted || (AndroidRuntimeState.isStagedProfileCurrent(activeStartupProfileDigest) &&
                 activeConnectRequestId.let { it == null || AndroidConnectRequestOwner.owns(it) }))
 
-    private fun startTunnelTrafficMonitor(scope: AndroidLifecycleTaskScope) {
+    private fun startTunnelTrafficMonitor(scope: AndroidLifecycleTaskScope, localDpiFallbackSummary: String?) {
+        if (localDpiFallbackSummary != null) {
+            AndroidRuntimeState.updateLocalDpiObservation(scope.generation, localDpiFallbackSummary)
+        }
         val reportedLocalDpiStatus = AtomicBoolean(false)
         val monitor = AndroidTunnelTrafficClient(
             scope = scope,
             onSnapshot = { snapshot ->
                 if (ownsRuntimeSession(scope)) {
-                    val localDpiSummary = activeLocalDpi?.observationSummary()
+                    val localDpiSummary = activeLocalDpi?.observationSummary() ?: localDpiFallbackSummary
                     if (reportedLocalDpiStatus.compareAndSet(false, true)) {
                         logLocalDpiDiagnostic(if (localDpiSummary?.startsWith("Локальный DPI: готово ") == true)
                             "status_seen localDpiStatsPresent=true" else "status_seen localDpiStatsPresent=false")
@@ -727,6 +730,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 }
             }
             startupPhase = AndroidRuntimeStartupPhase.LOCAL_DPI
+            var localDpiFallbackSummary: String? = null
             val dpi = AndroidLocalDpiAdmission.prepare(this, runtimeConfig,
                 JSONObject(rawContent).optJSONObject("_meta")?.optJSONObject("local_dpi"), session,
                 ownsProfile = { ownsRuntimeSession(session) && activeStartupProfileDigest == expectedDigest &&
@@ -734,7 +738,8 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 protect = ::protect, handler = mainHandler,
                 proofBudgetMillis = { minOf(ENDPOINT_PREFLIGHT_TIMEOUT_MILLIS,
                     activeConnectDeadline?.let { (it.expiresElapsedMs - android.os.SystemClock.elapsedRealtime()).toInt() }
-                        ?: ENDPOINT_PREFLIGHT_TIMEOUT_MILLIS) })
+                        ?: ENDPOINT_PREFLIGHT_TIMEOUT_MILLIS) },
+                onNaiveFallback = { localDpiFallbackSummary = "Локальный DPI: naive_fallback_vpn" })
             activeLocalDpi = dpi
             val dpiContent = runtimeConfig.toString()
             val handler = object : CommandServerHandler by this@PokrovRuntimeVpnService {
@@ -789,7 +794,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 activeStartupProfileDigest == expectedDigest && serviceCommandGeneration.get() == commandGeneration }
             startupPhase = AndroidRuntimeStartupPhase.EGRESS_PROBE
             schedulePendingCoreEgressProbe(session)
-            startTunnelTrafficMonitor(session)
+            startTunnelTrafficMonitor(session, localDpiFallbackSummary)
             // Staging belongs to the bridge/store. A delayed Core start must
             // not overwrite a newer staged identity with its older profile.
         } catch (error: Throwable) {

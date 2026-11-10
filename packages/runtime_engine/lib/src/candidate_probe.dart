@@ -213,7 +213,7 @@ mixin _CandidateProbeChannel
   }) async {
     if (!RegExp(r'^[A-Za-z0-9_-]{1,128}$').hasMatch(probeId) ||
         timeout.inMilliseconds < 1 ||
-        timeout.inMilliseconds > 30000 ||
+        timeout.inMilliseconds > (hostPlatform == HostPlatform.android ? 60000 : 30000) ||
         expectedNetworkContext.isEmpty) {
       throw ArgumentError('invalid_candidate_probe_request');
     }

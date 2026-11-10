@@ -13,6 +13,26 @@ void main() {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   tearDown(() => messenger.setMockMethodCallHandler(channel, null));
 
+  test('Android candidate bridge accepts sixty seconds while Windows keeps thirty', () async {
+    final sent = <int>[];
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      expect(call.method, 'runtimeEngine.probeCandidate');
+      sent.add((call.arguments as Map)['timeoutMs'] as int);
+      return {'success': true, 'failure_kind': '', 'duration_ms': 1};
+    });
+    Future<RuntimeCandidateProbeResult> probe(HostPlatform platform) =>
+        MobileArtifactRuntimeEngine(hostPlatform: platform).probeCandidate(
+          probeId: 'candidate-dns',
+          payload: const ManagedProfilePayload(profileName: 'candidate', configPayload: '{}'),
+          timeout: const Duration(seconds: 60),
+          expectedNetworkContext: 'network-context',
+        );
+
+    expect((await probe(HostPlatform.android)).success, isTrue);
+    await expectLater(probe(HostPlatform.windows), throwsArgumentError);
+    expect(sent, [60000]);
+  });
+
   test(
       'candidate probe uses the exact WARP chain and leaves ordinary payload alone',
       () async {

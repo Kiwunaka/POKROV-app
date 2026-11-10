@@ -1702,7 +1702,7 @@ class RuntimeHostBridge(
         fun failure(kind: String, duration: Long = 0L): Map<String, Any> =
             mapOf("success" to false, "failure_kind" to kind, "duration_ms" to duration)
         if (id == null || !id.matches(Regex("[A-Za-z0-9_-]{1,128}")) ||
-            content.isNullOrBlank() || timeout == null || timeout !in 1..30_000 || expected.isNullOrBlank()) {
+            content.isNullOrBlank() || timeout == null || timeout !in 1..60_000 || expected.isNullOrBlank()) {
             result.success(failure("invalid_request"))
             return
         }

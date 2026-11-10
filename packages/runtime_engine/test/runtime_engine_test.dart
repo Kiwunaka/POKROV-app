@@ -758,6 +758,17 @@ void main() {
     final accepted = await createRuntimeEngine(hostPlatform: HostPlatform.android).snapshot();
     expect(accepted.hostDiagnosticsSummary, contains(localDpi));
     _expectNoSensitiveRuntimeDetail(accepted.hostDiagnosticsSummary!);
+    const earlyRead = '$localDpi; причина early_read · early_read_cause=remote_closed';
+    nativeSummary = earlyRead;
+    final withCause = await createRuntimeEngine(hostPlatform: HostPlatform.android).snapshot();
+    expect(withCause.hostDiagnosticsSummary, contains(earlyRead));
+    nativeSummary = 'Локальный DPI: naive_fallback_vpn';
+    final fallback = await createRuntimeEngine(hostPlatform: HostPlatform.android).snapshot();
+    expect(fallback.hostDiagnosticsSummary, contains('Локальный DPI: для выбранных сервисов используется VPN.'));
+    nativeSummary = '$localDpi; причина early_read · early_read_cause=$_sensitiveRuntimeDetail';
+    final rejectedCause = await createRuntimeEngine(hostPlatform: HostPlatform.android).snapshot();
+    expect(rejectedCause.hostDiagnosticsSummary, isNot(contains('Локальный DPI:')));
+    _expectNoSensitiveRuntimeDetail(rejectedCause.hostDiagnosticsSummary!);
     nativeSummary = '$localDpi; причина $_sensitiveRuntimeDetail';
     final rejected = await createRuntimeEngine(hostPlatform: HostPlatform.android).snapshot();
     expect(rejected.hostDiagnosticsSummary, isNot(contains('Локальный DPI:')));

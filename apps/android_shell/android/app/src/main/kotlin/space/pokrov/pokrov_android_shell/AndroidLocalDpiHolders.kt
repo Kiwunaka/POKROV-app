@@ -67,9 +67,14 @@ internal class AndroidLocalDpiHolders(
             "connect_timeout_ipv4", "connect_timeout_ipv6", "connect_error_ipv4", "connect_error_ipv6",
             "early_read", "early_write",
         ) }.distinct().joinToString(", ")
+        val earlyReadCauses = observations.filter { it.optString("failure_reason") == "early_read" }
+            .map { it.optString("early_read_cause") }
+            .filter { it in setOf("timeout", "remote_closed", "reset", "other") }
+            .distinct().joinToString(", ")
         return "Локальный DPI: готово $ready, ожидание $pending, сбой $failed, отключено $withdrawn; " +
             "TCP напрямую $local, через VPN $vpn; отклонено соединений QUIC $quic" +
-            if (reasons.isEmpty()) "" else "; причина $reasons"
+            (if (reasons.isEmpty()) "" else "; причина $reasons") +
+            (if (earlyReadCauses.isEmpty()) "" else " · early_read_cause=$earlyReadCauses")
     }
 
     fun withdrawService(service: String) = synchronized(lock) {
