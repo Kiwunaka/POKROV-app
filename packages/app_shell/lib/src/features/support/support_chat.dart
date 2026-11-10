@@ -577,7 +577,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
       }
       final message = result.state == SupportBundleDeliveryState.queued
           ? 'Зашифрованная диагностика поставлена в очередь поддержки.'
-          : 'Сеть недоступна. Зашифрованный пакет сохранен на устройстве для повтора.';
+          : 'Не удалось завершить отправку диагностики. Зашифрованный файл сохранён на устройстве. Его можно отправить повторно.';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
       );

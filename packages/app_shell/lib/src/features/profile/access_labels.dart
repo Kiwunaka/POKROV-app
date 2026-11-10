@@ -109,7 +109,7 @@ String? _freeProfileAccessNotice(FreeProfileAccess? access) {
     return null;
   }
   if (access.hasRecoverableError) {
-    return 'Не удалось обновить базовый доступ. Обнови настройки через минуту; если это повторится, напиши в поддержку.';
+    return 'Не удалось обновить базовый доступ. Через минуту нажми «Обновить доступ». Если ошибка повторится, напиши в поддержку.';
   }
   if (access.isPending) {
     return 'Мы обновляем базовый доступ. Попробуй подключиться через минуту.';
@@ -118,7 +118,7 @@ String? _freeProfileAccessNotice(FreeProfileAccess? access) {
     return 'Лимит базового режима закончился. Доступ продолжится в базовом режиме.';
   }
   if (access.needsConservativePresentation) {
-    return 'Статус базового доступа уточняется. Обнови настройки перед подключением.';
+    return 'Статус базового доступа уточняется. Перед подключением нажми «Обновить доступ».';
   }
   return null;
 }
