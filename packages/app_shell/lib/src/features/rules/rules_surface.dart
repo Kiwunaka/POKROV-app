@@ -1243,16 +1243,16 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
                               _suggestedSelectedAppCandidates(
                             widget.hostPlatform,
                           );
-                          if (snapshot.connectionState !=
-                                  ConnectionState.done &&
-                              fallbackCandidates.isEmpty) {
+                          final loading =
+                              snapshot.connectionState != ConnectionState.done;
+                          if (loading &&
+                              (widget.hostPlatform == HostPlatform.windows ||
+                                  fallbackCandidates.isEmpty)) {
                             return const _MotionSkeletonList(
                               rows: 5,
                             );
                           }
-                          final rawCandidates = snapshot.connectionState ==
-                                      ConnectionState.done &&
-                                  snapshot.data != null
+                          final rawCandidates = !loading && snapshot.data != null
                               ? snapshot.data!
                               : fallbackCandidates;
                           final displayLabels =
