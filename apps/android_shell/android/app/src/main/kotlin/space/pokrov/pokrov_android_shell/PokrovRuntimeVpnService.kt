@@ -1742,7 +1742,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         mainHandler.postAtTime(watchdog, monitor,
             android.os.SystemClock.uptimeMillis() + if (periodic) {
                 target.periodicTimeoutMillis + 500L
-            } else CORE_EGRESS_HARD_TIMEOUT_MILLIS)
+            } else target.startupWatchdogMillis)
         if (!session.execute {
             try {
                 var completedAttempts = 0
@@ -2529,7 +2529,6 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         private const val NOTIFICATION_ID = 1407
         private const val CORE_EGRESS_RETRY_DELAY_MILLIS = 250L
         private const val CORE_ENDPOINT_EGRESS_RETRY_DELAY_MILLIS = 750L
-        private const val CORE_EGRESS_HARD_TIMEOUT_MILLIS = 55_000L
         private const val ENDPOINT_PREFLIGHT_TIMEOUT_MILLIS = 5_000
         private const val ROUTE_MODE_DEVICE = "device"
         private const val ROUTE_MODE_SELECTED_APPS = "selected_apps"

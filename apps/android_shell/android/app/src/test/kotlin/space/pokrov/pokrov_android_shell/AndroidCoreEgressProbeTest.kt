@@ -99,13 +99,15 @@ class AndroidCoreEgressProbeTest {
     }
 
     @Test
-    fun periodicDnsCarrierAllowsSlowSuccessWhileDefaultRemainsBounded() {
+    fun dnsCarrierGetsOneLongStartupProbeAndKeepsItsPeriodicBudget() {
         val cancelled = java.util.concurrent.atomic.AtomicBoolean(false)
         val cancellation = object : RuntimeProbeCancellation {
             override fun isCancelled(): Boolean = cancelled.get()
         }
         val core = BoundedCore("root").apply { simulatedLatencyMs = 4_000 }
         val defaultTarget = AndroidCoreEgressProbeTarget("root", AndroidCoreEgressProbeTargetKind.GROUP)
+        assertEquals(55_000L, defaultTarget.startupWatchdogMillis)
+        assertTrue(AndroidCoreEgressRetryPolicy.shouldRetry(defaultTarget, AndroidCoreEgressProbeResult.UNAVAILABLE, 1))
         assertEquals(AndroidCoreEgressProbeResult.TIMED_OUT, AndroidCoreEgressProbe.probe(defaultTarget, core, cancellation))
         assertEquals(3_000, core.lastTimeoutMs)
 
@@ -113,9 +115,11 @@ class AndroidCoreEgressProbeTest {
         for (carrier in listOf("dnstt", "slipstream")) {
             val types = mapOf("root" to "selector", "proxy" to "vless", "dns-tunnel" to carrier)
             val detours = mapOf("proxy" to "dns-tunnel")
-            val timeout = AndroidCoreEgressProbe.periodicTimeoutMillis("root", types, detours, members)
-            assertEquals(15_000, timeout)
-            val target = defaultTarget.copy(periodicTimeoutMillis = timeout)
+            val usesDnsCarrier = AndroidCoreEgressProbe.usesDnsCarrier("root", types, detours, members)
+            assertTrue(usesDnsCarrier)
+            val target = defaultTarget.copy(usesDnsCarrier = usesDnsCarrier)
+            assertEquals(65_000L, target.startupWatchdogMillis)
+            assertFalse(AndroidCoreEgressRetryPolicy.shouldRetry(target, AndroidCoreEgressProbeResult.UNAVAILABLE, 1))
             assertEquals(AndroidCoreEgressProbeResult.HEALTHY, AndroidCoreEgressProbe.probe(target, core, cancellation))
             assertEquals(15_000, core.lastTimeoutMs)
             core.timeout = true
@@ -124,8 +128,8 @@ class AndroidCoreEgressProbeTest {
             cancelled.set(true)
             assertEquals(AndroidCoreEgressProbeResult.UNAVAILABLE, AndroidCoreEgressProbe.probe(target, core, cancellation))
             cancelled.set(false)
-            assertEquals(3_000, AndroidCoreEgressProbe.periodicTimeoutMillis("root", types, emptyMap(), members))
-            assertEquals(3_000, AndroidCoreEgressProbe.periodicTimeoutMillis("root", types, detours,
+            assertFalse(AndroidCoreEgressProbe.usesDnsCarrier("root", types, emptyMap(), members))
+            assertFalse(AndroidCoreEgressProbe.usesDnsCarrier("root", types, detours,
                 mapOf("root" to listOf("proxy", "other"))))
         }
     }

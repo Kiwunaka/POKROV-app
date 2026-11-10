@@ -113,7 +113,7 @@ internal object AndroidCoreEgressRetryPolicy {
         result: AndroidCoreEgressProbeResult,
         completedAttempts: Int,
     ): Boolean =
-        completedAttempts < maxAttempts(target) &&
+        !target.usesDnsCarrier && completedAttempts < maxAttempts(target) &&
             (
                 result == AndroidCoreEgressProbeResult.UNAVAILABLE ||
                     (
@@ -138,8 +138,16 @@ internal data class AndroidCoreEgressProbeTarget(
     val keepRuntimeOnFailure: Boolean = false,
     val captureSafeFailureCategory: Boolean = false,
     val protocol: String = "unknown",
-    val periodicTimeoutMillis: Int = AndroidCoreEgressProbe.PERIODIC_TIMEOUT_MILLIS,
-)
+    val usesDnsCarrier: Boolean = false,
+) {
+    // Allow the single 60-second Core call to finish and publish its result.
+    val startupWatchdogMillis: Long
+        get() = if (usesDnsCarrier) 65_000L else 55_000L
+
+    val periodicTimeoutMillis: Int
+        get() = if (usesDnsCarrier) AndroidCoreEgressProbe.DNS_PERIODIC_TIMEOUT_MILLIS
+            else AndroidCoreEgressProbe.PERIODIC_TIMEOUT_MILLIS
+}
 
 /** A nonrenewable QA Connect owner dispatches service proof only once. */
 internal class AndroidFirstProviderQaProbe {
@@ -246,7 +254,7 @@ internal object AndroidCoreEgressProbe {
                 endpointTypes = endpointTypes,
             )?.copy(
                 protocol = unambiguousProtocol(tag, outboundTypes, endpointTypes, selectorMembers),
-                periodicTimeoutMillis = periodicTimeoutMillis(tag, outboundTypes, outboundDetours, selectorMembers),
+                usesDnsCarrier = usesDnsCarrier(tag, outboundTypes, outboundDetours, selectorMembers),
             )
         }.getOrNull()
     }
@@ -593,23 +601,22 @@ internal object AndroidCoreEgressProbe {
         return "unknown"
     }
 
-    internal fun periodicTimeoutMillis(targetTag: String, outboundTypes: Map<String, String>,
+    internal fun usesDnsCarrier(targetTag: String, outboundTypes: Map<String, String>,
         outboundDetours: Map<String, String>, selectorMembers: Map<String, List<String>>,
-    ): Int {
+    ): Boolean {
         var tag = targetTag
         val visited = mutableSetOf<String>()
         while (visited.add(tag)) {
             when (outboundTypes[tag]) {
-                "selector", "urltest" -> tag = selectorMembers[tag]?.singleOrNull() ?: return PERIODIC_TIMEOUT_MILLIS
+                "selector", "urltest" -> tag = selectorMembers[tag]?.singleOrNull() ?: return false
                 "vless" -> {
                     val carrier = outboundDetours[tag]?.let { outboundTypes[it] }
-                    return if (carrier == "dnstt" || carrier == "slipstream") DNS_PERIODIC_TIMEOUT_MILLIS
-                    else PERIODIC_TIMEOUT_MILLIS
+                    return carrier == "dnstt" || carrier == "slipstream"
                 }
-                else -> return PERIODIC_TIMEOUT_MILLIS
+                else -> return false
             }
         }
-        return PERIODIC_TIMEOUT_MILLIS
+        return false
     }
 
     /** Exact Core strings and standard class categories only; never raw error text. */
