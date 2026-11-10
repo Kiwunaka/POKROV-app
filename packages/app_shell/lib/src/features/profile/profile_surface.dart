@@ -654,7 +654,7 @@ void _showWindowsShellPreferencesSheet(
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Автозапуск не включает VPN сам. Системный туннель запросит права Windows только при подключении.',
+                  'Автозапуск открывает приложение, но не включает VPN. Windows запросит разрешение только при подключении.',
                   style: Theme.of(sheetContext).textTheme.bodyMedium?.copyWith(
                         color: PokrovPalette.of(sheetContext).muted,
                         height: 1.35,

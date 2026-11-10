@@ -676,8 +676,8 @@ void main() {
     final cases = <String, String>{
       'core_egress_probe_failed': 'POKROV не подтвердил защищенное подключение',
       'core_egress_connect_failed': 'Не удалось соединиться с сервером проверки',
-      'core_egress_tls_timeout': 'Согласование TLS с сервером проверки не завершилось вовремя',
-      'core_egress_probe_unavailable': 'POKROV не завершил проверку защищенного подключения',
+      'core_egress_tls_timeout': 'Не удалось вовремя установить защищённое соединение с сервером проверки',
+      'core_egress_probe_unavailable': 'POKROV не завершил проверку защищённого подключения',
     };
     for (final entry in cases.entries) {
       messenger.setMockMethodCallHandler(channel, (call) async => {
@@ -907,7 +907,7 @@ void main() {
     expect(failed.hasCoreEgressProbeFailure, isTrue);
     expect(failed.isCleanlyHealthy, isFalse);
     expect(failed.message,
-        'Сервер проверки не ответил вовремя после установки соединения. POKROV отключил VPN. Причина не установлена.');
+        'Сервер проверки не ответил вовремя после установки соединения. POKROV отключил VPN.');
   });
 
   test('windows DPI runtime observation decodes by value and stays unknown when invalid',
@@ -1095,7 +1095,7 @@ void main() {
         snapshot.profileIdentityOrigin, 'windows_service_stage_request_sha256');
     expect(snapshot.isCleanlyHealthy, isFalse);
     expect(snapshot.canConnect, isFalse);
-    expect(snapshot.message, contains('Изменение профиля не применено'));
+    expect(snapshot.message, contains('Новые настройки не применены'));
   });
 
   test('desktop lane stages a materialized runtime config without parse',
@@ -1296,14 +1296,14 @@ void main() {
     expect(systemProbeCalls, 3);
     expect(snapshot.phase, RuntimePhase.configStaged);
     expect(snapshot.lastFailureKind, 'desktop_tun_egress_probe_failed');
-    expect(snapshot.message, contains('Windows не пропускает трафик'));
+    expect(snapshot.message, contains('Windows не пропускает через него данные'));
     expect(bindings.startCalls, 1);
     expect(bindings.stopCalls, 1);
 
     final refreshed = await engine.snapshot();
     expect(refreshed.phase, RuntimePhase.configStaged);
     expect(refreshed.lastFailureKind, 'desktop_tun_egress_probe_failed');
-    expect(refreshed.message, contains('Windows не пропускает трафик'));
+    expect(refreshed.message, contains('Windows не пропускает через него данные'));
     expect(refreshed.message, isNot(contains('Профиль доступа готов')));
     final journal = File(
       '${File(staged.stagedConfigPath!).parent.parent.path}'
@@ -1359,7 +1359,7 @@ void main() {
 
     expect(snapshot.phase, RuntimePhase.configStaged);
     expect(snapshot.lastFailureKind, 'desktop_competing_vpn_active');
-    expect(snapshot.message, contains('Другой системный VPN'));
+    expect(snapshot.message, contains('Другой VPN уже работает в Windows'));
     expect(bindings.startCalls, 0);
   });
 

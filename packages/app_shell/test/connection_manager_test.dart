@@ -2945,7 +2945,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('SmartDNS работает'), findsOneWidget);
-    expect(find.text('Туннель, DNS и выход через VPN подтверждены.'), findsNothing);
+    expect(find.text('Защищённое соединение, адреса сайтов и выход через VPN проверены.'), findsNothing);
   });
 
   testWidgets('Rules syncs immediate Wi-Fi policy without discarding pending routing edits', (tester) async {

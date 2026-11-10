@@ -418,13 +418,13 @@ class RuntimeSnapshot {
   String get laneLabel {
     switch (lane) {
       case RuntimeLane.desktopFfi:
-        return 'Локальный runtime';
+        return 'Локальный модуль подключения';
       case RuntimeLane.linuxDaemon:
         return 'Системная служба Linux';
       case RuntimeLane.windowsService:
         return 'Системная служба Windows';
       case RuntimeLane.mobileArtifact:
-        return 'Системный runtime';
+        return 'Системный модуль подключения';
     }
   }
 
@@ -435,7 +435,7 @@ class RuntimeSnapshot {
       case RuntimePhase.artifactReady:
         return 'Файлы готовы';
       case RuntimePhase.initialized:
-        return 'Runtime готов';
+        return 'Модуль подключения готов';
       case RuntimePhase.configStaged:
         return 'Настройки готовы';
       case RuntimePhase.running:
@@ -883,15 +883,15 @@ String _publicRuntimeMessage({
     return 'Не удалось связаться с системным модулем.';
   }
   final egressRuntimeState = phase == RuntimePhase.running
-      ? 'Системный VPN остаётся включённым; выход через него не подтверждён.'
+      ? 'VPN остаётся включённым. Работа через него не подтверждена.'
       : 'POKROV отключил VPN.';
   switch (failureKind) {
     case 'desktop_competing_vpn_active':
-      return 'Другой системный VPN уже управляет маршрутами Windows. Отключите его туннель и повторите подключение POKROV.';
+      return 'Другой VPN уже работает в Windows. Отключи его и попробуй подключиться снова.';
     case 'desktop_loopback_port_conflict':
-      return 'Локальный порт POKROV занят другой программой. Повторите подключение.';
+      return 'Другая программа заняла сетевой порт POKROV. Попробуй подключиться снова.';
     case 'desktop_tun_start_failed':
-      return 'Windows не запустил системный туннель. Закройте другие VPN, затем запустите POKROV от имени администратора.';
+      return 'Windows не запустила защищённое соединение. Закрой другие VPN, затем запусти POKROV от имени администратора.';
     case 'runtime_initialization_failed':
       return 'POKROV не смог подготовить устройство.';
     case 'runtime_start_after_permission_failed':
@@ -903,7 +903,7 @@ String _publicRuntimeMessage({
     case 'runtime_stop_failed':
       return 'POKROV не смог корректно отключиться.';
     case 'protected_handoff_failed':
-      return 'Не удалось восстановить подключение. Повторите попытку или отключите POKROV.';
+      return 'Не удалось восстановить подключение. Попробуй ещё раз или отключи POKROV.';
     case 'connect_cancelled':
       return 'Подключение отменено.';
     case 'core_egress_probe_failed':
@@ -915,27 +915,27 @@ String _publicRuntimeMessage({
     case 'core_egress_connect_failed':
       return 'Не удалось соединиться с сервером проверки через подключение. $egressRuntimeState';
     case 'core_egress_tls_failed':
-      return 'Не удалось согласовать TLS с сервером проверки. $egressRuntimeState';
+      return 'Не удалось установить защищённое соединение с сервером проверки. $egressRuntimeState';
     case 'core_egress_tls_timeout':
-      return 'Согласование TLS с сервером проверки не завершилось вовремя. $egressRuntimeState Причина не установлена.';
+      return 'Не удалось вовремя установить защищённое соединение с сервером проверки. $egressRuntimeState';
     case 'core_egress_response_timeout':
-      return 'Сервер проверки не ответил вовремя после установки соединения. $egressRuntimeState Причина не установлена.';
+      return 'Сервер проверки не ответил вовремя после установки соединения. $egressRuntimeState';
     case 'core_egress_timeout':
-      return 'Проверка подключения не завершилась вовремя. $egressRuntimeState Причина не установлена.';
+      return 'Проверка подключения не завершилась вовремя. $egressRuntimeState';
     case 'core_smart_access_lease_expired':
       return 'Срок разрешения SmartDNS истёк. Подключение требует восстановления.';
     case 'core_egress_probe_unavailable':
       return phase == RuntimePhase.running
-          ? 'POKROV не завершил проверку защищенного подключения. $egressRuntimeState Попробуйте еще раз.'
-          : 'POKROV не завершил проверку защищенного подключения и отключил системный VPN. Попробуйте еще раз.';
+          ? 'POKROV не завершил проверку защищённого подключения. $egressRuntimeState Попробуй ещё раз.'
+          : 'POKROV не завершил проверку защищённого подключения и отключил VPN. Попробуй ещё раз.';
     case 'desktop_tun_egress_probe_failed':
-      return 'Туннель запущен, но Windows не пропускает трафик. POKROV отключил его, чтобы не оставить устройство без сети.';
+      return 'Соединение запущено, но Windows не пропускает через него данные. POKROV отключил его, чтобы сохранить доступ к сети.';
     case 'core_identity_mismatch':
-      return 'Модуль подключения изменился. Обновите POKROV и повторите подключение.';
+      return 'Модуль подключения изменился. Обнови POKROV и попробуй подключиться снова.';
     case 'connect_deadline':
-      return 'Время подготовки подключения истекло. Попробуйте подключиться снова.';
+      return 'Подготовка подключения заняла слишком много времени. Попробуй подключиться снова.';
     case 'profile_identity_mismatch':
-      return 'Изменение профиля не применено. Повторите подключение, чтобы загрузить актуальные настройки.';
+      return 'Новые настройки не применены. Подключись снова, чтобы их загрузить.';
     case 'profile_identity_failed':
     case 'profile_staging_failed':
       return 'POKROV не смог подготовить настройки подключения.';
@@ -944,26 +944,26 @@ String _publicRuntimeMessage({
     case 'config_apply_failed':
       return 'POKROV не смог применить настройки подключения.';
     case 'vpn_permission_denied':
-      return 'Android не получил разрешение на VPN. Нажмите «Разрешить VPN» и подтвердите системный запрос.';
+      return 'Android не получил разрешение на VPN. Нажми «Разрешить VPN» и подтверди запрос.';
     case 'notification_permission_denied':
       return 'Системное уведомление POKROV скрыто в настройках Android.';
     case 'resolver_response_error':
     case 'resolver_callback_error':
     case 'resolver_timeout':
     case 'dns_failure':
-      return 'POKROV не смог подтвердить DNS-подключение устройства.';
+      return 'POKROV не смог проверить адреса сайтов на устройстве.';
     case 'default_network_unavailable':
     case 'network_unavailable':
-      return 'Нет доступной сети. Проверьте Wi-Fi или мобильный интернет.';
+      return 'Нет доступной сети. Проверь Wi-Fi или мобильный интернет.';
     case 'default_network_interface_unresolved':
     case 'default_network_index_unresolved':
-      return 'POKROV не смог определить сетевой интерфейс устройства.';
+      return 'POKROV не смог определить сетевое подключение устройства.';
     case 'endpoint_connect_failed':
       return 'Не удалось установить соединение с точкой подключения.';
     case 'endpoint_connect_refused':
       return 'Точка подключения отклонила соединение.';
     case 'transport_timeout':
-      return 'Точка подключения не ответила вовремя. Причина не установлена.';
+      return 'Точка подключения не ответила вовремя. Попробуй ещё раз.';
     case 'tunnel_handshake_failed':
       return 'Не удалось согласовать защищённое соединение с точкой подключения.';
     case 'runtime_failure':
@@ -971,7 +971,7 @@ String _publicRuntimeMessage({
   }
   return switch (phase) {
     RuntimePhase.artifactMissing =>
-      'Модуль подключения не найден в этой сборке. Обновите приложение или проверьте сборку.',
+      'Модуль подключения не найден. Обнови приложение или напиши в поддержку.',
     RuntimePhase.artifactReady => 'Файлы подключения готовы.',
     RuntimePhase.initialized => 'Подготовка подключения завершена.',
     RuntimePhase.configStaged => 'Настройки POKROV готовы.',
@@ -2021,7 +2021,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine, RuntimeBootClock {
   static const _runtimeJournalRetainedLines = 300;
   static const defaultCoreTag = 'v1.1.0';
   static const _missingArtifactMessage =
-      'Модуль подключения не найден в этой сборке. Обновите приложение или проверьте сборку.';
+      'Модуль подключения не найден. Обнови приложение или напиши в поддержку.';
 
   @override
   Future<RuntimeSnapshot> snapshot() async {
@@ -2238,7 +2238,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine, RuntimeBootClock {
     _desktopVerificationPassed = false;
     final before = await snapshot();
     if (!before.canConnect || _bindings == null || _stagedPayload == null) {
-      _message = 'POKROV ждет подготовленные настройки и готовый runtime.';
+      _message = 'Подключение ещё не подготовлено. Попробуй ещё раз.';
       await _appendRuntimeEvent(
         event: RuntimeLifecycleEventType.tun,
         outcome: 'blocked',
@@ -2463,7 +2463,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine, RuntimeBootClock {
     return const _DesktopProbeFailure(
       kind: 'desktop_tun_egress_probe_failed',
       message:
-          'Туннель запущен, но Windows не пропускает трафик. POKROV отключил его, чтобы сохранить доступ к сети.',
+          'Соединение запущено, но Windows не пропускает через него данные. POKROV отключил его, чтобы сохранить доступ к сети.',
     );
   }
 

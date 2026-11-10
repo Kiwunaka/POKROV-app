@@ -690,7 +690,7 @@ _ProtectionSummary _protectionSummary(
     }
     return const _ProtectionSummary(
       title: 'Защита работает',
-      detail: 'Туннель, DNS и выход через VPN подтверждены.',
+      detail: 'Защищённое соединение, адреса сайтов и выход через VPN проверены.',
       tone: _ProtectionSummaryTone.success,
     );
   }
@@ -717,7 +717,7 @@ _ProtectionSummary _protectionSummary(
     title: hasFailure ? 'Защита требует внимания' : 'Проверяем защиту',
     detail: hasFailure
         ? 'Одна из проверок не подтверждена. Открой детали или запусти восстановление.'
-        : 'Туннель запущен, ждём свежие результаты DNS и выхода через VPN.',
+        : 'Соединение запущено. Проверяем адреса сайтов и выход через VPN.',
     tone: hasFailure
         ? _ProtectionSummaryTone.warning
         : _ProtectionSummaryTone.neutral,
@@ -862,9 +862,9 @@ class _ProtectionRepairOutcomeCard extends StatelessWidget {
           Text(
             succeeded
                 ? dnsOnly ? 'Проверка DNS и TLS выбранного сервиса прошла. Остальной трафик идёт напрямую.'
-                    : 'Туннель, DNS и выход через VPN подтверждены.'
+                    : 'Защищённое соединение, адреса сайтов и выход через VPN проверены.'
                 : interrupted
-                    ? 'Повторное подключение не продолжается. Текущее состояние туннеля показано выше.'
+                    ? 'Повторное подключение остановлено. Текущее состояние соединения показано выше.'
                     : 'Открой поддержку: диагностические данные будут показаны перед отправкой.',
           ),
           if (!succeeded && !interrupted) ...[
@@ -925,7 +925,7 @@ List<_ProtectionCheck> _protectionChecks(_ProtectionCenterData data) {
   final running = snapshot?.phase == RuntimePhase.running;
   final tunnel = !running
       ? _ProtectionCheck(
-          title: 'Туннель',
+          title: 'Соединение',
           value: snapshot == null ? 'Нет измерения' : 'Отключён',
           detail: _consumerTunnelDetail(snapshot),
           icon: Icons.shield_outlined,
@@ -933,21 +933,21 @@ List<_ProtectionCheck> _protectionChecks(_ProtectionCenterData data) {
         )
       : switch (snapshot!.hostHealth) {
           RuntimeHostHealth.healthy => const _ProtectionCheck(
-              title: 'Туннель',
+              title: 'Соединение',
               value: 'Активен',
               detail: 'Защищённое соединение работает.',
               icon: Icons.shield_rounded,
               tone: _ProtectionCheckTone.success,
             ),
           RuntimeHostHealth.degraded => _ProtectionCheck(
-              title: 'Туннель',
+              title: 'Соединение',
               value: 'Требует внимания',
               detail: _consumerTunnelDetail(snapshot),
               icon: Icons.warning_amber_rounded,
               tone: _ProtectionCheckTone.warning,
             ),
           RuntimeHostHealth.unknown => const _ProtectionCheck(
-              title: 'Туннель',
+              title: 'Соединение',
               value: 'Активен, проверяем',
               detail: 'Соединение запущено, свежий результат ещё не получен.',
               icon: Icons.shield_outlined,
@@ -1087,7 +1087,7 @@ String _consumerTunnelDetail(RuntimeSnapshot? snapshot) {
     _ when failureKind.isNotEmpty =>
       'Подключение требует внимания. Попробуй подключиться снова.',
     _ => snapshot == null
-        ? 'Runtime не подтвердил активное соединение.'
+        ? 'Не удалось подтвердить, что соединение активно.'
         : 'Подключение сейчас не активно. Попробуй подключиться снова.',
   };
 }

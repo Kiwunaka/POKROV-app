@@ -239,7 +239,7 @@ abstract final class PokrovDiagnosticMessages {
         PokrovDiagnosticMessageKey.disconnected => 'Активного подключения нет',
         PokrovDiagnosticMessageKey.blocked => 'Подключение не завершено',
         PokrovDiagnosticMessageKey.proofsComplete =>
-          'Туннель, маршруты, DNS и выход через VPN подтверждены.',
+          'Соединение, правила, адреса сайтов и выход через VPN проверены.',
         PokrovDiagnosticMessageKey.evidenceGap =>
           'Одна или несколько обязательных проверок не подтверждены.',
         PokrovDiagnosticMessageKey.awaitingEvidence =>
@@ -548,7 +548,7 @@ abstract final class PokrovDiagnosticsPresenter {
     final evidence = <PokrovDiagnosticEvidence>[
       PokrovDiagnosticEvidence(
         key: 'tunnel',
-        label: 'Туннель',
+        label: 'Соединение',
         state: _tunnelState(snapshot),
       ),
       PokrovDiagnosticEvidence(
@@ -881,7 +881,7 @@ abstract final class PokrovDiagnosticsPresenter {
           ),
         'app.connection.tun.started' || 'app.connection.tun.finished' => (
             'tun',
-            'Туннель'
+            'Соединение'
           ),
         'app.connection.routes.started' || 'app.connection.routes.finished' => (
             'routes',

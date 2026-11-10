@@ -1821,8 +1821,8 @@ class ConnectionManager extends ChangeNotifier {
         kind: 'trusted_wifi_pause',
         title: 'Пауза в доверенной сети',
         detail: name == null || name.isEmpty
-            ? 'Туннель остановлен правилом trusted Wi-Fi.'
-            : 'Туннель остановлен правилом для сети «$name».',
+            ? 'Подключение остановлено по правилу для доверенной сети Wi-Fi.'
+            : 'Подключение остановлено по правилу для сети «$name».',
         tone: PokrovProtectionEventTone.neutral,
       );
       return true;
@@ -1929,7 +1929,7 @@ class ConnectionManager extends ChangeNotifier {
           throw BootstrapFailure(_runtimeHeadline ?? 'Не удалось восстановить подключение.');
         }
         _recordProtectionEvent(kind: 'repair_success', title: 'Подключение восстановлено',
-            detail: 'Туннель и проверка выхода подтверждены.', tone: PokrovProtectionEventTone.success);
+            detail: 'Соединение и выход через VPN проверены.', tone: PokrovProtectionEventTone.success);
         return;
       }
       onStep?.call(_ProtectionRepairStep.stopOldConnection);
@@ -1958,7 +1958,7 @@ class ConnectionManager extends ChangeNotifier {
         _protectedHandoffActive = false;
       }
       if (!_canPrimaryConnect(current)) {
-        throw StateError('на этом устройстве не завершена подготовка runtime');
+        throw StateError('на этом устройстве не завершена подготовка подключения');
       }
       if (current.canInitialize &&
           current.phase == RuntimePhase.artifactReady) {
@@ -2046,7 +2046,7 @@ class ConnectionManager extends ChangeNotifier {
       if (current.phase != RuntimePhase.running) {
         throw StateError(
           current.message.trim().isEmpty
-              ? 'runtime не подтвердил подключение'
+              ? 'подключение не подтверждено'
               : current.message,
         );
       }
@@ -2062,12 +2062,12 @@ class ConnectionManager extends ChangeNotifier {
                 ? 'Выход через VPN не подтверждён'
                 : 'Подключение восстановлено',
         detail: current.isCoreEgressValidationPending
-            ? 'Туннель запущен; POKROV Core проверяет выход через выбранную локацию.'
+            ? 'Соединение запущено. POKROV проверяет выход через выбранную локацию.'
             : current.hasCoreEgressValidationFailure
-                ? 'POKROV Core не подтвердил выход через выбранную локацию.'
+                ? 'POKROV не подтвердил выход через выбранную локацию.'
                 : current.isCleanlyHealthy
-                    ? 'Профиль обновлён, туннель и host-health подтверждены.'
-                    : 'Профиль обновлён, туннель запущен с предупреждением хоста.',
+                    ? 'Настройки обновлены. Проверка соединения прошла.'
+                    : 'Настройки обновлены. Соединение запущено, но одна из проверок требует внимания.',
         tone: current.isCleanlyHealthy
             ? PokrovProtectionEventTone.success
             : PokrovProtectionEventTone.warning,
@@ -4319,7 +4319,7 @@ class ConnectionManager extends ChangeNotifier {
           _recordProtectionEvent(
             kind: 'disconnected',
             title: 'Защита выключена',
-            detail: 'Туннель остановлен по действию пользователя.',
+            detail: 'Ты отключил соединение.',
             tone: PokrovProtectionEventTone.neutral,
           );
           _activeConnectUsedWarp = false;
@@ -4439,7 +4439,7 @@ class ConnectionManager extends ChangeNotifier {
           _managedProfileDirty = false;
           _runtimeHeadline = proven.isCleanlyHealthy
               ? 'POKROV подключен.'
-              : 'Туннель запущен, проверка защиты не завершена.';
+              : 'Соединение запущено. Проверка защиты не завершена.';
         });
         if (proven.isCleanlyHealthy) _finalizeProvenConnection(proven);
         _startTransportPolicyRefresh();
@@ -4823,14 +4823,14 @@ class ConnectionManager extends ChangeNotifier {
             detail: warpFallbackUsed
                 ? 'WARP не прошёл проверку, поэтому POKROV автоматически сохранил рабочий обычный VPN.'
                 : current.isCoreEgressValidationPending
-                    ? 'Туннель запущен; POKROV Core проверяет выход через выбранную локацию.'
+                    ? 'Соединение запущено. POKROV проверяет выход через выбранную локацию.'
                     : current.hasCoreEgressValidationFailure
-                        ? 'POKROV Core не подтвердил выход через выбранную локацию.'
+                        ? 'POKROV не подтвердил выход через выбранную локацию.'
                         : usedCachedProfile
-                            ? 'Control plane не ответил вовремя; использован последний валидный профиль.'
+                            ? 'Сервер не ответил вовремя. Использованы последние проверенные настройки.'
                             : current.isCleanlyHealthy
-                                ? 'Туннель и host-health подтверждены.'
-                                : 'Туннель запущен, одна из host-проверок требует внимания.',
+                                ? 'Проверка соединения прошла.'
+                                : 'Соединение запущено. Одна из проверок требует внимания.',
             tone: warpFallbackUsed
                 ? PokrovProtectionEventTone.warning
                 : usedCachedProfile
@@ -5297,7 +5297,7 @@ class ConnectionManager extends ChangeNotifier {
           _runtimeHeadline = 'Проверяем выход через VPN…';
         } else if (refreshed.hasDegradedHostDiagnostics) {
           _runtimeHeadline =
-              'Туннель запущен, но проверка соединения требует внимания.';
+              'Соединение запущено, но его проверка требует внимания.';
         } else if (refreshed.isCleanlyHealthy) {
           _runtimeHeadline = 'POKROV подключен.';
         }
@@ -5935,9 +5935,9 @@ class ConnectionManager extends ChangeNotifier {
       RuntimeBoundConnectFailure(failureKind: 'core_egress_connect_failed') =>
         'Не удалось соединиться с сервером проверки через VPN.',
       RuntimeBoundConnectFailure(failureKind: 'core_egress_tls_failed') =>
-        'Не удалось согласовать TLS с сервером проверки через VPN.',
+        'Не удалось установить защищённое соединение с сервером проверки через VPN.',
       RuntimeBoundConnectFailure(failureKind: 'core_egress_tls_timeout') =>
-        'Согласование TLS с сервером проверки не завершилось вовремя.',
+        'Не удалось вовремя установить защищённое соединение с сервером проверки.',
       RuntimeBoundConnectFailure(failureKind: 'core_egress_response_timeout') =>
         'Сервер проверки не ответил вовремя после установки соединения.',
       RuntimeBoundConnectFailure(failureKind: 'core_egress_timeout' || 'connect_deadline' || 'deadline_exceeded') =>

@@ -378,13 +378,13 @@ class ConnectionPresentation {
         ? 'Состояние соединения не подтверждено. Попробуй восстановить его или отключи POKROV.'
         : switch (phase) {
       ConnectionExperiencePhase.connectedVerified =>
-        'DNS и выход через VPN подтверждены',
+        'Адреса сайтов и выход через VPN проверены',
       ConnectionExperiencePhase.connectedUnverified => awaitingVerification
-          ? 'Туннель запущен, подтверждаем DNS и выход'
-          : 'Туннель работает, одна из проверок требует внимания',
-      ConnectionExperiencePhase.disconnecting => 'Останавливаем туннель',
+          ? 'Соединение запущено. Проверяем адреса сайтов и выход через VPN'
+          : 'Соединение запущено. Одна из проверок требует внимания',
+      ConnectionExperiencePhase.disconnecting => 'Отключаемся',
       ConnectionExperiencePhase.reconnecting =>
-        'Повторно проверяем защищённый маршрут',
+        'Проверяем защищённое соединение ещё раз',
       ConnectionExperiencePhase.failed => 'Можно безопасно повторить попытку',
       ConnectionExperiencePhase.blocked =>
         'На этом устройстве не завершена подготовка',
@@ -435,11 +435,11 @@ class ConnectionPresentation {
 
   static String _stageTitle(ConnectionStage stage) => switch (stage) {
         ConnectionStage.permission => 'Нужен доступ к VPN',
-        ConnectionStage.profile => 'Подготавливаем профиль',
+        ConnectionStage.profile => 'Подготавливаем настройки',
         ConnectionStage.coreStart => 'Запускаем защиту',
         ConnectionStage.tunnel => 'Создаём защищённое соединение',
         ConnectionStage.network => 'Проверяем интернет',
-        ConnectionStage.dns => 'Проверяем DNS',
+        ConnectionStage.dns => 'Проверяем адреса сайтов',
         ConnectionStage.egress => 'Подтверждаем защиту',
         ConnectionStage.idle || ConnectionStage.complete => 'Подключаемся…',
       };
@@ -447,11 +447,11 @@ class ConnectionPresentation {
   static String _stageSubtitle(ConnectionStage stage) => switch (stage) {
         ConnectionStage.permission => 'Ждём системное разрешение',
         ConnectionStage.profile => 'Получаем и проверяем настройки',
-        ConnectionStage.coreStart => 'Готовим POKROV Core',
-        ConnectionStage.tunnel => 'Запускаем системный туннель',
+        ConnectionStage.coreStart => 'Готовим подключение',
+        ConnectionStage.tunnel => 'Запускаем защищённое соединение',
         ConnectionStage.network => 'Проверяем доступность сети',
-        ConnectionStage.dns => 'Проверяем защищённый DNS',
-        ConnectionStage.egress => 'Проверяем выбранный выход через VPN',
+        ConnectionStage.dns => 'Проверяем адреса сайтов через VPN',
+        ConnectionStage.egress => 'Проверяем подключение через выбранную локацию',
         ConnectionStage.idle ||
         ConnectionStage.complete =>
           'Настраиваем защищённое соединение',
