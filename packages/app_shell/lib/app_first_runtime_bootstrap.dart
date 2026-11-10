@@ -1140,7 +1140,8 @@ String? portalFailureUserMessage(PortalFailureReason? reason) => switch (reason)
   PortalFailureReason.deviceRecoveryRequired || PortalFailureReason.accessExpired ||
   PortalFailureReason.refreshTokenInvalid || PortalFailureReason.refreshReuseDetected ||
   PortalFailureReason.refreshExpired || PortalFailureReason.sessionRevoked ||
-  PortalFailureReason.deviceCredentialChanged || PortalFailureReason.sessionEpochChanged =>
+  PortalFailureReason.deviceCredentialChanged || PortalFailureReason.sessionEpochChanged ||
+  PortalFailureReason.sessionIdentityChanged =>
     'Войди заново. Открой «Восстановить вход» во вкладке «Доступ». Если код не помогает, используй привязанную почту или напиши в поддержку.',
   PortalFailureReason.accountNotFound || PortalFailureReason.accountUnavailable ||
   PortalFailureReason.accountRestricted =>
@@ -7575,7 +7576,7 @@ class AppFirstRuntimeBootstrapper
         'refresh_token_invalid', 'refresh_reuse_detected', 'refresh_expired',
         'session_revoked', 'session_state_changed', 'device_revoked',
         'device_not_found', 'account_not_found', 'account_unavailable',
-        'device_credential_changed', 'session_epoch_changed',
+        'device_credential_changed', 'session_epoch_changed', 'session_identity_changed',
       }.contains(error.code)) {
         final latest = await _sessionSecretStore.readSessionPair(
           hostPlatform: hostPlatform,

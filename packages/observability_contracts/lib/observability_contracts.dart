@@ -93,6 +93,7 @@ enum PortalFailureReason {
   deviceRevoked('device_revoked'),
   deviceCredentialChanged('device_credential_changed'),
   sessionEpochChanged('session_epoch_changed'),
+  sessionIdentityChanged('session_identity_changed'),
   accountNotFound('account_not_found'),
   accountUnavailable('account_unavailable'),
   accountRestricted('account_restricted'),
