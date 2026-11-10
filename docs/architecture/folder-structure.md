@@ -1,8 +1,6 @@
 # Repository map
 
-Android and Windows are the public host pair. This map locates current code;
-[cutover readiness](../operations/cutover-readiness.md) owns release acceptance,
-and [AGENTS.md](../../AGENTS.md) owns working and approval rules.
+Android and Windows are the public hosts. Follow the [release procedure](../operations/cutover-readiness.md) and [AGENTS.md](../../AGENTS.md) for operations and approval.
 
 ## Packages and source entrypoints
 
@@ -48,14 +46,6 @@ UI widgets do not create authentication, entitlements or connection proof.
 | [version parity](../../scripts/check-client-version-parity.ps1) / [runtime sync](../../scripts/sync-pokrov-core-runtime.ps1) | Exact source/version/artifact validation and explicit platform selection |
 | [test runner](../../scripts/run-tests.ps1) | Listed workspace Flutter checks and Android unit-test flavors; focused checks normally run in the changed package |
 
-Android 4180's Core AAR from `5364537` requires
-`-RuntimeArtifactsPath E:/POKROV-tools/temp/core-android-mobile-auth/runtime-artifacts.android.json`.
-The default manifest was not updated for Android; Windows keeps Core 1.2.14 /
-`40356d4` with matching Cronet. Keep these bindings separate; preserve source
-pins, dependency identities, signing and trust checks. See the scripts guide
-before staging or packaging either platform.
-
 `config/local/`, host build outputs and native artifact slots remain generated
 and ignored; no credentials, raw profiles or release binaries belong in Git.
-Tests live beside their owning packages or hosts. Dated decisions and receipts
-remain history, not a parallel task queue or permission to repeat accepted QA.
+Tests live beside their owning packages or hosts.

@@ -1,8 +1,6 @@
 # pokrov_app_ui
 
-Screens of the redesign the owner approved on 2026-10-18. The frame was built from the 1.5.0 screens: same circle button, chips, tabs, emerald, with plain «ты» texts, technical detail moved to a second layer, and live motion.
-
-On 2026-11-02 the owner chose direction D: four task tabs (Защита, Доступ, Помощь, Настройки) instead of the Simple/Advanced split, widgets on the main screen that the person picks and orders, and one search over Settings.
+The app uses four tabs (Защита, Доступ, Помощь, Настройки), configurable shortcuts on the protection screen and one settings search.
 
 The package is presentation only. Screens take view data (`lib/src/models.dart`) and callbacks; they never read runtime, network or storage. `example/lib/sample_data.dart` holds the fake data used only by the preview app and tests.
 

@@ -1,7 +1,5 @@
 # In-App AI Assistant Contract
 
-Last updated: 2026-08-15
-
 This document defines the support-scoped POKROV assistant for the
 `1.0.0-beta` client line.
 

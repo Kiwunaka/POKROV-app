@@ -1,25 +1,9 @@
 # Windows Shell
 
-Current packaging and exact-candidate acceptance live in
+Current packaging and release checks live in
 [cutover readiness](../../docs/operations/cutover-readiness.md) and
 [Windows readiness](../../docs/operations/windows-release-readiness.md).
 Runtime artifact selection belongs to the [packaging guide](../../scripts/README.md).
-
-Historical ATS-006 source checkpoint (its verification status is scoped to that
-checkpoint, not the current release):
-
-ATS-006 source adds service command 21 / capability bit 15 for expected Core,
-profile and original boot-relative deadline. The service validates the pinned
-module and staged request identity before startup, retains the exact cancellation
-owner after response and serializes expiry cleanup. The C++ IPC client negotiates
-the command and checks its returned identities. Runner/Dart now dispatch the exact
-tuple and retain the cancellation control after ACK until fresh service state
-shows restoration. Bound startup requires the optional Core interruptible-start
-export and sends cancellation into its context while the DLL call is in flight.
-The callback joins before return; Stop and restoration remain serial. Arbitrary
-blocked OS calls are not forcibly terminated. Selector/proof/lease handoff
-remains open. This is
-NOT_VERIFIED source; no Windows build, service call or clock/hash execution ran.
 
 Current responsibility:
 

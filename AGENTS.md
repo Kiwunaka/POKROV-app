@@ -13,8 +13,9 @@
 - Make the smallest change that solves the task; reuse existing code and patterns. No speculative abstractions, dependencies, configuration, fallbacks or future-proofing.
 - Test only the changed behavior plus the stage checklist: `flutter analyze` and tests for the changed packages; Gradle or Windows packaging checks only when their files change. Repeat a check only after a change or a failure.
 - Build only after code changes. Never rebuild to refresh hashes, licenses, provenance or a "fresh candidate".
-- Docs describe how the client works now and how to build and release it. When behavior changes, rewrite the affected paragraph in the owning doc; do not append a new one. A build, a check or a release is not a behavior change: what was done and when goes in the commit message and nowhere else.
-- Keep out of every doc and the queue: timestamps, candidate build numbers, byte counts, QA window logs, lists of what was not done. One fact lives in one place. A doc over 30 KB holds a chronicle or two topics: cut it. Do not create evidence folders, ledgers or decision diaries.
+- Describe the current behavior and recurring procedures. Rewrite the owning paragraph when it changes. One fact has one home. Record what changed and when in the commit message.
+- Before adding a paragraph, ask if it will still be true and needed in a month. Split or cut a doc above 30 KB. Keep timestamps, candidate numbers and acceptance logs in Git history.
+- Read production facts from production. Docs explain where and how to read them. Public release state lives in the Platform snapshot.
 - Do not read a large doc end to end. Search for the word you need and read the paragraph you find.
 - User-facing text in the app is written for a non-programmer: one thought per sentence, no internal terms.
 - Other agents may work in the same repos. Check `git status` and the diff first; never overwrite, revert or reformat work outside your task.

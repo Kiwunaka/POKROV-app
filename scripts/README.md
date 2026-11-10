@@ -1,115 +1,17 @@
-# Client scripts
+# Client build scripts
 
-Use [AGENTS.md](../AGENTS.md) for working/approval rules and
-[cutover readiness](../docs/operations/cutover-readiness.md) for current results.
-The source target for V2 is **2.0.0+4269**. Public distribution is **1.4.5**,
-and the retained seven-asset draft is **1.5.0+4175**. Use these scripts for
-private packaging before the separate publication step.
+Use the [release procedure](../docs/operations/cutover-readiness.md) for the sequence from a tested change to handoff.
 
 ## Runtime selection
 
-Private Windows **4268** and Android **4267** use production trust and share
-`E:/POKROV-tools/temp/core-4267-313c77b/runtime-artifacts.4267.json`.
-Windows pairs it with `E:/POKROV-tools/temp/core-4267-313c77b/windows-release.4267.json`.
-The outputs are in `E:/POKROV-tools/temp/release-1.5.0-4268` for Windows and
-`E:/POKROV-tools/temp/release-1.5.0-4267` for Android. Windows **LAB4265** uses
-the lab catalog for isolated VM testing.
+[config/runtime-artifacts.seed.json](../config/runtime-artifacts.seed.json) defines the default binding. Pass `-RuntimeArtifactsPath` for an approved alternate binding and use that same manifest for parity, sync and packaging. `-WindowsReleasePath` selects a paired Windows packaging config when needed.
 
-Windows **4209** reuses the accepted Windows Core/guard pair from 4205. Its selection
-is `-RuntimeArtifactsPath E:/POKROV-tools/temp/core-windows-4205/runtime-artifacts.json`
-and `-CoreArtifactDirectory E:/POKROV-tools/temp/core-windows-4205/windows`, with
-`-CoreRoot C:/Users/kiwun/Documents/ai/POKROV-core -SyncRuntime`. Retain the approved
-signing arguments and production transport-trust file
-`E:/POKROV-tools/temp/release-1.5.0/client-transport-trust-defines.smartdns-4186.production.json`.
-Android **4209** includes the active-profile and uplink recovery fixes; both
-platform packages contain the independent-bridge cache selection. Android reuses the accepted staged AAR
-with `-RuntimeArtifactsPath E:/POKROV-tools/temp/core-android-4202/runtime-artifacts.json`,
-without `SyncRuntime` or a Core rebuild. See cutover readiness
-for the accepted source/package scope. The default
-[tracked manifest](../config/runtime-artifacts.seed.json) is not the private
-selected binding and must not be used to restage this private build.
-
-Windows local DPI now uses [Zapret2 v1.0.6](https://github.com/bol-van/zapret2/releases/tag/v1.0.6)
-(`221d7dff`, LuaCompat 6): package `winws2.exe`, `zapret-lib.lua`,
-`zapret-antidpi.lua`, the Google TLS blob, Cygwin, WinDivert and `NOTICES.txt`
-as `local-dpi/` dependencies in the selected runtime manifest. The private
-selection is `E:/POKROV-tools/temp/zapret2-1.0.6/runtime-artifacts.zapret2-v1.0.6.json`
-with its `windows` artifact directory and `windows-release.zapret2-v1.0.6.json`.
-Sync preserves dependency subdirectories; packaging excludes unselected files
-left by an older engine. The service keeps the same signed domain/interface
-scope, fresh TLS proof and bounded two-strategy retry, using Zapret2's Lua
-`multidisorder` and `fake`/`multisplit` functions. Native checks cover arguments
-and owned sandbox cleanup; actual Lua/filter acceptance still requires the VM.
-
-- [build-android-production.ps1](build-android-production.ps1) validates an
-  already staged Android runtime with `RuntimeArtifactsPath`. Copying is
-  explicit: `-SyncRuntime` or `-CoreArtifactDirectory` invokes Android-only sync.
-  Both production builders accept `-WindowsReleasePath` for a paired private
-  release config; omission keeps the existing Windows release seed.
-- [build-windows-release.ps1](build-windows-release.ps1) validates the Windows
-  runtime after requested sync or restoration of missing files. Before staging,
-  it checks built Core/dependency bytes against that verified runtime and both
-  executable version fields against the client version. This also applies to
-  `-SkipBuild`: a stale bundle requires a rebuild. Packaging requires the seed's
-  complete `local-dpi` files even when a private release config is selected.
-  The optional
-  [reproducible wrapper](build-windows-release-reproducible.ps1) forwards arguments
-  and uses a temporary `P:` mapping.
-  WinDivert's driver has a separate installer entry: an identical installed
-  `local-dpi/WinDivert64.sys` is retained, even when loaded. A changed driver
-  that is locked uses Inno Setup's restart replacement and restart prompt;
-  DPI is not accepted with the new driver until that restart. The installer
-  does not stop another application's WinDivert service.
-- [sync-pokrov-core-runtime.ps1](sync-pokrov-core-runtime.ps1) requires the clean
-  Core checkout at the selected manifest's exact source commit, then validates
-  artifact and dependency sizes/hashes before copying. Use `-Platforms android`
-  or `-Platforms windows` for a single-platform change; it otherwise selects both.
-  `CoreArtifactDirectory` requires exactly one platform. Never replace exact
-  bindings with whichever files happen to be in Core `dist/`.
-  A Slipstream Windows SDK lists `slipstream-client.exe` and
-  `slipstream-LICENSE.txt` in the selected manifest's existing runtime dependencies;
-  CMake installs the pair. Android receives the per-ABI executable
-  `libslipstream.so` from Core's AAR and extracts native libraries for execution
-  by Core. Sync also extracts that AAR's Slipstream license into an ignored
-  Android license asset. Source support alone does not establish packaged readiness.
-- [check-client-version-parity.ps1](check-client-version-parity.ps1) checks
-  selected-platform versions and artifact identities. Pass the same
-  `RuntimeArtifactsPath` as packaging; use `-Platforms android` or
-  `-Platforms windows` when checking only that host.
-
-Signing, secure-storage and runtime pin rules are unchanged. Build from the
-reviewed source only when the task needs a changed binary. Packaging checks the
-produced signer/debuggable/version/ABI or required Windows files/signature;
-it does not replace tests, device acceptance or release approval. Outputs stay
-ignored and outside Git/LFS.
-
-Both production builders also require `-CandidateRankerModelPath` pointing to
-the approved exported v1/F82 shadow model, currently
-`E:/POKROV-tools/experiments/connection-selection/contract-transformer-runtime.bin`.
-They stage the fixed 3,734,808-byte `PKRTF001` file into the ignored
-`packages/app_shell/assets/models/candidate-ranker-v1.bin` and verify that the
-Windows bundle or every APK contains those exact bytes. `SkipBuild` cannot
-package an old Windows bundle without the model. No external runtime path or
-download is used, and V3/F102 is not a valid input. Remove the obsolete
-`POKROV_RANKER_SHADOW_MODEL_PATH` entry from the selected defines file; retain its
-other trust values. An ordinary source checkout does not require the weights.
-
-For the focused real-asset check without building a release, dot-source
-`scripts/candidate-ranker-asset.ps1` and call `Sync-PokrovCandidateRankerAsset`
-with `-ModelPath` and `-RepositoryRoot`. From `apps/windows_shell`, set
-`POKROV_RANKER_BUNDLE_TEST=1` and run `flutter test
-../../packages/app_shell/test/candidate_ranker_shadow_test.dart --plain-name
-"staged v1 bundle reaches the manager and scores without a local model path"`.
-Running from the host supplies the same package-prefixed Flutter asset key used
-by the application. Normal package tests mock this asset and need no model file.
+- [check-client-version-parity.ps1](check-client-version-parity.ps1) validates version and selected-platform artifact identity. Use `-Platforms android` or `-Platforms windows` for a single-platform check.
+- [sync-pokrov-core-runtime.ps1](sync-pokrov-core-runtime.ps1) verifies the clean Core source and the artifact/dependency identities before copying. It reads `CoreRoot/dist/<platform>` or an explicit `-CoreArtifactDirectory` for one platform. It does not fetch from a release tag. Windows needs the selected Cronet and local-DPI files. Keep required notices with selected dependencies.
+- [build-android-production.ps1](build-android-production.ps1) validates the staged AAR. Use `-SyncRuntime` or an explicit `-CoreArtifactDirectory` to copy the selected Android binding. It validates the signed outputs, versions and ABIs. Use the existing signer under `%LOCALAPPDATA%/POKROV/android-signing`. [configure-android-production-signing.ps1](configure-android-production-signing.ps1) provisions signing for an authorized setup. Keep passwords and key files outside the checkout. Do not replace an existing signing lineage.
+- [build-windows-release.ps1](build-windows-release.ps1) validates the runtime and sidecars, executable versions, installer identity and the requested signing mode. `-SkipBuild` requires matching existing outputs. The [reproducible wrapper](build-windows-release-reproducible.ps1) uses a temporary drive mapping. Use the existing approved certificate configuration for a trusted-signed release.
+- Both production builders require `-CandidateRankerModelPath` for the approved v1 model and validate the bundled asset. The model source is external to the repository. Normal source tests use test assets.
 
 ## Development checks
 
-Run `flutter analyze` and focused `flutter test` cases from the changed package
-or host. [run-tests.ps1](run-tests.ps1) is the broader runner for its listed
-workspace packages and both Android unit-test flavors. Do not use it to repeat
-accepted unrelated checks or for documentation-only edits.
-
-[check-release-source-logging.ps1](check-release-source-logging.ps1) is an
-optional focused source scan. It does not justify printing session/auth values
-or copying private runtime material into reports.
+Run `flutter analyze` and focused `flutter test` in the affected package or host. [run-tests.ps1](run-tests.ps1) runs the listed workspace and Android flavor checks when the affected scope requires it. [check-release-source-logging.ps1](check-release-source-logging.ps1) checks the release logging boundary. Packaging outputs and signing material stay out of git.

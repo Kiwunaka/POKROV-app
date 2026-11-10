@@ -1,12 +1,11 @@
 ---
 name: POKROV Client Design System
 status: active
-updated: 2026-11-02
 ---
 
 # POKROV Client Design System
 
-The approved 18 October screens, plain «ты» copy, colors and motion live in
+The shared screens, plain «ты» copy, colors and motion live in
 `packages/app_ui`. Fonts are shared with the cabinet and site: Onest for text
 and Unbounded for titles and the wordmark; titles grow with system text up to
 140% so single words stay whole. Feature-local adapters in `app_shell` supply

@@ -1,27 +1,9 @@
 # Client documents
 
-- Current V2 release queue: [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md).
-  [Execution section 0](C:/Users/kiwun/Downloads/POKROV_EXECUTION_PLAN_2026-09-24.md)
-  explains how to continue; its older stages retain criteria, not a second queue.
-- Repository ownership and entrypoints: [folder structure](architecture/folder-structure.md).
-- Product behavior: [client product contract](product/client-product-contract.md).
-- Runtime startup and platform boundary:
-  [bootstrap workflow](architecture/bootstrap-workflow.md),
-  [platform privilege/runtime contract](architecture/platform-privilege-runtime-contract.md).
-- Runtime package: [runtime engine](../packages/runtime_engine/README.md).
-- Packaging and artifact selection: [scripts](../scripts/README.md).
-- Current V2 status and prior package acceptance: [cutover readiness](operations/cutover-readiness.md).
-- Android and Windows checks:
-  [Android](operations/android-release-audit.md),
-  [Windows](operations/windows-release-readiness.md).
-- WARP-specific checks: [runtime proof checklist](operations/warp-runtime-proof-checklist.md).
-
-Current artifacts, manifest selection and acceptance limits belong to
-[cutover readiness](operations/cutover-readiness.md), with packaging mechanics
-in [scripts](../scripts/README.md#runtime-selection). The 2 November 2026
-snapshot distinguished public **1.4.5**, the seven-asset draft **1.5.0+4175**,
-and private Android/Windows **1.5.0+4256**; it is historical.
-See [DESIGN.md](../DESIGN.md) for screen ownership,
-real-data bindings and the Diagnostics boundary.
-Dated candidate receipts are history, not current blockers or permission to
-repeat accepted checks. Older detailed receipts remain in Git history.
+- [Repository map](architecture/folder-structure.md) locates the shared packages, hosts and build tooling.
+- [Product behavior](product/client-product-contract.md) and [onboarding](architecture/app-first-onboarding-flow.md) describe the account and connection flows.
+- [Bootstrap](architecture/bootstrap-workflow.md), [host privileges](architecture/platform-privilege-runtime-contract.md), [package boundaries](architecture/package-boundaries.md) and [persisted state](architecture/persisted-state-contract.md) describe the client implementation.
+- [Smart Access DNS](architecture/smart-access-dns.md) and [support assistant](architecture/in-app-ai-assistant-contract.md) describe those integrations.
+- [Design](../DESIGN.md) owns the screen and component rules.
+- [Build scripts](../scripts/README.md) and the [release procedure](operations/cutover-readiness.md) explain packaging and handoff.
+- [Production state](../../VPN/docs/operations/current-state.md) records public versions.
