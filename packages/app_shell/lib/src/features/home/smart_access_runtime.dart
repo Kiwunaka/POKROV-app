@@ -138,9 +138,11 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
       throw const RoutingCatalogFailure('smart_access_native_recovery_unsupported');
     }
     final backgroundEngine = engine as RuntimeSmartAccessBackgroundControl;
-    // One reread covers a concurrent final receipt; continuous change consumes
-    // the action budget and requires another user/foreground operation.
-    for (var attempt = 0; attempt < 2; attempt++) {
+    // One reread covers a concurrent final receipt. Stop is asynchronous on
+    // Android, so its worker must settle within this same action budget.
+    var attempt = 0;
+    var stopRequested = false;
+    while (attempt < 2) {
       if (!current()) throw const ConnectionOperationSuperseded();
       final encoded = await waitFor(backgroundEngine.readSmartAccessRestrictions());
       if (!current()) throw const ConnectionOperationSuperseded();
@@ -159,14 +161,28 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
         }
       }
       _applyNativeSmartAccessRestrictions(retained.restrictions);
-      // Android can stage while its previous Core is alive. Do not allow a
-      // concurrent worker receipt to race cached catalog stage after readback.
+      // A stopped Android tunnel can still have its previous control worker.
+      // Join that owner before restaging; a live tunnel keeps its protection.
       if (forStage && retained.hasLiveWorker) {
-        throw const RoutingCatalogFailure('smart_access_recovery_requires_stopped_runtime');
+        if (_appContext.hostPlatform != HostPlatform.android ||
+            native.phase == RuntimePhase.running || native.connectionPending || native.protectionRetained == true) {
+          throw const RoutingCatalogFailure('smart_access_recovery_requires_stopped_runtime');
+        }
+        if (!stopRequested) {
+          native = await waitFor(engine.disconnect());
+          stopRequested = true;
+          if (!current()) throw const ConnectionOperationSuperseded();
+          if (native.phase == RuntimePhase.running || native.connectionPending || native.protectionRetained == true) {
+            throw const RoutingCatalogFailure('smart_access_recovery_requires_stopped_runtime');
+          }
+        }
+        await waitFor(Future<void>.delayed(const Duration(milliseconds: 100)));
+        continue;
       }
       final acknowledged = await waitFor(backgroundEngine.acknowledgeSmartAccessRestrictions(retained.snapshotSha256));
       if (!current()) throw const ConnectionOperationSuperseded();
       if (acknowledged) return retained.restrictions;
+      attempt++;
     }
     throw const RoutingCatalogFailure('smart_access_recovery_changed');
   }

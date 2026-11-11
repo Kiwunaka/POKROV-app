@@ -381,6 +381,23 @@ class _CatalogFailureBootstrapper extends _StatsBootstrapper implements AppFirst
   }
 }
 
+class _PersistentCatalogBootstrapper extends _StatsBootstrapper
+    implements AppFirstRoutingCatalogService, AppFirstSmartAccessService {
+  _PersistentCatalogBootstrapper(this.routingCatalog) : super(bundle: true);
+  final VerifiedRoutingCatalog routingCatalog;
+  @override
+  bool get routingCatalogEnabled => true;
+  @override
+  bool get smartAccessControlAvailable => true;
+  @override
+  bool get smartAccessEnabled => false;
+  @override
+  Future<RoutingCatalogFetchResult?> fetchRoutingCatalog({required HostPlatform hostPlatform,
+    bool cacheOnly = false, Future<void>? cancelled}) async => RoutingCatalogFetchResult(catalog: routingCatalog, usingCache: false);
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 class _QaProfileFailureBootstrapper extends AppFirstRuntimeBootstrapper {
   _QaProfileFailureBootstrapper(Directory directory)
       : super(supportDirectoryResolver: () async => directory,
@@ -725,6 +742,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   int routingCatalogWindowVersion = 0;
   int routingCatalogControlVersion = 0;
   int smartAccessLeaseVersion = 0;
+  int smartAccessRuntimeControlVersion = 0;
   Duration probeDelay = Duration.zero;
   Duration probeDuration = Duration.zero;
   final probeTimeouts = <Duration>[];
@@ -924,6 +942,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
         routingCatalogWindowVersion: routingCatalogWindowVersion,
         routingCatalogControlVersion: routingCatalogControlVersion,
         smartAccessLeaseVersion: smartAccessLeaseVersion,
+        smartAccessRuntimeControlVersion: smartAccessRuntimeControlVersion,
         protectionRetained: restoredHandoffGuard,
         canInitialize: phase == RuntimePhase.artifactReady || coreInitializationPending,
         canConnect: phase.index >= RuntimePhase.configStaged.index,
@@ -1102,6 +1121,63 @@ class _SmartDnsRuntime extends _Runtime implements RuntimeSmartAccessControl {
   @override
   Future<bool> revokeSmartAccessLease({required String profileDigest,
     required String leaseId, required bool terminateActive}) async => true;
+}
+
+class _PersistentCatalogRuntime extends _Runtime implements RuntimeSmartAccessControl, RuntimeSmartAccessBackgroundControl {
+  _PersistentCatalogRuntime() {
+    routingCatalogWindowVersion = 1;
+    routingCatalogControlVersion = 4;
+    smartAccessLeaseVersion = 1;
+    smartAccessRuntimeControlVersion = 1;
+    supportsCandidates = true;
+  }
+  bool retainedWorker = true;
+  bool workerStops = true;
+  RuntimePhase stageNativePhase = RuntimePhase.configStaged;
+  int acknowledgements = 0;
+  @override
+  Future<RuntimeSnapshot> stageSmartAccessProfile(ManagedProfilePayload payload, {
+    required Future<String> Function(String, RuntimeSnapshot) persistRestrictions,
+    required bool Function() operationIsCurrent,
+  }) async {
+    profileDigest = await persistRestrictions(payload.configPayload, value(stageNativePhase));
+    return stageManagedProfile(payload);
+  }
+  @override
+  Future<String> readSmartAccessRestrictions() async {
+    final entries = <Object>[
+      if (acknowledgements == 0) {
+        'catalog_sha256': 'c' * 64, 'catalog_withdrawn': false,
+        'expires_at': _smartDnsTime(DateTime.now().toUtc().add(const Duration(hours: 1))),
+        'generation': 'd' * 32, 'leases': <Object>[], 'live': retainedWorker, 'pending': retainedWorker,
+        'policy_action': 'none', 'profile_digest': 'e' * 64, 'scope_actions': <String, Object>{},
+      },
+    ];
+    return jsonEncode({'schema': 1,
+      'snapshot_sha256': await smartAccessProfileSha256(jsonEncode(entries)), 'entries': entries});
+  }
+  @override
+  Future<RuntimeSnapshot> disconnect() async {
+    final stopped = await super.disconnect();
+    if (workerStops) unawaited(Future<void>.delayed(const Duration(milliseconds: 200), () => retainedWorker = false));
+    return stopped;
+  }
+  @override
+  Future<bool> acknowledgeSmartAccessRestrictions(String snapshotSha256) async {
+    expect(retainedWorker, isFalse, reason: 'the running worker must settle before its final receipt is acknowledged');
+    acknowledgements++;
+    return true;
+  }
+  @override
+  Future<RuntimeSmartAccessLeaseState> readSmartAccessLeases(String profileDigest) async =>
+    RuntimeSmartAccessLeaseState(profileDigest: profileDigest, leaseIds: {}, selections: {});
+  @override
+  Future<bool> revokeSmartAccessLease({required String profileDigest, required String leaseId,
+    required bool terminateActive}) async => true;
+  @override
+  Future<bool> configureSmartAccessRuntimeControl({required String profileDigest, required String configJson}) async => true;
+  @override
+  Future<bool> configureSmartAccessRenewal({required String profileDigest, required String configJson}) async => true;
 }
 
 class _ExperienceStore implements PokrovClientExperienceStore {
@@ -1368,6 +1444,49 @@ Future<void> _openTechnicalDiagnostics(WidgetTester tester) async {
 }
 
 void main() {
+  for (final scenario in [
+    (name: 'settles a stopped native worker before staging a proven candidate', liveTunnel: false, workerStops: true),
+    (name: 'keeps the live tunnel when its catalog worker is active', liveTunnel: true, workerStops: true),
+    (name: 'rejects stage when the stopped native worker cannot settle', liveTunnel: false, workerStops: false),
+  ]) {
+    test('Android ${scenario.name}', () async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      final originalStorage = FlutterSecureStoragePlatform.instance;
+      FlutterSecureStoragePlatform.instance = TestFlutterSecureStoragePlatform({});
+      addTearDown(() => FlutterSecureStoragePlatform.instance = originalStorage);
+      final fixture = await _smartDnsFixture(audience: 'production');
+      final payload = jsonDecode(jsonEncode(fixture.catalog.payload)) as Map<String, Object?>;
+      final service = (payload['services'] as List).single as Map;
+      service['platforms'] = ['android'];
+      service['classification'] = 'ordinary';
+      service['route_intents'] = [{'mode': 'smart_safe', 'action': 'vpn'}];
+      service['provider_capability_refs'] = <String>[];
+      service['external_gateway_policy'] = 'forbidden';
+      final catalog = await RoutingCatalogVerifier(publicKeysById: {
+        'fixture': base64Encode((await fixture.key.extractPublicKey()).bytes)}, audience: 'production').verify(
+        await _signedSmartDns(payload, 'pokrov-routing-catalog-v1', fixture.key), now: DateTime.now().toUtc(),
+        minimumRevision: 0, minimumSecurityRevision: 1, currentPayloadSha256: null);
+      final bootstrapper = _PersistentCatalogBootstrapper(catalog)
+        ..profileAccess = FreeProfileAccess.tryParse(access: {'access_state': 'paid_unlimited'})
+        ..materialConfigPayload = '{"inbounds":[{"type":"tun","tag":"tun-in","auto_route":true,"strict_route":true}],"outbounds":[{"type":"socks","tag":"proxy","server":"127.0.0.1","server_port":1080},{"type":"direct","tag":"direct"}],"dns":{"servers":[{"type":"https","tag":"dns-remote","server":"1.1.1.1","detour":"proxy"},{"type":"local","tag":"dns-direct","detour":"direct"}],"final":"dns-remote"},"route":{"final":"proxy"}}';
+      final runtime = _PersistentCatalogRuntime()
+        ..phase = RuntimePhase.configStaged..stagedProfile = 'old-profile'..profileDigest = 'e' * 64
+        ..stageNativePhase = scenario.liveTunnel ? RuntimePhase.running : RuntimePhase.configStaged
+        ..workerStops = scenario.workerStops;
+      final store = _ExperienceStore();
+      final manager = _manager(runtime, bootstrapper, experienceStore: store,
+        actionTimeout: scenario.workerStops ? const Duration(seconds: 18) : const Duration(seconds: 1));
+      addTearDown(manager.dispose);
+      await manager.connect();
+      final succeeds = !scenario.liveTunnel && scenario.workerStops;
+      expect(manager.status.phase, succeeds ? ConnectionPhase.connected : ConnectionPhase.actionRequired,
+        reason: '${store.saved.protectionEvents.map((event) => event.detail).join('; ')} ${bootstrapper.actualReports}');
+      expect(runtime.calls.where((call) => call == 'disconnect'), hasLength(scenario.liveTunnel ? 0 : 1));
+      expect(runtime.connectCalls, succeeds ? 1 : 0);
+      expect(runtime.stagedPayloads, hasLength(succeeds ? 1 : 0));
+      expect(runtime.acknowledgements, succeeds ? 1 : 0);
+    });
+  }
   testWidgets('aggregate Connect deadline cancels and joins a hung native phase and allows a fresh attempt', (tester) async {
     final runtime = _Runtime(heldOperation: 'connect', hostPlatform: HostPlatform.windows)
       ..releaseConnectOnCancel = true;
