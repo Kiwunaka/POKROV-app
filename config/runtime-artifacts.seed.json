@@ -11,8 +11,8 @@
     "assets": {
       "android": {
         "entry": "pokrov-core.aar",
-        "size": 25842895,
-        "sha256": "f3de27d5a23d5fab88111a2c0fca1851741ef85248e337e3a50b5b3ff83eb5cc",
+        "size": 77160128,
+        "sha256": "349e4795c724d0b704b57c7ced1482a07b66c207de71f09dba401d38c79ff52d",
         "sync_destination": "apps/android_shell/android/app/libs"
       },
       "windows": {
