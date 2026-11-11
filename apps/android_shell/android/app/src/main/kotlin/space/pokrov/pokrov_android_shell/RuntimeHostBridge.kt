@@ -121,6 +121,8 @@ class RuntimeHostBridge(
             if (!AndroidConnectRequestOwner.bridgeClosing(network)) network.close()
         }
         hostTaskScope.close()
+        runCatching { Class.forName("space.pokrov.core.mobile.Mobile")
+            .getMethod("stopApiLoopbackProxy").invoke(null) }
         if (catalogIdentityResolver.isInitialized()) catalogIdentityResolver.value.close()
         updateDownloadInProgress = false
     }
@@ -147,6 +149,7 @@ class RuntimeHostBridge(
                     network.candidateNetwork().channelValue()
                 }
             }
+            "runtimeEngine.startApiLoopbackProxy" -> startApiLoopbackProxy(call, result)
             "runtimeEngine.probeCandidate" -> probeCandidate(call, result)
             "runtimeEngine.candidateDiagnostics" -> AndroidOperationalJournal.readCandidateDiagnostics { outcome ->
                 activity.runOnUiThread {
@@ -1691,6 +1694,40 @@ class RuntimeHostBridge(
         val fresh = call.argument<Any>("fresh") == true
         executeHostTask(result, AndroidCatalogIdentityResolver.unavailable()) {
             resolver.scan(digest, packages.filterIsInstance<String>(), fresh)
+        }
+    }
+
+    private fun startApiLoopbackProxy(call: MethodCall, result: MethodChannel.Result) {
+        val board = call.argument<String>("boardUrl")
+        val key = call.argument<String>("publicKey")
+        if (board.isNullOrEmpty() || key.isNullOrEmpty()) {
+            result.success(null)
+            return
+        }
+        val context = runCatching { transportNetworkContext.value }.getOrNull()
+        val captured = runCatching { context?.candidateNetwork() }.getOrNull()
+        if (context == null || captured?.network == null || captured.links == null) {
+            result.success(null)
+            return
+        }
+        executeHostTask(result, null as Int?) {
+            AndroidSystemCertificates.prepare(activity.applicationContext)
+            fun currentPlatform(): AndroidCandidateProbePlatform {
+                val current = context.candidateNetwork()
+                return AndroidCandidateProbePlatform(
+                    current.network ?: error("uplink unavailable"),
+                    current.links ?: error("uplink unavailable"),
+                ) { !hostTaskScope.isActive() }
+            }
+            val platform = AndroidApiBootstrapPlatform(currentPlatform(), ::currentPlatform)
+            val mobile = Class.forName("space.pokrov.core.mobile.Mobile")
+            val method = mobile.getMethod("startApiLoopbackProxy", String::class.java, String::class.java,
+                space.pokrov.core.libbox.PlatformInterface::class.java)
+            val port = (method.invoke(null, board, key, platform) as? Int)?.takeIf { it in 1..65535 }
+            if (!hostTaskScope.isActive()) {
+                mobile.getMethod("stopApiLoopbackProxy").invoke(null)
+                null
+            } else port
         }
     }
 

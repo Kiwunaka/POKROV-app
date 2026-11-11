@@ -83,6 +83,69 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
     }
   }
 
+  void _validateMtsMaterial(Object raw, TransportCandidate? candidate,
+      Object? access, Set<RuntimeTransportFeature> runtimeFeatures, {String kind = ''}) {
+    try {
+      final config = _readMap(raw is String ? jsonDecode(raw) : raw);
+      final outbounds = (config['outbounds'] as List? ?? const []).map(_readMap).toList();
+      final carriers = outbounds.where((outbound) => outbound['type'] == 'mts').toList();
+      if (carriers.isEmpty && candidate?.transport != 'mts' && kind != 'mts') return;
+      _requirePremiumTransportAccess(access);
+      if (candidate?.transport != 'mts' ||
+          !runtimeFeatures.containsAll({RuntimeTransportFeature.vless, RuntimeTransportFeature.mtsVless}) ||
+          carriers.length != 1 ||
+          (config['endpoints'] is List && (config['endpoints'] as List).isNotEmpty)) {
+        throw const FormatException();
+      }
+      final leaf = outbounds.where((outbound) => outbound['type'] == 'vless').single;
+      final carrier = carriers.single;
+      bool exactKeys(Map<String, dynamic> value, Set<String> keys) =>
+          value.length == keys.length && value.keys.every(keys.contains);
+      if (!exactKeys(leaf, const {'type', 'tag', 'server', 'server_port', 'uuid', 'flow', 'network', 'detour'}) ||
+          leaf['tag'] != 'proxy' || leaf['server'] != '127.0.0.1' || leaf['server_port'] != 12543 ||
+          !RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
+              .hasMatch(_readText(leaf['uuid'])) ||
+          leaf['flow'] != '' || leaf['network'] != 'tcp' || leaf['detour'] != 'mts-tunnel' ||
+          !exactKeys(carrier, const {'type', 'tag', 'board_url', 'public_key', 'network'}) ||
+          carrier['tag'] != 'mts-tunnel' || carrier['network'] != 'tcp' ||
+          !RegExp(r'^[0-9a-f]{64}$').hasMatch(_readText(carrier['public_key']))) {
+        throw const FormatException();
+      }
+      final board = Uri.tryParse(_readText(carrier['board_url']));
+      if (board == null || board.scheme != 'https' || board.host.isEmpty ||
+          board.userInfo.isNotEmpty || board.hasFragment) {
+        throw const FormatException();
+      }
+      final tags = <String>{};
+      for (final outbound in outbounds) {
+        if (!tags.add(_readText(outbound['tag'])) ||
+            !const {'vless', 'mts', 'selector', 'urltest', 'direct', 'block', 'dns'}.contains(outbound['type']) ||
+            (outbound['type'] != 'vless' && outbound.containsKey('detour')) ||
+            outbound['default'] == 'mts-tunnel' ||
+            ((outbound['outbounds'] as List? ?? const []).contains('mts-tunnel'))) {
+          throw const FormatException();
+        }
+      }
+      // Also cover route/DNS rules in already materialized cached profiles.
+      void rejectCarrierRoute(Object? value) {
+        if (value is Map) {
+          for (final entry in value.entries) {
+            if (const {'outbound', 'final', 'detour'}.contains(entry.key) && entry.value == 'mts-tunnel') {
+              throw const FormatException();
+            }
+            rejectCarrierRoute(entry.value);
+          }
+        } else if (value is List) {
+          value.forEach(rejectCarrierRoute);
+        }
+      }
+      rejectCarrierRoute(config['route']);
+      rejectCarrierRoute(config['dns']);
+    } on Object {
+      throw const TransportManifestFailure('transport_catalog_profile_mismatch');
+    }
+  }
+
   void _validateSlipstreamMaterial(Object raw, TransportCandidate? candidate,
       Object? access, Set<RuntimeTransportFeature> runtimeFeatures, {String kind = ''}) {
     try {
@@ -223,7 +286,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
             requestedCandidateRef: selectedCandidateRef)
         : null;
     if (transportCatalog?.candidates.any((candidate) =>
-        const {'dnstt', 'slipstream'}.contains(candidate.transport) || candidate.protocol == 'naive') == true) {
+        const {'dnstt', 'slipstream', 'mts'}.contains(candidate.transport) || candidate.protocol == 'naive') == true) {
       _requirePremiumTransportAccess(response['access']);
     }
     if (selectedCandidateRef.isNotEmpty && transportCatalog == null) {
@@ -276,6 +339,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
         'grpc' => ('vless', 'grpc', 'tls'),
         'xhttp' => ('vless', 'xhttp', candidate.protection),
         'dnstt' => ('vless', 'dnstt', 'noise'),
+        'mts' => ('vless', 'mts', 'noise'),
         'slipstream' => ('vless', 'slipstream', 'tls'),
         'naive' => ('naive', 'h2', 'tls'),
         'awg31' => ('awg', 'udp', 'awg31'),
@@ -286,6 +350,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
         throw const TransportManifestFailure('transport_catalog_profile_mismatch');
       }
       _validateDnsttMaterial(raw, candidate, response['access'], runtimeFeatures, kind: kind);
+      _validateMtsMaterial(raw, candidate, response['access'], runtimeFeatures, kind: kind);
       _validateSlipstreamMaterial(raw, candidate, response['access'], runtimeFeatures, kind: kind);
       _validateNaiveMaterial(raw, candidate, response['access'], runtimeFeatures, kind: kind);
       if (candidate?.warpMode == 'warp_direct') {
@@ -385,7 +450,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
           'awg2' => 'awg2', 'awg31' => 'awg31', 'hysteria2' => 'hysteria2',
           'warp_direct' => 'warp',
           'naive' => 'naive',
-          'reality' || 'grpc' || 'xhttp' || 'ru_bridge' || 'dnstt' || 'slipstream' => 'vless',
+          'reality' || 'grpc' || 'xhttp' || 'ru_bridge' || 'dnstt' || 'slipstream' || 'mts' => 'vless',
           _ => 'unknown',
         },
       ),
@@ -426,7 +491,8 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
     final bundled = <String, ManagedProfilePayload>{};
     final ManagedProfilePayload payload;
     if (response.containsKey('candidate_materials')) {
-      final materialLimit = runtimeFeatures.contains(RuntimeTransportFeature.slipstreamVless) ? 7 : 6;
+      final materialLimit = 6 + (runtimeFeatures.contains(RuntimeTransportFeature.slipstreamVless) ? 1 : 0) +
+          (runtimeFeatures.contains(RuntimeTransportFeature.mtsVless) ? 1 : 0);
       if (transportCatalog == null || supplied is! List || supplied.isEmpty || supplied.length > materialLimit) {
         throw const TransportManifestFailure('transport_catalog_materials_mismatch');
       }

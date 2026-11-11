@@ -100,6 +100,7 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
             (const {'grpc', 'xhttp'}.contains(transport) && protection == 'tls') ||
             (transport == 'xhttp' && protection == 'reality') ||
             (transport == 'dnstt' && protection == 'noise') ||
+            (transport == 'mts' && protection == 'noise') ||
             (transport == 'slipstream' && protection == 'tls'),
         'awg' => transport == 'udp' && protection == 'awg31',
         'hysteria2' => transport == 'udp' && protection == 'tls',
@@ -114,7 +115,7 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
       if (!const {'tcp', 'udp'}.contains(parameters['network']) ||
           !const {'', 'xtls-rprx-vision'}.contains(parameters['flow'])) throw const FormatException();
       if (transport == 'xhttp' && parameters['flow'] != '') throw const FormatException();
-      if (const {'dnstt', 'slipstream'}.contains(transport) && (parameters['network'] != 'tcp' ||
+      if (const {'dnstt', 'slipstream', 'mts'}.contains(transport) && (parameters['network'] != 'tcp' ||
           parameters['flow'] != '' || warpMode != null || deliveryId != null)) {
         throw const FormatException();
       }
@@ -138,7 +139,7 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
       if (deliveryId != null && _transportReleaseCompare(minimumClientVersion, '1.5.0') < 0) {
         throw const FormatException();
       }
-      if ((const {'dnstt', 'slipstream'}.contains(transport) || protocol == 'naive') &&
+      if ((const {'dnstt', 'slipstream', 'mts'}.contains(transport) || protocol == 'naive') &&
           _transportReleaseCompare(minimumClientVersion, '1.5.0') < 0) {
         throw const FormatException();
       }
@@ -167,6 +168,7 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
           'grpc' => RuntimeTransportFeature.grpc,
           'xhttp' => RuntimeTransportFeature.xhttp,
           'dnstt' => RuntimeTransportFeature.dnsttVless,
+          'mts' => RuntimeTransportFeature.mtsVless,
           'slipstream' => RuntimeTransportFeature.slipstreamVless,
           _ => RuntimeTransportFeature.reality,
         }},

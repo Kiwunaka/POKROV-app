@@ -65,6 +65,19 @@ void main() {
         'code', 'transport_catalog_invalid')));
   });
 
+  test('MTS catalog requires its compiled capability and Noise', () {
+    final row = candidate('de', 'mts_vless', transport: 'mts',
+      protection: 'noise', features: ['mts_vless_v1', 'singbox_vless_v1']);
+    (row['requirements'] as Map)['minimum_client_release'] = '1.5.0';
+    expect(parse(catalog([row]), clientRelease: '1.5.0').selected.transport, 'mts');
+    expect(() => decodeManagedTransportCatalog(catalog([row]), platform: HostPlatform.windows,
+      clientRelease: '1.5.0', runtimeFeatures: {RuntimeTransportFeature.vless}),
+      throwsA(isA<TransportManifestFailure>()));
+    row['protection'] = 'tls';
+    expect(() => parse(catalog([row]), clientRelease: '1.5.0'),
+      throwsA(isA<TransportManifestFailure>()));
+  });
+
   test('Slipstream catalog requires its own compiled capability and TCP-only VLESS chain', () {
     final row = candidate('de', 'slipstream_vless', transport: 'slipstream',
       protection: 'tls', features: ['singbox_vless_v1', 'slipstream_vless_v1']);

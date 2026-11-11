@@ -2,6 +2,8 @@
 param(
   [string]$SigningDirectory = (Join-Path ([Environment]::GetFolderPath("LocalApplicationData")) "POKROV\android-signing"),
   [string]$ApiBaseUrl = "https://app.pokrov.space",
+  [string]$MtsBootstrapBoard = "",
+  [string]$MtsBootstrapPublicKey = "",
   [string]$SupportSigningKeyId = $env:POKROV_SUPPORT_SIGNING_KEY_ID,
   [string]$SupportSigningPublicKey = $env:POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64,
   [string]$TransportTrustDefinesFile,
@@ -153,6 +155,8 @@ try {
       "--target-platform", $(if ($Arm64Only) { "android-arm64" } else { "android-arm,android-arm64,android-x64" }),
       "--android-project-arg=pokrov.singleVersionSplitApks=true",
       "--dart-define=POKROV_API_BASE_URL=$ApiBaseUrl",
+      "--dart-define=POKROV_MTS_BOOTSTRAP_BOARD=$MtsBootstrapBoard",
+      "--dart-define=POKROV_MTS_BOOTSTRAP_PUBLIC_KEY=$MtsBootstrapPublicKey",
       "--dart-define=POKROV_APP_VERSION=$declaredVersionName",
       "--dart-define=POKROV_BUILD_NUMBER=$declaredVersionCode",
       "--dart-define=POKROV_GIT_REVISION=$clientRevision",

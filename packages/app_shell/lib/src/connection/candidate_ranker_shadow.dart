@@ -323,7 +323,7 @@ const _nativeFailures = {'connect_failed', 'tls_failed', 'timeout', 'data_stalle
   'probe_failed', 'unexpected_status'};
 const _rankerCategories = <String, List<String>>{
   'protocol': ['unknown', 'vless', 'naive', 'awg', 'hysteria2', 'warp'],
-  'transport': ['unknown', 'tcp', 'grpc', 'xhttp', 'h2', 'udp', 'dnstt', 'slipstream'],
+  'transport': ['unknown', 'tcp', 'grpc', 'xhttp', 'h2', 'udp', 'dnstt', 'slipstream', 'mts'],
   'protection': ['unknown', 'reality', 'tls', 'noise', 'awg31', 'warp'],
   'network': ['unknown', 'tcp', 'udp'],
   'family': ['unknown', 'ipv4', 'ipv6'],

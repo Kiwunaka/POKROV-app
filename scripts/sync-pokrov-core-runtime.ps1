@@ -39,7 +39,7 @@ $coreCommit = (& git -C $CoreRoot rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0 -or $coreCommit -ne $runtime.source_commit) {
   throw "POKROV Core must be checked out at $($runtime.source_commit); found '$coreCommit'."
 }
-$coreStatus = @(& git -C $CoreRoot status --porcelain)
+$coreStatus = @(& git -C $CoreRoot status --porcelain --untracked-files=no)
 if ($LASTEXITCODE -ne 0 -or $coreStatus.Count -ne 0) {
   throw "POKROV Core must be clean before exact runtime artifacts are synchronized."
 }

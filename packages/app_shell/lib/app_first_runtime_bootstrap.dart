@@ -139,6 +139,8 @@ class _ManagedProfileCancelled implements Exception {
 }
 
 /// Owns network handles created by one bootstrap operation and its children.
+final _managedRequestOwners = Expando<_ManagedProfileRequests>();
+
 class _ManagedProfileRequests {
   _ManagedProfileRequests(Future<void>? cancelled) {
     if (cancelled != null) {
@@ -178,6 +180,7 @@ class _ManagedProfileRequests {
       throw const _ManagedProfileCancelled();
     }
     _clients.add(client);
+    _managedRequestOwners[client] = this;
     return client;
   }
 
@@ -3504,6 +3507,7 @@ class AppFirstRuntimeBootstrapper
     final materialCandidate = materialRef.isEmpty ? catalog?.selected
         : catalog?.candidates.firstWhere((candidate) => candidate.candidateRef == materialRef);
     _validateDnsttMaterial(config, materialCandidate, value['access'], runtimeFeatures ?? const {});
+    _validateMtsMaterial(config, materialCandidate, value['access'], runtimeFeatures ?? const {});
     _validateSlipstreamMaterial(config, materialCandidate, value['access'], runtimeFeatures ?? const {});
     _validateNaiveMaterial(config, materialCandidate, value['access'], runtimeFeatures ?? const {});
     final warpPolicy = WarpRuntimePolicy.tryParse(value['warp_policy']);
@@ -4711,7 +4715,7 @@ class AppFirstRuntimeBootstrapper
       if (ref is! String || transport is! String || stage != 'probe' || outcome is! bool ||
           duration is! int || !RegExp(r'^[a-z0-9][a-z0-9_.:-]{0,127}$').hasMatch(ref) ||
           !const {'vless_reality', 'vless_grpc_tls', 'xhttp_reality',
-            'xhttp_tls', 'vless_dnstt_noise', 'vless_slipstream_tls', 'naive', 'hysteria2', 'awg31', 'warp'}.contains(transport)) continue;
+            'xhttp_tls', 'vless_dnstt_noise', 'vless_slipstream_tls', 'vless_mts_noise', 'naive', 'hysteria2', 'awg31', 'warp'}.contains(transport)) continue;
       if (!outcome && (failure is! String ||
           !RegExp(r'^[a-z][a-z0-9_]{0,31}$').hasMatch(failure))) continue;
       final safeProbe = <String, Object?>{
@@ -4826,7 +4830,7 @@ class AppFirstRuntimeBootstrapper
             !RegExp(r'[\x00-\x1f\x7f]').hasMatch(safeCarrierName))
           'carrier_name': safeCarrierName,
         if (const {'vless_reality', 'vless_grpc_tls', 'xhttp_reality',
-          'xhttp_tls', 'vless_dnstt_noise', 'vless_slipstream_tls', 'naive', 'hysteria2', 'awg31', 'warp'}.contains(safeCandidateTransport))
+          'xhttp_tls', 'vless_dnstt_noise', 'vless_slipstream_tls', 'vless_mts_noise', 'naive', 'hysteria2', 'awg31', 'warp'}.contains(safeCandidateTransport))
           'candidate_transport': safeCandidateTransport,
         if (RegExp(r'^[a-z0-9][a-z0-9_.:-]{0,127}$').hasMatch(safeCandidateRef))
           'candidate_ref': safeCandidateRef,
@@ -7721,7 +7725,7 @@ class AppFirstRuntimeBootstrapper
       final query = <String, String>{
         'catalog_version': '1', 'client_platform': hostPlatform.name,
         'candidate_material_limit': selectedCandidateRef.isNotEmpty ? '1'
-            : runtimeFeatures.contains(RuntimeTransportFeature.slipstreamVless) ? '7' : '6',
+            : '${6 + (runtimeFeatures.contains(RuntimeTransportFeature.slipstreamVless) ? 1 : 0) + (runtimeFeatures.contains(RuntimeTransportFeature.mtsVless) ? 1 : 0)}',
         'client_release': _managedCatalogClientRelease,
         'runtime_features': (runtimeFeatures.map((feature) => feature.wireName).toList()..sort()).join(','),
         if (coreRelease != null && coreRelease.isNotEmpty) 'core_release': coreRelease,
@@ -10245,7 +10249,7 @@ class AppFirstRuntimeBootstrapper
 
   bool _isProxyTransportOutbound(Map<String, dynamic> outbound) {
     final type = _readText(outbound['type']).toLowerCase();
-    return !const {'direct', 'block', 'dns', 'selector', 'urltest', 'dnstt', 'slipstream'}
+    return !const {'direct', 'block', 'dns', 'selector', 'urltest', 'dnstt', 'slipstream', 'mts'}
         .contains(type);
   }
 
@@ -10541,7 +10545,65 @@ class AppFirstRuntimeBootstrapper
         );
   }
 
+  static Future<int?>? _apiLoopbackProxy;
+
   Future<Map<String, dynamic>> _requestJson({
+    required String method, required String path, required HostPlatform hostPlatform,
+    required HttpClient client, String bearerToken = '', Map<String, Object?>? body,
+    Map<String, String> headers = const <String, String>{}, List<int>? rawBody,
+    String rawContentType = 'application/octet-stream', Duration? requestTimeoutOverride,
+    int maximumResponseBytes = _maxJsonResponseBytes, bool allowRetries = true,
+    Map<String, dynamic> Function(String)? responseDecoder, bool requireHttps = false,
+    void Function(String, int?)? onProgress, Future<void> Function(Duration)? waitForRetry,
+  }) async {
+    Future<Map<String, dynamic>> request({required bool retries}) => _requestJsonDirect(
+      method: method, path: path, hostPlatform: hostPlatform, client: client,
+      bearerToken: bearerToken, body: body, headers: headers, rawBody: rawBody,
+      rawContentType: rawContentType, requestTimeoutOverride: requestTimeoutOverride,
+      maximumResponseBytes: maximumResponseBytes, allowRetries: retries,
+      responseDecoder: responseDecoder, requireHttps: requireHttps,
+      onProgress: onProgress, waitForRetry: waitForRetry);
+    const board = String.fromEnvironment('POKROV_MTS_BOOTSTRAP_BOARD');
+    const key = String.fromEnvironment('POKROV_MTS_BOOTSTRAP_PUBLIC_KEY');
+    final eligible = hostPlatform == HostPlatform.android && path.startsWith('/api/') &&
+        _ownedApiHosts.contains(Uri.parse(apiBaseUrl).host) && board.isNotEmpty && key.isNotEmpty;
+    void useProxy(int port) {
+      client.findProxy = (uri) => uri.scheme == 'https' && _ownedApiHosts.contains(uri.host)
+          ? 'PROXY 127.0.0.1:$port' : 'DIRECT';
+    }
+    final existing = eligible ? _apiLoopbackProxy : null;
+    if (existing != null) {
+      final port = await existing;
+      _managedRequestOwners[client]?.requireActive();
+      if (port != null && port >= 1 && port <= 65535) useProxy(port);
+    }
+    try {
+      return await request(retries: eligible ? false : allowRetries);
+    } on BootstrapFailure catch (error) {
+      final safeRetry = error.apiFailureKind == 'origin_timeout' ||
+          (error.apiFailureKind == 'request_timeout' && const {'GET', 'HEAD'}.contains(method.toUpperCase()));
+      if (!eligible || existing != null || !safeRetry) rethrow;
+      _managedRequestOwners[client]?.requireActive();
+      final pending = _apiLoopbackProxy ??= _appFirstRuntimeEngineChannel.invokeMethod<int>(
+          'runtimeEngine.startApiLoopbackProxy', {'boardUrl': board, 'publicKey': key});
+      int? port;
+      try {
+        port = await pending;
+      } on Object {
+        if (identical(_apiLoopbackProxy, pending)) _apiLoopbackProxy = null;
+        throw error;
+      }
+      if (port == null || port < 1 || port > 65535) {
+        if (identical(_apiLoopbackProxy, pending)) _apiLoopbackProxy = null;
+        rethrow;
+      }
+      _managedRequestOwners[client]?.requireActive();
+      useProxy(port);
+      return request(retries: false);
+    }
+  }
+
+  Future<Map<String, dynamic>> _requestJsonDirect({
     required String method,
     required String path,
     required HostPlatform hostPlatform,

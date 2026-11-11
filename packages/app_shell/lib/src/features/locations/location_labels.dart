@@ -149,6 +149,7 @@ String _locationCandidateLabel(domain.TransportCandidate candidate) {
   if (candidate.displayName != null) return candidate.displayName!;
   final protocol = switch (candidate.protocol) {
     'vless' => switch (candidate.transport) {
+        'mts' => 'МТС',
         'dnstt' => 'DNS-туннель (DNSTT)',
         'slipstream' => 'DNS-туннель (Slipstream)',
         'xhttp' => 'VLESS XHTTP',

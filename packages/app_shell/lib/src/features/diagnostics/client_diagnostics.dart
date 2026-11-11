@@ -575,6 +575,7 @@ abstract final class PokrovDiagnosticsPresenter {
       'vless_grpc_tls' => 'VLESS gRPC / TLS',
       'xhttp_reality' => 'XHTTP REALITY',
       'xhttp_tls' => 'XHTTP TLS',
+      'vless_mts_noise' => 'МТС',
       'vless_dnstt_noise' => 'VLESS / DNS / Noise',
       'vless_slipstream_tls' => 'DNS-туннель (Slipstream)',
       'naive' => 'Naive HTTPS / H2',

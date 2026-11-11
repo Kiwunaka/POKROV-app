@@ -23,6 +23,12 @@ String _inventory(List<String> features) =>
     jsonEncode({'schema': 1, 'features': features});
 
 void main() {
+  test('MTS capability preserves the compiled inventory', () {
+    final names = [..._dnsttCoreFeatures, 'mts_vless_v1']..sort();
+    final capabilities = RuntimeTransportCapabilities.fromWire(_inventory(names));
+    expect(capabilities?.features, contains(RuntimeTransportFeature.mtsVless));
+  });
+
   test('Slipstream adds compiled support without changing the raw inventory', () {
     final names = [..._dnsttCoreFeatures, 'singbox_naive_h2_v1', 'slipstream_vless_v1']..sort();
     final wire = _inventory(names);

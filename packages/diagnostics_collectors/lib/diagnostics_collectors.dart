@@ -127,7 +127,7 @@ final class DiagnosticNetworkSummary {
         'native_phase' => const {'artifact_missing', 'artifact_ready', 'connecting', 'busy',
           'initialized', 'config_staged', 'running', 'recovery_required'}.contains(value),
         'attempted_transport' => const {'vless_reality', 'vless_grpc_tls', 'xhttp_reality',
-          'xhttp_tls', 'vless_dnstt_noise', 'vless_slipstream_tls', 'naive', 'hysteria2', 'awg31', 'warp'}.contains(value),
+          'xhttp_tls', 'vless_dnstt_noise', 'vless_slipstream_tls', 'vless_mts_noise', 'naive', 'hysteria2', 'awg31', 'warp'}.contains(value),
         'latest_attempt_phase' => const {'intent', 'profile', 'core', 'tun', 'routes', 'dns',
           'egress', 'verified', 'rollback', 'stopped'}.contains(value),
         'module_matches' || 'profile_matches' || 'cleanup_confirmed' || 'dns_ready' ||

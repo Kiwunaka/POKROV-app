@@ -94,6 +94,22 @@ internal class AndroidCandidateProbePlatform(
     }
 }
 
+/** API bootstrap outlives one uplink; each new socket and DNS query uses the current one. */
+internal class AndroidApiBootstrapPlatform(
+    initial: PlatformInterface,
+    private val current: () -> PlatformInterface,
+) : PlatformInterface by initial {
+    override fun autoDetectInterfaceControl(fd: Int) = current().autoDetectInterfaceControl(fd)
+    override fun getInterfaces(): NetworkInterfaceIterator = current().getInterfaces()
+    override fun localDNSTransport(): LocalDNSTransport = object : LocalDNSTransport {
+        override fun raw(): Boolean = true
+        override fun exchange(ctx: ExchangeContext, message: ByteArray) =
+            current().localDNSTransport().exchange(ctx, message)
+        override fun lookup(ctx: ExchangeContext, network: String, domain: String) =
+            current().localDNSTransport().lookup(ctx, network, domain)
+    }
+}
+
 private class ProbeStringIterator(private val values: List<String>) : StringIterator {
     private val iterator = values.iterator()
     override fun hasNext(): Boolean = iterator.hasNext()
