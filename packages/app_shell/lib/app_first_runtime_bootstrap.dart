@@ -1217,7 +1217,8 @@ class BootstrapFailure implements Exception {
     this.preparation,
     this.requestId,
     this.sessionRejected = false,
-  });
+    bool proxyConnectFailure = false,
+  }) : _proxyConnectFailure = proxyConnectFailure;
 
   final String message;
   final int? statusCode;
@@ -1230,6 +1231,7 @@ class BootstrapFailure implements Exception {
   final Map<String, Object>? preparation;
   final String? requestId;
   final bool sessionRejected;
+  final bool _proxyConnectFailure;
 
   PortalFailureReason? get reason => PortalFailureReason.fromCode(code);
 
@@ -10546,6 +10548,22 @@ class AppFirstRuntimeBootstrapper
   }
 
   static Future<int?>? _apiLoopbackProxy;
+  static bool _preferApiProxy = false;
+
+  static Future<int?> _startApiLoopbackProxy(String board, String key) {
+    final existing = _apiLoopbackProxy;
+    if (existing != null) return existing;
+    late final Future<int?> pending;
+    pending = (() async {
+      try {
+        return await _appFirstRuntimeEngineChannel.invokeMethod<int>(
+          'runtimeEngine.startApiLoopbackProxy', {'boardUrl': board, 'publicKey': key});
+      } finally {
+        if (identical(_apiLoopbackProxy, pending)) _apiLoopbackProxy = null;
+      }
+    })();
+    return _apiLoopbackProxy = pending;
+  }
 
   Future<Map<String, dynamic>> _requestJson({
     required String method, required String path, required HostPlatform hostPlatform,
@@ -10571,35 +10589,54 @@ class AppFirstRuntimeBootstrapper
       client.findProxy = (uri) => uri.scheme == 'https' && _ownedApiHosts.contains(uri.host)
           ? 'PROXY 127.0.0.1:$port' : 'DIRECT';
     }
-    final existing = eligible ? _apiLoopbackProxy : null;
-    if (existing != null) {
-      final port = await existing;
+    bool networkFailure(BootstrapFailure error) =>
+        !const {HttpStatus.unauthorized, HttpStatus.forbidden}.contains(error.observedHttpStatus) &&
+        (error._proxyConnectFailure || const {
+          'origin_socket', 'origin_timeout', 'request_socket', 'request_timeout',
+        }.contains(error.apiFailureKind));
+    bool canRetry(BootstrapFailure error) => const {'origin_socket', 'origin_timeout'}
+        .contains(error.apiFailureKind) ||
+        (error._proxyConnectFailure && error.apiFailureKind == 'origin_http') ||
+        const {'GET', 'HEAD'}.contains(method.toUpperCase());
+    Future<bool> prepareProxy() async {
       _managedRequestOwners[client]?.requireActive();
-      if (port != null && port >= 1 && port <= 65535) useProxy(port);
+      int? port;
+      try {
+        port = await _startApiLoopbackProxy(board, key);
+      } on Object {
+        _managedRequestOwners[client]?.requireActive();
+        return false;
+      }
+      _managedRequestOwners[client]?.requireActive();
+      if (port == null || port < 1 || port > 65535) return false;
+      useProxy(port);
+      return true;
     }
+    final proxyFirst = eligible && _preferApiProxy;
+    final usingProxy = proxyFirst && await prepareProxy();
+    final proxyUnavailable = proxyFirst && !usingProxy;
+    if (proxyUnavailable) _preferApiProxy = false;
+    if (eligible && !usingProxy) client.findProxy = (_) => 'DIRECT';
     try {
       return await request(retries: eligible ? false : allowRetries);
     } on BootstrapFailure catch (error) {
-      final safeRetry = error.apiFailureKind == 'origin_timeout' ||
-          (error.apiFailureKind == 'request_timeout' && const {'GET', 'HEAD'}.contains(method.toUpperCase()));
-      if (!eligible || existing != null || !safeRetry) rethrow;
-      _managedRequestOwners[client]?.requireActive();
-      final pending = _apiLoopbackProxy ??= _appFirstRuntimeEngineChannel.invokeMethod<int>(
-          'runtimeEngine.startApiLoopbackProxy', {'boardUrl': board, 'publicKey': key});
-      int? port;
-      try {
-        port = await pending;
-      } on Object {
-        if (identical(_apiLoopbackProxy, pending)) _apiLoopbackProxy = null;
-        throw error;
+      if (!eligible || !networkFailure(error)) rethrow;
+      if (usingProxy) {
+        _preferApiProxy = false;
+        if (!canRetry(error)) rethrow;
+        _managedRequestOwners[client]?.requireActive();
+        client.findProxy = (_) => 'DIRECT';
+        return request(retries: false);
       }
-      if (port == null || port < 1 || port > 65535) {
-        if (identical(_apiLoopbackProxy, pending)) _apiLoopbackProxy = null;
+      if (proxyUnavailable || !canRetry(error) || !await prepareProxy()) rethrow;
+      try {
+        final response = await request(retries: false);
+        _preferApiProxy = true;
+        return response;
+      } on BootstrapFailure catch (proxyError) {
+        if (networkFailure(proxyError)) _preferApiProxy = false;
         rethrow;
       }
-      _managedRequestOwners[client]?.requireActive();
-      useProxy(port);
-      return request(retries: false);
     }
   }
 
@@ -10820,6 +10857,7 @@ class AppFirstRuntimeBootstrapper
           operation: operation,
           operationalCode: 'API-002',
           apiFailureKind: 'request_http',
+          proxyConnectFailure: _isProxyConnectFailure(error),
           observedHttpStatus: traceStatus,
         );
         if (attempt >= attemptLimit - 1) {
@@ -10900,6 +10938,9 @@ class AppFirstRuntimeBootstrapper
     String? lastFailureKind;
     int? lastHttpStatus;
     int? lastOsErrorCode;
+    String? securityFailureKind;
+    int? securityHttpStatus;
+    var lastProxyConnectFailure = false;
     for (final candidate in _apiBaseUrls) {
       _traceBootstrap('origin_probe', 'begin');
       int? observedHttpStatus;
@@ -10932,6 +10973,12 @@ class AppFirstRuntimeBootstrapper
               ? 'origin_content_type' : 'origin_http_status';
           lastHttpStatus = observedHttpStatus;
           lastOsErrorCode = null;
+          lastProxyConnectFailure = false;
+          if (response.statusCode == HttpStatus.unauthorized ||
+              response.statusCode == HttpStatus.forbidden) {
+            securityFailureKind = 'origin_http_status';
+            securityHttpStatus = observedHttpStatus;
+          }
           _traceBootstrap('origin_probe', 'fail', status: response.statusCode,
             reason: contentType?.mimeType.toLowerCase() != 'application/json'
               ? 'content_type' : 'http_status');
@@ -10942,6 +10989,7 @@ class AppFirstRuntimeBootstrapper
           lastFailureKind = 'origin_json_not_object';
           lastHttpStatus = observedHttpStatus;
           lastOsErrorCode = null;
+          lastProxyConnectFailure = false;
           _traceBootstrap('origin_probe', 'fail', reason: 'json_not_object',
             status: response.statusCode);
           continue;
@@ -10969,16 +11017,26 @@ class AppFirstRuntimeBootstrapper
         };
         lastHttpStatus = observedHttpStatus;
         lastOsErrorCode = error is SocketException ? error.osError?.errorCode : null;
+        lastProxyConnectFailure = error is HttpException && _isProxyConnectFailure(error);
+        if (error is HandshakeException) {
+          securityFailureKind = 'origin_tls';
+          securityHttpStatus = observedHttpStatus;
+        }
       }
     }
     throw BootstrapFailure(
       'Не удалось связаться с сервисом. Проверь сеть и попробуй ещё раз.',
       operationalCode: 'API-002',
-      apiFailureKind: lastFailureKind,
-      observedHttpStatus: lastHttpStatus,
-      osErrorCode: lastOsErrorCode,
+      apiFailureKind: securityFailureKind ?? lastFailureKind,
+      observedHttpStatus: securityFailureKind != null ? securityHttpStatus : lastHttpStatus,
+      osErrorCode: securityFailureKind != null ? null : lastOsErrorCode,
+      proxyConnectFailure: securityFailureKind == null && lastProxyConnectFailure,
     );
   }
+
+  // Dart reports the local proxy's failed CONNECT as an HttpException.
+  static bool _isProxyConnectFailure(HttpException error) =>
+      error.message.startsWith('Proxy failed to establish tunnel (502 ');
 
   void _invalidateApiBaseUrl(Uri? requestUri) {
     final active = _activeApiBaseUrl;

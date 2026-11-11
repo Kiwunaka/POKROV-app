@@ -16,7 +16,10 @@ class _TimeoutThenProxyClient implements HttpClient {
   @override
   set connectionTimeout(Duration? value) => _client.connectionTimeout = value;
   @override
-  set findProxy(String Function(Uri)? callback) { proxied = callback != null; }
+  set findProxy(String Function(Uri)? callback) {
+    proxied = callback?.call(Uri.parse('https://app.pokrov.space/api/health'))
+        .startsWith('PROXY ') ?? false;
+  }
   @override
   Future<HttpClientRequest> getUrl(Uri url) async {
     if (!proxied) {

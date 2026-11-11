@@ -121,8 +121,7 @@ class RuntimeHostBridge(
             if (!AndroidConnectRequestOwner.bridgeClosing(network)) network.close()
         }
         hostTaskScope.close()
-        runCatching { Class.forName("space.pokrov.core.mobile.Mobile")
-            .getMethod("stopApiLoopbackProxy").invoke(null) }
+        runCatching { apiProxyOwner.close(this) { stopApiLoopbackProxy() } }
         if (catalogIdentityResolver.isInitialized()) catalogIdentityResolver.value.close()
         updateDownloadInProgress = false
     }
@@ -1723,12 +1722,14 @@ class RuntimeHostBridge(
             val mobile = Class.forName("space.pokrov.core.mobile.Mobile")
             val method = mobile.getMethod("startApiLoopbackProxy", String::class.java, String::class.java,
                 space.pokrov.core.libbox.PlatformInterface::class.java)
-            val port = (method.invoke(null, board, key, platform) as? Int)?.takeIf { it in 1..65535 }
-            if (!hostTaskScope.isActive()) {
-                mobile.getMethod("stopApiLoopbackProxy").invoke(null)
-                null
-            } else port
+            apiProxyOwner.start(this, { hostTaskScope.isActive() },
+                { method.invoke(null, board, key, platform) as? Int },
+                { stopApiLoopbackProxy() })
         }
+    }
+
+    private fun stopApiLoopbackProxy() {
+        Class.forName("space.pokrov.core.mobile.Mobile").getMethod("stopApiLoopbackProxy").invoke(null)
     }
 
     private fun probeCandidate(call: MethodCall, result: MethodChannel.Result) {
@@ -1922,6 +1923,7 @@ class RuntimeHostBridge(
         }.getOrNull()
 
     companion object {
+        private val apiProxyOwner = ApiLoopbackProxyOwner()
         private const val MAX_INSTALLED_APP_ICONS = 80
         private const val MAX_VARIANT_PROBE_CONFIG_BYTES = 4L * 1024L * 1024L
         private val SUPPORTED_UPDATE_ABIS = setOf("arm64-v8a", "armeabi-v7a", "x86_64")

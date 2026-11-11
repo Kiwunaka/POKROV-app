@@ -3,7 +3,7 @@
     "repository": "Kiwunaka/pokrov-core",
     "version": "1.2.16",
     "release_tag": "v1.2.16",
-    "source_commit": "f498b559f94405beb775f69ad21af221aa2eaea6",
+    "source_commit": "651879b4da3fdfb3823307f54dd12c90cdd8f30f",
     "android_package": "space.pokrov.core",
     "desktop_abi": {
       "version": 2
