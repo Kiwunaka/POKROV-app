@@ -13,7 +13,8 @@
         "entry": "pokrov-core.aar",
         "size": 77537330,
         "sha256": "2df705f2ad9d6d1b04a7718c2bdb7ea80148a4f83c8484c053f1e727b19bce4c",
-        "sync_destination": "apps/android_shell/android/app/libs"
+        "sync_destination": "apps/android_shell/android/app/libs",
+        "runtime_dependencies": []
       }
     }
   }
