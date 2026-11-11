@@ -173,6 +173,45 @@ Future<ProcessResult> _preflight(Directory fixture,
     });
 
 void main() {
+  test('Android may select a newer Core while Windows keeps its release',
+      () async {
+    final fixture = await _runtimeFixture(staged: true);
+    final manifestFile = File('${fixture.path}/runtime.json');
+    final manifest =
+        jsonDecode(await manifestFile.readAsString()) as Map<String, dynamic>;
+    final core = manifest['core'] as Map<String, dynamic>;
+    core['version'] = '1.2.17';
+    core['release_tag'] = 'v1.2.17';
+    core['assets']['android'] = {
+      'entry': 'pokrov-core.aar',
+      'sync_destination': 'fixture-runtime',
+      'size': 3,
+      'sha256': _abcSha256,
+    };
+    await manifestFile.writeAsString(jsonEncode(manifest));
+    await File('${fixture.path}/fixture-runtime/pokrov-core.aar')
+        .writeAsString('abc');
+
+    Future<ProcessResult> check(String platform) => Process.run('pwsh', [
+          '-NoLogo',
+          '-NoProfile',
+          '-NonInteractive',
+          '-File',
+          '${fixture.path}/scripts/check-client-version-parity.ps1',
+          '-RuntimeArtifactsPath',
+          manifestFile.path,
+          '-Platforms',
+          platform,
+        ]);
+
+    final android = await check('android');
+    expect(android.exitCode, 0, reason: '${android.stdout}\n${android.stderr}');
+    final windows = await check('windows');
+    expect(windows.exitCode, isNot(0));
+    expect('${windows.stdout}\n${windows.stderr}',
+        contains('Core release identity disagrees'));
+  }, skip: !Platform.isWindows);
+
   test('runtime sync keeps the selected Zapret2 dependency subdirectory', () async {
     final fixture = await _runtimeFixture(staged: true);
     final sourceRoot = Directory('../..').absolute;

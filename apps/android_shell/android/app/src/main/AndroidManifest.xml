@@ -82,6 +82,15 @@
                 android:value="pokrov_runtime_vpn" />
         </service>
         <service
+            android:name=".PokrovMtsBridgeService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="pokrov_local_mts_bridge" />
+        </service>
+        <service
             android:name=".PokrovQuickSettingsTileService"
             android:enabled="true"
             android:exported="true"

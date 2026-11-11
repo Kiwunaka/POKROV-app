@@ -69,6 +69,9 @@ function Set-ProcessEnvironmentValue {
 }
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
+if (-not $RuntimeArtifactsPath) {
+  $RuntimeArtifactsPath = Join-Path $repoRoot "config/runtime-artifacts.android.json"
+}
 . (Join-Path $PSScriptRoot 'candidate-ranker-asset.ps1')
 $rankerAssetPath = Sync-PokrovCandidateRankerAsset -ModelPath $CandidateRankerModelPath -RepositoryRoot $repoRoot
 $rankerAssetHash = (Get-FileHash -LiteralPath $rankerAssetPath -Algorithm SHA256).Hash

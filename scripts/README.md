@@ -4,7 +4,7 @@ Use the [release procedure](../docs/operations/cutover-readiness.md) for the seq
 
 ## Runtime selection
 
-[config/runtime-artifacts.seed.json](../config/runtime-artifacts.seed.json) defines the default binding. Pass `-RuntimeArtifactsPath` for an approved alternate binding and use that same manifest for parity, sync and packaging. `-WindowsReleasePath` selects a paired Windows packaging config when needed.
+[config/runtime-artifacts.seed.json](../config/runtime-artifacts.seed.json) is the default for Windows and standalone sync and parity commands. Android production builds use [config/runtime-artifacts.android.json](../config/runtime-artifacts.android.json). Select `-Platforms android` and that Android manifest when checking or syncing Android independently. `-RuntimeArtifactsPath` selects a binding; `-WindowsReleasePath` selects a paired Windows packaging config when needed.
 
 - [check-client-version-parity.ps1](check-client-version-parity.ps1) validates version and selected-platform artifact identity. Use `-Platforms android` or `-Platforms windows` for a single-platform check.
 - [sync-pokrov-core-runtime.ps1](sync-pokrov-core-runtime.ps1) verifies the clean Core source and the artifact/dependency identities before copying. It reads `CoreRoot/dist/<platform>` or an explicit `-CoreArtifactDirectory` for one platform. It does not fetch from a release tag. Windows needs the selected Cronet and local-DPI files. Keep required notices with selected dependencies.

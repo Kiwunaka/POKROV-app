@@ -298,6 +298,9 @@ class _ProtectionRepairFailed implements Exception {
 class _PokrovSeedShellState extends State<PokrovSeedShell>
     with WidgetsBindingObserver {
   late final ConnectionManager _connectionManager;
+  bool _mtsBridgeRunning = false;
+  bool _mtsBridgeBusy = false;
+  String? _mtsBridgeLink;
   void _onConnectionChanged() {
     if (!mounted) return;
     setState(() {});
@@ -416,6 +419,143 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
     if (!mounted || startingGeneration != _connectionManager.attemptId) return;
     return _connectionManager.toggle(reconnectAfterDisconnect: reconnectAfterDisconnect);
+  }
+
+  Future<void> _refreshMtsBridgeStatus() async {
+    if (widget.appContext.hostPlatform != HostPlatform.android || _mtsBridgeBusy) return;
+    try {
+      final status = await _pokrovRuntimeSystemChannel
+          .invokeMethod<String>('runtimeEngine.mtsBridgeStatus');
+      if (!mounted || _mtsBridgeBusy) return;
+      final running = status == 'running' || status == 'starting';
+      setState(() {
+        _mtsBridgeRunning = running;
+        if (!running) _mtsBridgeLink = null;
+      });
+    } on Object {
+      // A host without this feature has no bridge to display.
+    }
+  }
+
+  Future<void> _openMtsBridge() async {
+    if (_mtsBridgeBusy) return;
+    String? currentStatus;
+    try {
+      currentStatus = await _pokrovRuntimeSystemChannel
+          .invokeMethod<String>('runtimeEngine.mtsBridgeStatus');
+    } on Object {
+      if (mounted) showPokrovSnack(context, 'Не удалось открыть подключение.', tone: PokrovSnackTone.danger);
+      return;
+    }
+    if (!mounted) return;
+    if (currentStatus == 'starting') return;
+    if (currentStatus == 'running') {
+      await _showMtsBridgeDialog();
+      return;
+    }
+    final selected = _clientExperience.preferredCandidateRef;
+    final candidate = _connectionManager.transportCatalog?.candidates
+        .where((item) => item.candidateRef == selected).firstOrNull;
+    if (candidate?.transport != 'mts') return;
+    setState(() => _mtsBridgeBusy = true);
+    try {
+      final engine = _connectionManager._runtimeEngine;
+      final beforeStop = await engine.snapshot();
+      _connectionManager._update(() => _connectionManager._runtimeSnapshot = beforeStop);
+      await _connectionManager.disconnect();
+      var snapshot = await engine.snapshot();
+      snapshot = await _connectionManager._settleRuntimeDisconnectTransition(snapshot);
+      if (!_connectionManager._runtimeStopConfirmed(snapshot)) {
+        throw const BootstrapFailure('Не удалось отключить POKROV. Попробуй ещё раз.');
+      }
+      snapshot = await engine.initialize();
+      _connectionManager._update(() => _connectionManager._runtimeSnapshot = snapshot);
+      if (snapshot.phase != RuntimePhase.initialized ||
+          !snapshot.availableTransportFeatures.contains(RuntimeTransportFeature.mtsVless)) {
+        throw const BootstrapFailure('Не удалось подготовить подключение. Попробуй ещё раз.');
+      }
+      final revision = _managedProfileRevision;
+      final inputs = _connectionManager._managedProfileCacheInputs;
+      final payload = await _bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.android,
+        routeMode: inputs.routeMode,
+        selectedApps: inputs.selectedApps,
+        preferredCandidateRef: selected,
+        selectedCandidateRef: selected,
+        runtimeFeatures: snapshot.availableTransportFeatures,
+        coreRelease: snapshot.coreVersion,
+        selectCandidate: false,
+        cacheResult: false,
+        timeout: widget.runtimeActionTimeout,
+      );
+      if (!mounted || revision != _managedProfileRevision ||
+          _clientExperience.preferredCandidateRef != selected) return;
+      final material = selectedMtsBridgeMaterial(payload, selected);
+      final started = await _pokrovRuntimeSystemChannel.invokeMethod<bool>(
+          'runtimeEngine.startMtsBridge', {'boardUrl': material.board, 'publicKey': material.key});
+      if (started != true) {
+        throw const BootstrapFailure('Не удалось запустить подключение. Попробуй ещё раз.');
+      }
+      String? status;
+      for (var attempt = 0; attempt < 60; attempt++) {
+        await Future<void>.delayed(const Duration(milliseconds: 250));
+        status = await _pokrovRuntimeSystemChannel
+            .invokeMethod<String>('runtimeEngine.mtsBridgeStatus');
+        if (status != 'starting') break;
+      }
+      if (status != 'running') {
+        await _pokrovRuntimeSystemChannel.invokeMethod<bool>('runtimeEngine.stopMtsBridge');
+        throw const BootstrapFailure('Не удалось запустить подключение. Попробуй ещё раз.');
+      }
+      if (!mounted) return;
+      setState(() {
+        _mtsBridgeRunning = true;
+        _mtsBridgeLink = material.link;
+      });
+      await _showMtsBridgeDialog();
+    } on BootstrapFailure catch (error) {
+      if (mounted) showPokrovSnack(context, error.message, tone: PokrovSnackTone.danger);
+    } on Object {
+      if (mounted) {
+        showPokrovSnack(context, 'Не удалось подготовить подключение. Попробуй ещё раз.',
+            tone: PokrovSnackTone.danger);
+      }
+    } finally {
+      if (mounted) setState(() => _mtsBridgeBusy = false);
+    }
+  }
+
+  Future<void> _showMtsBridgeDialog() async {
+    final action = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hiddify и Happ'),
+        content: Text(_mtsBridgeLink == null
+            ? 'Подключение запущено. Чтобы получить ссылку снова, останови его и запусти ещё раз.'
+            : 'Сначала исключи POKROV из VPN в настройках Hiddify или Happ. Затем скопируй ссылку и импортируй её в выбранное приложение.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, 'stop'), child: const Text('Остановить')),
+          if (_mtsBridgeLink != null)
+            FilledButton(onPressed: () => Navigator.pop(context, 'copy'), child: const Text('Скопировать ссылку')),
+        ],
+      ),
+    );
+    if (action == 'copy' && _mtsBridgeLink != null) {
+      await Clipboard.setData(ClipboardData(text: _mtsBridgeLink!));
+      if (mounted) showPokrovSnack(context, 'Ссылка скопирована.');
+    } else if (action == 'stop') {
+      final stopped = await _pokrovRuntimeSystemChannel
+          .invokeMethod<bool>('runtimeEngine.stopMtsBridge');
+      if (!mounted) return;
+      setState(() {
+        _mtsBridgeRunning = false;
+        _mtsBridgeLink = null;
+      });
+      if (stopped != true) {
+        showPokrovSnack(context, 'Не удалось остановить подключение.',
+            tone: PokrovSnackTone.danger);
+      }
+    }
   }
 
   int _selectedIndex = 0;
@@ -632,6 +772,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     _clientExperienceRestore = _restoreClientExperience();
     unawaited(_clientExperienceRestore);
     _refreshRuntimeSnapshot();
+    unawaited(_refreshMtsBridgeStatus());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.observability?.markUiReady();
       final initialAcquisitionUri = widget.initialAcquisitionUri;
@@ -1038,12 +1179,18 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       _selectedIndex = tab.index;
     });
     if (tab == SeedTab.locations) {
-      unawaited(_connectionManager.refreshTransportCatalog());
+      unawaited(_refreshMtsBridgeStatus());
+      unawaited(_prepareLocationsTransportCatalog());
       unawaited(_refreshLocationsCatalog());
     }
     if (tab == SeedTab.access && widget.bootstrapper != null) {
       unawaited(_refreshAccountSummary());
     }
+  }
+
+  Future<void> _prepareLocationsTransportCatalog() async {
+    await _clientExperienceRestore;
+    if (mounted) await _connectionManager.prepareLocationsTransportCatalog();
   }
 
   Future<void> _refreshLocationsCatalog({bool measureDevice = false, bool forceTransportCatalog = false}) async {
@@ -1510,6 +1657,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       return;
     }
     if (state == AppLifecycleState.resumed) {
+      unawaited(_refreshMtsBridgeStatus());
       unawaited(_resumeRuntimeAndTrustedWifiChecks());
       unawaited(_checkForClientUpdate());
       if (_telegramLinkVerificationPending) {
@@ -3927,6 +4075,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             favoriteNodeCodes: _clientExperience.favoriteNodeCodes,
             recentNodeCodes: _clientExperience.recentNodeCodes,
             onFavoriteNodeToggle: _toggleFavoriteLocation,
+            onMtsBridge: widget.appContext.hostPlatform == HostPlatform.android && !_mtsBridgeBusy
+                ? () => unawaited(_openMtsBridge()) : null,
+            mtsBridgeRunning: _mtsBridgeRunning,
           ),
       (context) => _RulesSection(
             appContext: widget.appContext,

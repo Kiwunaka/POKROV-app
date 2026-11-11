@@ -210,13 +210,17 @@ void main() {
     expect(find.text('Начать бесплатно'), findsOneWidget);
     var back = 0;
     var manual = 0;
+    var bridge = 0;
     await _pump(tester, LocationsScreen(data: const LocationsViewData(countries: PokrovSampleData.countries),
-      onAuto: _noop, onSelect: (_) {}, onBack: () => back++, onSelectConnection: () => manual++));
+      onAuto: _noop, onSelect: (_) {}, onBack: () => back++, onSelectConnection: () => manual++,
+      onMtsBridge: () => bridge++));
     expect(find.text('Германия'), findsOneWidget);
     expect(find.text('38 мс'), findsOneWidget, reason: 'a measured delay is shown as measured');
     await tester.tap(find.byIcon(Icons.arrow_back_rounded));
     await tester.tap(find.text('Соединение вручную'));
-    expect((back, manual), (1, 1));
+    await tester.ensureVisible(find.byKey(const ValueKey('locations-mts-bridge')));
+    await tester.tap(find.byKey(const ValueKey('locations-mts-bridge')));
+    expect((back, manual, bridge), (1, 1, 1));
     await _pump(tester, RulesScreen(data: PokrovSampleData.rules(selected: 'all'), onSelect: (_) {}, onApply: _noop, onBack: () => back++));
     expect(find.text('Что идёт через POKROV'), findsOneWidget);
     expect(find.text('Применить'), findsOneWidget);

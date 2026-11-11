@@ -438,7 +438,7 @@ packages:
       path: "../../packages/app_shell"
       relative: true
     source: path
-    version: "2.0.7"
+    version: "2.0.8"
   pokrov_app_ui:
     dependency: transitive
     description:

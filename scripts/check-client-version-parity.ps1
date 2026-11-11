@@ -65,7 +65,7 @@ if ($runtime.release_tag -ne "v$($runtime.version)" -or
     $runtime.source_commit -notmatch '^[0-9a-f]{40}$' -or
     $runtime.android_package -ne "space.pokrov.core" -or
     [int]$runtime.desktop_abi.version -ne [int]$windowsRelease.runtime.desktop_abi -or
-    $runtime.release_tag -ne $windowsRelease.runtime.release_tag) {
+    (($Platforms -contains "windows") -and $runtime.release_tag -ne $windowsRelease.runtime.release_tag)) {
   throw "Core release identity disagrees with the client runtime contract."
 }
 

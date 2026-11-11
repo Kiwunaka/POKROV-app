@@ -29,6 +29,8 @@ class _LocationsSection extends StatefulWidget {
     required this.favoriteNodeCodes,
     required this.recentNodeCodes,
     required this.onFavoriteNodeToggle,
+    this.onMtsBridge,
+    this.mtsBridgeRunning = false,
   });
 
   final SeedAppContext appContext;
@@ -62,6 +64,8 @@ class _LocationsSection extends StatefulWidget {
   final List<String> favoriteNodeCodes;
   final List<String> recentNodeCodes;
   final ValueChanged<String> onFavoriteNodeToggle;
+  final VoidCallback? onMtsBridge;
+  final bool mtsBridgeRunning;
 
   @override
   State<_LocationsSection> createState() => _LocationsSectionState();
@@ -198,6 +202,9 @@ class _LocationsSectionState extends State<_LocationsSection> {
       onSelectConnection: (widget.transportCatalog?.candidates.isNotEmpty ?? false) ? _selectConnection : null,
       onBack: widget.onBack,
       selectedConnectionLabel: _preferredCandidate == null ? null : _locationCandidateLabel(_preferredCandidate!),
+      onMtsBridge: _preferredCandidate?.transport == 'mts' || widget.mtsBridgeRunning
+          ? widget.onMtsBridge : null,
+      mtsBridgeRunning: widget.mtsBridgeRunning,
     );
   }
 }

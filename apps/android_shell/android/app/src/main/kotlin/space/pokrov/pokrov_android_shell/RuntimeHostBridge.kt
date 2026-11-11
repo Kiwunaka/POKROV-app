@@ -149,6 +149,21 @@ class RuntimeHostBridge(
                 }
             }
             "runtimeEngine.startApiLoopbackProxy" -> startApiLoopbackProxy(call, result)
+            "runtimeEngine.startMtsBridge" -> {
+                val board = call.argument<String>("boardUrl")
+                val key = call.argument<String>("publicKey")
+                if (board.isNullOrEmpty() || key.isNullOrEmpty()) {
+                    result.success(false)
+                } else {
+                    executeHostTask(result, false) {
+                        PokrovMtsBridgeService.startBridge(activity.applicationContext, board, key)
+                    }
+                }
+            }
+            "runtimeEngine.stopMtsBridge" -> executeHostTask(result, false) {
+                PokrovMtsBridgeService.stopBridge()
+            }
+            "runtimeEngine.mtsBridgeStatus" -> result.success(PokrovMtsBridgeService.status())
             "runtimeEngine.probeCandidate" -> probeCandidate(call, result)
             "runtimeEngine.candidateDiagnostics" -> AndroidOperationalJournal.readCandidateDiagnostics { outcome ->
                 activity.runOnUiThread {

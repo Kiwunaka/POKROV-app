@@ -5219,6 +5219,94 @@ void main() {
     expect(disconnects, 1);
   });
 
+  testWidgets('fresh Android opens manual MTS selection from the home country tile without VPN', (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final features = RuntimeTransportFeature.values.map((feature) => feature.wireName).toList()..sort();
+    final mts = TransportCandidate(candidateRef: 'ch:mts_vless', profileRef: 'mts_vless', nodeCode: 'ch',
+      countryCode: 'CH', protocol: 'vless', transport: 'mts', protection: 'noise',
+      priority: 1, network: 'tcp', flow: '', minimumClientRelease: '1.5.0',
+      minimumCoreRelease: null, platforms: {HostPlatform.android}, requiredFeatures: const {});
+    final bootstrapper = _CatalogPickerBootstrapper((await tester.runAsync(_pickerCatalog))!)
+      ..candidates = [mts]
+      ..materialConfigPayload = jsonEncode({'outbounds': [
+        {'type': 'mts', 'tag': 'carrier', 'board_url': 'https://doski.mts-link.ru/boards/board/fixture',
+          'public_key': 'fixture-key'},
+        {'type': 'vless', 'detour': 'carrier', 'uuid': '00000000-0000-4000-8000-000000000001'},
+      ]})
+      ..cachedCatalog = TransportCandidateCatalog(revision: 'fresh-mts',
+        selectedCandidateRef: mts.candidateRef, candidates: [mts])
+      ..locationsCatalog = ClientLocationsCatalog.fromJson({'countries': [
+        {'code': 'CH', 'country': 'Switzerland', 'cities': [
+          {'code': 'ch', 'city': 'Switzerland', 'variants': [{'id': 'direct', 'label': 'Обычный'}]},
+        ]},
+      ]});
+    var available = false;
+    var initialized = false;
+    var running = false;
+    var disconnecting = false;
+    var stopReads = 0;
+    var bridgeStarted = false;
+    final nativeMutations = <String>[];
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'runtimeEngine.mtsBridgeStatus') return bridgeStarted ? 'running' : 'stopped';
+      if (call.method == 'runtimeEngine.disconnect') disconnecting = true;
+      if (call.method == 'runtimeEngine.snapshot' && disconnecting && ++stopReads > 16) running = false;
+      if (call.method == 'runtimeEngine.startMtsBridge') {
+        expect(running, isFalse, reason: 'the bridge must wait for the existing VPN to stop');
+        bridgeStarted = true;
+        return true;
+      }
+      if (const {'runtimeEngine.initialize', 'runtimeEngine.stageManagedProfile', 'runtimeEngine.connect'}
+          .contains(call.method)) nativeMutations.add(call.method);
+      if (call.method == 'runtimeEngine.initialize') initialized = true;
+      return {
+        'phase': running ? 'running' : initialized ? 'initialized' : available ? 'artifactReady' : 'artifactMissing',
+        'supportsLiveConnect': true, 'canInitialize': available && !initialized, 'canConnect': false,
+        if (initialized) 'coreVersion': '1.2.16',
+        if (initialized) 'transportCapabilitiesJson': jsonEncode({'schema': 1, 'features': features}),
+      };
+    });
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() async {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+      messenger.setMockMethodCallHandler(channel, null);
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: bootstrapper, firstLaunchStore: _FirstLaunchStore(),
+      clientExperienceStore: _CatalogPickerExperience(interfaceMode: PokrovInterfaceMode.simple),
+      themeMode: ThemeMode.light, onThemeModeChanged: (_) {},
+    )));
+    await tester.pumpAndSettle();
+    expect(nativeMutations, isEmpty);
+    available = true;
+    await tester.tap(find.byKey(const ValueKey('home-tile-country')));
+    await tester.pumpAndSettle();
+    expect(nativeMutations, ['runtimeEngine.initialize']);
+    expect(bootstrapper.refreshedFeatures, isNotEmpty);
+    expect(bootstrapper.refreshedFeatures.every((features) => features.contains(RuntimeTransportFeature.mtsVless)), isTrue);
+    await tester.tap(find.byKey(const ValueKey('locations-select-connection')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(ValueKey('location-candidate-${mts.candidateRef}')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('locations-mts-bridge')), findsOneWidget);
+    expect(nativeMutations, ['runtimeEngine.initialize']);
+    running = true;
+    await tester.tap(find.byKey(const ValueKey('locations-mts-bridge')));
+    for (var attempt = 0; attempt < 25 && !bridgeStarted; attempt++) {
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+    expect(bridgeStarted, isTrue);
+    expect(find.text('Hiddify и Happ'), findsOneWidget);
+  });
+
   testWidgets('Advanced Locations keeps country Auto and offers admitted manual connections', (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final nativeMutations = <String>[];

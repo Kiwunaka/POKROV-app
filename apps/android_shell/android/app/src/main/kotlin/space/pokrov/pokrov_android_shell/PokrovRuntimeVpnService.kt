@@ -345,6 +345,17 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     try {
                         AndroidRuntimeState.markConnectionPending()
                         runtimeExecutor.execute {
+                            if (!PokrovMtsBridgeService.stopBridge()) {
+                                AndroidRuntimeState.markFailure(
+                                    "mts_bridge_stop_failed",
+                                    "Не удалось остановить подключение для других приложений.",
+                                )
+                                PokrovQuickSettingsTileService.completeRuntimeTransition(this, tileGeneration)
+                                mainHandler.post {
+                                    if (ownsServiceCommand(commandGeneration)) stopSelf()
+                                }
+                                return@execute
+                            }
                             startRuntime(configPath, tileGeneration, routeMode, expectedDigest,
                                 commandGeneration, connectRequestId, expectedCoreModuleSha256, deadline)
                         }

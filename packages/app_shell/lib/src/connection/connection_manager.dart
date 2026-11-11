@@ -234,6 +234,25 @@ class ConnectionManager extends ChangeNotifier {
     }();
   }
 
+  Future<bool> prepareLocationsTransportCatalog() async {
+    if (_appContext.hostPlatform == HostPlatform.android && _transportCatalog == null && !_runtimeBusy) {
+      try {
+        await _runRuntimeAction(() async {
+          final current = await _withRuntimeActionTimeout('snapshot', _runtimeEngine.snapshot);
+          if (!retainsProtection && !current.protectionRetained && !current.connectionPending &&
+              current.canInitialize && (current.phase == RuntimePhase.artifactReady ||
+                  current.phase == RuntimePhase.configStaged && current.coreVersion == null)) {
+            return _withRuntimeActionTimeout('initialize', _runtimeEngine.initialize);
+          }
+          return current;
+        });
+      } on Object {
+        return false;
+      }
+    }
+    return refreshTransportCatalog();
+  }
+
   Future<bool> _refreshManagedProfileCache({bool alternativesOnly = false}) async {
     final generation = _connectionCoordinator.operationGeneration;
     if (alternativesOnly && _cacheRefreshInFlight) await _cacheRefreshCompletion?.future;

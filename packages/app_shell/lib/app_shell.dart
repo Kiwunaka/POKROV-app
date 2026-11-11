@@ -48,6 +48,7 @@ import 'src/observability/release_health_baseline.dart';
 import 'src/seed/platform_product_facts.g.dart';
 import 'src/shell/cached_profile_fallback_gate.dart';
 import 'src/shell/managed_profile_lifecycle.dart';
+import 'src/shell/mts_bridge_material.dart';
 import 'src/shared/pokrov_haptics.dart';
 import 'src/shared/ru_plural.dart';
 import 'src/warp/pokrov_warp_lifecycle.dart';

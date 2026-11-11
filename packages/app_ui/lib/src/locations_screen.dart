@@ -8,7 +8,8 @@ import 'widgets.dart';
 /// milliseconds; nothing is shown without a measurement.
 class LocationsScreen extends StatelessWidget {
   const LocationsScreen({super.key, required this.data, required this.onAuto, required this.onSelect,
-    this.onRefresh, this.refreshing = false, this.onSelectConnection, this.selectedConnectionLabel, this.onBack});
+    this.onRefresh, this.refreshing = false, this.onSelectConnection, this.selectedConnectionLabel,
+    this.onMtsBridge, this.mtsBridgeRunning = false, this.onBack});
 
   final LocationsViewData data;
   final VoidCallback? onAuto;
@@ -17,6 +18,8 @@ class LocationsScreen extends StatelessWidget {
   final bool refreshing;
   final VoidCallback? onSelectConnection;
   final String? selectedConnectionLabel;
+  final VoidCallback? onMtsBridge;
+  final bool mtsBridgeRunning;
   final VoidCallback? onBack;
 
   @override
@@ -101,6 +104,15 @@ class LocationsScreen extends StatelessWidget {
             if (selectedConnectionLabel != null) Text('Выбрано: $selectedConnectionLabel',
               textAlign: TextAlign.center, style: pokrovTextStyle(context, PokrovText.caption)),
           ],
+          if (onMtsBridge != null)
+            TextButton.icon(
+              key: const ValueKey('locations-mts-bridge'),
+              onPressed: onMtsBridge,
+              icon: const Icon(Icons.link_rounded),
+              label: Text(mtsBridgeRunning
+                  ? 'Hiddify и Happ: запущено'
+                  : 'Подключить Hiddify или Happ'),
+            ),
         ],
       ),
     );
