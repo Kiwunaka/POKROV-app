@@ -239,8 +239,9 @@ std::wstring QueryProbeAddress(const TunDnsEndpoint& endpoint,
 // context. No WinHTTP pool or OS-version-dependent resolution override is used.
 class EgressConnection {
  public:
-  EgressConnection(ProbeObservation& observation, const CheckInterruption& interrupted)
-      : observation_(observation), interrupted_(interrupted) {
+  EgressConnection(ProbeObservation& observation, const CheckInterruption& interrupted,
+                   std::uint32_t io_timeout_ms)
+      : observation_(observation), interrupted_(interrupted), io_timeout_ms_(io_timeout_ms) {
     SecInvalidateHandle(&credentials_);
     SecInvalidateHandle(&context_);
     WSADATA data{};
@@ -273,7 +274,7 @@ class EgressConnection {
     if (::connect(socket_, reinterpret_cast<const sockaddr*>(&remote), sizeof(remote))) {
       const auto error = ::WSAGetLastError();
       if (error != WSAEWOULDBLOCK) return SocketError(error);
-      if (!Wait(true, ::GetTickCount64() + 3000)) return false;
+      if (!Wait(true, ::GetTickCount64() + io_timeout_ms_)) return false;
       int pending_error = 0, length = sizeof(pending_error);
       if (::getsockopt(socket_, SOL_SOCKET, SO_ERROR,
               reinterpret_cast<char*>(&pending_error), &length)) return SocketError();
@@ -307,7 +308,7 @@ class EgressConnection {
     constexpr ULONG flags = ISC_REQ_SEQUENCE_DETECT | ISC_REQ_REPLAY_DETECT |
         ISC_REQ_CONFIDENTIALITY | ISC_REQ_ALLOCATE_MEMORY | ISC_REQ_STREAM |
         ISC_REQ_USE_SUPPLIED_CREDS;
-    const auto deadline = ::GetTickCount64() + 3000;
+    const auto deadline = ::GetTickCount64() + io_timeout_ms_;
     bool first = true;
     while (Current(deadline)) {
       SecBuffer inputs[2]{{static_cast<ULONG>(encrypted_.size()), SECBUFFER_TOKEN, encrypted_.data()},
@@ -346,7 +347,7 @@ class EgressConnection {
 
   bool Write(const std::string& request) {
     observation_.stage = EgressProbeStage::kSending;
-    const auto deadline = ::GetTickCount64() + 3000;
+    const auto deadline = ::GetTickCount64() + io_timeout_ms_;
     if (!secure_) return SendBytes(request.data(), request.size(), deadline);
     if (request.size() > sizes_.cbMaximumMessage) return TlsError(SEC_E_BUFFER_TOO_SMALL);
     std::vector<char> bytes(sizes_.cbHeader + request.size() + sizes_.cbTrailer);
@@ -455,6 +456,7 @@ class EgressConnection {
 
   ProbeObservation& observation_;
   const CheckInterruption& interrupted_;
+  const std::uint32_t io_timeout_ms_;
   bool winsock_ready_ = false;
   bool secure_ = false;
   SOCKET socket_ = INVALID_SOCKET;
@@ -477,9 +479,11 @@ std::string_view Trim(std::string_view value) {
 }
 
 bool ReadProof(EgressConnection& connection, bool data, bool periodic,
-               ProbeObservation& observation, const CheckInterruption& interrupted) {
+               ProbeObservation& observation, const CheckInterruption& interrupted,
+               std::uint32_t io_timeout_ms) {
   observation.stage = EgressProbeStage::kResponse;
-  auto deadline = ::GetTickCount64() + 6000;
+  const auto read_timeout_ms = (std::max)(std::uint32_t{6000}, io_timeout_ms);
+  auto deadline = ::GetTickCount64() + read_timeout_ms;
   std::string bytes;
   auto end = bytes.find("\r\n\r\n");
   while (end == std::string::npos) {
@@ -541,7 +545,7 @@ bool ReadProof(EgressConnection& connection, bool data, bool periodic,
   std::size_t received = bytes.size();
   while (received < 65536 && !Interrupted(interrupted)) {
     bytes.clear();
-    deadline = ::GetTickCount64() + 6000;
+    deadline = ::GetTickCount64() + read_timeout_ms;
     if (!connection.Read(&bytes, deadline)) return false;
     received += bytes.size();
   }
@@ -572,7 +576,8 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
         tun_dns_(tun_dns), events_(events), loopback_tun_ipv4_(loopback_tun_ipv4) {}
 
   std::string Verify(const CheckInterruption& interrupted, bool periodic,
-                     std::uint64_t deadline_tick, EgressProbeReserve reserve) override {
+                     std::uint64_t deadline_tick, EgressProbeReserve reserve,
+                     std::uint32_t io_timeout_ms) override {
     last_observation_.reset();
     const auto target_count = reserve == EgressProbeReserve::kNone ? std::size_t{1} : target_count_;
     const CheckInterruption owner = [&] {
@@ -604,7 +609,7 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
           ? api_reserve_ : targets_[target_index];
       failure = ProbeOnce(target, periodic, target_check,
           target_index == 0 ? EgressProbeTarget::kOwnedApi : EgressProbeTarget::kOwnedReserve,
-          deadline_tick);
+          deadline_tick, io_timeout_ms);
       if (failure.empty() && !Interrupted(owner)) return "";
       if (failure == "core_egress_probe_unavailable") invalid_proof_response = true;
       // Periodic failover to a different target gets the remaining budget
@@ -662,7 +667,8 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
 
   std::string ProbeOnce(const ProbeTarget& target, bool periodic,
                         const CheckInterruption& interrupted,
-                        EgressProbeTarget target_kind, std::uint64_t owner_deadline) {
+                        EgressProbeTarget target_kind, std::uint64_t owner_deadline,
+                        std::uint32_t io_timeout_ms) {
     auto started = ::GetTickCount64();
     ProbeObservation observation;
     observation.target = target_kind;
@@ -690,7 +696,7 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
       started = ::GetTickCount64();
     }
     observation.stage = EgressProbeStage::kHttpSetup;
-    EgressConnection connection(observation, interrupted);
+    EgressConnection connection(observation, interrupted, io_timeout_ms);
     bool valid = connection.Connect(tun_dns_ ? numeric : target.hostname, port_,
                                     expected_tun_ipv4);
     if (valid && secure_) valid = connection.Handshake(target.hostname);
@@ -703,7 +709,8 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
       const std::string http = "GET " + Ascii(data ? target.data_path : target.proof_path) +
           " HTTP/1.1\r\nHost: " + Ascii(target.hostname) +
           "\r\nConnection: " + (data || periodic ? "close" : "keep-alive") + "\r\n\r\n";
-      valid = connection.Write(http) && ReadProof(connection, data, periodic, observation, interrupted);
+      valid = connection.Write(http) && ReadProof(connection, data, periodic, observation, interrupted,
+                                                io_timeout_ms);
       RecordObservation(observation, started, valid, interrupted);
       if (!valid || Interrupted(interrupted)) return ObservedFailure(observation);
     }

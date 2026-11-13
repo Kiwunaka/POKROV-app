@@ -254,7 +254,7 @@ void RuntimeDispatcher::CheckRunningEgress() {
   auto cancelled = std::make_shared<std::atomic<bool>>(false);
   egress_check_cancelled_ = cancelled;
   state.unlock();
-  const auto deadline = now + 3000;
+  const auto deadline = now + runtime_->EgressCheckBudgetMs();
   runtime_->RecheckEgress([cancelled, deadline] {
     if (cancelled->load()) return OperationInterruption::kCancelled;
     return ::GetTickCount64() >= deadline ? OperationInterruption::kDeadlineExceeded

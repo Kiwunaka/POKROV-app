@@ -590,10 +590,12 @@ class FakeEgressProbe final : public pokrov::service::RuntimeEgressProbe {
  public:
   std::string Verify(const pokrov::service::CheckInterruption& = {}, bool periodic = false,
                      std::uint64_t deadline_tick = 0,
-                     pokrov::service::EgressProbeReserve reserve = pokrov::service::EgressProbeReserve::kStatic) override {
+                     pokrov::service::EgressProbeReserve reserve = pokrov::service::EgressProbeReserve::kStatic,
+                     std::uint32_t io_timeout_ms = 3000) override {
     last_periodic = periodic;
     last_deadline_tick = deadline_tick;
     last_reserve = reserve;
+    last_io_timeout_ms = io_timeout_ms;
     ++verify_calls;
     if (on_verify) on_verify();
     return verify_error;
@@ -608,6 +610,7 @@ class FakeEgressProbe final : public pokrov::service::RuntimeEgressProbe {
   std::optional<pokrov::service::EgressProbeObservation> observation;
   bool last_periodic = false;
   std::uint64_t last_deadline_tick = 0;
+  std::uint32_t last_io_timeout_ms = 0;
   pokrov::service::EgressProbeReserve last_reserve = pokrov::service::EgressProbeReserve::kStatic;
 };
 
@@ -1168,6 +1171,12 @@ void TestConnectionHelperWaitsForFullTunProof() {
     Expect(connected.status == Status::kOk && egress->verify_calls == 2 &&
                Contains(connected, "core_egress_validated=1;dns_ready=1") && !egress->last_periodic,
            "cold helper did not wait for the full TUN proof");
+    Expect(egress->last_io_timeout_ms == 15000 && host.EgressCheckBudgetMs() == 15000,
+           "Psiphon startup and periodic checks kept the direct-path timeout");
+    const auto periodic = host.RecheckEgress({}, ::GetTickCount64() + host.EgressCheckBudgetMs());
+    Expect(periodic.status == Status::kOk && egress->last_periodic &&
+               egress->last_io_timeout_ms == 15000,
+           "Psiphon periodic check lost its carrier timeout");
   }
   RemoveTestRoot(root);
 }

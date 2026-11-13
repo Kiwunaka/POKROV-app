@@ -2041,6 +2041,10 @@ bool RuntimeHost::CanRecheckEgress() const {
       !TransitionGuardArmed();
 }
 
+std::uint32_t RuntimeHost::EgressCheckBudgetMs() const {
+  return WindowsConnectionHelperIoTimeoutMs(staged_runtime_config_);
+}
+
 std::string RuntimeHost::VerifyEgress(bool periodic, const CheckInterruption& interrupted,
                                     std::uint64_t deadline_tick) {
   egress_failure_observation_.reset();
@@ -2064,7 +2068,8 @@ std::string RuntimeHost::VerifyEgress(bool periodic, const CheckInterruption& in
   };
   std::string failure;
   for (;;) {
-    failure = egress_probe_->Verify(probe_owner, periodic, deadline_tick, reserve);
+    failure = egress_probe_->Verify(probe_owner, periodic, deadline_tick, reserve,
+                                    EgressCheckBudgetMs());
     const auto observation = egress_probe_->LastObservation();
     // A cold helper can still be connecting after the ordinary DNS retries.
     // Keep the full TUN proof and its cancellation while that startup settles.

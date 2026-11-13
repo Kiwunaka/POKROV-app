@@ -126,7 +126,8 @@ class RuntimeEgressProbe {
   virtual ~RuntimeEgressProbe() = default;
   virtual std::string Verify(const CheckInterruption& interrupted = {},
                              bool periodic = false, std::uint64_t deadline_tick = 0,
-                             EgressProbeReserve reserve = EgressProbeReserve::kStatic) = 0;
+                             EgressProbeReserve reserve = EgressProbeReserve::kStatic,
+                             std::uint32_t io_timeout_ms = 3000) = 0;
   virtual std::optional<EgressProbeObservation> LastObservation() const {
     return std::nullopt;
   }
@@ -175,6 +176,7 @@ class RuntimeHost {
   RuntimeResult RevokeTransportLease(const TransportLeaseRevocation& target);
   RuntimeResult Disconnect(bool explicit_disconnect = true);
   bool CanRecheckEgress() const;
+  std::uint32_t EgressCheckBudgetMs() const;
   RuntimeResult RecheckEgress(const CheckInterruption& interrupted,
                              std::uint64_t deadline_tick = 0);
   RuntimeResult ReplaceManagedProfile(const std::string& body, const CheckInterruption& interrupted,

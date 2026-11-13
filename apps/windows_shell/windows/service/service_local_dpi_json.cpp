@@ -316,6 +316,17 @@ std::string CancelWindowsCandidateProbeResult(const std::string& encoded,
   return Encode(result.Get());
 }
 
+std::uint32_t WindowsConnectionHelperIoTimeoutMs(const std::string& encoded) {
+  JsonApartment apartment;
+  if (!apartment.Ready()) return 3000;
+  const auto profile = ParseObject(encoded);
+  if (!profile) return 3000;
+  for (const auto& outbound : Rows(Array(profile.Get(), L"outbounds").Get())) {
+    if (String(outbound.Get(), L"type") == "psiphon") return 15000;
+  }
+  return 3000;
+}
+
 std::uint64_t WindowsConnectionHelperStartupBudgetMs(const std::string& encoded) {
   JsonApartment apartment;
   if (!apartment.Ready()) return 0;

@@ -58,6 +58,7 @@ std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& 
     bool first_provider_qa = false, EgressProbeReserve* egress_reserve = nullptr,
     std::string* selected_vpn_tag = nullptr);
 std::uint64_t WindowsConnectionHelperStartupBudgetMs(const std::string& profile);
+std::uint32_t WindowsConnectionHelperIoTimeoutMs(const std::string& profile);
 // Purpose check only; Core validates the complete worker config before admission.
 bool IsWindowsFirstProviderQaRuntimeControl(const std::string& config);
 // Override only cancellation status; retain the trusted Core's completed stages.
