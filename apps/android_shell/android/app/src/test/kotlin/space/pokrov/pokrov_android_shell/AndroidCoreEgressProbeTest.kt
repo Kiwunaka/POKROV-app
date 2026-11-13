@@ -115,13 +115,12 @@ class AndroidCoreEgressProbeTest {
         for (carrier in listOf("dnstt", "slipstream")) {
             val types = mapOf("root" to "selector", "proxy" to "vless", "dns-tunnel" to carrier)
             val detours = mapOf("proxy" to "dns-tunnel")
-            val usesDnsCarrier = AndroidCoreEgressProbe.usesDnsCarrier("root", types, detours, members)
-            assertTrue(usesDnsCarrier)
+            assertEquals(carrier, AndroidCoreEgressProbe.vlessCarrierType("root", types, detours, members))
             val graph = types.values + listOf("direct", "block", "dns")
             assertTrue(AndroidCoreEgressProbe.isDnsUplinkGraph(graph, 0))
             assertFalse(AndroidCoreEgressProbe.isDnsUplinkGraph(graph + "pokrov-smart-access", 0))
             assertFalse(AndroidCoreEgressProbe.isDnsUplinkGraph(graph, 1))
-            val target = defaultTarget.copy(usesDnsCarrier = usesDnsCarrier)
+            val target = defaultTarget.copy(usesDnsCarrier = true)
             assertEquals(65_000L, target.startupWatchdogMillis)
             assertFalse(AndroidCoreEgressRetryPolicy.shouldRetry(target, AndroidCoreEgressProbeResult.UNAVAILABLE, 1))
             assertEquals(AndroidCoreEgressProbeResult.HEALTHY, AndroidCoreEgressProbe.probe(target, core, cancellation))
@@ -132,10 +131,30 @@ class AndroidCoreEgressProbeTest {
             cancelled.set(true)
             assertEquals(AndroidCoreEgressProbeResult.UNAVAILABLE, AndroidCoreEgressProbe.probe(target, core, cancellation))
             cancelled.set(false)
-            assertFalse(AndroidCoreEgressProbe.usesDnsCarrier("root", types, emptyMap(), members))
-            assertFalse(AndroidCoreEgressProbe.usesDnsCarrier("root", types, detours,
+            assertNull(AndroidCoreEgressProbe.vlessCarrierType("root", types, emptyMap(), members))
+            assertNull(AndroidCoreEgressProbe.vlessCarrierType("root", types, detours,
                 mapOf("root" to listOf("proxy", "other"))))
         }
+    }
+
+    @Test
+    fun vkCarrierAllowsObservedLatencyAtStartupAndDuringPeriodicChecks() {
+        val types = mapOf("root" to "selector", "proxy" to "vless", "vk-tunnel" to "vk")
+        assertEquals("vk", AndroidCoreEgressProbe.vlessCarrierType("root", types,
+            mapOf("proxy" to "vk-tunnel"), mapOf("root" to listOf("proxy"))))
+        val target = AndroidCoreEgressProbeTarget("root", AndroidCoreEgressProbeTargetKind.GROUP,
+            usesVkCarrier = true)
+        val core = BoundedCore("root").apply { simulatedLatencyMs = 12_000 }
+        assertEquals(65_000L, target.startupWatchdogMillis)
+        assertFalse(target.bindsDnsUplink)
+        assertFalse(AndroidCoreEgressRetryPolicy.shouldRetry(target, AndroidCoreEgressProbeResult.UNAVAILABLE, 1))
+        assertEquals(AndroidCoreEgressProbeResult.HEALTHY, AndroidCoreEgressProbe.probe(target, core))
+        assertEquals(60_000, core.lastTimeoutMs)
+        val cancellation = object : RuntimeProbeCancellation {
+            override fun isCancelled(): Boolean = false
+        }
+        assertEquals(AndroidCoreEgressProbeResult.HEALTHY, AndroidCoreEgressProbe.probe(target, core, cancellation))
+        assertEquals(15_000, core.lastTimeoutMs)
     }
 
     @Test

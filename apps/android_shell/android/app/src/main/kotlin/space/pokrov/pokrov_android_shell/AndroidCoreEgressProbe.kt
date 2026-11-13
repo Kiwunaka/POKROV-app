@@ -113,7 +113,7 @@ internal object AndroidCoreEgressRetryPolicy {
         result: AndroidCoreEgressProbeResult,
         completedAttempts: Int,
     ): Boolean =
-        !target.usesDnsCarrier && completedAttempts < maxAttempts(target) &&
+        !target.usesDnsCarrier && !target.usesVkCarrier && completedAttempts < maxAttempts(target) &&
             (
                 result == AndroidCoreEgressProbeResult.UNAVAILABLE ||
                     (
@@ -140,13 +140,14 @@ internal data class AndroidCoreEgressProbeTarget(
     val protocol: String = "unknown",
     val usesDnsCarrier: Boolean = false,
     val bindsDnsUplink: Boolean = false,
+    val usesVkCarrier: Boolean = false,
 ) {
     // Allow the single 60-second Core call to finish and publish its result.
     val startupWatchdogMillis: Long
-        get() = if (usesDnsCarrier) 65_000L else 55_000L
+        get() = if (usesDnsCarrier || usesVkCarrier) 65_000L else 55_000L
 
     val periodicTimeoutMillis: Int
-        get() = if (usesDnsCarrier) AndroidCoreEgressProbe.DNS_PERIODIC_TIMEOUT_MILLIS
+        get() = if (usesDnsCarrier || usesVkCarrier) AndroidCoreEgressProbe.DNS_PERIODIC_TIMEOUT_MILLIS
             else AndroidCoreEgressProbe.PERIODIC_TIMEOUT_MILLIS
 }
 
@@ -249,7 +250,8 @@ internal object AndroidCoreEgressProbe {
                     endpointTypes[endpointTag] = endpoint.optString("type")
                 }
             }
-            val dnsCarrier = usesDnsCarrier(tag, outboundTypes, outboundDetours, selectorMembers)
+            val carrier = vlessCarrierType(tag, outboundTypes, outboundDetours, selectorMembers)
+            val dnsCarrier = carrier == "dnstt" || carrier == "slipstream"
             resolveFinalTarget(
                 finalTag = tag,
                 outboundTypes = outboundTypes,
@@ -257,6 +259,7 @@ internal object AndroidCoreEgressProbe {
             )?.copy(
                 protocol = unambiguousProtocol(tag, outboundTypes, endpointTypes, selectorMembers),
                 usesDnsCarrier = dnsCarrier,
+                usesVkCarrier = carrier == "vk",
                 bindsDnsUplink = dnsCarrier && outboundTypes.size == outbounds.length() &&
                     isDnsUplinkGraph(outboundTypes.values, endpoints?.length() ?: 0),
             )
@@ -540,10 +543,14 @@ internal object AndroidCoreEgressProbe {
             return AndroidCoreEgressProbeResult.UNAVAILABLE
         }
         return try {
-            val result = if (periodicCancellation != null) {
+            val result = if (periodicCancellation != null || target.usesVkCarrier) {
+                val cancellation = periodicCancellation ?: object : RuntimeProbeCancellation {
+                    override fun isCancelled(): Boolean = false
+                }
+                val timeoutMillis = if (periodicCancellation == null) 60_000 else target.periodicTimeoutMillis
                 server.javaClass.getMethod("probeRuntimeEgress", String::class.java,
                     Int::class.javaPrimitiveType, RuntimeProbeCancellation::class.java)
-                    .invoke(server, target.tag, target.periodicTimeoutMillis, periodicCancellation)
+                    .invoke(server, target.tag, timeoutMillis, cancellation)
             } else {
                 val methodName = if (target.kind == AndroidCoreEgressProbeTargetKind.ENDPOINT) {
                     "probeEndpoint"
@@ -605,22 +612,19 @@ internal object AndroidCoreEgressProbe {
         return "unknown"
     }
 
-    internal fun usesDnsCarrier(targetTag: String, outboundTypes: Map<String, String>,
+    internal fun vlessCarrierType(targetTag: String, outboundTypes: Map<String, String>,
         outboundDetours: Map<String, String>, selectorMembers: Map<String, List<String>>,
-    ): Boolean {
+    ): String? {
         var tag = targetTag
         val visited = mutableSetOf<String>()
         while (visited.add(tag)) {
             when (outboundTypes[tag]) {
-                "selector", "urltest" -> tag = selectorMembers[tag]?.singleOrNull() ?: return false
-                "vless" -> {
-                    val carrier = outboundDetours[tag]?.let { outboundTypes[it] }
-                    return carrier == "dnstt" || carrier == "slipstream"
-                }
-                else -> return false
+                "selector", "urltest" -> tag = selectorMembers[tag]?.singleOrNull() ?: return null
+                "vless" -> return outboundDetours[tag]?.let { outboundTypes[it] }
+                else -> return null
             }
         }
-        return false
+        return null
     }
 
     // The shared platform callback has no outbound identity. Allow binding only
