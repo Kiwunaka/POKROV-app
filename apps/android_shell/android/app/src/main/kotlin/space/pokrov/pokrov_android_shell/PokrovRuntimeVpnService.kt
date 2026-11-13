@@ -816,6 +816,11 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             if (!ownsRuntimeSession(session)) throw SupersededRuntimeStart()
             startupPhase = AndroidRuntimeStartupPhase.CORE_START
             nextServer.startOrReloadService(dpiContent, OverrideOptions())
+            if (outbounds != null && (0 until outbounds.length()).any {
+                    outbounds.optJSONObject(it)?.optString("type") == "vk"
+                }) {
+                nextServer.prepareVkBridge()
+            }
             if (!ownsRuntimeSession(session)) throw SupersededRuntimeStart()
             activeCoreStartCompleted = true
             startupPhase = AndroidRuntimeStartupPhase.LOCAL_DPI_PUBLISH
