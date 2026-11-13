@@ -29,6 +29,20 @@ TransportCandidateCatalog parse(Map<String, Object?> value, {String node = '', S
       requestedNodeCode: node);
 
 void main() {
+  test('VK requires the Android SDK host and authenticated VLESS capability', () {
+    final row = candidate('ch', 'vk_vless', transport: 'vk', protection: 'reality',
+      features: ['vk_vless_v1', 'singbox_vless_v1', 'singbox_reality_v1', 'singbox_tls_v1', 'singbox_utls_v1']);
+    (row['parameters'] as Map)['flow'] = 'xtls-rprx-vision';
+    (row['requirements'] as Map).addAll(<String, Object?>{'minimum_client_release': '2.0.9',
+      'minimum_core_release': '1.2.18', 'platforms': ['android']});
+    final parsed = decodeManagedTransportCatalog(catalog([row]), platform: HostPlatform.android,
+      clientRelease: '2.0.9', coreRelease: '1.2.18', runtimeFeatures: RuntimeTransportFeature.values.toSet());
+    expect(parsed.selected.transport, 'vk');
+    expect(() => decodeManagedTransportCatalog(catalog([row]), platform: HostPlatform.windows,
+      clientRelease: '2.0.9', coreRelease: '1.2.18', runtimeFeatures: RuntimeTransportFeature.values.toSet()),
+      throwsA(isA<TransportManifestFailure>()));
+  });
+
   test('DNSTT-capable Core still admits ordinary managed candidates', () {
     final capabilities = RuntimeTransportCapabilities.fromWire(jsonEncode({
       'schema': 1,

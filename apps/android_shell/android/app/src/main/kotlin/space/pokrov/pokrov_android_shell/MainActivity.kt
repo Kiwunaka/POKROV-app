@@ -11,6 +11,7 @@ class MainActivity : FlutterActivity() {
     private var acquisitionLinksChannel: MethodChannel? = null
     private var supportExportChannel: MethodChannel? = null
     private var runtimeHostBridge: RuntimeHostBridge? = null
+    private var vkCaptchaSurface: PokrovVkCaptchaSurface? = null
     private var pendingSupportExport: PendingSupportExport? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -81,11 +82,26 @@ class MainActivity : FlutterActivity() {
 
     override fun onResume() {
         super.onResume()
+        PokrovVkCaptchaHost.attach(this)
         PokrovQuickSettingsTileService.ensureActiveModeRegistration(this)
         PokrovQuickSettingsTileService.requestRefresh(this)
         runtimeHostBridge?.resumePendingUpdateInstall()
         runtimeHostBridge?.handleDebugIntent(intent)
     }
+
+    override fun onPause() {
+        PokrovVkCaptchaHost.detach(this)
+        vkCaptchaSurface?.close()
+        vkCaptchaSurface = null
+        super.onPause()
+    }
+
+    internal fun showVkCaptcha(id: String, url: String, onResult: (String) -> Unit) {
+        val surface = vkCaptchaSurface ?: PokrovVkCaptchaSurface(this).also { vkCaptchaSurface = it }
+        surface.show(id, url, onResult)
+    }
+
+    internal fun cancelVkCaptcha(id: String) { vkCaptchaSurface?.cancel(id) }
 
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)

@@ -1385,6 +1385,7 @@ class ConnectionManager extends ChangeNotifier {
       if (candidate.transport == 'xhttp' && candidate.protection == 'reality') return 'xhttp_reality';
       if (candidate.transport == 'xhttp' && candidate.protection == 'tls') return 'xhttp_tls';
       if (candidate.transport == 'mts' && candidate.protection == 'noise') return 'vless_mts_noise';
+      if (candidate.transport == 'vk' && candidate.protection == 'reality') return 'vless_vk_reality';
       if (candidate.transport == 'dnstt' && candidate.protection == 'noise') return 'vless_dnstt_noise';
       if (candidate.transport == 'slipstream' && candidate.protection == 'tls') return 'vless_slipstream_tls';
     }
@@ -3010,9 +3011,10 @@ class ConnectionManager extends ChangeNotifier {
       final warpCandidates = eligibleCandidates.where((candidate) =>
           candidate.warpMode != null && candidate.warpMode != 'warp_direct').toList();
       final ordinaryCandidates = eligibleCandidates.where((candidate) =>
-          candidate.warpMode == null && !const {'dnstt', 'slipstream', 'mts'}.contains(candidate.transport)).toList();
+          candidate.warpMode == null && !const {'dnstt', 'slipstream', 'mts', 'vk'}.contains(candidate.transport)).toList();
       final dnsCandidates = [
         ...eligibleCandidates.where((candidate) => candidate.transport == 'mts').take(1),
+        ...eligibleCandidates.where((candidate) => candidate.transport == 'vk').take(1),
         ...eligibleCandidates.where((candidate) => candidate.transport == 'dnstt').take(1),
         ...eligibleCandidates.where((candidate) => candidate.transport == 'slipstream').take(1),
       ]..sort((a, b) => a.priority.compareTo(b.priority));
@@ -3291,13 +3293,14 @@ class ConnectionManager extends ChangeNotifier {
             candidate.warpMode == 'warp_direct').toList();
         final dnsCandidates = [
           ...cachedCandidates.where((candidate) => candidate.transport == 'mts').take(1),
+          ...cachedCandidates.where((candidate) => candidate.transport == 'vk').take(1),
           ...cachedCandidates.where((candidate) => candidate.transport == 'dnstt').take(1),
           ...cachedCandidates.where((candidate) => candidate.transport == 'slipstream').take(1),
         ]..sort((a, b) => a.priority.compareTo(b.priority));
         final groups = [
           warpCandidates,
           cachedCandidates.where((candidate) => candidate.warpMode == null &&
-              !const {'dnstt', 'slipstream', 'mts'}.contains(candidate.transport)).toList(),
+              !const {'dnstt', 'slipstream', 'mts', 'vk'}.contains(candidate.transport)).toList(),
           dnsCandidates,
           directWarpCandidates,
         ];

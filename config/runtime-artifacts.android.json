@@ -1,9 +1,9 @@
 {
   "core": {
     "repository": "Kiwunaka/pokrov-core",
-    "version": "1.2.17",
-    "release_tag": "v1.2.17",
-    "source_commit": "9a9b0da7fb87372668beedc9e3123af7b7199735",
+    "version": "1.2.18",
+    "release_tag": "v1.2.18",
+    "source_commit": "13b4019b451dddfdae49daf1dd58667bd1c21feb",
     "android_package": "space.pokrov.core",
     "desktop_abi": {
       "version": 2
@@ -11,8 +11,8 @@
     "assets": {
       "android": {
         "entry": "pokrov-core.aar",
-        "size": 77537330,
-        "sha256": "2df705f2ad9d6d1b04a7718c2bdb7ea80148a4f83c8484c053f1e727b19bce4c",
+        "size": 78646082,
+        "sha256": "6b0c5d849bc57e9ba44f4c397a2f9cd67129fab5cf7cd19ffdf74ff16c64b5e9",
         "sync_destination": "apps/android_shell/android/app/libs",
         "runtime_dependencies": []
       }

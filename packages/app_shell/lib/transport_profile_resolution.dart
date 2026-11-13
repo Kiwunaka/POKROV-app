@@ -101,6 +101,7 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
             (transport == 'xhttp' && protection == 'reality') ||
             (transport == 'dnstt' && protection == 'noise') ||
             (transport == 'mts' && protection == 'noise') ||
+            (transport == 'vk' && protection == 'reality') ||
             (transport == 'slipstream' && protection == 'tls'),
         'awg' => transport == 'udp' && protection == 'awg31',
         'hysteria2' => transport == 'udp' && protection == 'tls',
@@ -117,6 +118,10 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
       if (transport == 'xhttp' && parameters['flow'] != '') throw const FormatException();
       if (const {'dnstt', 'slipstream', 'mts'}.contains(transport) && (parameters['network'] != 'tcp' ||
           parameters['flow'] != '' || warpMode != null || deliveryId != null)) {
+        throw const FormatException();
+      }
+      if (transport == 'vk' && (parameters['network'] != 'tcp' ||
+          parameters['flow'] != 'xtls-rprx-vision' || warpMode != null || deliveryId != null)) {
         throw const FormatException();
       }
       if (protocol == 'naive' && (parameters['network'] != 'tcp' ||
@@ -154,6 +159,11 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
         final known = HostPlatform.values.where((item) => item.name == name);
         if (known.isEmpty || !platforms.add(known.single)) throw const FormatException();
       }
+      if (transport == 'vk' && (platforms.length != 1 || !platforms.contains(HostPlatform.android) ||
+          _transportReleaseCompare(minimumClientVersion, '2.0.9') < 0 || minimumCore == null ||
+          _transportReleaseCompare(minimumCore as String, '1.2.18') < 0)) {
+        throw const FormatException();
+      }
       final features = <RuntimeTransportFeature>{};
       for (final name in featureNames) {
         final known = RuntimeTransportFeature.values.where((item) => item.wireName == name);
@@ -169,11 +179,16 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
           'xhttp' => RuntimeTransportFeature.xhttp,
           'dnstt' => RuntimeTransportFeature.dnsttVless,
           'mts' => RuntimeTransportFeature.mtsVless,
+          'vk' => RuntimeTransportFeature.vkVless,
           'slipstream' => RuntimeTransportFeature.slipstreamVless,
           _ => RuntimeTransportFeature.reality,
         }},
       };
       if (transport == 'xhttp' && protection == 'reality') {
+        candidateFeatures.addAll({RuntimeTransportFeature.tls,
+          RuntimeTransportFeature.utls, RuntimeTransportFeature.reality});
+      }
+      if (transport == 'vk') {
         candidateFeatures.addAll({RuntimeTransportFeature.tls,
           RuntimeTransportFeature.utls, RuntimeTransportFeature.reality});
       }

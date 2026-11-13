@@ -794,6 +794,9 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             }
             startupPhase = AndroidRuntimeStartupPhase.COMMAND_SERVER
             val nextServer = Libbox.newCommandServer(handler, platform)
+            nextServer.setVkCaptchaHandler(PokrovVkCaptchaHost.handler { id, token ->
+                nextServer.submitVkCaptchaResult(id, token)
+            })
             commandServer = nextServer
             boundCoreServiceClosed = false
             activeCoreRunId = AndroidCoreOperationalEvents.beginRun(

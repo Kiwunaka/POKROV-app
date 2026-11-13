@@ -146,6 +146,78 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
     }
   }
 
+  void _validateVkMaterial(Object raw, TransportCandidate? candidate,
+      Object? access, Set<RuntimeTransportFeature> runtimeFeatures, {String kind = ''}) {
+    try {
+      final config = _readMap(raw is String ? jsonDecode(raw) : raw);
+      final outbounds = (config['outbounds'] as List? ?? const []).map(_readMap).toList();
+      final carriers = outbounds.where((item) => item['type'] == 'vk').toList();
+      if (carriers.isEmpty && candidate?.transport != 'vk' && kind != 'vk') return;
+      _requirePremiumTransportAccess(access);
+      if (candidate?.transport != 'vk' || candidate?.protection != 'reality' ||
+          !runtimeFeatures.containsAll({RuntimeTransportFeature.vless, RuntimeTransportFeature.vkVless,
+            RuntimeTransportFeature.reality, RuntimeTransportFeature.tls, RuntimeTransportFeature.utls}) ||
+          carriers.length != 1 || (config['endpoints'] is List && (config['endpoints'] as List).isNotEmpty)) {
+        throw const FormatException();
+      }
+      final leaf = outbounds.where((item) => item['type'] == 'vless').single;
+      final carrier = carriers.single;
+      bool exactKeys(Map<String, dynamic> value, Set<String> keys) =>
+          value.length == keys.length && value.keys.every(keys.contains);
+      final tls = _readMap(leaf['tls']);
+      final utls = _readMap(tls['utls']);
+      final reality = _readMap(tls['reality']);
+      final ip = InternetAddress.tryParse(_readText(carrier['server']));
+      final call = Uri.tryParse(_readText(carrier['call_url']));
+      final peerPort = carrier['server_port'];
+      if (!exactKeys(leaf, const {'type', 'tag', 'server', 'server_port', 'uuid', 'flow', 'network', 'detour', 'tls'}) ||
+          leaf['tag'] != 'proxy' || leaf['server'] != carrier['server'] || leaf['server_port'] != 443 ||
+          leaf['network'] != 'tcp' || leaf['flow'] != 'xtls-rprx-vision' || leaf['detour'] != 'vk-tunnel' ||
+          !RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
+              .hasMatch(_readText(leaf['uuid'])) ||
+          !exactKeys(tls, const {'enabled', 'server_name', 'utls', 'reality'}) || tls['enabled'] != true ||
+          !RegExp(r'^[A-Za-z0-9.-]{1,253}$').hasMatch(_readText(tls['server_name'])) ||
+          !exactKeys(utls, const {'enabled', 'fingerprint'}) || utls['enabled'] != true || utls['fingerprint'] != 'chrome' ||
+          !exactKeys(reality, const {'enabled', 'public_key', 'short_id'}) || reality['enabled'] != true ||
+          base64Url.decode(base64Url.normalize(_readText(reality['public_key']))).length != 32 ||
+          !RegExp(r'^(?:[0-9a-fA-F]{2}){0,8}$').hasMatch(_readText(reality['short_id'])) ||
+          !carrier.keys.every(const {'type', 'tag', 'call_url', 'server', 'server_port', 'connect_timeout', 'domain_resolver'}.contains) ||
+          carrier['tag'] != 'vk-tunnel' || carrier['connect_timeout'] != '90s' ||
+          ip == null || ip.type != InternetAddressType.IPv4 || peerPort is! int || peerPort < 1 || peerPort > 65535 ||
+          call == null || call.scheme != 'https' || !const {'vk.com', 'vk.ru'}.contains(call.host) ||
+          call.hasPort || call.userInfo.isNotEmpty || call.hasQuery || call.hasFragment ||
+          !RegExp(r'^/call/join/[A-Za-z0-9_-]+$').hasMatch(call.path)) {
+        throw const FormatException();
+      }
+      final tags = <String>{};
+      for (final outbound in outbounds) {
+        if (!tags.add(_readText(outbound['tag'])) ||
+            !const {'vless', 'vk', 'selector', 'urltest', 'direct', 'block', 'dns'}.contains(outbound['type']) ||
+            (outbound['type'] != 'vless' && outbound.containsKey('detour')) ||
+            outbound['default'] == 'vk-tunnel' ||
+            ((outbound['outbounds'] as List? ?? const []).contains('vk-tunnel'))) {
+          throw const FormatException();
+        }
+      }
+      void rejectCarrierRoute(Object? value) {
+        if (value is Map) {
+          for (final entry in value.entries) {
+            if (const {'outbound', 'final', 'detour'}.contains(entry.key) && entry.value == 'vk-tunnel') {
+              throw const FormatException();
+            }
+            rejectCarrierRoute(entry.value);
+          }
+        } else if (value is List) {
+          value.forEach(rejectCarrierRoute);
+        }
+      }
+      rejectCarrierRoute(config['route']);
+      rejectCarrierRoute(config['dns']);
+    } on Object {
+      throw const TransportManifestFailure('transport_catalog_profile_mismatch');
+    }
+  }
+
   void _validateSlipstreamMaterial(Object raw, TransportCandidate? candidate,
       Object? access, Set<RuntimeTransportFeature> runtimeFeatures, {String kind = ''}) {
     try {
@@ -286,7 +358,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
             requestedCandidateRef: selectedCandidateRef)
         : null;
     if (transportCatalog?.candidates.any((candidate) =>
-        const {'dnstt', 'slipstream', 'mts'}.contains(candidate.transport) || candidate.protocol == 'naive') == true) {
+        const {'dnstt', 'slipstream', 'mts', 'vk'}.contains(candidate.transport) || candidate.protocol == 'naive') == true) {
       _requirePremiumTransportAccess(response['access']);
     }
     if (selectedCandidateRef.isNotEmpty && transportCatalog == null) {
@@ -340,6 +412,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
         'xhttp' => ('vless', 'xhttp', candidate.protection),
         'dnstt' => ('vless', 'dnstt', 'noise'),
         'mts' => ('vless', 'mts', 'noise'),
+        'vk' => ('vless', 'vk', 'reality'),
         'slipstream' => ('vless', 'slipstream', 'tls'),
         'naive' => ('naive', 'h2', 'tls'),
         'awg31' => ('awg', 'udp', 'awg31'),
@@ -351,6 +424,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
       }
       _validateDnsttMaterial(raw, candidate, response['access'], runtimeFeatures, kind: kind);
       _validateMtsMaterial(raw, candidate, response['access'], runtimeFeatures, kind: kind);
+      _validateVkMaterial(raw, candidate, response['access'], runtimeFeatures, kind: kind);
       _validateSlipstreamMaterial(raw, candidate, response['access'], runtimeFeatures, kind: kind);
       _validateNaiveMaterial(raw, candidate, response['access'], runtimeFeatures, kind: kind);
       if (candidate?.warpMode == 'warp_direct') {
@@ -450,7 +524,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
           'awg2' => 'awg2', 'awg31' => 'awg31', 'hysteria2' => 'hysteria2',
           'warp_direct' => 'warp',
           'naive' => 'naive',
-          'reality' || 'grpc' || 'xhttp' || 'ru_bridge' || 'dnstt' || 'slipstream' || 'mts' => 'vless',
+          'reality' || 'grpc' || 'xhttp' || 'ru_bridge' || 'dnstt' || 'slipstream' || 'mts' || 'vk' => 'vless',
           _ => 'unknown',
         },
       ),
@@ -492,7 +566,8 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
     final ManagedProfilePayload payload;
     if (response.containsKey('candidate_materials')) {
       final materialLimit = 6 + (runtimeFeatures.contains(RuntimeTransportFeature.slipstreamVless) ? 1 : 0) +
-          (runtimeFeatures.contains(RuntimeTransportFeature.mtsVless) ? 1 : 0);
+          (runtimeFeatures.contains(RuntimeTransportFeature.mtsVless) ? 1 : 0) +
+          (runtimeFeatures.contains(RuntimeTransportFeature.vkVless) ? 1 : 0);
       if (transportCatalog == null || supplied is! List || supplied.isEmpty || supplied.length > materialLimit) {
         throw const TransportManifestFailure('transport_catalog_materials_mismatch');
       }

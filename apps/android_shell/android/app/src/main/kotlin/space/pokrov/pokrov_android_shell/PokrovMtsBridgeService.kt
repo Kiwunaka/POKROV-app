@@ -18,9 +18,10 @@ import space.pokrov.core.libbox.CommandServerHandler
 import space.pokrov.core.libbox.Libbox
 import space.pokrov.core.libbox.OverrideOptions
 import space.pokrov.core.libbox.SystemProxyStatus
+import space.pokrov.core.libbox.RuntimeProbeCancellation
 import java.util.concurrent.Executors
 
-/** Owns only the local MTS bridge. It never establishes a VPN. */
+/** Owns the selected local carrier for other clients. It never establishes a VPN. */
 class PokrovMtsBridgeService : Service() {
     private val executor = Executors.newSingleThreadExecutor()
     private var network: AndroidTransportNetworkContext? = null
@@ -64,6 +65,7 @@ class PokrovMtsBridgeService : Service() {
         val board = intent?.getStringExtra(EXTRA_BOARD).orEmpty()
         val key = intent?.getStringExtra(EXTRA_KEY).orEmpty()
         executor.execute {
+            var verification: CommandServer? = null
             synchronized(lock) {
                 if (request != generation || state != "starting" ||
                     PokrovRuntimeVpnService.isTunEstablished() || AndroidRuntimeState.isConnectionPending()) {
@@ -92,14 +94,36 @@ class PokrovMtsBridgeService : Service() {
                         override fun writeDebugMessage(message: String) = Unit
                     }
                     val next = Libbox.newCommandServer(handler, platform)
+                    next.setVkCaptchaHandler(PokrovVkCaptchaHost.handler { id, token ->
+                        next.submitVkCaptchaResult(id, token)
+                    })
                     server = next
-                    next.startOrReloadService(bridgeConfig(board, key), OverrideOptions())
+                    val vkConfig = pendingVkConfig
+                    pendingVkConfig = null
+                    next.startOrReloadService(vkConfig ?: bridgeConfig(board, key), OverrideOptions())
                     serverStarted = true
-                    state = "running"
+                    if (vkConfig == null) state = "running" else verification = next
                 } catch (_: Throwable) {
                     closeResources()
                     state = "error"
                     stopSelf()
+                }
+            }
+            verification?.let { next ->
+                val ready = runCatching {
+                    next.prepareVkBridge()
+                    next.probeRuntimeEgress("vk-check", 15000, object : RuntimeProbeCancellation {
+                        override fun isCancelled(): Boolean = request != generation
+                    })
+                }.getOrDefault(false)
+                synchronized(lock) {
+                    if (request == generation && server === next) {
+                        if (ready) state = "running" else {
+                            closeResources()
+                            state = "error"
+                            stopSelf()
+                        }
+                    }
                 }
             }
         }
@@ -146,6 +170,7 @@ class PokrovMtsBridgeService : Service() {
         @Volatile private var state = "stopped"
         private var owner: PokrovMtsBridgeService? = null
         private var closeFailed = false
+        private var pendingVkConfig: String? = null
 
         fun status(): String = state
 
@@ -153,6 +178,7 @@ class PokrovMtsBridgeService : Service() {
             if (closeFailed || owner != null || state == "starting" || state == "running" ||
                 PokrovRuntimeVpnService.isTunEstablished() || AndroidRuntimeState.isConnectionPending()) return false
             generation++
+            pendingVkConfig = null
             state = "starting"
             val intent = Intent(context, PokrovMtsBridgeService::class.java).apply {
                 action = ACTION_START
@@ -172,12 +198,33 @@ class PokrovMtsBridgeService : Service() {
         fun stopBridge(): Boolean =
             synchronized(lock) {
                 generation++
+                pendingVkConfig = null
                 val service = owner
                 val closed = service?.closeResources() ?: !closeFailed
                 state = if (closed) "stopped" else "error"
                 service?.stopSelf()
                 closed
             }
+
+        fun startVkBridge(context: Context, config: String): Boolean = synchronized(lock) {
+            if (closeFailed || owner != null || state == "starting" || state == "running" ||
+                PokrovRuntimeVpnService.isTunEstablished() || AndroidRuntimeState.isConnectionPending()) return false
+            generation++
+            pendingVkConfig = config
+            state = "starting"
+            val intent = Intent(context, PokrovMtsBridgeService::class.java).apply {
+                action = ACTION_START
+                putExtra(EXTRA_GENERATION, generation)
+            }
+            try {
+                ContextCompat.startForegroundService(context, intent)
+                true
+            } catch (_: Throwable) {
+                pendingVkConfig = null
+                state = "error"
+                false
+            }
+        }
 
         private fun bridgeConfig(board: String, key: String): String = JSONObject()
             .put("log", JSONObject().put("disabled", true))

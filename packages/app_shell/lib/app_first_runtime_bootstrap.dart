@@ -3510,6 +3510,7 @@ class AppFirstRuntimeBootstrapper
         : catalog?.candidates.firstWhere((candidate) => candidate.candidateRef == materialRef);
     _validateDnsttMaterial(config, materialCandidate, value['access'], runtimeFeatures ?? const {});
     _validateMtsMaterial(config, materialCandidate, value['access'], runtimeFeatures ?? const {});
+    _validateVkMaterial(config, materialCandidate, value['access'], runtimeFeatures ?? const {});
     _validateSlipstreamMaterial(config, materialCandidate, value['access'], runtimeFeatures ?? const {});
     _validateNaiveMaterial(config, materialCandidate, value['access'], runtimeFeatures ?? const {});
     final warpPolicy = WarpRuntimePolicy.tryParse(value['warp_policy']);
@@ -7727,7 +7728,7 @@ class AppFirstRuntimeBootstrapper
       final query = <String, String>{
         'catalog_version': '1', 'client_platform': hostPlatform.name,
         'candidate_material_limit': selectedCandidateRef.isNotEmpty ? '1'
-            : '${6 + (runtimeFeatures.contains(RuntimeTransportFeature.slipstreamVless) ? 1 : 0) + (runtimeFeatures.contains(RuntimeTransportFeature.mtsVless) ? 1 : 0)}',
+            : '${6 + (runtimeFeatures.contains(RuntimeTransportFeature.slipstreamVless) ? 1 : 0) + (runtimeFeatures.contains(RuntimeTransportFeature.mtsVless) ? 1 : 0) + (runtimeFeatures.contains(RuntimeTransportFeature.vkVless) ? 1 : 0)}',
         'client_release': _managedCatalogClientRelease,
         'runtime_features': (runtimeFeatures.map((feature) => feature.wireName).toList()..sort()).join(','),
         if (coreRelease != null && coreRelease.isNotEmpty) 'core_release': coreRelease,
@@ -10251,7 +10252,7 @@ class AppFirstRuntimeBootstrapper
 
   bool _isProxyTransportOutbound(Map<String, dynamic> outbound) {
     final type = _readText(outbound['type']).toLowerCase();
-    return !const {'direct', 'block', 'dns', 'selector', 'urltest', 'dnstt', 'slipstream', 'mts'}
+    return !const {'direct', 'block', 'dns', 'selector', 'urltest', 'dnstt', 'slipstream', 'mts', 'vk'}
         .contains(type);
   }
 

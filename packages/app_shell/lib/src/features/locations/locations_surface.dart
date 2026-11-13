@@ -202,7 +202,7 @@ class _LocationsSectionState extends State<_LocationsSection> {
       onSelectConnection: (widget.transportCatalog?.candidates.isNotEmpty ?? false) ? _selectConnection : null,
       onBack: widget.onBack,
       selectedConnectionLabel: _preferredCandidate == null ? null : _locationCandidateLabel(_preferredCandidate!),
-      onMtsBridge: _preferredCandidate?.transport == 'mts' || widget.mtsBridgeRunning
+      onMtsBridge: const {'mts', 'vk'}.contains(_preferredCandidate?.transport) || widget.mtsBridgeRunning
           ? widget.onMtsBridge : null,
       mtsBridgeRunning: widget.mtsBridgeRunning,
     );

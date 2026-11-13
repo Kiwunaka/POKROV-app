@@ -456,7 +456,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     final selected = _clientExperience.preferredCandidateRef;
     final candidate = _connectionManager.transportCatalog?.candidates
         .where((item) => item.candidateRef == selected).firstOrNull;
-    if (candidate?.transport != 'mts') return;
+    if (!const {'mts', 'vk'}.contains(candidate?.transport)) return;
+    final isVk = candidate!.transport == 'vk';
     setState(() => _mtsBridgeBusy = true);
     try {
       final engine = _connectionManager._runtimeEngine;
@@ -471,7 +472,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       snapshot = await engine.initialize();
       _connectionManager._update(() => _connectionManager._runtimeSnapshot = snapshot);
       if (snapshot.phase != RuntimePhase.initialized ||
-          !snapshot.availableTransportFeatures.contains(RuntimeTransportFeature.mtsVless)) {
+          !snapshot.availableTransportFeatures.contains(isVk ? RuntimeTransportFeature.vkVless : RuntimeTransportFeature.mtsVless)) {
         throw const BootstrapFailure('Не удалось подготовить подключение. Попробуй ещё раз.');
       }
       final revision = _managedProfileRevision;
@@ -490,14 +491,23 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       );
       if (!mounted || revision != _managedProfileRevision ||
           _clientExperience.preferredCandidateRef != selected) return;
-      final material = selectedMtsBridgeMaterial(payload, selected);
-      final started = await _pokrovRuntimeSystemChannel.invokeMethod<bool>(
-          'runtimeEngine.startMtsBridge', {'boardUrl': material.board, 'publicKey': material.key});
+      final String link;
+      final bool? started;
+      if (isVk) {
+        final material = selectedVkBridgeMaterial(payload, selected);
+        link = material.link;
+        started = await _pokrovRuntimeSystemChannel.invokeMethod<bool>('runtimeEngine.startVkBridge', {'config': material.config});
+      } else {
+        final material = selectedMtsBridgeMaterial(payload, selected);
+        link = material.link;
+        started = await _pokrovRuntimeSystemChannel.invokeMethod<bool>(
+            'runtimeEngine.startMtsBridge', {'boardUrl': material.board, 'publicKey': material.key});
+      }
       if (started != true) {
         throw const BootstrapFailure('Не удалось запустить подключение. Попробуй ещё раз.');
       }
       String? status;
-      for (var attempt = 0; attempt < 60; attempt++) {
+      for (var attempt = 0; attempt < (isVk ? 480 : 60); attempt++) {
         await Future<void>.delayed(const Duration(milliseconds: 250));
         status = await _pokrovRuntimeSystemChannel
             .invokeMethod<String>('runtimeEngine.mtsBridgeStatus');
@@ -510,7 +520,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (!mounted) return;
       setState(() {
         _mtsBridgeRunning = true;
-        _mtsBridgeLink = material.link;
+        _mtsBridgeLink = link;
       });
       await _showMtsBridgeDialog();
     } on BootstrapFailure catch (error) {

@@ -23,6 +23,7 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import org.json.JSONObject
 import space.pokrov.core.mobile.Mobile
+import space.pokrov.core.libbox.Libbox
 import space.pokrov.core.mobile.CandidateProbeCancellation
 
 internal data class PendingRuntimeConnect(
@@ -162,6 +163,13 @@ class RuntimeHostBridge(
             }
             "runtimeEngine.stopMtsBridge" -> executeHostTask(result, false) {
                 PokrovMtsBridgeService.stopBridge()
+            }
+            "runtimeEngine.startVkBridge" -> {
+                val config = call.argument<String>("config")
+                if (config.isNullOrEmpty()) result.success(false)
+                else executeHostTask(result, false) {
+                    PokrovMtsBridgeService.startVkBridge(activity.applicationContext, config)
+                }
             }
             "runtimeEngine.mtsBridgeStatus" -> result.success(PokrovMtsBridgeService.status())
             "runtimeEngine.probeCandidate" -> probeCandidate(call, result)
@@ -558,6 +566,11 @@ class RuntimeHostBridge(
             handledDebugPath = debugConfigPath
             return
         }
+        if (intent.getBooleanExtra("space.pokrov.debug.VK_BRIDGE", false)) {
+            handledDebugPath = debugConfigPath
+            PokrovMtsBridgeService.startVkBridge(activity.applicationContext, File(debugConfigPath).readText())
+            return
+        }
         val currentSnapshot = AndroidRuntimeState.snapshot()
         if (
             currentSnapshot["phase"] == "running" &&
@@ -566,7 +579,12 @@ class RuntimeHostBridge(
             handledDebugPath = debugConfigPath
             return
         }
-        AndroidRuntimeState.markProfileStaged(debugConfigPath)
+        stageManagedProfile(MethodCall("runtimeEngine.stageManagedProfile", mapOf(
+            "configPayload" to File(debugConfigPath).readText(),
+            "materializedForRuntime" to true,
+            "routeMode" to "fullTunnel",
+            "coreEgressProbeRequired" to true,
+        )))
         handledDebugPath = debugConfigPath
         if (intent.getBooleanExtra(EXTRA_DEBUG_AUTO_CONNECT, false)) {
             connect()
@@ -1771,13 +1789,19 @@ class RuntimeHostBridge(
             val cancellation = object : CandidateProbeCancellation {
                 override fun isCancelled(): Boolean = cancelled.get() || !context.isCurrent(expected)
             }
+            lateinit var vkCaptcha: space.pokrov.core.libbox.VkCaptchaSession
+            vkCaptcha = Libbox.newVkCaptchaSession(PokrovVkCaptchaHost.handler { requestID, token ->
+                vkCaptcha.submitResult(requestID, token)
+            })
             val response: Any = try {
                 if (cancellation.isCancelled()) failure(if (cancelled.get()) "cancelled" else "network_changed")
-                else Mobile.probeCandidate(content, id, timeout,
+                else Mobile.probeCandidateWithVkCaptcha(content, id, timeout,
                     AndroidCandidateProbePlatform(captured.network, captured.links, cancellation::isCancelled),
-                    cancellation)
+                    cancellation, vkCaptcha)
             } catch (_: Throwable) {
                 failure("unavailable")
+            } finally {
+                vkCaptcha.close()
             }
             val elapsed = (System.nanoTime() - started) / 1_000_000
             // Preserve the native phase even if cancellation or bridge closure discards the reply.
