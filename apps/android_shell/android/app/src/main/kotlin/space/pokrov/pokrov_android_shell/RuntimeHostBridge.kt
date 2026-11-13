@@ -580,6 +580,7 @@ class RuntimeHostBridge(
             return
         }
         stageManagedProfile(MethodCall("runtimeEngine.stageManagedProfile", mapOf(
+            "profileName" to "Debug runtime",
             "configPayload" to File(debugConfigPath).readText(),
             "materializedForRuntime" to true,
             "routeMode" to "fullTunnel",
