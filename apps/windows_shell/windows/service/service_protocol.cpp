@@ -351,7 +351,7 @@ std::string NetworkObservationHttpRequest(const NetworkObservationRequest& reque
 
 std::string EncodeCandidateProbe(const CandidateProbeRequest& request) {
   if (!IsCandidateProbeId(request.probe_id) || request.timeout_ms < 1 ||
-      request.timeout_ms > 30000 || !IsTransportNetworkContextRef(request.network_context_ref) ||
+      request.timeout_ms > 60000 || !IsTransportNetworkContextRef(request.network_context_ref) ||
       request.config.empty() || request.config.find('\0') != std::string::npos ||
       request.config.size() > kMaxProfileBodySize - 256) return "";
   return request.probe_id + "\n" + std::to_string(request.timeout_ms) + "\n" +

@@ -669,7 +669,7 @@ bool FlutterWindow::OnCreate() {
           const auto* network = StringArgument(arguments, "expectedNetworkContext");
           const auto timeout = ElapsedArgument(arguments, "timeoutMs");
           if (arguments == nullptr || arguments->size() != 4 || id == nullptr || config == nullptr ||
-              network == nullptr || !timeout || *timeout > 30000) {
+              network == nullptr || !timeout || *timeout > 60000) {
             reply->Error("invalid_probe_request", "Candidate probe parameters are required.");
             return;
           }
