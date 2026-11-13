@@ -3049,6 +3049,7 @@ Future<bool> _desktopLoopbackPortAvailable(int port) async {
 }
 
 const _pokrovWarpEndpointTag = 'pokrov-warp';
+const _pokrovHelperBootstrapDnsTag = 'pokrov-helper-bootstrap';
 const _pokrovAwg2ContractId = 'pokrov.awg2.endpoint.v1';
 const _pokrovAwg2ContractSha256 =
     'c473c411025825bfef5a76c64990c5c921e9658b3581210d3a86d72e454fdea8';
@@ -3149,6 +3150,23 @@ String _materializePokrovCoreConfig(
       : directTag;
   final profileDirectTag = policy.transport == WarpRuntimeTransport.wireguard
       ? directTag : endpointDirectTag;
+  final helperDomainResolver =
+      policy.transport != WarpRuntimeTransport.wireguard && !warpOverProxy
+          ? const {'server': _pokrovHelperBootstrapDnsTag, 'strategy': 'ipv4_only'}
+          : null;
+  if (helperDomainResolver != null) {
+    // Provider bootstrap must not resolve through the proxy it is starting.
+    // HTTPS also avoids Windows' strict-route block on external plain DNS.
+    final dns = Map<String, Object?>.from(_runtimeObjectMap(config['dns']));
+    dns['servers'] = _runtimeMapList(dns['servers'])
+      ..removeWhere((server) => server['tag'] == _pokrovHelperBootstrapDnsTag)
+      ..add({
+        'type': 'https', 'tag': _pokrovHelperBootstrapDnsTag,
+        'server': '1.1.1.1', 'path': '/dns-query',
+        if (endpointDirectTag != null) 'detour': endpointDirectTag,
+      });
+    config['dns'] = dns;
+  }
   if (warpDirect &&
       (!policy.isClientLocal ||
           !policy.id.startsWith('warp-direct:') ||
@@ -3194,6 +3212,7 @@ String _materializePokrovCoreConfig(
     'unique_identifier': policy.id.trim().isEmpty ? 'p1' : policy.id.trim(),
     'profile': profile,
     'mtu': 1280,
+    if (helperDomainResolver != null) 'domain_resolver': helperDomainResolver,
     if (warpOverProxy && proxyTag != null)
       'detour': proxyTag
     else if (endpointDirectTag != null)
@@ -3250,6 +3269,7 @@ String _materializePokrovCoreConfig(
       'client_platform': 'POKROV',
       'data_directory': 'pokrov-psiphon',
       'establish_tunnel_timeout': '45s',
+      if (helperDomainResolver != null) 'domain_resolver': helperDomainResolver,
       if (endpointDirectTag != null) 'detour': endpointDirectTag,
     });
   }

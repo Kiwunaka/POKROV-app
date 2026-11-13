@@ -143,11 +143,14 @@ void main() {
       addTearDown(engine.disconnect);
       final config = jsonDecode(await File(staged.stagedConfigPath!).readAsString()) as Map;
       final outbounds = (config['outbounds'] as List).cast<Map>();
+      final dnsServers = (config['dns']['servers'] as List).cast<Map>();
+      final remoteDns = dnsServers.singleWhere((value) => value['tag'] == 'remote');
       if (transport == WarpRuntimeTransport.psiphon) {
         final helper = outbounds.singleWhere((value) => value['type'] == 'psiphon');
         expect(helper.containsKey('detour'), isFalse);
         expect(outbounds.singleWhere((value) => value['tag'] == 'node')['detour'], helper['tag']);
-        expect((config['dns']['servers'] as List).single['detour'], 'proxy');
+        expect(remoteDns['detour'], 'proxy');
+        expect(helper['domain_resolver']['server'], 'pokrov-helper-bootstrap');
         expect(config['endpoints'], isEmpty);
       } else {
         final helper = (config['endpoints'] as List).single as Map;
@@ -156,11 +159,19 @@ void main() {
           expect(helper.containsKey('detour'), isFalse);
           expect((helper['profile'] as Map).containsKey('detour'), isFalse);
           expect(outbounds.singleWhere((value) => value['tag'] == 'node')['detour'], helper['tag']);
-          expect((config['dns']['servers'] as List).single['detour'], 'proxy');
+          expect(remoteDns['detour'], 'proxy');
+          expect(helper['domain_resolver']['server'], 'pokrov-helper-bootstrap');
         } else {
           expect(helper['detour'], 'proxy');
-          expect((config['dns']['servers'] as List).single['detour'], helper['tag']);
+          expect(remoteDns['detour'], helper['tag']);
+          expect(helper.containsKey('domain_resolver'), isFalse);
         }
+      }
+      if (mode == 'proxy_over_warp') {
+        final bootstrap = dnsServers.singleWhere((value) => value['tag'] == 'pokrov-helper-bootstrap');
+        expect(bootstrap['type'], 'https');
+        expect(bootstrap['server'], '1.1.1.1');
+        expect(bootstrap.containsKey('detour'), isFalse);
       }
     });
   }
