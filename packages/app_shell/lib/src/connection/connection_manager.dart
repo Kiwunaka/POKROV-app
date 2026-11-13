@@ -4089,7 +4089,8 @@ class ConnectionManager extends ChangeNotifier {
   Set<WarpRuntimeTransport> get availableConnectionHelpers {
     final features = _runtimeSnapshot?.availableTransportFeatures ?? const <RuntimeTransportFeature>{};
     return {WarpRuntimeTransport.wireguard,
-      if (features.contains(RuntimeTransportFeature.warpMasqueH2)) WarpRuntimeTransport.masqueH2};
+      if (features.contains(RuntimeTransportFeature.warpMasqueH2)) WarpRuntimeTransport.masqueH2,
+      if (features.contains(RuntimeTransportFeature.psiphonTcp)) WarpRuntimeTransport.psiphon};
   }
 
   String get _connectionHelperLabel =>

@@ -138,24 +138,26 @@ class AndroidCoreEgressProbeTest {
     }
 
     @Test
-    fun vkCarrierAllowsObservedLatencyAtStartupAndDuringPeriodicChecks() {
-        val types = mapOf("root" to "selector", "proxy" to "vless", "vk-tunnel" to "vk")
-        assertEquals("vk", AndroidCoreEgressProbe.vlessCarrierType("root", types,
-            mapOf("proxy" to "vk-tunnel"), mapOf("root" to listOf("proxy"))))
-        val target = AndroidCoreEgressProbeTarget("root", AndroidCoreEgressProbeTargetKind.GROUP,
-            usesVkCarrier = true)
-        assertEquals(65_000L, target.startupWatchdogMillis)
-        assertFalse(target.bindsDnsUplink)
-        assertFalse(AndroidCoreEgressRetryPolicy.shouldRetry(target, AndroidCoreEgressProbeResult.UNAVAILABLE, 1))
-        val startupCore = ReachableCore()
-        assertEquals(AndroidCoreEgressProbeResult.HEALTHY, AndroidCoreEgressProbe.probe(target, startupCore))
-        assertEquals("root", startupCore.lastTag)
-        val core = BoundedCore("root").apply { simulatedLatencyMs = 12_000 }
-        val cancellation = object : RuntimeProbeCancellation {
-            override fun isCancelled(): Boolean = false
+    fun slowTcpCarriersAllowObservedLatencyAtStartupAndDuringPeriodicChecks() {
+        for (carrier in listOf("vk", "psiphon")) {
+            val types = mapOf("root" to "selector", "proxy" to "vless", "carrier" to carrier)
+            assertEquals(carrier, AndroidCoreEgressProbe.vlessCarrierType("root", types,
+                mapOf("proxy" to "carrier"), mapOf("root" to listOf("proxy"))))
+            val target = AndroidCoreEgressProbeTarget("root", AndroidCoreEgressProbeTargetKind.GROUP,
+                usesVkCarrier = carrier == "vk", usesPsiphonCarrier = carrier == "psiphon")
+            assertEquals(65_000L, target.startupWatchdogMillis)
+            assertFalse(target.bindsDnsUplink)
+            assertFalse(AndroidCoreEgressRetryPolicy.shouldRetry(target, AndroidCoreEgressProbeResult.UNAVAILABLE, 1))
+            val startupCore = ReachableCore()
+            assertEquals(AndroidCoreEgressProbeResult.HEALTHY, AndroidCoreEgressProbe.probe(target, startupCore))
+            assertEquals("root", startupCore.lastTag)
+            val core = BoundedCore("root").apply { simulatedLatencyMs = 12_000 }
+            val cancellation = object : RuntimeProbeCancellation {
+                override fun isCancelled(): Boolean = false
+            }
+            assertEquals(AndroidCoreEgressProbeResult.HEALTHY, AndroidCoreEgressProbe.probe(target, core, cancellation))
+            assertEquals(15_000, core.lastTimeoutMs)
         }
-        assertEquals(AndroidCoreEgressProbeResult.HEALTHY, AndroidCoreEgressProbe.probe(target, core, cancellation))
-        assertEquals(15_000, core.lastTimeoutMs)
     }
 
     @Test

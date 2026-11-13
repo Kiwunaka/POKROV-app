@@ -140,7 +140,7 @@ class _WarpConsentSheet extends StatelessWidget {
                     DropdownMenuItem(value: value, enabled: availableTransports.contains(value), child: Text(switch (value) {
                       WarpRuntimeTransport.wireguard => 'WARP',
                       WarpRuntimeTransport.masqueH2 => 'WARP через HTTPS',
-                      WarpRuntimeTransport.psiphon => 'Psiphon — недоступен',
+                      WarpRuntimeTransport.psiphon => availableTransports.contains(value) ? 'Psiphon' : 'Psiphon — недоступен',
                     })),
                 ],
                 onChanged: ready ? (value) {

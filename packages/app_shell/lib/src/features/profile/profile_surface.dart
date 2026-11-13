@@ -325,8 +325,8 @@ class _ProfileSection extends StatelessWidget {
         keywords: 'warp cloudflare', icon: Icons.cloud_outlined, toggled: warpRuntimeConsent,
         onTap: warpPolicy.canOfferRuntime && onWarpConsentChanged != null
             ? () => onWarpConsentChanged!(!warpRuntimeConsent) : () => unawaited(onOpenWarp())),
-      ui.SettingsEntry(group: connection, title: 'Способ подключения', hint: 'WARP или WARP через HTTPS',
-        keywords: 'warp cloudflare https', icon: Icons.info_outline_rounded, onTap: () => unawaited(onOpenWarp())),
+      ui.SettingsEntry(group: connection, title: 'Способ подключения', hint: 'WARP, WARP через HTTPS или Psiphon',
+        keywords: 'warp cloudflare https psiphon', icon: Icons.info_outline_rounded, onTap: () => unawaited(onOpenWarp())),
       if (onOpenBypass != null) ui.SettingsEntry(group: connection, title: 'Обход блокировок',
         hint: 'Поддерживаемые сервисы сначала напрямую, при сбое через VPN', value: bypassEnabled ? 'Включён' : 'Выключен',
         keywords: 'dpi youtube zapret byedpi', icon: Icons.turn_right_rounded, onTap: onOpenBypass),

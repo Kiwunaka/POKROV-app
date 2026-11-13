@@ -113,7 +113,7 @@ internal object AndroidCoreEgressRetryPolicy {
         result: AndroidCoreEgressProbeResult,
         completedAttempts: Int,
     ): Boolean =
-        !target.usesDnsCarrier && !target.usesVkCarrier && completedAttempts < maxAttempts(target) &&
+        !target.usesDnsCarrier && !target.usesVkCarrier && !target.usesPsiphonCarrier && completedAttempts < maxAttempts(target) &&
             (
                 result == AndroidCoreEgressProbeResult.UNAVAILABLE ||
                     (
@@ -141,13 +141,14 @@ internal data class AndroidCoreEgressProbeTarget(
     val usesDnsCarrier: Boolean = false,
     val bindsDnsUplink: Boolean = false,
     val usesVkCarrier: Boolean = false,
+    val usesPsiphonCarrier: Boolean = false,
 ) {
     // Allow the single 60-second Core call to finish and publish its result.
     val startupWatchdogMillis: Long
-        get() = if (usesDnsCarrier || usesVkCarrier) 65_000L else 55_000L
+        get() = if (usesDnsCarrier || usesVkCarrier || usesPsiphonCarrier) 65_000L else 55_000L
 
     val periodicTimeoutMillis: Int
-        get() = if (usesDnsCarrier || usesVkCarrier) AndroidCoreEgressProbe.DNS_PERIODIC_TIMEOUT_MILLIS
+        get() = if (usesDnsCarrier || usesVkCarrier || usesPsiphonCarrier) AndroidCoreEgressProbe.DNS_PERIODIC_TIMEOUT_MILLIS
             else AndroidCoreEgressProbe.PERIODIC_TIMEOUT_MILLIS
 }
 
@@ -260,6 +261,7 @@ internal object AndroidCoreEgressProbe {
                 protocol = unambiguousProtocol(tag, outboundTypes, endpointTypes, selectorMembers),
                 usesDnsCarrier = dnsCarrier,
                 usesVkCarrier = carrier == "vk",
+                usesPsiphonCarrier = carrier == "psiphon",
                 bindsDnsUplink = dnsCarrier && outboundTypes.size == outbounds.length() &&
                     isDnsUplinkGraph(outboundTypes.values, endpoints?.length() ?: 0),
             )

@@ -3267,7 +3267,7 @@ String _materializePokrovCoreConfig(
       'type': 'psiphon', 'tag': _pokrovWarpEndpointTag,
       'network_id': policy.id.trim().isEmpty ? 'pokrov' : policy.id.trim(),
       'client_platform': 'POKROV',
-      'data_directory': 'pokrov-psiphon',
+      'data_directory': 'pokrov-psiphon-https',
       'establish_tunnel_timeout': '45s',
       if (helperDomainResolver != null) 'domain_resolver': helperDomainResolver,
       if (endpointDirectTag != null) 'detour': endpointDirectTag,

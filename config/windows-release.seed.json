@@ -44,7 +44,7 @@
       "slipstream-client.exe",
       "slipstream-LICENSE.txt"
     ],
-    "release_tag": "v1.2.19",
+    "release_tag": "v1.2.20",
     "desktop_abi": 2
   },
   "app_local_msvc_runtime": {
