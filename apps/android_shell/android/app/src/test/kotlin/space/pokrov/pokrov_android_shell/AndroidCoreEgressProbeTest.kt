@@ -144,12 +144,13 @@ class AndroidCoreEgressProbeTest {
             mapOf("proxy" to "vk-tunnel"), mapOf("root" to listOf("proxy"))))
         val target = AndroidCoreEgressProbeTarget("root", AndroidCoreEgressProbeTargetKind.GROUP,
             usesVkCarrier = true)
-        val core = BoundedCore("root").apply { simulatedLatencyMs = 12_000 }
         assertEquals(65_000L, target.startupWatchdogMillis)
         assertFalse(target.bindsDnsUplink)
         assertFalse(AndroidCoreEgressRetryPolicy.shouldRetry(target, AndroidCoreEgressProbeResult.UNAVAILABLE, 1))
-        assertEquals(AndroidCoreEgressProbeResult.HEALTHY, AndroidCoreEgressProbe.probe(target, core))
-        assertEquals(60_000, core.lastTimeoutMs)
+        val startupCore = ReachableCore()
+        assertEquals(AndroidCoreEgressProbeResult.HEALTHY, AndroidCoreEgressProbe.probe(target, startupCore))
+        assertEquals("root", startupCore.lastTag)
+        val core = BoundedCore("root").apply { simulatedLatencyMs = 12_000 }
         val cancellation = object : RuntimeProbeCancellation {
             override fun isCancelled(): Boolean = false
         }

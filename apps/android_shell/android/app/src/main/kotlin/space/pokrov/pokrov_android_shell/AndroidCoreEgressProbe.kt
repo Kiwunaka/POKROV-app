@@ -543,14 +543,10 @@ internal object AndroidCoreEgressProbe {
             return AndroidCoreEgressProbeResult.UNAVAILABLE
         }
         return try {
-            val result = if (periodicCancellation != null || target.usesVkCarrier) {
-                val cancellation = periodicCancellation ?: object : RuntimeProbeCancellation {
-                    override fun isCancelled(): Boolean = false
-                }
-                val timeoutMillis = if (periodicCancellation == null) 60_000 else target.periodicTimeoutMillis
+            val result = if (periodicCancellation != null) {
                 server.javaClass.getMethod("probeRuntimeEgress", String::class.java,
                     Int::class.javaPrimitiveType, RuntimeProbeCancellation::class.java)
-                    .invoke(server, target.tag, timeoutMillis, cancellation)
+                    .invoke(server, target.tag, target.periodicTimeoutMillis, periodicCancellation)
             } else {
                 val methodName = if (target.kind == AndroidCoreEgressProbeTargetKind.ENDPOINT) {
                     "probeEndpoint"
