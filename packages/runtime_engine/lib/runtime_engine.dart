@@ -3139,7 +3139,7 @@ String _materializePokrovCoreConfig(
   if (psiphon && policy.mode != 'proxy_over_warp') {
     throw const FormatException('Psiphon is a TCP route before the main server');
   }
-  final endpointDirectTag = warpDirect &&
+  final endpointDirectTag = (warpDirect || policy.transport != WarpRuntimeTransport.wireguard) &&
           directTag != null &&
           outbounds
               .firstWhere((outbound) => _runtimeText(outbound['tag']) == directTag)
@@ -3147,6 +3147,8 @@ String _materializePokrovCoreConfig(
               .every((key) => key == 'type' || key == 'tag')
       ? null
       : directTag;
+  final profileDirectTag = policy.transport == WarpRuntimeTransport.wireguard
+      ? directTag : endpointDirectTag;
   if (warpDirect &&
       (!policy.isClientLocal ||
           !policy.id.startsWith('warp-direct:') ||
@@ -3174,8 +3176,8 @@ String _materializePokrovCoreConfig(
       'license': policy.licenseKey.trim(),
     if (warpOverProxy && proxyTag != null)
       'detour': proxyTag
-    else if (directTag != null)
-      'detour': directTag,
+    else if (profileDirectTag != null)
+      'detour': profileDirectTag,
   };
   final wireguardConfig = policy.wireguardConfigObject;
   final legacyPrivateKey = _runtimeText(

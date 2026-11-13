@@ -113,8 +113,12 @@ RuntimeSnapshot _runningSnapshot({
 }
 
 void main() {
-  for (final transport in [WarpRuntimeTransport.psiphon, WarpRuntimeTransport.masqueH2]) {
-    test('desktop materializes ${transport.name} with the intended chain and protected DNS', () async {
+  for (final (transport, mode) in [
+    (WarpRuntimeTransport.psiphon, 'proxy_over_warp'),
+    (WarpRuntimeTransport.masqueH2, 'proxy_over_warp'),
+    (WarpRuntimeTransport.masqueH2, 'warp_over_proxy'),
+  ]) {
+    test('desktop materializes ${transport.name} $mode with the intended chain and protected DNS', () async {
       final root = await Directory.systemTemp.createTemp('pokrov-helper-test-');
       addTearDown(() async { if (await root.exists()) await root.delete(recursive: true); });
       final platform = Directory(p.join(root.path, 'windows'))..createSync(recursive: true);
@@ -124,7 +128,7 @@ void main() {
           bindingsLoader: (_) => _FakeDesktopBindings());
       final staged = await engine.stageManagedProfile(ManagedProfilePayload(
         profileName: 'connection-helper', materializedForRuntime: true, routeMode: RouteMode.fullTunnel,
-        warpPolicy: WarpRuntimePolicy.clientLocalDefault.withTransport(transport).withUserConsent(true),
+        warpPolicy: WarpRuntimePolicy.clientLocalDefault.withTransport(transport).withUserConsent(true).copyWith(mode: mode),
         configPayload: jsonEncode({
           'outbounds': [
             {'type': 'selector', 'tag': 'proxy', 'outbounds': ['node'], 'default': 'node'},
@@ -141,15 +145,22 @@ void main() {
       final outbounds = (config['outbounds'] as List).cast<Map>();
       if (transport == WarpRuntimeTransport.psiphon) {
         final helper = outbounds.singleWhere((value) => value['type'] == 'psiphon');
-        expect(helper['detour'], 'direct');
+        expect(helper.containsKey('detour'), isFalse);
         expect(outbounds.singleWhere((value) => value['tag'] == 'node')['detour'], helper['tag']);
         expect((config['dns']['servers'] as List).single['detour'], 'proxy');
         expect(config['endpoints'], isEmpty);
       } else {
         final helper = (config['endpoints'] as List).single as Map;
         expect(helper['mode'], 'masque_h2');
-        expect(helper['detour'], 'proxy');
-        expect((config['dns']['servers'] as List).single['detour'], helper['tag']);
+        if (mode == 'proxy_over_warp') {
+          expect(helper.containsKey('detour'), isFalse);
+          expect((helper['profile'] as Map).containsKey('detour'), isFalse);
+          expect(outbounds.singleWhere((value) => value['tag'] == 'node')['detour'], helper['tag']);
+          expect((config['dns']['servers'] as List).single['detour'], 'proxy');
+        } else {
+          expect(helper['detour'], 'proxy');
+          expect((config['dns']['servers'] as List).single['detour'], helper['tag']);
+        }
       }
     });
   }
