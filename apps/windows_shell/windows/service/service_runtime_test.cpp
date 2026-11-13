@@ -1144,6 +1144,34 @@ void TestCoreErrorsAreSanitized() {
   RemoveTestRoot(root);
 }
 
+void TestConnectionHelperWaitsForFullTunProof() {
+  using namespace pokrov::service;
+  const auto root = CreateTestRoot();
+  auto probe = std::make_unique<FakeEgressProbe>();
+  auto* egress = probe.get();
+  egress->verify_error = "core_egress_dns_failed";
+  egress->observation = EgressProbeObservation{EgressProbeStage::kDnsWait,
+      EgressProbeOutcome::kTimeout, EgressErrorDomain::kNone, 0, 3000};
+  egress->on_verify = [&] {
+    if (egress->verify_calls == 2) {
+      egress->verify_error.clear();
+      egress->observation.reset();
+    }
+  };
+  {
+    RuntimeHost host(std::make_unique<FakeCoreRuntime>(), std::move(probe),
+                     std::make_unique<FakeRecovery>(), root, false);
+    host.Initialize();
+    host.StageProfile(R"(0
+{"outbounds":[{"type":"vless","tag":"proxy","detour":"helper"},{"type":"psiphon","tag":"helper"}],"route":{"final":"proxy"}})");
+    const auto connected = host.Connect(StagedDigest(host));
+    Expect(connected.status == Status::kOk && egress->verify_calls == 2 &&
+               Contains(connected, "core_egress_validated=1;dns_ready=1") && !egress->last_periodic,
+           "cold helper did not wait for the full TUN proof");
+  }
+  RemoveTestRoot(root);
+}
+
 void TestEgressFailureStopsCoreAndIsSanitized() {
   using namespace pokrov::service;
   const auto root = CreateTestRoot();
@@ -2195,6 +2223,7 @@ int main(int argc, char** argv) {
   TestRuntimeLifecycle();
   TestBundledRuleSetsAreStagedInsideProtectedWorkingDirectory();
   TestCoreErrorsAreSanitized();
+  TestConnectionHelperWaitsForFullTunProof();
   TestEgressFailureStopsCoreAndIsSanitized();
   TestDirectReadinessOverrideRequiresSelectedVpn();
   TestPendingRecoveryStopsCoreBeforeRuntimeReady();

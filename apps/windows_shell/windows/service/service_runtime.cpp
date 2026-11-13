@@ -2054,7 +2054,26 @@ std::string RuntimeHost::VerifyEgress(bool periodic, const CheckInterruption& in
     return core_->ProbeSmartAccess(*target, periodic, interrupted);
   }
   if (!egress_probe_) return "core_egress_probe_failed";
-  const auto failure = egress_probe_->Verify(interrupted, periodic, deadline_tick, reserve);
+  const auto startup_budget = periodic ? 0 : WindowsConnectionHelperStartupBudgetMs(staged_runtime_config_);
+  const auto helper_deadline = startup_budget == 0 ? 0 : ::GetTickCount64() + startup_budget;
+  const CheckInterruption probe_owner = [&] {
+    const auto reason = interrupted ? interrupted() : OperationInterruption::kNone;
+    if (reason != OperationInterruption::kNone) return reason;
+    return helper_deadline != 0 && ::GetTickCount64() >= helper_deadline
+        ? OperationInterruption::kDeadlineExceeded : OperationInterruption::kNone;
+  };
+  std::string failure;
+  for (;;) {
+    failure = egress_probe_->Verify(probe_owner, periodic, deadline_tick, reserve);
+    const auto observation = egress_probe_->LastObservation();
+    // A cold helper can still be connecting after the ordinary DNS retries.
+    // Keep the full TUN proof and its cancellation while that startup settles.
+    if (helper_deadline == 0 || failure != "core_egress_dns_failed" || !observation ||
+        observation->stage != EgressProbeStage::kDnsWait ||
+        observation->outcome != EgressProbeOutcome::kTimeout ||
+        probe_owner() != OperationInterruption::kNone) break;
+  }
+  if (helper_deadline != 0 && ::GetTickCount64() >= helper_deadline) failure = "core_egress_timeout";
   if (!failure.empty()) {
     egress_failure_observation_ = egress_probe_->LastObservation();
     if (egress_failure_observation_) {

@@ -316,6 +316,21 @@ std::string CancelWindowsCandidateProbeResult(const std::string& encoded,
   return Encode(result.Get());
 }
 
+std::uint64_t WindowsConnectionHelperStartupBudgetMs(const std::string& encoded) {
+  JsonApartment apartment;
+  if (!apartment.Ready()) return 0;
+  const auto profile = ParseObject(encoded);
+  if (!profile) return 0;
+  for (const auto& outbound : Rows(Array(profile.Get(), L"outbounds").Get())) {
+    if (String(outbound.Get(), L"type") == "psiphon") return 60000;
+  }
+  for (const auto& endpoint : Rows(Array(profile.Get(), L"endpoints").Get())) {
+    if (String(endpoint.Get(), L"type") == "warp" &&
+        String(endpoint.Get(), L"mode") == "masque_h2") return 30000;
+  }
+  return 0;
+}
+
 std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& encoded,
     bool first_provider_qa, EgressProbeReserve* egress_reserve, std::string* selected_vpn_tag) {
   if (egress_reserve) *egress_reserve = EgressProbeReserve::kStatic;
