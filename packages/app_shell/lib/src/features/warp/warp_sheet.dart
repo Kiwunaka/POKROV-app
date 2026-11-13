@@ -135,11 +135,12 @@ class _WarpConsentSheet extends StatelessWidget {
                 initialValue: transport,
                 decoration: const InputDecoration(labelText: 'Способ подключения'),
                 items: [
-                  for (final value in WarpRuntimeTransport.values)
+                  for (final value in WarpRuntimeTransport.values.where(
+                      (value) => availableTransports.contains(value) || value == transport))
                     DropdownMenuItem(value: value, enabled: availableTransports.contains(value), child: Text(switch (value) {
                       WarpRuntimeTransport.wireguard => 'WARP',
                       WarpRuntimeTransport.masqueH2 => 'WARP через HTTPS',
-                      WarpRuntimeTransport.psiphon => 'Psiphon — запасной путь',
+                      WarpRuntimeTransport.psiphon => 'Psiphon — недоступен',
                     })),
                 ],
                 onChanged: ready ? (value) {

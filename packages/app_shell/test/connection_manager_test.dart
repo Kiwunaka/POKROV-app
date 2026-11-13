@@ -5528,18 +5528,18 @@ void main() {
     expect(manager.availableConnectionHelpers, {WarpRuntimeTransport.wireguard});
     await manager.connect();
     await manager.disconnect();
-    expect(manager.availableConnectionHelpers, containsAll(WarpRuntimeTransport.values));
-    await manager.setConnectionHelper(WarpRuntimeTransport.psiphon);
+    expect(manager.availableConnectionHelpers, {WarpRuntimeTransport.wireguard, WarpRuntimeTransport.masqueH2});
+    await manager.setConnectionHelper(WarpRuntimeTransport.masqueH2);
     await manager.setWarpRuntimeConsent(true);
     runtime.probedPayloads.clear();
     runtime.probeTimeouts.clear();
     await manager.connect();
-    expect(runtime.probedPayloads.single.warpPolicy.transport, WarpRuntimeTransport.psiphon);
-    expect(runtime.probeTimeouts.single, const Duration(seconds: 60));
-    expect(runtime.stagedPayloads.last.warpPolicy.transport, WarpRuntimeTransport.psiphon);
-    expect(runtime.stagedPayloads.last.warpPolicy.canEnableRuntime, isTrue);
-    await manager.setConnectionHelper(WarpRuntimeTransport.masqueH2);
+    expect(runtime.probedPayloads.single.warpPolicy.transport, WarpRuntimeTransport.masqueH2);
+    expect(runtime.probeTimeouts.single, const Duration(seconds: 30));
     expect(runtime.stagedPayloads.last.warpPolicy.transport, WarpRuntimeTransport.masqueH2);
+    expect(runtime.stagedPayloads.last.warpPolicy.canEnableRuntime, isTrue);
+    await manager.setConnectionHelper(WarpRuntimeTransport.wireguard);
+    expect(runtime.stagedPayloads.last.warpPolicy.transport, WarpRuntimeTransport.wireguard);
     expect(manager.snapshot?.phase, RuntimePhase.running);
   });
 
