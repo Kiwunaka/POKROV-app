@@ -36,6 +36,28 @@ TransportCandidate _familyCandidate(String family, {int? priority, String endpoi
 );
 
 void main() {
+  test('serial helper probes settle the preferred controller before the next', () async {
+    final selector = SmartConnectCandidateSelector();
+    final candidates = [_candidate(0), _candidate(1)];
+    selector.recordSuccess('network-a', candidates.first.candidateRef);
+    var active = 0;
+    final started = <String>[];
+    final selected = await selector.select(
+      catalog: _catalog(candidates), network: 'network-a', platform: HostPlatform.windows,
+      cancelled: Completer<void>().future, serialProbes: true,
+      probe: (candidate, _, __) async {
+        expect(active++, 0);
+        started.add(candidate.candidateRef);
+        await Future<void>.delayed(const Duration(milliseconds: 400));
+        active--;
+        return candidate.priority == 0
+            ? const SmartConnectCandidateProbeResult.failure('connect_failed') : _success(candidate);
+      });
+    expect(selected.profileName, candidates.last.candidateRef);
+    expect(started, candidates.map((value) => value.candidateRef));
+    expect(active, 0);
+  });
+
   test('cache reserves another node before a protocol alternative and keeps manual country', () {
     final candidates = [
       _candidate(0), _candidate(1, udp: true),

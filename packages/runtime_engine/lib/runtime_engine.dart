@@ -1018,12 +1018,15 @@ DateTime? _runtimeDateTime(Object? value) {
   return DateTime.tryParse(text);
 }
 
+enum WarpRuntimeTransport { wireguard, masqueH2, psiphon }
+
 class WarpRuntimePolicy {
   const WarpRuntimePolicy({
     required this.enabled,
     required this.runtimeReady,
     required this.state,
     this.mode = 'proxy_over_warp',
+    this.transport = WarpRuntimeTransport.wireguard,
     this.source = 'backend_managed',
     this.userConsented = false,
     this.id = '',
@@ -1064,6 +1067,7 @@ class WarpRuntimePolicy {
   final bool runtimeReady;
   final String state;
   final String mode;
+  final WarpRuntimeTransport transport;
   final String source;
   final bool userConsented;
   final String id;
@@ -1121,11 +1125,22 @@ class WarpRuntimePolicy {
         userConsented: value,
       );
 
+  WarpRuntimePolicy withTransport(WarpRuntimeTransport value) => copyWith(
+    transport: value,
+    mode: value == WarpRuntimeTransport.psiphon ? 'proxy_over_warp' : mode,
+    wireguardConfigJson: value == WarpRuntimeTransport.wireguard ? wireguardConfigJson : '',
+    accountId: value == WarpRuntimeTransport.wireguard ? accountId : '',
+    accessToken: value == WarpRuntimeTransport.wireguard ? accessToken : '',
+    cleanIp: value == WarpRuntimeTransport.wireguard ? cleanIp : 'auto',
+    cleanPort: value == WarpRuntimeTransport.wireguard ? cleanPort : 0,
+  );
+
   WarpRuntimePolicy copyWith({
     bool? enabled,
     bool? runtimeReady,
     String? state,
     String? mode,
+    WarpRuntimeTransport? transport,
     String? source,
     bool? userConsented,
     String? id,
@@ -1145,6 +1160,7 @@ class WarpRuntimePolicy {
       runtimeReady: runtimeReady ?? this.runtimeReady,
       state: state ?? this.state,
       mode: mode ?? this.mode,
+      transport: transport ?? this.transport,
       source: source ?? this.source,
       userConsented: userConsented ?? this.userConsented,
       id: id ?? this.id,
@@ -1199,6 +1215,9 @@ class WarpRuntimePolicy {
         runtimeReady: runtimeReady,
       ),
       mode: _readMode(map['mode']),
+      transport: WarpRuntimeTransport.values.firstWhere(
+        (value) => value.name == map['transport'],
+        orElse: () => WarpRuntimeTransport.wireguard),
       source: _readText(map['source'], fallback: 'backend_managed'),
       userConsented: _readBool(map['user_consented'] ?? map['userConsented']),
       id: _readText(map['id']),
@@ -3116,6 +3135,10 @@ String _materializePokrovCoreConfig(
   final proxyTag = _primaryProxyTag(outbounds, route);
   final warpOverProxy = policy.mode == 'warp_over_proxy';
   final warpDirect = policy.mode == 'warp_direct';
+  final psiphon = policy.transport == WarpRuntimeTransport.psiphon;
+  if (psiphon && policy.mode != 'proxy_over_warp') {
+    throw const FormatException('Psiphon is a TCP route before the main server');
+  }
   final endpointDirectTag = warpDirect &&
           directTag != null &&
           outbounds
@@ -3165,6 +3188,7 @@ String _materializePokrovCoreConfig(
   final endpoint = <String, Object?>{
     'type': 'warp',
     'tag': _pokrovWarpEndpointTag,
+    if (policy.transport == WarpRuntimeTransport.masqueH2) 'mode': 'masque_h2',
     'unique_identifier': policy.id.trim().isEmpty ? 'p1' : policy.id.trim(),
     'profile': profile,
     'mtu': 1280,
@@ -3173,7 +3197,11 @@ String _materializePokrovCoreConfig(
     else if (endpointDirectTag != null)
       'detour': endpointDirectTag,
   };
-  _mergeNativeWarpConfig(endpoint, wireguardConfig);
+  if (policy.transport == WarpRuntimeTransport.wireguard) {
+    _mergeNativeWarpConfig(endpoint, wireguardConfig);
+  } else if (policy.hasServerManagedMaterial) {
+    throw const FormatException('This connection helper requires local registration');
+  }
 
   final cleanIp = policy.cleanIp.trim();
   if (cleanIp.isNotEmpty &&
@@ -3208,6 +3236,21 @@ String _materializePokrovCoreConfig(
       (item) => _runtimeText(item['tag']) == _pokrovWarpEndpointTag,
     )
     ..add(endpoint);
+  if (psiphon) {
+    endpoints.removeWhere((value) => value['tag'] == _pokrovWarpEndpointTag);
+    final proxies = outbounds.where(_isProxyTransportForWarp).toList();
+    if (proxies.isEmpty || proxies.any((value) => const {'hysteria', 'hysteria2', 'tuic', 'wireguard', 'awg'}.contains(value['type']))) {
+      throw const FormatException('Psiphon requires a TCP server connection');
+    }
+    outbounds.add(<String, Object?>{
+      'type': 'psiphon', 'tag': _pokrovWarpEndpointTag,
+      'network_id': policy.id.trim().isEmpty ? 'pokrov' : policy.id.trim(),
+      'client_platform': 'POKROV',
+      'data_directory': 'pokrov-psiphon',
+      'establish_tunnel_timeout': '45s',
+      if (endpointDirectTag != null) 'detour': endpointDirectTag,
+    });
+  }
   config['endpoints'] = endpoints;
 
   if (warpOverProxy || warpDirect) {
@@ -3220,6 +3263,7 @@ String _materializePokrovCoreConfig(
   } else {
     for (final outbound in outbounds) {
       if (_isProxyTransportForWarp(outbound)) {
+        if (outbound['tag'] == _pokrovWarpEndpointTag) continue;
         outbound['detour'] = _pokrovWarpEndpointTag;
       }
     }

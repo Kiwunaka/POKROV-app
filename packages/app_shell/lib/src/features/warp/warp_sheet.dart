@@ -5,6 +5,9 @@ void _showWarpConsentSheet(
   required PokrovWarpLifecycle lifecycle,
   required bool enabled,
   required Future<void> Function(bool value) onChanged,
+  required WarpRuntimeTransport transport,
+  required Set<WarpRuntimeTransport> availableTransports,
+  required Future<void> Function(WarpRuntimeTransport value) onTransportChanged,
 }) {
   showModalBottomSheet<void>(
     context: context,
@@ -18,6 +21,9 @@ void _showWarpConsentSheet(
       lifecycle: lifecycle,
       enabled: enabled,
       onChanged: onChanged,
+      transport: transport,
+      availableTransports: availableTransports,
+      onTransportChanged: onTransportChanged,
     ),
   );
 }
@@ -27,11 +33,17 @@ class _WarpConsentSheet extends StatelessWidget {
     required this.lifecycle,
     required this.enabled,
     required this.onChanged,
+    required this.transport,
+    required this.availableTransports,
+    required this.onTransportChanged,
   });
 
   final PokrovWarpLifecycle lifecycle;
   final bool enabled;
   final Future<void> Function(bool value) onChanged;
+  final WarpRuntimeTransport transport;
+  final Set<WarpRuntimeTransport> availableTransports;
+  final Future<void> Function(WarpRuntimeTransport value) onTransportChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +51,7 @@ class _WarpConsentSheet extends StatelessWidget {
     final nextValue = !enabled;
     final ready = lifecycle.canOffer;
     final active = enabled || lifecycle.phase == PokrovWarpPhase.active;
+    final helperLabel = transport == WarpRuntimeTransport.psiphon ? 'Psiphon' : 'WARP';
     // Palette tokens adapt to light/dark on their own; no hardcoded
     // white-alpha dark panel.
     final foreground = p.ink;
@@ -83,7 +96,7 @@ class _WarpConsentSheet extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'WARP',
+                          transport == WarpRuntimeTransport.psiphon ? 'Psiphon' : 'WARP',
                           style: Theme.of(context)
                               .textTheme
                               .headlineSmall
@@ -117,6 +130,25 @@ class _WarpConsentSheet extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 24),
+              DropdownButtonFormField<WarpRuntimeTransport>(
+                key: const ValueKey('connection-helper-transport'),
+                initialValue: transport,
+                decoration: const InputDecoration(labelText: 'Способ подключения'),
+                items: [
+                  for (final value in WarpRuntimeTransport.values)
+                    DropdownMenuItem(value: value, enabled: availableTransports.contains(value), child: Text(switch (value) {
+                      WarpRuntimeTransport.wireguard => 'WARP',
+                      WarpRuntimeTransport.masqueH2 => 'WARP через HTTPS',
+                      WarpRuntimeTransport.psiphon => 'Psiphon — запасной путь',
+                    })),
+                ],
+                onChanged: ready ? (value) {
+                  if (value == null) return;
+                  Navigator.of(context).pop();
+                  unawaited(onTransportChanged(value));
+                } : null,
+              ),
+              const SizedBox(height: 12),
               Text(
                 ready
                     ? 'Дополнительный маршрут подключения'
@@ -129,7 +161,11 @@ class _WarpConsentSheet extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'Добавляет Cloudflare WARP к маршруту подключения POKROV.',
+                switch (transport) {
+                  WarpRuntimeTransport.psiphon => 'Запасной путь до сервера POKROV. Подходит для сайтов и загрузок.',
+                  WarpRuntimeTransport.masqueH2 => 'WARP через защищённое HTTPS-соединение. Попробуй, если обычный WARP не подключается.',
+                  WarpRuntimeTransport.wireguard => 'Дополнительный маршрут через Cloudflare WARP.',
+                },
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: secondary,
                       height: 1.34,
@@ -138,7 +174,9 @@ class _WarpConsentSheet extends StatelessWidget {
               const SizedBox(height: 18),
               if (ready) ...[
                 Text(
-                  'WARP включается только вручную. Автоматический выбор страны и пути сам его не включает. После включения для пробного и бесплатного доступа доступен также резерв через Cloudflare без серверов POKROV; его страна выхода неизвестна.',
+                  transport == WarpRuntimeTransport.psiphon
+                      ? 'Включается вручную. Интернет будет выходить через выбранный сервер POKROV.'
+                      : 'Включается вручную. После включения для пробного и бесплатного доступа доступен также резерв через Cloudflare без серверов POKROV.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: secondary,
                         height: 1.34,
@@ -150,10 +188,10 @@ class _WarpConsentSheet extends StatelessWidget {
                 _WarpInfoRow(
                   icon: Icons.bolt_rounded,
                   title: lifecycle.phase == PokrovWarpPhase.active
-                      ? 'WARP активен в текущем подключении.'
+                      ? '$helperLabel активен в текущем подключении.'
                       : enabled
-                          ? 'WARP включится при следующем подключении.'
-                          : 'Включи WARP, чтобы использовать его при подключении.',
+                          ? '$helperLabel включится при следующем подключении.'
+                          : 'Включи $helperLabel, чтобы использовать его при подключении.',
                   value: '',
                   foreground: foreground,
                   muted: secondary,
@@ -167,7 +205,7 @@ class _WarpConsentSheet extends StatelessWidget {
                   muted: secondary,
                   line: lineColor,
                 ),
-                _WarpInfoRow(
+                if (transport != WarpRuntimeTransport.psiphon) _WarpInfoRow(
                   icon: Icons.public_rounded,
                   title:
                       'Если выход через WARP, страна выхода не подтверждена.',
@@ -200,8 +238,8 @@ class _WarpConsentSheet extends StatelessWidget {
                     label: Text(
                       ready
                           ? enabled
-                              ? 'Выключить WARP'
-                              : 'Включить WARP'
+                              ? 'Выключить $helperLabel'
+                              : 'Включить $helperLabel'
                           : 'Понятно',
                     ),
                     onPressed: () {

@@ -941,7 +941,9 @@ class ConnectionManager extends ChangeNotifier {
     final clock = inherited?.clock ?? (Stopwatch()..start());
     // One largest candidate group, not a fresh allowance for each candidate or
     // fallback. The existing pending-connect window is also a lower bound.
-    final phases = _initialProfilePreparationTimeout + _dnsCandidateSelectionTimeout + _actionTimeout * 2;
+    final helperTimeout = _clientExperience.routingPreferences.connectionHelper == WarpRuntimeTransport.psiphon
+        ? const Duration(seconds: 60) : _dnsCandidateSelectionTimeout;
+    final phases = _initialProfilePreparationTimeout + helperTimeout + _actionTimeout * 2;
     final timeout = inherited?.timeout ??
         (phases > _nativeConnectSettlementTimeout ? phases : _nativeConnectSettlementTimeout);
     final expired = Completer<void>();
@@ -2956,7 +2958,8 @@ class ConnectionManager extends ChangeNotifier {
               cancelled: cancelled)
           : null;
       requireCurrent();
-      final candidateWarpPolicy = warpStatus?.applyTo(baseWarpPolicy) ?? baseWarpPolicy;
+      final candidateWarpPolicy = (warpStatus?.applyTo(baseWarpPolicy) ?? baseWarpPolicy)
+          .withTransport(_clientExperience.routingPreferences.connectionHelper);
       final useWarpCandidates =
           !suppressWarpRuntime &&
           _explicitWarpRuntimeConsent == true &&
@@ -3009,7 +3012,9 @@ class ConnectionManager extends ChangeNotifier {
           (inputs.preferredCandidateRef.isEmpty || candidate.candidateRef == inputs.preferredCandidateRef) &&
           (candidate.warpMode == 'warp_direct' || inputs.preferredNodeCode.isEmpty || candidate.nodeCode == inputs.preferredNodeCode)).toList();
       final warpCandidates = eligibleCandidates.where((candidate) =>
-          candidate.warpMode != null && candidate.warpMode != 'warp_direct').toList();
+          candidate.warpMode != null && candidate.warpMode != 'warp_direct' &&
+          (candidateWarpPolicy.transport != WarpRuntimeTransport.psiphon ||
+              candidate.warpMode == 'proxy_over_warp' && candidate.network == 'tcp')).toList();
       final ordinaryCandidates = eligibleCandidates.where((candidate) =>
           candidate.warpMode == null && !const {'dnstt', 'slipstream', 'mts', 'vk'}.contains(candidate.transport)).toList();
       final dnsCandidates = [
@@ -3024,16 +3029,20 @@ class ConnectionManager extends ChangeNotifier {
         if (useWarpCandidates && warpCandidates.isNotEmpty) warpCandidates,
         ordinaryCandidates,
         dnsCandidates,
-        if (useWarpCandidates) directWarpCandidates,
+        if (useWarpCandidates && candidateWarpPolicy.transport != WarpRuntimeTransport.psiphon) directWarpCandidates,
       ];
       var selectedCandidate = false;
       BootstrapFailure? apiFailure;
       for (final group in groups) {
         if (group.isEmpty) continue;
+        final alternateHelper = identical(group, warpCandidates) &&
+            candidateWarpPolicy.transport != WarpRuntimeTransport.wireguard;
         final twoWaveWarp = coldConnect && _appContext.hostPlatform == HostPlatform.android &&
             identical(group, warpCandidates) && group.length > 3;
         // DNS handshakes plus the unchanged 64 KiB proof need their own budget.
-        final selectionTimeout = identical(group, dnsCandidates)
+        final selectionTimeout = alternateHelper
+            ? Duration(seconds: candidateWarpPolicy.transport == WarpRuntimeTransport.psiphon ? 60 : 30)
+            : identical(group, dnsCandidates)
             ? _dnsCandidateTimeoutFor(inputs)
             : identical(group, directWarpCandidates)
             ? const Duration(seconds: 4)
@@ -3055,7 +3064,7 @@ class ConnectionManager extends ChangeNotifier {
             cancelled: cancelled,
             recoveryCandidateRef: recoveryCandidateRef,
             excludedCandidateRefs: excludedCandidateRefs,
-            probeTimeout: identical(group, dnsCandidates)
+            probeTimeout: alternateHelper || identical(group, dnsCandidates)
                 ? selectionTimeout
                 : initialProfilePreparation &&
                     _appContext.hostPlatform == HostPlatform.android &&
@@ -3065,6 +3074,9 @@ class ConnectionManager extends ChangeNotifier {
             selectionTimeout: _withinConnectBudget(selectionTimeout),
             probeSettlementTimeout: _candidateWorkTimeout,
             excludeProbeCleanupFromBudget: twoWaveWarp,
+            // Psiphon owns a process-wide datastore. Keep helper startup and
+            // shutdown in one slot, including the preferred candidate.
+            serialProbes: alternateHelper,
             onProbeResult: (candidate, result) {
               if (_disposed || !_connectionCoordinator.ownsOperation(generation) ||
                   profileRevision != _managedProfileRevision) return;
@@ -3250,13 +3262,16 @@ class ConnectionManager extends ChangeNotifier {
       final probing = engine as RuntimeCandidateProbing;
       final service = cache as CachedManagedProfileBootstrapper;
       final cachedWarpAllowed = _explicitWarpRuntimeConsent == true;
+      final helperTransport = _clientExperience.routingPreferences.connectionHelper;
       final features = _runtimeSnapshot?.availableTransportFeatures ?? const <RuntimeTransportFeature>{};
       final candidateRefs = catalog.candidates.where((candidate) =>
           (inputs.preferredCandidateRef.isEmpty || candidate.candidateRef == inputs.preferredCandidateRef) &&
           (candidate.warpMode == 'warp_direct' || inputs.preferredCountryCode.isEmpty ||
               candidate.nodeCountryCode(catalog.candidates) == inputs.preferredCountryCode) &&
           (candidate.warpMode == 'warp_direct' || inputs.preferredNodeCode.isEmpty || candidate.nodeCode == inputs.preferredNodeCode) &&
-          (candidate.warpMode == null || cachedWarpAllowed))
+          (candidate.warpMode == null || cachedWarpAllowed &&
+            (helperTransport != WarpRuntimeTransport.psiphon ||
+                candidate.warpMode == 'proxy_over_warp' && candidate.network == 'tcp')))
           .map((candidate) => candidate.candidateRef).toSet();
       final materialClock = Stopwatch()..start();
       final available = await service.loadCachedManagedCandidateProfiles(inputs,
@@ -3307,6 +3322,9 @@ class ConnectionManager extends ChangeNotifier {
         var found = false;
         for (final group in groups) {
           if (group.isEmpty) continue;
+          final alternateHelper = identical(group, warpCandidates) &&
+              helperTransport != WarpRuntimeTransport.wireguard;
+          final helperTimeout = Duration(seconds: helperTransport == WarpRuntimeTransport.psiphon ? 60 : 30);
           final twoWaveWarp = coldConnect && inputs.hostPlatform == HostPlatform.android &&
               identical(group, warpCandidates) && group.length > 3;
           try {
@@ -3320,7 +3338,7 @@ class ConnectionManager extends ChangeNotifier {
               contextGeneration: context,
               cancelled: _connectionCoordinator.whenOperationEnds(generation),
               recoveryCandidateRef: recoveryCandidateRef, excludedCandidateRefs: excludedCandidateRefs,
-              selectionTimeout: _withinConnectBudget(identical(group, dnsCandidates)
+              selectionTimeout: _withinConnectBudget(alternateHelper ? helperTimeout : identical(group, dnsCandidates)
                   ? _dnsCandidateTimeoutFor(inputs)
                   : identical(group, directWarpCandidates)
                   ? const Duration(seconds: 4)
@@ -3330,8 +3348,9 @@ class ConnectionManager extends ChangeNotifier {
                           ? const Duration(seconds: 7)
                           : const Duration(seconds: 12)),
               excludeProbeCleanupFromBudget: twoWaveWarp,
+              serialProbes: alternateHelper,
               probeSettlementTimeout: _candidateWorkTimeout,
-              probeTimeout: identical(group, dnsCandidates)
+              probeTimeout: alternateHelper ? helperTimeout : identical(group, dnsCandidates)
                   ? _dnsCandidateTimeoutFor(inputs)
                   : coldConnect && inputs.hostPlatform == HostPlatform.android &&
                       group.every((candidate) => candidate.warpMode == null)
@@ -3348,7 +3367,7 @@ class ConnectionManager extends ChangeNotifier {
                 final exact = available[candidate.candidateRef]!;
                 final probePayload = exact.copyWith(warpPolicy: candidate.warpMode == null
                     ? exact.warpPolicy.withUserConsent(false)
-                    : exact.warpPolicy.withClientLocalDefaults().copyWith(
+                    : exact.warpPolicy.withClientLocalDefaults().withTransport(helperTransport).copyWith(
                         mode: candidate.warpMode, userConsented: true));
                 final checked = await _probeManagedCandidate(probing, probePayload,
                     context: context, cancelled: stop, timeout: timeout,
@@ -3466,6 +3485,8 @@ class ConnectionManager extends ChangeNotifier {
             userConsented: true,
           )
         : serverDisplayWarpPolicy;
+    final helperWarpPolicy = displayWarpPolicy.withTransport(
+        _clientExperience.routingPreferences.connectionHelper);
     // Saved/server consent is retained, but Auto requires a current manual
     // WARP choice before admitting a chain or a direct WARP reserve.
     final warpConsentStillValid =
@@ -3506,8 +3527,9 @@ class ConnectionManager extends ChangeNotifier {
       // A server-reported fallback/error is a circuit breaker, not a cosmetic
       // status. Keep the person's consent visible, but stage the ordinary VPN
       // until they explicitly toggle WARP off and on to retry it.
-      warpPolicy: displayWarpPolicy.copyWith(
-          mode: selectedWarpMode ?? displayWarpPolicy.mode,
+      warpPolicy: helperWarpPolicy.copyWith(
+          mode: helperWarpPolicy.transport == WarpRuntimeTransport.psiphon
+              ? 'proxy_over_warp' : selectedWarpMode ?? displayWarpPolicy.mode,
           userConsented: warpRuntimeAttemptEnabled),
       quickSettingsEligible: _appContext.hostPlatform == HostPlatform.android &&
           localSmartAccessState == null &&
@@ -4064,12 +4086,35 @@ class ConnectionManager extends ChangeNotifier {
     }
   }
 
+  Set<WarpRuntimeTransport> get availableConnectionHelpers {
+    final features = _runtimeSnapshot?.availableTransportFeatures ?? const <RuntimeTransportFeature>{};
+    return {WarpRuntimeTransport.wireguard,
+      if (features.contains(RuntimeTransportFeature.warpMasqueH2)) WarpRuntimeTransport.masqueH2,
+      if (features.contains(RuntimeTransportFeature.psiphonTcp)) WarpRuntimeTransport.psiphon};
+  }
+
+  String get _connectionHelperLabel =>
+      _clientExperience.routingPreferences.connectionHelper == WarpRuntimeTransport.psiphon ? 'Psiphon' : 'WARP';
+
+  Future<void> setConnectionHelper(WarpRuntimeTransport value) async {
+    if (_warpPolicyBusy || !availableConnectionHelpers.contains(value)) return;
+    setRoutingPreferences(_clientExperience.routingPreferences.copyWith(connectionHelper: value));
+    _update(() => _managedWarpPolicy = _managedWarpPolicy.withTransport(value));
+    if (_warpRuntimeConsent) await setWarpRuntimeConsent(true);
+  }
+
   Future<void> setWarpRuntimeConsent(bool value) async {
     if (_warpPolicyBusy) {
       return;
     }
     final wasConnected = _runtimeSnapshot?.phase == RuntimePhase.running;
-    final localPolicy = _managedWarpPolicy.withClientLocalDefaults();
+    final localPolicy = _managedWarpPolicy.withClientLocalDefaults().withTransport(
+        _clientExperience.routingPreferences.connectionHelper);
+    final helperLabel = localPolicy.transport == WarpRuntimeTransport.psiphon ? 'Psiphon' : 'WARP';
+    if (value && !availableConnectionHelpers.contains(localPolicy.transport)) {
+      _notify('Обнови POKROV, чтобы включить выбранный способ подключения.', tone: PokrovSnackTone.danger);
+      return;
+    }
     final requestedEnabled = value && localPolicy.canOfferRuntime;
     _update(() {
       _warpPolicyBusy = true;
@@ -4132,17 +4177,17 @@ class ConnectionManager extends ChangeNotifier {
         _cachedProfileFallbackGate.markUserChange();
         _runtimeHeadline = wasConnected
             ? enabled
-                ? 'Включаем WARP…'
-                : 'Выключаем WARP…'
+                ? 'Включаем $helperLabel…'
+                : 'Выключаем $helperLabel…'
             : enabled
-                ? 'WARP включится при следующем подключении.'
-                : 'WARP выключен для следующих подключений.';
+                ? '$helperLabel включится при следующем подключении.'
+                : '$helperLabel выключен для следующих подключений.';
       });
       _invalidateQuickSettingsProfile();
       if (wasConnected) {
         await _reconnectAfterManagedProfileChange(
-          progressMessage: enabled ? 'Включаем WARP…' : 'Выключаем WARP…',
-          successMessage: enabled ? 'WARP включён.' : 'WARP выключен.',
+          progressMessage: enabled ? 'Включаем $helperLabel…' : 'Выключаем $helperLabel…',
+          successMessage: enabled ? '$helperLabel включён.' : '$helperLabel выключен.',
         );
       }
     } on BootstrapFailure catch (error) {
@@ -4783,7 +4828,7 @@ class ConnectionManager extends ChangeNotifier {
                 userConsented: true,
               );
               _runtimeHeadline =
-                  'WARP временно недоступен. Подключаем обычный VPN…';
+                  '$_connectionHelperLabel временно недоступен. Подключаем обычный VPN…';
             });
             current = await runOwnedRuntimeAction(
               'connectWithoutWarp',
@@ -4810,7 +4855,7 @@ class ConnectionManager extends ChangeNotifier {
         _update(() {
           _runtimeSnapshot = current;
           _runtimeHeadline = warpFallbackUsed
-              ? 'POKROV подключен. WARP временно на паузе.'
+              ? 'POKROV подключен. $_connectionHelperLabel временно на паузе.'
               : current.phase == RuntimePhase.running && usedCachedProfile
                   ? current.isCoreEgressValidationPending
                       ? 'Проверяем выход через VPN…'
@@ -4850,7 +4895,7 @@ class ConnectionManager extends ChangeNotifier {
                                 ? 'Защита включена'
                                 : 'Защита включена с предупреждением',
             detail: warpFallbackUsed
-                ? 'WARP не прошёл проверку, поэтому POKROV автоматически сохранил рабочий обычный VPN.'
+                ? '$_connectionHelperLabel не прошёл проверку. POKROV сохранил рабочий обычный VPN.'
                 : current.isCoreEgressValidationPending
                     ? 'Соединение запущено. POKROV проверяет выход через выбранную локацию.'
                     : current.hasCoreEgressValidationFailure
@@ -5314,7 +5359,7 @@ class ConnectionManager extends ChangeNotifier {
               userConsented: true,
             );
             _runtimeHeadline =
-                'WARP временно недоступен. Подключаем обычный VPN…';
+                '$_connectionHelperLabel временно недоступен. Подключаем обычный VPN…';
           });
           unawaited(_retryWithoutWarpAfterEgressFailure(refreshed));
           _publish();
@@ -5428,7 +5473,7 @@ class ConnectionManager extends ChangeNotifier {
       if (!baselineReady) {
         _update(() {
           _runtimeHeadline =
-              'WARP не прошёл проверку. Выключи его и повтори подключение.';
+              '$_connectionHelperLabel не прошёл проверку. Выключи его и повтори подключение.';
         });
         if (!fallbackReported) {
           unawaited(_reportWarpRuntimeFallback(warpFailure));
@@ -5454,7 +5499,7 @@ class ConnectionManager extends ChangeNotifier {
       _update(() {
         _runtimeSnapshot = current;
         _runtimeHeadline = current.phase == RuntimePhase.running
-            ? 'POKROV подключен. WARP временно на паузе.'
+            ? 'POKROV подключен. $_connectionHelperLabel временно на паузе.'
             : current.message.trim().isEmpty
                 ? 'Обычный VPN тоже не подключился. Попробуй другую локацию.'
                 : current.message;
@@ -5468,7 +5513,7 @@ class ConnectionManager extends ChangeNotifier {
           kind: 'warp_fallback_connected',
           title: 'Обычная защита включена',
           detail:
-              'WARP не прошёл проверку, поэтому POKROV автоматически сохранил рабочий обычный VPN.',
+              '$_connectionHelperLabel не прошёл проверку. POKROV сохранил рабочий обычный VPN.',
           tone: PokrovProtectionEventTone.warning,
         );
       } else if (_mustRefreshProfileAfterRuntimeFailure(current)) {

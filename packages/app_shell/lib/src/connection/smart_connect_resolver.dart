@@ -159,6 +159,7 @@ class SmartConnectCandidateSelector {
     Duration selectionTimeout = const Duration(seconds: 12),
     Duration probeSettlementTimeout = Duration.zero,
     bool excludeProbeCleanupFromBudget = false,
+    bool serialProbes = false,
   }) async {
     if (network.isEmpty) throw StateError('smart_connect_network_unavailable');
     // Keep one observer owner throughout this selection, including an async
@@ -268,7 +269,8 @@ class SmartConnectCandidateSelector {
     final probes = <Completer<void>>{};
     final settled = <Future<void>>[];
     final committed = <String, TransportCandidate>{};
-    final parallelism = const {HostPlatform.android, HostPlatform.ios}.contains(platform) ? 3 : 4;
+    final parallelism = serialProbes ? 1 :
+        const {HostPlatform.android, HostPlatform.ios}.contains(platform) ? 3 : 4;
     final fixedPrefix = <TransportCandidate>[];
     for (final group in capturing ? priorityGroups.values.toSet() : <int>{}) {
       final rows = candidates.where((candidate) => priorityGroups[candidate.candidateRef] == group).toList();
@@ -480,8 +482,12 @@ class SmartConnectCandidateSelector {
             (elapsed) => preferredProbeTime += elapsed).whenComplete(
             () => preferredSettled = true);
         settled.add(preferredRun);
-        await Future.any<void>([ended.future, preferredRun,
-          Future<void>.delayed(const Duration(milliseconds: 350))]);
+        if (serialProbes) {
+          await preferredRun;
+        } else {
+          await Future.any<void>([ended.future, preferredRun,
+            Future<void>.delayed(const Duration(milliseconds: 350))]);
+        }
       }
       final workerCount = preferredRun == null || preferredSettled
           ? parallelism : parallelism - 1;

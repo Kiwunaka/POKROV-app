@@ -3642,6 +3642,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       ),
       enabled: _warpRuntimeConsent,
       onChanged: _setWarpRuntimeConsent,
+      transport: _clientExperience.routingPreferences.connectionHelper,
+      availableTransports: _connectionManager.availableConnectionHelpers,
+      onTransportChanged: _connectionManager.setConnectionHelper,
     );
   }
 

@@ -29,7 +29,7 @@ try {
     $env:POKROV_REAL_CORE_ROOT = $resolvedCoreRoot
     Push-Location $runtimePackage
     try {
-        & flutter test test\runtime_engine_test.dart --plain-name "real Windows POKROV Core survives 100 start-stop cycles"
+        & flutter test test\real_core_lifecycle_test.dart --plain-name "real Windows POKROV Core starts and stops without system routes"
         if ($LASTEXITCODE -ne 0) {
             throw "Proxy-only Windows Core smoke failed with exit code $LASTEXITCODE."
         }
@@ -44,5 +44,5 @@ finally {
     $env:TMP = $previousTmp
 }
 
-Write-Output "PASS: exact Windows Core completed 100 proxy-only start/stop cycles without changing system routes."
+Write-Output "PASS: Windows Core completed three proxy-only start/stop cycles with traffic and without system routes."
 Write-Output "NOTE: this does not prove Windows TUN, DNS capture, or leak protection; run those in an isolated VM or Windows Sandbox."

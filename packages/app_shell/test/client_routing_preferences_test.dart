@@ -52,6 +52,11 @@ Map _dnsConfig(PokrovRoutingPreferences preferences, HostPlatform platform,
         .configPayload) as Map)['dns'] as Map;
 
 void main() {
+  test('connection helper selection survives saved preferences', () {
+    final helper = const PokrovRoutingPreferences.defaults().copyWith(connectionHelper: WarpRuntimeTransport.masqueH2);
+    expect(PokrovRoutingPreferences.fromJson(Map<String, dynamic>.from(helper.toJson())).connectionHelper, WarpRuntimeTransport.masqueH2);
+  });
+
   test('local DPI defaults to auto but preserves a saved opt-out', () {
     expect(const PokrovRoutingPreferences.defaults().localDpiEnabled, isTrue);
     expect(PokrovRoutingPreferences.fromJson({}).localDpiEnabled, isTrue);

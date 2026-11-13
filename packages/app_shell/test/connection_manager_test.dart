@@ -5511,6 +5511,38 @@ void main() {
     expect(bootstrapper.lastCoreRelease, '1.1.2');
   });
 
+  test('connection helper follows the loaded Core and reaches the selected candidate', () async {
+    final base = _candidates.first;
+    final chain = TransportCandidate(candidateRef: '${base.candidateRef}:proxy_over_warp',
+      profileRef: base.profileRef, nodeCode: base.nodeCode, countryCode: 'DE',
+      protocol: base.protocol, transport: base.transport, protection: base.protection,
+      priority: 1, network: base.network, flow: base.flow,
+      minimumClientRelease: '1.4.0', minimumCoreRelease: null,
+      platforms: base.platforms, requiredFeatures: base.requiredFeatures,
+      warpMode: 'proxy_over_warp');
+    final bootstrapper = _ControlledWarpBootstrapper()
+      ..cacheAvailable = false..candidates = [base, chain];
+    final runtime = _Runtime()..supportsCandidates = true;
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+    expect(manager.availableConnectionHelpers, {WarpRuntimeTransport.wireguard});
+    await manager.connect();
+    await manager.disconnect();
+    expect(manager.availableConnectionHelpers, containsAll(WarpRuntimeTransport.values));
+    await manager.setConnectionHelper(WarpRuntimeTransport.psiphon);
+    await manager.setWarpRuntimeConsent(true);
+    runtime.probedPayloads.clear();
+    runtime.probeTimeouts.clear();
+    await manager.connect();
+    expect(runtime.probedPayloads.single.warpPolicy.transport, WarpRuntimeTransport.psiphon);
+    expect(runtime.probeTimeouts.single, const Duration(seconds: 60));
+    expect(runtime.stagedPayloads.last.warpPolicy.transport, WarpRuntimeTransport.psiphon);
+    expect(runtime.stagedPayloads.last.warpPolicy.canEnableRuntime, isTrue);
+    await manager.setConnectionHelper(WarpRuntimeTransport.masqueH2);
+    expect(runtime.stagedPayloads.last.warpPolicy.transport, WarpRuntimeTransport.masqueH2);
+    expect(manager.snapshot?.phase, RuntimePhase.running);
+  });
+
   test('WARP candidate probes its chain and ordinary fallback stays ordinary', () async {
     final base = _candidates.first;
     final chain = TransportCandidate(candidateRef: '${base.candidateRef}:proxy_over_warp',

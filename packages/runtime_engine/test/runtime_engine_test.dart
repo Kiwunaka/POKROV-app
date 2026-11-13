@@ -113,6 +113,47 @@ RuntimeSnapshot _runningSnapshot({
 }
 
 void main() {
+  for (final transport in [WarpRuntimeTransport.psiphon, WarpRuntimeTransport.masqueH2]) {
+    test('desktop materializes ${transport.name} with the intended chain and protected DNS', () async {
+      final root = await Directory.systemTemp.createTemp('pokrov-helper-test-');
+      addTearDown(() async { if (await root.exists()) await root.delete(recursive: true); });
+      final platform = Directory(p.join(root.path, 'windows'))..createSync(recursive: true);
+      File(p.join(platform.path, 'pokrov-core.dll')).writeAsStringSync('stub');
+      final engine = DesktopRuntimeEngine(hostPlatform: HostPlatform.windows,
+          assetRootOverride: root.path, connectivityProbe: () async => null,
+          bindingsLoader: (_) => _FakeDesktopBindings());
+      final staged = await engine.stageManagedProfile(ManagedProfilePayload(
+        profileName: 'connection-helper', materializedForRuntime: true, routeMode: RouteMode.fullTunnel,
+        warpPolicy: WarpRuntimePolicy.clientLocalDefault.withTransport(transport).withUserConsent(true),
+        configPayload: jsonEncode({
+          'outbounds': [
+            {'type': 'selector', 'tag': 'proxy', 'outbounds': ['node'], 'default': 'node'},
+            {'type': 'vless', 'tag': 'node', 'server': 'node.example', 'server_port': 443},
+            {'type': 'direct', 'tag': 'direct'},
+          ],
+          'route': {'final': 'proxy'},
+          'dns': {'servers': [{'tag': 'remote', 'address': 'tcp://1.1.1.1', 'detour': 'proxy'}]},
+        }),
+      ));
+      await engine.connect();
+      addTearDown(engine.disconnect);
+      final config = jsonDecode(await File(staged.stagedConfigPath!).readAsString()) as Map;
+      final outbounds = (config['outbounds'] as List).cast<Map>();
+      if (transport == WarpRuntimeTransport.psiphon) {
+        final helper = outbounds.singleWhere((value) => value['type'] == 'psiphon');
+        expect(helper['detour'], 'direct');
+        expect(outbounds.singleWhere((value) => value['tag'] == 'node')['detour'], helper['tag']);
+        expect((config['dns']['servers'] as List).single['detour'], 'proxy');
+        expect(config['endpoints'], isEmpty);
+      } else {
+        final helper = (config['endpoints'] as List).single as Map;
+        expect(helper['mode'], 'masque_h2');
+        expect(helper['detour'], 'proxy');
+        expect((config['dns']['servers'] as List).single['detour'], helper['tag']);
+      }
+    });
+  }
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('desktop ABI 2 negotiates the exact capability and event contract', () {

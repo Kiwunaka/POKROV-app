@@ -7,6 +7,8 @@ enum RuntimeTransportFeature {
   vkVless('vk_vless_v1'),
   atsLease('pokrov_ats_lease_v1'),
   awg31('pokrov_awg31_endpoint_v1'),
+  psiphonTcp('pokrov_psiphon_tcp_v1'),
+  warpMasqueH2('pokrov_warp_masque_h2_v1'),
   telegramWs('pokrov_telegram_ws_v1'),
   grpc('singbox_grpc_v1'),
   hysteria2('singbox_hysteria2_v1'),

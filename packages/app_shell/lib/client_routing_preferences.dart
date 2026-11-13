@@ -147,6 +147,7 @@ class PokrovRoutingPreferences {
     required this.pauseOnTrustedWifi,
     this.autoConnectOnUntrustedWifi = false,
     this.localDpiEnabled = true,
+    this.connectionHelper = WarpRuntimeTransport.wireguard,
     required this.windowsConnectionMode,
     required this.tunStack,
   });
@@ -165,6 +166,7 @@ class PokrovRoutingPreferences {
         pauseOnTrustedWifi = false,
         autoConnectOnUntrustedWifi = false,
         localDpiEnabled = true,
+        connectionHelper = WarpRuntimeTransport.wireguard,
         windowsConnectionMode = PokrovWindowsConnectionMode.vpn,
         tunStack = PokrovTunStack.system;
 
@@ -181,6 +183,7 @@ class PokrovRoutingPreferences {
   final bool pauseOnTrustedWifi;
   final bool autoConnectOnUntrustedWifi;
   final bool localDpiEnabled;
+  final WarpRuntimeTransport connectionHelper;
   final PokrovWindowsConnectionMode windowsConnectionMode;
   final PokrovTunStack tunStack;
 
@@ -198,6 +201,7 @@ class PokrovRoutingPreferences {
     bool? pauseOnTrustedWifi,
     bool? autoConnectOnUntrustedWifi,
     bool? localDpiEnabled,
+    WarpRuntimeTransport? connectionHelper,
     PokrovWindowsConnectionMode? windowsConnectionMode,
     PokrovTunStack? tunStack,
   }) {
@@ -216,6 +220,7 @@ class PokrovRoutingPreferences {
       pauseOnTrustedWifi: pauseOnTrustedWifi ?? this.pauseOnTrustedWifi,
       autoConnectOnUntrustedWifi: autoConnectOnUntrustedWifi ?? this.autoConnectOnUntrustedWifi,
       localDpiEnabled: localDpiEnabled ?? this.localDpiEnabled,
+      connectionHelper: connectionHelper ?? this.connectionHelper,
       windowsConnectionMode:
           windowsConnectionMode ?? this.windowsConnectionMode,
       tunStack: tunStack ?? this.tunStack,
@@ -288,6 +293,9 @@ class PokrovRoutingPreferences {
           json['pauseOnTrustedWifi'] == true && trustedWifi.isNotEmpty,
       autoConnectOnUntrustedWifi: json['autoConnectOnUntrustedWifi'] == true,
       localDpiEnabled: !json.containsKey('localDpiEnabled') || json['localDpiEnabled'] == true,
+      connectionHelper: WarpRuntimeTransport.values.firstWhere(
+        (value) => value.name == json['connectionHelper'],
+        orElse: () => WarpRuntimeTransport.wireguard),
       windowsConnectionMode: windowsConnectionMode,
       tunStack: tunStack,
     );
@@ -310,6 +318,7 @@ class PokrovRoutingPreferences {
         'pauseOnTrustedWifi': pauseOnTrustedWifi,
         'autoConnectOnUntrustedWifi': autoConnectOnUntrustedWifi,
         'localDpiEnabled': localDpiEnabled,
+        'connectionHelper': connectionHelper.name,
         'windowsConnectionMode': windowsConnectionMode.name,
         'tunStack': tunStack.name,
       };
