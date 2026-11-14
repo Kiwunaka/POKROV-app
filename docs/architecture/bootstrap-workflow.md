@@ -15,7 +15,7 @@ The runtime package verifies and materializes a managed profile for the selected
 
 The native host accepts the prepared identity and owns the VPN service or installed privileged helper. Start, cancel, restart, stop and proof results are scoped to that identity. A stale callback or completed previous operation does not settle the current attempt. If route intent or uplink changes while connecting, invalidate the affected work. See the [host runtime contract](platform-privilege-runtime-contract.md).
 
-Use the runtime's owned egress check for the selected route before reporting a usable connection. A resolved address, native process start or transport socket alone does not establish protection. A failed reserve or expired grant must not be presented as an active route.
+Use the runtime's owned egress check for the selected route before reporting a usable connection. Windows uses the longer carrier timeout for Slipstream's initial and periodic HTTPS checks. A resolved address, native process start or transport socket alone does not establish protection. A failed reserve or expired grant must not be presented as an active route.
 
 ## Update handoff
 

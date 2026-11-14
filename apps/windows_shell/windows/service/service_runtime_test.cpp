@@ -1181,6 +1181,31 @@ void TestConnectionHelperWaitsForFullTunProof() {
   RemoveTestRoot(root);
 }
 
+void TestSlipstreamPeriodicEgressBudget() {
+  using namespace pokrov::service;
+  const auto root = CreateTestRoot();
+  auto probe = std::make_unique<FakeEgressProbe>();
+  auto* egress = probe.get();
+  egress->on_verify = [&] {
+    egress->verify_error = egress->last_periodic && egress->last_io_timeout_ms < 4000
+        ? "core_egress_tls_timeout" : "";
+  };
+  {
+    RuntimeHost host(std::make_unique<FakeCoreRuntime>(), std::move(probe),
+                     std::make_unique<FakeRecovery>(), root, false);
+    host.Initialize();
+    host.StageProfile(R"(0
+{"outbounds":[{"type":"vless","tag":"proxy","detour":"helper"},{"type":"slipstream","tag":"helper"}],"route":{"final":"proxy"}})");
+    Expect(host.Connect(StagedDigest(host)).status == Status::kOk,
+           "Slipstream startup did not establish its TUN proof");
+    const auto periodic = host.RecheckEgress({}, ::GetTickCount64() + host.EgressCheckBudgetMs());
+    Expect(periodic.status == Status::kOk && egress->last_periodic &&
+               Contains(periodic, "core_egress_validated=1;dns_ready=1"),
+           "Slipstream periodic proof rejected a working slower DNS path");
+  }
+  RemoveTestRoot(root);
+}
+
 void TestEgressFailureStopsCoreAndIsSanitized() {
   using namespace pokrov::service;
   const auto root = CreateTestRoot();
@@ -2166,6 +2191,10 @@ void TestProtectedHandoffRetainsGuardUntilVerifiedOrExplicitOff() {
 }  // namespace
 
 int main(int argc, char** argv) {
+  if (argc == 2 && std::string(argv[1]) == "--slipstream-egress") {
+    TestSlipstreamPeriodicEgressBudget();
+    return failures == 0 ? 0 : 1;
+  }
   if (argc == 3 && std::string(argv[1]) == "--local-dpi-zapret2-test-child") {
     if (!EnterZapret2TestSandbox(reinterpret_cast<HANDLE>(std::stoull(argv[2])))) return 1;
     ::Sleep(10000);
@@ -2233,6 +2262,7 @@ int main(int argc, char** argv) {
   TestBundledRuleSetsAreStagedInsideProtectedWorkingDirectory();
   TestCoreErrorsAreSanitized();
   TestConnectionHelperWaitsForFullTunProof();
+  TestSlipstreamPeriodicEgressBudget();
   TestEgressFailureStopsCoreAndIsSanitized();
   TestDirectReadinessOverrideRequiresSelectedVpn();
   TestPendingRecoveryStopsCoreBeforeRuntimeReady();

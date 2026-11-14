@@ -322,7 +322,8 @@ std::uint32_t WindowsConnectionHelperIoTimeoutMs(const std::string& encoded) {
   const auto profile = ParseObject(encoded);
   if (!profile) return 3000;
   for (const auto& outbound : Rows(Array(profile.Get(), L"outbounds").Get())) {
-    if (String(outbound.Get(), L"type") == "psiphon") return 15000;
+    const auto type = String(outbound.Get(), L"type");
+    if (type == "psiphon" || type == "slipstream") return 15000;
   }
   return 3000;
 }
