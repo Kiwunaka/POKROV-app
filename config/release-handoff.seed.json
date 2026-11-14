@@ -6,9 +6,9 @@
   },
   "release_truth": {
     "development_target": {
-      "product_version": "2.0.12",
-      "platform_build": 4290,
-      "package_version": "2.0.12+4290"
+      "product_version": "2.0.13",
+      "platform_build": 4291,
+      "package_version": "2.0.13+4291"
     }
   }
 }

@@ -2332,7 +2332,7 @@ void main() {
         online.resolveManagedProfile(hostPlatform: platform, routeMode: inputs.routeMode,
           preferredCountryCode: 'CH', runtimeFeatures: features, selectCandidate: false);
     final selected = await resolve();
-    expect(queries.single['candidate_material_limit'], '7');
+    expect(queries.single['candidate_material_limit'], '9');
     expect(selected.candidateMaterials, hasLength(7));
     expect(responseBytes, inInclusiveRange(1, 8 * 1024 * 1024));
     final reserve = selected.candidateMaterials[reserveRef]!;
