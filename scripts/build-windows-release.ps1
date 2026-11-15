@@ -30,6 +30,10 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+if (-not $SkipBuild -and -not $TransportTrustDefinesFile) {
+  throw 'Windows builds require -TransportTrustDefinesFile for the signed routing catalog.'
+}
+
 $transportTrustArguments = @()
 if ($TransportTrustDefinesFile) {
   $transportTrustPath = (Resolve-Path -LiteralPath $TransportTrustDefinesFile -ErrorAction Stop).Path
