@@ -1311,7 +1311,12 @@ class ConnectionManager extends ChangeNotifier {
     if (error is RuntimeBoundConnectFailure) return error.toString();
     final type = error.runtimeType.toString();
     final safeType = RegExp(r'^[_A-Za-z][_A-Za-z0-9]{0,63}$').hasMatch(type) ? type : 'Object';
-    final platformCode = _connectionPlatformFailureCode(error);
+    final platformCode = _connectionPlatformFailureCode(error) ??
+        (error is RoutingCatalogFailure && const {
+          'smart_access_native_recovery_required',
+          'smart_access_stage_revoked',
+          'smart_access_native_unscoped_recovery_required',
+        }.contains(error.code) ? error.code : null);
     final frames = RegExp(
       r'package:(?:pokrov_app_shell|pokrov_runtime_engine|pokrov_core_domain)/[A-Za-z0-9_/.-]*?([A-Za-z0-9_]{1,64}\.dart):([0-9]{1,7})(?::[0-9]+)?',
     ).allMatches(stack.toString()).map((frame) => '${frame[1]}:${frame[2]}').toSet().take(2);
