@@ -12,6 +12,7 @@ import android.content.pm.ServiceInfo
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.Network
+import android.net.NetworkCapabilities
 import android.net.VpnService
 import android.graphics.Color
 import android.os.Handler
@@ -1465,6 +1466,17 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     }
 
     override fun getInterfaces(): NetworkInterfaceIterator {
+        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val dnsByInterface = connectivityManager.allNetworks.mapNotNull { network ->
+            val capabilities = connectivityManager.getNetworkCapabilities(network)
+            if (capabilities == null || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
+                return@mapNotNull null
+            }
+            val links = connectivityManager.getLinkProperties(network) ?: return@mapNotNull null
+            links.interfaceName?.let { name ->
+                name to links.dnsServers.mapNotNull { it.hostAddress }
+            }
+        }.toMap()
         val iterator = JavaNetworkInterface.getNetworkInterfaces()
         val interfaces = mutableListOf<space.pokrov.core.libbox.NetworkInterface>()
         while (iterator.hasMoreElements()) {
@@ -1474,6 +1486,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     setIndex(resolvedInterface.index)
                     setMTU(runCatching { resolvedInterface.mtu }.getOrDefault(0))
                     setName(resolvedInterface.name ?: "")
+                    setDNSServer(LibboxStringIterator(dnsByInterface[resolvedInterface.name].orEmpty()))
                     setAddresses(
                         LibboxStringIterator(
                             resolvedInterface.interfaceAddresses

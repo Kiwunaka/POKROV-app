@@ -76,6 +76,7 @@ internal class AndroidCandidateProbePlatform(
         val value = space.pokrov.core.libbox.NetworkInterface().apply {
             setIndex(resolved.index)
             setName(name)
+            setDNSServer(ProbeStringIterator(links.dnsServers.mapNotNull { it.hostAddress }))
             setMTU(resolved.mtu)
             setFlags(if (resolved.isUp) OsConstants.IFF_UP else 0)
             setAddresses(ProbeStringIterator(links.linkAddresses.map {
