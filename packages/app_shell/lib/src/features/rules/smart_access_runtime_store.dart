@@ -377,6 +377,10 @@ class SmartAccessRuntimeStore {
       final scopeBlocked = sameProfile && leases.any((lease) =>
         record.scopeActions.containsKey(lease.lease['runtime_scope_sha256']));
       if ((sameProfile && record.blocksProfile) || scopeBlocked || record.affectsCatalog(binding.catalogSha256)) {
+        if (record.recoveryRequired && record.catalogSha256.isEmpty && record.expiresAt == null &&
+            record.policyAction == 'none' && !record.catalogWithdrawn && record.scopeActions.isEmpty) {
+          throw const RoutingCatalogFailure('smart_access_native_unscoped_recovery_required');
+        }
         throw RoutingCatalogFailure(record.recoveryRequired ? 'smart_access_native_recovery_required' : 'smart_access_stage_revoked');
       }
     }
