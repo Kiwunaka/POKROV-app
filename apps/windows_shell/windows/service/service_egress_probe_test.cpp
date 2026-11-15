@@ -17,7 +17,8 @@ namespace pokrov::service {
 std::wstring QueryLoopbackProbeAddressForTest(std::uint16_t port,
                                             const CheckInterruption& interrupted,
                                             bool reserve = false,
-                                            std::optional<bool>* dns_a_accepted = nullptr);
+                                            std::optional<bool>* dns_a_accepted = nullptr,
+                                            std::uint32_t io_timeout_ms = 3000);
 }
 namespace {
 class EgressEvents final : public pokrov::service::ServiceEventSink {
@@ -45,7 +46,7 @@ class EgressEvents final : public pokrov::service::ServiceEventSink {
 
 class LoopbackDnsServer {
  public:
-  enum class Reply { kValid, kWrongId, kWrongName, kError, kWait };
+  enum class Reply { kValid, kWrongId, kWrongName, kError, kWait, kDelayed };
   explicit LoopbackDnsServer(Reply reply) {
     socket_ = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     sockaddr_in address{};
@@ -70,6 +71,7 @@ class LoopbackDnsServer {
             sizeof(request), 0, reinterpret_cast<sockaddr*>(&peer), &peer_size);
         ++requests;
         if (received < 17 || reply == Reply::kWait) return;
+        if (reply == Reply::kDelayed) ::Sleep(3200);
         std::vector<unsigned char> response(request, request + received);
         response[2] |= 0x80;  // QR: response; the question and transaction are echoed.
         response[3] |= 0x80;  // Recursion available.
@@ -272,6 +274,42 @@ void CheckStalledConnections(const std::function<void(bool, const char*)>& expec
               << " fixture_socket_error=" << server.stall_socket_error << std::endl;
   }
 }
+
+void CheckDnsResponses(const std::function<void(bool, const char*)>& expect) {
+  using namespace pokrov::service;
+  for (const auto reply : {LoopbackDnsServer::Reply::kValid,
+                          LoopbackDnsServer::Reply::kWrongId,
+                          LoopbackDnsServer::Reply::kWrongName,
+                          LoopbackDnsServer::Reply::kError,
+                          LoopbackDnsServer::Reply::kWait}) {
+    LoopbackDnsServer server(reply);
+    expect(server.port != 0, "DNS loopback listener failed");
+    if (server.port == 0) return;
+    const auto started = ::GetTickCount64();
+    std::optional<bool> accepted;
+    const auto address = QueryLoopbackProbeAddressForTest(server.port, [&] {
+      return reply == LoopbackDnsServer::Reply::kWait && server.requests > 0
+                 ? OperationInterruption::kCancelled : OperationInterruption::kNone;
+    }, false, &accepted);
+    expect(accepted == (reply == LoopbackDnsServer::Reply::kValid),
+           "DNS observation did not distinguish an accepted A from a received invalid reply");
+    expect(reply == LoopbackDnsServer::Reply::kValid ? address == L"127.0.0.1" : address.empty(),
+           "DNS accepted a mismatched/error reply or rejected the owned valid answer");
+    expect(server.requests == 1, "DNS transport did not send exactly one query");
+    if (reply == LoopbackDnsServer::Reply::kWait) {
+      expect(::GetTickCount64() - started < 500, "DNS cancellation waited for its full deadline");
+    }
+  }
+  LoopbackDnsServer delayed(LoopbackDnsServer::Reply::kDelayed);
+  expect(delayed.port != 0, "delayed DNS loopback listener failed");
+  if (delayed.port == 0) return;
+  std::optional<bool> accepted;
+  const auto started = ::GetTickCount64();
+  const auto address = QueryLoopbackProbeAddressForTest(delayed.port, {}, false, &accepted, 5000);
+  expect(address == L"127.0.0.1" && accepted == true && delayed.requests == 1,
+         "DNS ignored the connection helper's extended I/O budget");
+  expect(::GetTickCount64() - started >= 3000, "DNS fixture did not exceed the ordinary budget");
+}
 }  // namespace
 #endif
 
@@ -286,6 +324,11 @@ int main(int argc, char** argv) {
   };
   if (argc == 2 && std::string(argv[1]) == "--stalls") {
     CheckStalledConnections(expect);
+    ::WSACleanup();
+    return failures == 0 ? 0 : 1;
+  }
+  if (argc == 2 && std::string(argv[1]) == "--dns") {
+    CheckDnsResponses(expect);
     ::WSACleanup();
     return failures == 0 ? 0 : 1;
   }
@@ -390,29 +433,7 @@ int main(int argc, char** argv) {
   }
   // The probe's DNS transport is a socket owned by this process. Exercise its
   // real SDK decoder and cancellation without a TUN, OS resolver or WFP writes.
-  for (const auto reply : {LoopbackDnsServer::Reply::kValid,
-                          LoopbackDnsServer::Reply::kWrongId,
-                          LoopbackDnsServer::Reply::kWrongName,
-                          LoopbackDnsServer::Reply::kError,
-                          LoopbackDnsServer::Reply::kWait}) {
-    LoopbackDnsServer server(reply);
-    expect(server.port != 0, "DNS loopback listener failed");
-    if (server.port == 0) return 1;
-    const auto started = ::GetTickCount64();
-    std::optional<bool> accepted;
-    const auto address = QueryLoopbackProbeAddressForTest(server.port, [&] {
-      return reply == LoopbackDnsServer::Reply::kWait && server.requests > 0
-                 ? OperationInterruption::kCancelled : OperationInterruption::kNone;
-    }, false, &accepted);
-    expect(accepted == (reply == LoopbackDnsServer::Reply::kValid),
-           "DNS observation did not distinguish an accepted A from a received invalid reply");
-    expect(reply == LoopbackDnsServer::Reply::kValid ? address == L"127.0.0.1" : address.empty(),
-           "DNS accepted a mismatched/error reply or rejected the owned valid answer");
-    expect(server.requests == 1, "DNS transport did not send exactly one query");
-    if (reply == LoopbackDnsServer::Reply::kWait) {
-      expect(::GetTickCount64() - started < 500, "DNS cancellation waited for its full deadline");
-    }
-  }
+  CheckDnsResponses(expect);
   {
     const SOCKET reservation = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     sockaddr_in address{};

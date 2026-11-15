@@ -114,7 +114,8 @@ bool FindTunDns(TunDnsEndpoint* result, ProbeObservation* observation) {
 std::wstring QueryProbeAddress(const TunDnsEndpoint& endpoint,
                               const wchar_t* hostname,
                               const CheckInterruption& interrupted,
-                              ProbeObservation* observation) {
+                              ProbeObservation* observation,
+                              std::uint32_t io_timeout_ms) {
   observation->stage = EgressProbeStage::kDnsSetup;
   observation->dns_a_accepted = false;
   WSADATA wsa{};
@@ -167,7 +168,7 @@ std::wstring QueryProbeAddress(const TunDnsEndpoint& endpoint,
       return;
     }
     observation->stage = EgressProbeStage::kDnsWait;
-    const auto deadline = ::GetTickCount64() + 3000;
+    const auto deadline = ::GetTickCount64() + io_timeout_ms;
     while (!Interrupted(interrupted) && ::GetTickCount64() < deadline) {
       fd_set readable;
       FD_ZERO(&readable);
@@ -682,7 +683,7 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
     if (tun_dns_) {
       if (!FindTunDns(&endpoint, &observation) ||
           (numeric = QueryProbeAddress(endpoint, target.hostname, interrupted,
-                                       &observation))
+                                       &observation, io_timeout_ms))
               .empty()) {
         RecordObservation(observation, started, false, interrupted);
         return "core_egress_dns_failed";
@@ -752,7 +753,8 @@ std::unique_ptr<RuntimeEgressProbe> CreateLoopbackEgressProbeForTest(
 
 std::wstring QueryLoopbackProbeAddressForTest(std::uint16_t port,
                                             const CheckInterruption& interrupted,
-                                            bool reserve, std::optional<bool>* dns_a_accepted) {
+                                            bool reserve, std::optional<bool>* dns_a_accepted,
+                                            std::uint32_t io_timeout_ms) {
   TunDnsEndpoint endpoint;
   endpoint.local.sin_family = AF_INET;
   endpoint.local.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
@@ -767,7 +769,7 @@ std::wstring QueryLoopbackProbeAddressForTest(std::uint16_t port,
   endpoint.interface_index = route.InterfaceIndex;
   ProbeObservation observation;
   auto result = QueryProbeAddress(endpoint, kProbeTargets[reserve ? 1 : 0].hostname,
-      interrupted, &observation);
+      interrupted, &observation, io_timeout_ms);
   if (dns_a_accepted != nullptr) *dns_a_accepted = observation.dns_a_accepted;
   return result;
 }
