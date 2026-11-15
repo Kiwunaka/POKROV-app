@@ -89,10 +89,10 @@ class _QuickConnectSection extends StatelessWidget {
       ),
       onToggle: presentation.primaryActionEnabled
           ? () => unawaited(protectionIntents.activatePrimaryAction(presentation)) : null,
-      onOpenStatus: pokrovPrivateClient ? null : protectionIntents.openConnectionDetails,
+      onOpenStatus: pokrovPrivateClient && !pokrovPrivateTools ? null : protectionIntents.openConnectionDetails,
       onOpenAccess: pokrovPrivateClient ? null : onOpenProfile,
       onNotifications: pokrovPrivateClient ? null : onOpenNotifications,
-      onEditTiles: pokrovPrivateClient ? null : onEditTiles,
+      onEditTiles: pokrovPrivateClient && !pokrovPrivateTools ? null : onEditTiles,
       onTip: loginRecoveryRequired ? onOpenProfile : onTelegramBonus,
       onHelp: () => unawaited(onHelp()),
       adSlot: slots.isEmpty ? null : Column(children: [

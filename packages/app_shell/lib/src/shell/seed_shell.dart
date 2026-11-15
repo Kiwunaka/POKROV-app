@@ -1183,7 +1183,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   void _selectTab(SeedTab tab) {
-    if (pokrovPrivateClient && tab != SeedTab.protection && tab != SeedTab.locations) return;
+    if (pokrovPrivateClient && !pokrovPrivateTools &&
+        tab != SeedTab.protection && tab != SeedTab.locations) return;
     setState(() {
       if (tab.index >= SeedTab.locations.index && _selectedIndex < SeedTab.locations.index) {
         _pageReturnIndex = _selectedIndex;

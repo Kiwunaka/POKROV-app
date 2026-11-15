@@ -106,6 +106,8 @@ part 'src/features/rules/route_labels.dart';
 part 'src/features/warp/warp_sheet.dart';
 
 const pokrovPrivateClient = bool.fromEnvironment('POKROV_PRIVATE_CLIENT');
+const pokrovPrivateTools = pokrovPrivateClient &&
+    bool.fromEnvironment('POKROV_PRIVATE_TOOLS');
 
 /// The first four are the tab bar; locations and rules open as pages over
 /// the tab they were opened from.
