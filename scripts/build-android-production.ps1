@@ -20,6 +20,10 @@ param(
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
+if (-not $TransportTrustDefinesFile) {
+  throw 'Android builds require -TransportTrustDefinesFile for the signed routing catalog.'
+}
+
 $transportTrustArguments = @()
 if ($TransportTrustDefinesFile) {
   $transportTrustPath = (Resolve-Path -LiteralPath $TransportTrustDefinesFile -ErrorAction Stop).Path
