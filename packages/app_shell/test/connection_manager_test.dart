@@ -3051,7 +3051,7 @@ void main() {
     expect(controller.isConnected, isTrue);
     await tester.pump(const Duration(milliseconds: 400));
     expect(bootstrapper.cached.resolutions, isEmpty, reason: 'the actual profile uses only SmartDNS');
-    tester.widget<ui.HomeScreen>(find.byType(ui.HomeScreen)).onOpenStatus();
+    tester.widget<ui.HomeScreen>(find.byType(ui.HomeScreen)).onOpenStatus!();
     await tester.pump(const Duration(milliseconds: 400));
     final status = tester.widget<ui.StatusSheet>(find.byType(ui.StatusSheet));
     expect(status.data.title, 'SmartDNS работает');

@@ -984,6 +984,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           .take(128)
           .toList(growable: false);
       final effectiveState = restored.copyWith(
+        interfaceMode: pokrovPrivateClient ? PokrovInterfaceMode.simple : restored.interfaceMode,
         cachedNotifications: notificationCacheMatches ? restored.cachedNotifications : null,
         notificationsCachedAt: notificationCacheMatches ? restored.notificationsCachedAt : '',
         notificationCacheOwner: notificationCacheMatches ? savedOwner : '',
@@ -1182,6 +1183,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   void _selectTab(SeedTab tab) {
+    if (pokrovPrivateClient && tab != SeedTab.protection && tab != SeedTab.locations) return;
     setState(() {
       if (tab.index >= SeedTab.locations.index && _selectedIndex < SeedTab.locations.index) {
         _pageReturnIndex = _selectedIndex;
@@ -1388,6 +1390,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   Future<void> _refreshNotifications() {
+    if (pokrovPrivateClient) return Future<void>.value();
     final current = _notificationsRequest;
     if (current != null) return current;
     late final Future<void> request;
@@ -1828,6 +1831,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   Future<void> _checkForClientUpdate({bool forcePrompt = false}) async {
+    if (pokrovPrivateClient) return;
     final releaseActions = _releaseActionService;
     if (releaseActions == null) {
       return;
@@ -2635,6 +2639,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   Future<void> _loadBonusSummary({bool force = false}) async {
+    if (pokrovPrivateClient) return;
     final accountRevision = _accountUiRevision;
     if (_bonusSummaryBusy || _accountSessionChanging) {
       return;
@@ -2837,6 +2842,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   Future<void> _loadFirstLaunchState() async {
+    if (pokrovPrivateClient) {
+      _firstSessionCoordinator.complete(animated: false);
+      return;
+    }
     final completed = await _firstSessionCoordinator.loadPersistedCompletion();
     if (!mounted || !completed) {
       return;

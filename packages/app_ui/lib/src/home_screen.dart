@@ -14,8 +14,8 @@ class HomeScreen extends StatelessWidget {
     super.key,
     required this.data,
     required this.onToggle,
-    required this.onOpenStatus,
-    required this.onOpenAccess,
+    this.onOpenStatus,
+    this.onOpenAccess,
     this.onNotifications,
     this.onEditTiles,
     this.onTip,
@@ -25,8 +25,8 @@ class HomeScreen extends StatelessWidget {
 
   final HomeViewData data;
   final VoidCallback? onToggle;
-  final VoidCallback onOpenStatus;
-  final VoidCallback onOpenAccess;
+  final VoidCallback? onOpenStatus;
+  final VoidCallback? onOpenAccess;
   final VoidCallback? onNotifications;
   final VoidCallback? onEditTiles;
   final VoidCallback? onTip;
@@ -169,7 +169,7 @@ class _Header extends StatelessWidget {
   const _Header({required this.accessBadge, required this.onAccess, this.onNotifications, this.unread = 0});
 
   final String accessBadge;
-  final VoidCallback onAccess;
+  final VoidCallback? onAccess;
   final VoidCallback? onNotifications;
   final int unread;
 
@@ -186,7 +186,7 @@ class _Header extends StatelessWidget {
           tooltip: unread > 0 ? 'Уведомления · $unread' : 'Уведомления',
           icon: Badge(isLabelVisible: unread > 0, label: Text('$unread'), child: Icon(Icons.notifications_none_rounded, color: pokrovColor(context, PokrovColors.ink))),
         ),
-        OutlinedButton(
+        if (onAccess != null) OutlinedButton(
           onPressed: onAccess,
           style: OutlinedButton.styleFrom(
             foregroundColor: pokrovColor(context, PokrovColors.accent),
@@ -210,7 +210,7 @@ class _StatusPill extends StatelessWidget {
   const _StatusPill({required this.data, required this.onTap});
 
   final HomeViewData data;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -221,7 +221,7 @@ class _StatusPill extends StatelessWidget {
       ConnectionPhase.error => ('Не получилось', pokrovColor(context, PokrovColors.warnBg), pokrovColor(context, PokrovColors.warnStrong), pokrovColor(context, PokrovColors.warnDot)),
     };
     return Semantics(
-      button: true,
+      button: onTap != null,
       label: 'Состояние защиты: ${data.statusLabel ?? text}',
       onTap: onTap,
       excludeSemantics: true,
@@ -253,7 +253,7 @@ class _StatusPill extends StatelessWidget {
                       style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: fg),
                     ),
                   ),
-                  Icon(Icons.chevron_right_rounded, size: 18, color: fg),
+                  if (onTap != null) Icon(Icons.chevron_right_rounded, size: 18, color: fg),
                 ],
               ),
             ),

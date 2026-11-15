@@ -279,6 +279,41 @@ class _NoConnectBootstrapper implements ManagedProfileBootstrapper {
 }
 
 void main() {
+  test('provisioned session uses secure storage and preserves a rotated session on restart', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-private-session-');
+    addTearDown(() => directory.delete(recursive: true));
+    final secrets = MemoryAppFirstSessionSecretStore();
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      supportDirectoryResolver: () async => directory,
+      sessionSecretStore: secrets,
+    );
+    Future<void> seed() => bootstrapper.seedProvisionedSession(
+      hostPlatform: HostPlatform.android,
+      installId: 'private-fixture-install',
+      accountId: 'private-fixture-account',
+      credentials: const AppFirstSessionCredentials(
+        accessToken: 'private-fixture-access', refreshToken: 'private-fixture-refresh'),
+    );
+    await seed();
+    final state = await File('${directory.path}/app-first-session-android.json').readAsString();
+    expect(jsonDecode(state)['install_id'], 'private-fixture-install');
+    expect(jsonDecode(state)['account_id'], 'private-fixture-account');
+    expect(state, isNot(contains('private-fixture-access')));
+    expect(state, isNot(contains('private-fixture-refresh')));
+    var pair = await secrets.readSessionPair(
+      hostPlatform: HostPlatform.android, installId: 'private-fixture-install');
+    expect(pair?.accessToken, 'private-fixture-access');
+    expect(pair?.refreshToken, 'private-fixture-refresh');
+    await secrets.writeSessionPair(
+      hostPlatform: HostPlatform.android, installId: 'private-fixture-install',
+      pair: const AppFirstSessionCredentials(accessToken: 'rotated-access', refreshToken: 'rotated-refresh'));
+    await seed();
+    pair = await secrets.readSessionPair(
+      hostPlatform: HostPlatform.android, installId: 'private-fixture-install');
+    expect(pair?.accessToken, 'rotated-access');
+    expect(pair?.refreshToken, 'rotated-refresh');
+  });
+
   test('catalog service failure retains verified policy until its signed expiry or explicit disable', () async {
     final directory = await Directory.systemTemp.createTemp('pokrov-catalog-service-failure-');
     addTearDown(() => directory.delete(recursive: true));

@@ -62,8 +62,8 @@ class _QuickConnectSection extends StatelessWidget {
     final errorMessage = retainsProtection
         ? [if (failure != null && failure.isNotEmpty) failure, presentation.subtitle].join(' ')
         : failure ?? (presentation.isDegraded ? presentation.subtitle : null);
-    final slots = _homeAdminPromoSlots(bonusSummary);
-    final showTip = bonusSummary?.channelBonusEligible == true &&
+    final slots = pokrovPrivateClient ? const <AppFirstPromoSlot>[] : _homeAdminPromoSlots(bonusSummary);
+    final showTip = !pokrovPrivateClient && bonusSummary?.channelBonusEligible == true &&
         bonusSummary?.channelBonusClaimed != true && onTelegramBonus != null;
     return ui.HomeScreen(
       data: ui.HomeViewData(
@@ -81,7 +81,7 @@ class _QuickConnectSection extends StatelessWidget {
         errorMessage: errorMessage?.isNotEmpty == true ? errorMessage : null,
         notificationsUnread: notificationsUnread,
         tiles: tiles,
-        tip: loginRecoveryRequired ? const ui.NextStepTip(title: 'Нужно восстановить вход',
+        tip: !pokrovPrivateClient && loginRecoveryRequired ? const ui.NextStepTip(title: 'Нужно восстановить вход',
           text: 'Войди по коду из Telegram или почты аккаунта.', icon: Icons.alternate_email_rounded)
           : showTip ? ui.NextStepTip(title: 'Подпишись на канал',
           text: _telegramBonusHomeLabel(bonusSummary), icon: Icons.send_rounded) : null,
@@ -89,10 +89,10 @@ class _QuickConnectSection extends StatelessWidget {
       ),
       onToggle: presentation.primaryActionEnabled
           ? () => unawaited(protectionIntents.activatePrimaryAction(presentation)) : null,
-      onOpenStatus: protectionIntents.openConnectionDetails,
-      onOpenAccess: onOpenProfile,
-      onNotifications: onOpenNotifications,
-      onEditTiles: onEditTiles,
+      onOpenStatus: pokrovPrivateClient ? null : protectionIntents.openConnectionDetails,
+      onOpenAccess: pokrovPrivateClient ? null : onOpenProfile,
+      onNotifications: pokrovPrivateClient ? null : onOpenNotifications,
+      onEditTiles: pokrovPrivateClient ? null : onEditTiles,
       onTip: loginRecoveryRequired ? onOpenProfile : onTelegramBonus,
       onHelp: () => unawaited(onHelp()),
       adSlot: slots.isEmpty ? null : Column(children: [

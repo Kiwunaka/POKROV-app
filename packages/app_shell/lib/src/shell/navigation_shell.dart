@@ -26,7 +26,7 @@ class _MobileShell extends StatelessWidget {
             index: selectedIndex,
             child: _LazyIndexedStack(index: selectedIndex, builders: sectionBuilders),
           )),
-          Align(alignment: Alignment.bottomCenter, child: ui.PokrovTabBar(
+          if (!pokrovPrivateClient) Align(alignment: Alignment.bottomCenter, child: ui.PokrovTabBar(
             current: ui.PokrovTab.values[tabIndex],
             onSelect: (tab) {
               if (tab.index == selectedIndex) return;

@@ -6998,6 +6998,30 @@ class AppFirstRuntimeBootstrapper
     return _waitForLocalState(creation, timeout: timeout);
   }
 
+  Future<void> seedProvisionedSession({
+    required HostPlatform hostPlatform,
+    required String installId,
+    required String accountId,
+    required AppFirstSessionCredentials credentials,
+  }) async {
+    final file = await _stateFile(hostPlatform);
+    await _withAppFirstStateFileLock(file, () async {
+      if (await _loadStateFromFile(hostPlatform, file) != null) return;
+      await _persistStateToFile(
+        hostPlatform: hostPlatform,
+        file: file,
+        state: _StoredBootstrapState(
+          installId: installId,
+          accountId: accountId,
+          sessionToken: credentials.accessToken,
+          refreshToken: credentials.refreshToken,
+          managedManifestPath: _defaultManagedManifestPath,
+          profileRevision: '',
+        ),
+      );
+    });
+  }
+
   Future<_StoredBootstrapState> _loadOrCreateStateWithFileLock(
     HostPlatform hostPlatform,
   ) async {

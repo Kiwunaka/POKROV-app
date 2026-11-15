@@ -199,7 +199,7 @@ class _LocationsSectionState extends State<_LocationsSection> {
       onSelect: widget.onPreferredCountrySelected,
       onRefresh: widget.onRefreshLocationsCatalog,
       refreshing: widget.locationsCatalogBusy,
-      onSelectConnection: (widget.transportCatalog?.candidates.isNotEmpty ?? false) ? _selectConnection : null,
+      onSelectConnection: !pokrovPrivateClient && (widget.transportCatalog?.candidates.isNotEmpty ?? false) ? _selectConnection : null,
       onBack: widget.onBack,
       selectedConnectionLabel: _preferredCandidate == null ? null : _locationCandidateLabel(_preferredCandidate!),
       onMtsBridge: const {'mts', 'vk'}.contains(_preferredCandidate?.transport) || widget.mtsBridgeRunning

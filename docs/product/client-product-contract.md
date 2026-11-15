@@ -8,3 +8,5 @@ POKROV is the Android and Windows client for the managed service. [Design](../..
 - **Настройки** groups routing and app controls, diagnostics and updates. Full and selective protection keep their distinct meaning. If a selected route is unavailable, preserve the choice and explain what the user can change. WARP is a separate user choice with its own proof. [Smart Access](../architecture/smart-access-dns.md) requires eligible signed provider scope.
 
 See [onboarding](../architecture/app-first-onboarding-flow.md) for account entry and [bootstrap](../architecture/bootstrap-workflow.md) for runtime and update behavior.
+
+Private Android builds open directly into simple mode with a pre-issued device session stored in secure storage. The screen provides connection, country choice and help. Account, purchase, reward, promotion and inbox controls are hidden; promotion, inbox and public update requests are disabled. The VPN permission prompt and running-service notification retain normal Android behavior. Personal build inputs stay outside the checkout; [packaging](../../scripts/README.md) owns the build command.

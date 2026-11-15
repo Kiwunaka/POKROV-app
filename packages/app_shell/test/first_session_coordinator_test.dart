@@ -111,6 +111,37 @@ void main() {
   });
   tearDown(() => messenger.setMockMethodCallHandler(runtimeChannel, null));
 
+  testWidgets('private client opens ready with connection country and help only', (tester) async {
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: _PairingActions(),
+      firstLaunchStore: _MemoryFirstLaunchStore(),
+    ));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(tester.takeException(), isNull);
+    expect(find.byKey(const ValueKey('connect-action')), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-tile-country')), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-tile-help')), findsOneWidget);
+    for (final key in ['home-edit-tiles', 'home-notifications-action', 'home-tile-access',
+        'home-tile-bonuses', 'home-tile-route', 'home-tile-devices']) {
+      expect(find.byKey(ValueKey(key)), findsNothing);
+    }
+    for (final text in ['У меня есть код', 'Доступ', 'Настройки', 'Бонусы']) {
+      expect(find.text(text), findsNothing);
+    }
+    await tester.tap(find.byKey(const ValueKey('home-tile-country')));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Авто · все страны'), findsOneWidget);
+    expect(find.text('Выбрать соединение'), findsNothing);
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    expect(find.byKey(const ValueKey('connect-action')), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  }, skip: !pokrovPrivateClient);
+
   testWidgets('initial runtime timeout stays in the shell and resume can recover', (tester) async {
     final stalled = Completer<Map<String, Object?>>();
     var snapshots = 0;

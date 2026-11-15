@@ -33,6 +33,7 @@ extension _HomeTiles on _PokrovSeedShellState {
       [for (final id in _homeTileIds) if (id != 'bypass' || _bypassAvailable) id];
 
   List<String> get _shownHomeTileIds =>
+      pokrovPrivateClient ? const ['country', 'help'] :
       [for (final id in _homeTiles ?? _homeTileDefaults) if (_availableHomeTileIds.contains(id)) id];
 
   List<ui.HomeTile> _homeTileViews(BuildContext context, String selectedCountry) {
@@ -58,7 +59,13 @@ extension _HomeTiles on _PokrovSeedShellState {
         'access' => tile(id, _accountSessionCoordinator.loginRecoveryRequired ? 'Восстановить вход'
             : _accessShortValue(widget.appContext, _bonusSummary, _accountSessionCoordinator.freeProfileAccessForDisplay, _subscriptionInfo),
             () => _selectTab(SeedTab.access)),
-        'help' => tile(id, 'ИИ и человек', () => _selectTab(SeedTab.help)),
+        'help' => tile(id, 'ИИ и человек', () {
+          if (pokrovPrivateClient) {
+            unawaited(_showSupportHub());
+          } else {
+            _selectTab(SeedTab.help);
+          }
+        }),
         'devices' => tile(id, '«Код для входа» для нового', () => _showDevicesSheet(context,
             currentPlatformLabel: widget.appContext.hostPlatform.label,
             onFetchDevices: _fetchClientDevices, onRevokeDevice: _revokeClientDevice,

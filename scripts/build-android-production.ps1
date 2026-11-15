@@ -7,6 +7,7 @@ param(
   [string]$SupportSigningKeyId = $env:POKROV_SUPPORT_SIGNING_KEY_ID,
   [string]$SupportSigningPublicKey = $env:POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64,
   [string]$TransportTrustDefinesFile,
+  [string]$PrivateClientDefinesFile,
   [string]$CoreRoot,
   [string]$RuntimeArtifactsPath,
   [string]$WindowsReleasePath,
@@ -23,6 +24,21 @@ $transportTrustArguments = @()
 if ($TransportTrustDefinesFile) {
   $transportTrustPath = (Resolve-Path -LiteralPath $TransportTrustDefinesFile -ErrorAction Stop).Path
   $transportTrustArguments = @("--dart-define-from-file=$transportTrustPath")
+}
+
+$privateClientArguments = @()
+if ($PrivateClientDefinesFile) {
+  $privateClientPath = (Resolve-Path -LiteralPath $PrivateClientDefinesFile -ErrorAction Stop).Path
+  $privateClientDefines = [IO.File]::ReadAllText($privateClientPath) | ConvertFrom-Json -AsHashtable
+  if ($privateClientDefines['POKROV_PRIVATE_CLIENT'] -ne $true -and $privateClientDefines['POKROV_PRIVATE_CLIENT'] -ne 'true') {
+    throw 'Private client defines must enable POKROV_PRIVATE_CLIENT.'
+  }
+  foreach ($name in @('INSTALL_ID', 'ACCOUNT_ID', 'ACCESS_TOKEN', 'REFRESH_TOKEN')) {
+    if ([string]::IsNullOrWhiteSpace([string]$privateClientDefines["POKROV_PRIVATE_$name"])) {
+      throw "Private client defines are missing $name."
+    }
+  }
+  $privateClientArguments = @("--dart-define-from-file=$privateClientPath")
 }
 
 $SupportSigningKeyId = [string]$SupportSigningKeyId
@@ -166,7 +182,7 @@ try {
       "--dart-define=POKROV_SUPPORT_SIGNING_KEY_ID=$SupportSigningKeyId",
       "--dart-define=POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64=$SupportSigningPublicKey"
     )
-    & flutter @commonBuildArguments @transportTrustArguments
+    & flutter @commonBuildArguments @transportTrustArguments @privateClientArguments
     if ($LASTEXITCODE -ne 0) {
       throw "Flutter production universal and ABI APK build failed with exit code $LASTEXITCODE."
     }
@@ -273,7 +289,8 @@ foreach ($artifact in $artifacts) {
     [regex]::Matches($nativeCodeMatch.Groups[1].Value, "'([^']+)'") |
       ForEach-Object { $_.Groups[1].Value }
   )
-  if ($artifactPackage -ne [string]$metadata.package_name) {
+  $expectedPackage = [string]$metadata.package_name + $(if ($PrivateClientDefinesFile) { '.private' } else { '' })
+  if ($artifactPackage -ne $expectedPackage) {
     throw "A production APK package does not match the configured signing identity."
   }
   if ($versionName -ne $declaredVersionName) {

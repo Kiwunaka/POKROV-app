@@ -21,6 +21,8 @@ def productionSigningInputs = [
     keyPassword: System.getenv("ANDROID_SIGNING_KEY_PASSWORD"),
     keyAlias: System.getenv("ANDROID_SIGNING_KEY_ALIAS"),
 ]
+
+def pokrovPrivateClient = pokrovDartDefines['POKROV_PRIVATE_CLIENT'] == 'true'
 def configuredProductionSigningInputs = productionSigningInputs.values().findAll { value ->
     value != null && !value.toString().trim().isEmpty()
 }
@@ -70,7 +72,7 @@ android {
         ['POKROV_ROUTING_CATALOG_KEY_ID', 'POKROV_ROUTING_CATALOG_PUBLIC_KEY_B64', 'POKROV_ROUTING_CATALOG_AUDIENCE'].each { name ->
             buildConfigField "String", name, groovy.json.JsonOutput.toJson(pokrovDartDefines[name] ?: (name.endsWith('AUDIENCE') ? 'production' : ''))
         }
-        applicationId = "space.pokrov.pokrov_android_shell"
+        applicationId = "space.pokrov.pokrov_android_shell" + (pokrovPrivateClient ? ".private" : "")
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -102,7 +104,7 @@ android {
     productFlavors {
         direct {
             dimension = "distribution"
-            buildConfigField "boolean", "POKROV_DIRECT_UPDATE_ENABLED", "true"
+            buildConfigField "boolean", "POKROV_DIRECT_UPDATE_ENABLED", pokrovPrivateClient ? "false" : "true"
             buildConfigField "String", "POKROV_UPDATE_CHANNEL", '"stable"'
         }
         store {

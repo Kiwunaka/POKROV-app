@@ -20,13 +20,24 @@ Future<void> main() async {
     // Unsupported device or emulator - the default mode is fine.
   }
   final bootstrapper = AppFirstRuntimeBootstrapper();
+  if (pokrovPrivateClient) {
+    await bootstrapper.seedProvisionedSession(
+      hostPlatform: HostPlatform.android,
+      installId: const String.fromEnvironment('POKROV_PRIVATE_INSTALL_ID'),
+      accountId: const String.fromEnvironment('POKROV_PRIVATE_ACCOUNT_ID'),
+      credentials: const AppFirstSessionCredentials(
+        accessToken: String.fromEnvironment('POKROV_PRIVATE_ACCESS_TOKEN'),
+        refreshToken: String.fromEnvironment('POKROV_PRIVATE_REFRESH_TOKEN'),
+      ),
+    );
+  }
   final observability = await PokrovClientObservability.start(
     hostPlatform: HostPlatform.android,
     releaseHealthService: bootstrapper,
   );
   installPokrovCrashHandlers(observability);
   final acquisitionLinks = PokrovAndroidAcquisitionLinks();
-  final initialAcquisitionUri = await acquisitionLinks.start();
+  final initialAcquisitionUri = pokrovPrivateClient ? null : await acquisitionLinks.start();
   runApp(
     PokrovSeedApp(
       appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
