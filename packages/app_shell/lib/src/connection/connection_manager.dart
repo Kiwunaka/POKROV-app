@@ -235,7 +235,7 @@ class ConnectionManager extends ChangeNotifier {
   }
 
   Future<bool> prepareLocationsTransportCatalog() async {
-    if (_appContext.hostPlatform == HostPlatform.android && _transportCatalog == null && !_runtimeBusy) {
+    if (_appContext.hostPlatform == HostPlatform.android && !_runtimeBusy) {
       try {
         await _runRuntimeAction(() async {
           final current = await _withRuntimeActionTimeout('snapshot', _runtimeEngine.snapshot);
@@ -250,7 +250,7 @@ class ConnectionManager extends ChangeNotifier {
         return false;
       }
     }
-    return refreshTransportCatalog();
+    return refreshTransportCatalog(force: _appContext.hostPlatform == HostPlatform.android);
   }
 
   Future<bool> _refreshManagedProfileCache({bool alternativesOnly = false}) async {

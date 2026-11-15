@@ -5460,6 +5460,28 @@ void main() {
     expect(nativeMutations, isEmpty);
   });
 
+  test('locations refreshes cached choices after initializing cold Android Core', () async {
+    final bootstrapper = _CachedBootstrapper();
+    final runtime = _Runtime(hostPlatform: HostPlatform.android)
+      ..supportsCandidates = true..coreVersion = '1.2.22'..phase = RuntimePhase.initialized;
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+    await manager.refresh();
+    await manager.refreshTransportCatalog(force: true);
+    expect(manager.transportCatalog?.revision, 'cached');
+
+    runtime.phase = RuntimePhase.artifactReady;
+    bootstrapper.refreshedCatalog = TransportCandidateCatalog(revision: 'loaded-core',
+      selectedCandidateRef: _candidates.first.candidateRef, candidates: _candidates);
+    expect(await manager.prepareLocationsTransportCatalog(), isTrue);
+
+    expect(runtime.calls.where((call) => call == 'initialize'), hasLength(1));
+    expect(manager.transportCatalog?.revision, 'loaded-core');
+    expect(bootstrapper.refreshedCoreReleases, ['1.2.22', '1.2.22']);
+    expect(runtime.stagedPayloads, isEmpty);
+    expect(runtime.connectCalls, 0);
+  });
+
   test('loaded Core refresh publishes the full catalog without replacing the running material', () async {
     final refreshGate = Completer<void>();
     final bootstrapper = _CachedBootstrapper()
