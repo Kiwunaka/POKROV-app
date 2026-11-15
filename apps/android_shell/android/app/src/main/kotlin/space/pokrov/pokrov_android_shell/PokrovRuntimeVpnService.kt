@@ -21,6 +21,7 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.os.Process
+import android.system.OsConstants
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import org.json.JSONArray
@@ -1486,6 +1487,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     setIndex(resolvedInterface.index)
                     setMTU(runCatching { resolvedInterface.mtu }.getOrDefault(0))
                     setName(resolvedInterface.name ?: "")
+                    setFlags(if (resolvedInterface.isUp) OsConstants.IFF_UP else 0)
                     setDNSServer(LibboxStringIterator(dnsByInterface[resolvedInterface.name].orEmpty()))
                     setAddresses(
                         LibboxStringIterator(
