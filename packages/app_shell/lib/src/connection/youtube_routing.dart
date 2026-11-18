@@ -53,7 +53,6 @@ ManagedProfilePayload applyPokrovYouTubeFailover(ManagedProfilePayload payload, 
     if (detour.isNotEmpty) outbounds.add({...bridge!, 'tag': '$tag-bridge'});
     outbounds.add({...leaf, 'tag': tag, if (detour.isNotEmpty) 'detour': '$tag-bridge'});
     paths.add(tag);
-    if (paths.length == 4) break;
   }
   if (paths.length == 1) return payload;
   final service = {'domain_suffix': _youtubeDomains, 'port': 443};

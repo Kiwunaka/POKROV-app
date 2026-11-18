@@ -2052,7 +2052,7 @@ void main() {
             'transport_catalog': {'schema_version': 'pokrov-transport-catalog-v1',
               'revision': 'transport-reserve', 'selected_candidate_ref': realityRef,
               'candidates': [candidate(false), candidate(true)]},
-            'candidate_materials': exact ? [{
+            'candidate_materials': exact && request.uri.queryParameters['candidate_material_limit'] == '1' ? [{
               'candidate_ref': realityRef, 'transport_kind': 'reality',
               'config_format': 'singbox-json', 'config_payload': config(false),
             }] : [for (final xhttp in [false, true]) {
@@ -2088,6 +2088,11 @@ void main() {
     final playerProfile = jsonDecode(applyPokrovYouTubeFailover(selected, autoCountry: false).configPayload);
     expect((playerProfile['outbounds'] as List).singleWhere((row) => row['type'] == 'pokrov-youtube')['outbounds'],
         hasLength(2));
+    final manual = await online.resolveManagedProfile(hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode,
+      preferredCountryCode: 'DE', preferredCandidateRef: realityRef, selectedCandidateRef: realityRef,
+      runtimeFeatures: features, selectCandidate: false, cacheResult: false);
+    expect(manual.materialCandidate?.candidateRef, realityRef);
+    expect(manual.candidateMaterials.keys, contains(xhttpRef));
     await online.markManagedProfileProven(inputs, selected.cacheEntryId);
     final restarted = create(offline: true);
     final reserve = await restarted.loadCachedManagedProfile(inputs,

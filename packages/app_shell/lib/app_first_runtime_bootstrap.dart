@@ -3932,6 +3932,9 @@ class AppFirstRuntimeBootstrapper
             runtimeFeatures: runtimeFeatures,
             coreRelease: coreRelease,
             selectedCandidateRef: selectedCandidateRef,
+            includePlayerReserves: preferredCandidateRef.isNotEmpty &&
+                preferredCandidateRef == selectedCandidateRef &&
+                runtimeFeatures.contains(RuntimeTransportFeature.youtubeFailover),
             tcpFallbackFromRevision: tcpFallbackFromRevision,
             state: state,
             hostPlatform: hostPlatform,
@@ -7724,6 +7727,7 @@ class AppFirstRuntimeBootstrapper
     Set<RuntimeTransportFeature> runtimeFeatures = const {},
     String? coreRelease,
     String selectedCandidateRef = '',
+    bool includePlayerReserves = false,
     String preferredCountryCode = '',
     Duration? profileTimeout,
     Future<void> Function(Duration)? waitForRetry,
@@ -7751,7 +7755,7 @@ class AppFirstRuntimeBootstrapper
     if (!transportManifestEnabled && runtimeFeatures.isNotEmpty && preferredVariantId == 'direct') {
       final query = <String, String>{
         'catalog_version': '1', 'client_platform': hostPlatform.name,
-        'candidate_material_limit': selectedCandidateRef.isNotEmpty ? '1'
+        'candidate_material_limit': selectedCandidateRef.isNotEmpty && !includePlayerReserves ? '1'
             : '${6 + (runtimeFeatures.contains(RuntimeTransportFeature.slipstreamVless) ? 1 : 0) + (runtimeFeatures.contains(RuntimeTransportFeature.mtsVless) ? 1 : 0) + (runtimeFeatures.contains(RuntimeTransportFeature.vkVless) ? 1 : 0)}',
         'client_release': _managedCatalogClientRelease,
         'runtime_features': (runtimeFeatures.map((feature) => feature.wireName).toList()..sort()).join(','),
