@@ -53,18 +53,20 @@ Map _dnsConfig(PokrovRoutingPreferences preferences, HostPlatform platform,
 
 void main() {
   test('YouTube reserve follows the manual country and earlier direct rules', () {
-    TransportCandidate candidate(String node, String country) => TransportCandidate(
-        candidateRef: node, profileRef: node, nodeCode: node, countryCode: country, protocol: 'vless',
+    TransportCandidate candidate(String node, String country, {String protocol = 'vless'}) => TransportCandidate(
+        candidateRef: node, profileRef: node, nodeCode: node, countryCode: country, protocol: protocol,
         transport: 'tcp', protection: 'reality', priority: 0, network: 'tcp', flow: '',
         minimumClientRelease: '', minimumCoreRelease: null, platforms: {HostPlatform.android, HostPlatform.windows},
         requiredFeatures: {});
     final catalog = TransportCandidateCatalog(revision: 'current', selectedCandidateRef: 'de',
-        candidates: [candidate('de', 'DE'), candidate('us', 'US'), candidate('de2', 'DE')]);
+        candidates: [candidate('de', 'DE'), candidate('us', 'US'),
+          candidate('de-hy2', 'DE', protocol: 'hysteria2'), candidate('de2', 'DE')]);
     final firstRule = {'domain_suffix': ['ytimg.com'], 'outbound': 'direct'};
     ManagedProfilePayload profile(String ref) => ManagedProfilePayload(profileName: 'fixture',
         transportCatalog: catalog, materialCandidateRef: ref, configPayload: jsonEncode({
           'outbounds': [
-            {'tag': 'vpn', 'type': 'vless', 'server': '$ref.example', 'server_port': 443},
+            {'tag': 'vpn', 'type': ref == 'de-hy2' ? 'hysteria2' : 'vless',
+              'tls': {'enabled': true}, 'server': '$ref.example', 'server_port': 443},
             {'tag': 'direct', 'type': 'direct'},
           ],
           'route': {'final': 'vpn', 'rules': [firstRule, {'process_name': ['chrome.exe'], 'outbound': 'vpn'}]},

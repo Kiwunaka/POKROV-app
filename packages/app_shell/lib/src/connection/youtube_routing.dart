@@ -26,6 +26,7 @@ ManagedProfilePayload applyPokrovYouTubeFailover(ManagedProfilePayload payload, 
   final ordinaryTags = {vpn, paths.first};
   final targets = catalog.candidates.where((candidate) =>
       candidate.candidateRef != selected.candidateRef && candidate.warpMode == null &&
+      candidate.protocol == 'vless' && const {'tcp', 'grpc', 'xhttp'}.contains(candidate.transport) &&
       candidate.countryCode.isNotEmpty && payload.candidateMaterials.containsKey(candidate.candidateRef));
   final ordered = [
     ...targets.where((c) => c.countryCode == selected.countryCode && c.nodeCode != selected.nodeCode),
@@ -41,9 +42,9 @@ ManagedProfilePayload applyPokrovYouTubeFailover(ManagedProfilePayload payload, 
     final otherTags = {for (final item in collection) _routingText(item['tag']): item};
     final leaf = _youtubeLeaf(otherTags,
         _resolveProxyTag(collection, _routingListOfMaps(other['endpoints']), _routingMap(other['route'])));
-    // Reserve routes are self-contained TLS proxies, optionally via an admitted
-    // VLESS bridge. Special carriers keep their own native grant and lifecycle.
-    if (leaf == null || !const {'vless', 'hysteria2', 'naive'}.contains(leaf['type'])) continue;
+    // HY2 and AWG are bound to the contract of their original profile. Only a
+    // self-contained TLS-protected VLESS route can be added to another profile.
+    if (leaf == null || leaf['type'] != 'vless' || _routingMap(leaf['tls'])['enabled'] != true) continue;
     final tag = 'pokrov-youtube-path-${paths.length}';
     final detour = _routingText(leaf['detour']);
     final bridge = otherTags[detour];
