@@ -859,7 +859,7 @@ Root: HKLM64; Subkey: "Software\space.pokrov\POKROV\Service"; ValueType: string;
 Filename: "{app}\$($windowsReleaseConfig.binary_name)"; WorkingDir: "{app}"; Description: "Запустить POKROV"; Flags: nowait postinstall skipifsilent runasoriginaluser
 
 [UninstallRun]
-Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command ""`$ErrorActionPreference='Stop'; `$service=Get-Service -Name 'POKROVService' -ErrorAction SilentlyContinue; if (`$null -ne `$service -and `$service.Status -ne 'Stopped') {{ Stop-Service -InputObject `$service -Force -ErrorAction Stop; `$service.WaitForStatus('Stopped', [TimeSpan]::FromSeconds(30)) }"""; Flags: runhidden waituntilterminated; RunOnceId: "StopPOKROVService"
+Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -NonInteractive -Command ""`$ErrorActionPreference='Stop'; `$service=Get-Service -Name 'POKROVService' -ErrorAction SilentlyContinue; if (`$null -ne `$service -and `$service.Status -ne 'Stopped') {{ Stop-Service -InputObject `$service -Force -ErrorAction Stop; `$service.WaitForStatus('Stopped', [TimeSpan]::FromSeconds(30)) }"""; Flags: runhidden waituntilterminated; RunOnceId: "StopPOKROVService"
 Filename: "{sys}\sc.exe"; Parameters: "delete POKROVService"; Flags: runhidden waituntilterminated; RunOnceId: "DeletePOKROVService"
 
 [UninstallDelete]
@@ -1032,7 +1032,7 @@ begin
   ResultCode := -1;
   StopSucceeded := Exec(
       ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
-      '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "' +
+      '-NoProfile -NonInteractive -Command "' +
       '`$ErrorActionPreference=''Stop''; try { ' +
       '`$service=Get-Service -Name ''POKROVService'' -ErrorAction SilentlyContinue; ' +
       'if (`$null -eq `$service) { exit 0 }; ' +
