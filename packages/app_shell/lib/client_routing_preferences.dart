@@ -1142,10 +1142,14 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
   meta.remove('local_dpi');
   if (preferences.localDpiEnabled &&
       const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform) &&
-      const {CatalogRoutingMode.selective, CatalogRoutingMode.smartSafe}.contains(expectedMode) &&
+      const {CatalogRoutingMode.selective, CatalogRoutingMode.smartSafe, CatalogRoutingMode.full}.contains(expectedMode) &&
       policy.localDpiControlHosts.isNotEmpty) {
     meta['local_dpi'] = {
-      'mode': selective ? 'selective' : 'smart_safe', 'platform': hostPlatform.name,
+      'mode': switch (expectedMode) {
+        CatalogRoutingMode.full => 'full',
+        CatalogRoutingMode.smartSafe => 'smart_safe',
+        _ => 'selective',
+      }, 'platform': hostPlatform.name,
       'catalog_envelope': policy.catalog.canonicalEnvelopeJson,
       'catalog_sha256': policy.payloadSha256,
       'revision': policy.revision, 'security_revision': policy.securityRevision,

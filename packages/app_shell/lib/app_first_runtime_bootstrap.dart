@@ -5359,7 +5359,7 @@ class AppFirstRuntimeBootstrapper
     final client = requests.attach(_createHttpClient(platform));
     try {
       final response = await _requestJson(
-        method: 'GET', path: '/api/client/routing-catalog?smart_safe_local_dpi=1&social_local_dpi=1',
+        method: 'GET', path: '/api/client/routing-catalog?smart_safe_local_dpi=1&social_local_dpi=1&full_local_dpi=1',
         hostPlatform: platform,
         client: client, bearerToken: state.sessionToken,
         maximumResponseBytes: routingCatalogMaximumBytes + 1024,

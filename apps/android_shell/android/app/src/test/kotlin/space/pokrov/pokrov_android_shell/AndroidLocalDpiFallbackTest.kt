@@ -42,7 +42,9 @@ class AndroidLocalDpiFallbackTest {
         assertEquals(listOf("fallback=type_naive"), reasons)
         assertTrue(localDpiModeAllows("selective", setOf("other"), "direct", outbounds))
         assertFalse(localDpiModeAllows("selective", setOf("other"), "vpn", outbounds))
-        assertFalse(localDpiModeAllows("full", setOf("youtube"), "vpn", outbounds))
+        assertTrue(localDpiModeAllows("full", setOf("youtube", "discord"), "vpn", outbounds))
+        assertFalse(localDpiModeAllows("full", setOf("youtube", "instagram"), "vpn", outbounds))
+        assertFalse(localDpiModeAllows("full", setOf("youtube"), "direct", outbounds))
     }
 
     @Test fun atsFallbackKeepsLeaseAndRequiresDirectUpstream() {

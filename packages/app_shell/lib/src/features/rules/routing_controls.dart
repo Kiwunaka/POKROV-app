@@ -11,7 +11,7 @@ class _LocalDpiCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final supportedMode = const {RouteMode.allExceptRu, RouteMode.selectiveServices}.contains(routeMode);
+    final supportedMode = const {RouteMode.fullTunnel, RouteMode.allExceptRu, RouteMode.selectiveServices}.contains(routeMode);
     final runtimeReady = hostPlatform != HostPlatform.windows || windowsLocalDpiReady;
     return _SectionCard(
       key: const ValueKey('rules-local-dpi-card'),
@@ -21,14 +21,16 @@ class _LocalDpiCard extends StatelessWidget {
         if (!runtimeReady)
           'Zapret2 недоступен: служба POKROV не подтвердила готовность компонента.'
         else if (!supportedMode)
-          'Работает в режимах «Россия напрямую» и «Только выбранные сервисы».'
+          'Доступно в режимах «Всё устройство», «Россия напрямую» и «Только выбранные сервисы».'
         else
           'Применяется при подключении POKROV. При прямом соединении сервис видит твой IP.',
       ],
       child: !supportedMode || (!runtimeReady && !preferences.localDpiEnabled) ? null : _RoutingToggleRow(
         key: const ValueKey('rules-local-dpi'),
         title: 'Включить обход блокировок',
-        subtitle: routeMode == RouteMode.allExceptRu
+        subtitle: routeMode == RouteMode.fullTunnel
+            ? 'YouTube и Discord используют твой обычный IP. Если соединение не удастся, POKROV подключит их через VPN.'
+            : routeMode == RouteMode.allExceptRu
             ? 'Для поддерживаемых сервисов сначала напрямую через оператора, при сбое через VPN.'
             : 'Для выбранных сервисов с поддержкой обхода сначала напрямую через оператора, при сбое через VPN.',
         value: preferences.localDpiEnabled,

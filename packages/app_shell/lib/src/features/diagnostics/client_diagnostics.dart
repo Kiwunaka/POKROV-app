@@ -737,7 +737,7 @@ abstract final class PokrovDiagnosticsPresenter {
       buildNumber: buildNumber,
       generatedAt: now,
     );
-    final localDpiMode = const {RouteMode.allExceptRu, RouteMode.selectiveServices}.contains(routeMode);
+    final localDpiMode = const {RouteMode.fullTunnel, RouteMode.allExceptRu, RouteMode.selectiveServices}.contains(routeMode);
     return PokrovDiagnosticsReport(
       statusLabel: statusLabel,
       summaryKey: summaryKey,

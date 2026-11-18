@@ -149,6 +149,7 @@ class RoutingCatalogPolicy {
         final dpiHost = intent['local_dpi_control_host'];
         if (dpiHost != null) {
           final modeAllowsDpi = mode == CatalogRoutingMode.selective ||
+              (mode == CatalogRoutingMode.full && const {'youtube', 'discord'}.contains(id)) ||
               (mode == CatalogRoutingMode.smartSafe &&
                const {'youtube', 'discord', 'instagram', 'threads'}.contains(id));
           if (!modeAllowsDpi || action != CatalogRouteAction.vpn ||
@@ -382,7 +383,7 @@ CatalogDomainPolicy compileCatalogDomainPolicy({
   return CatalogDomainPolicy._(
     catalog: catalog,
     localDpiControlHosts: Map.unmodifiable({
-      if (const {CatalogRoutingMode.selective, CatalogRoutingMode.smartSafe}.contains(mode) &&
+      if (const {CatalogRoutingMode.selective, CatalogRoutingMode.smartSafe, CatalogRoutingMode.full}.contains(mode) &&
           const {'android', 'windows'}.contains(platform) && vpnAvailable)
         for (final service in policy.services)
           if (selected.contains(service.id) && service.localDpiControlHostsByMode[mode] != null)
@@ -493,7 +494,7 @@ Future<Set<String>> catalogRuntimeRevocations(CatalogRuntimeIdentity previous,
         if (!domain.shared) {
           allowed.add(await _runtimeRuleDigest(service.id, domain, action));
           final dpiHost = service.localDpiControlHostsByMode[mode];
-          if (const {CatalogRoutingMode.selective, CatalogRoutingMode.smartSafe}.contains(mode) &&
+          if (const {CatalogRoutingMode.selective, CatalogRoutingMode.smartSafe, CatalogRoutingMode.full}.contains(mode) &&
               const {'android', 'windows'}.contains(previous.platform) &&
               action == CatalogRouteAction.vpn && dpiHost != null) {
             allowed.add(await _runtimeRuleDigest(service.id, domain, action, dpiHost));

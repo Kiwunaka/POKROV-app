@@ -28,6 +28,7 @@ internal data class LocalDpiVpnOutbound(
     val upstreamTag: String = "",
     val children: List<String> = emptyList(),
     val tlsSecure: Boolean = false,
+    val defaultTag: String = "",
 )
 
 internal fun localDpiSecureTls(enabled: Any?, insecure: Any?): Boolean =
@@ -56,7 +57,7 @@ internal fun localDpiVpnFallback(
         return when (outbound.type) {
             "vless", "hysteria2", "wireguard", "awg" -> true
             "pokrov-ats-lease" -> protected(outbound.upstreamTag, visited, "fallback=lease_target_missing")
-            "selector", "urltest" -> if (outbound.children.isEmpty()) rejected("fallback=empty_group") else
+            "selector", "urltest", "pokrov-youtube" -> if (outbound.children.isEmpty()) rejected("fallback=empty_group") else
                 outbound.children.all { protected(it, visited, "fallback=group_target_missing") }
             "direct" -> rejected("fallback=type_direct")
             "block" -> rejected("fallback=type_block")
@@ -72,12 +73,25 @@ internal fun localDpiVpnFallback(
 
 private val smartSafeLocalDpiServices = setOf("youtube", "discord", "instagram", "threads")
 
+private fun localDpiPrimaryPath(outbounds: List<LocalDpiVpnOutbound>, finalTag: String): String? {
+    var tag = finalTag
+    repeat(outbounds.size) {
+        val route = outbounds.singleOrNull { it.tag == tag } ?: return null
+        if (route.type != "selector" && route.type != "urltest") return tag
+        tag = route.defaultTag.ifEmpty { route.children.firstOrNull() ?: return null }
+        if (tag !in route.children) return null
+    }
+    return null
+}
+
 internal fun localDpiModeAllows(mode: String, services: Set<String>, finalTag: String,
                                 outbounds: List<LocalDpiVpnOutbound>, onFallbackRejected: (String) -> Unit = {}): Boolean = when (mode) {
     "selective" -> outbounds.singleOrNull { it.tag == finalTag }?.let {
         it.type == "direct" && it.detour.isEmpty()
     } == true
     "smart_safe" -> services.isNotEmpty() && smartSafeLocalDpiServices.containsAll(services) &&
+        localDpiVpnFallback(outbounds, finalTag, onFallbackRejected) != null
+    "full" -> services.isNotEmpty() && setOf("youtube", "discord").containsAll(services) &&
         localDpiVpnFallback(outbounds, finalTag, onFallbackRejected) != null
     else -> false
 }
@@ -306,7 +320,7 @@ internal class AndroidLocalDpiAdmission private constructor(
             try {
                 if (Libbox.localDpiAdmissionVersion() != 1) return unavailable("prepare=core_unsupported")
                 val mode = metadata.getString("mode")
-                if (mode !in setOf("selective", "smart_safe") || metadata.getString("platform") != "android")
+                if (mode !in setOf("selective", "smart_safe", "full") || metadata.getString("platform") != "android")
                     return unavailable("prepare=metadata_scope")
                 if (!ownsProfile()) return unavailable("prepare=owner_changed")
                 failureCode = "prepare=config_exception"
@@ -319,7 +333,7 @@ internal class AndroidLocalDpiAdmission private constructor(
                     LocalDpiVpnOutbound(outbound.optString("tag"), outbound.optString("type"),
                         outbound.optString("detour"), outbound.optString("upstream_tag"),
                         if (children == null) emptyList() else (0 until children.length()).map(children::getString),
-                        localDpiSecureTls(tls?.opt("enabled"), insecure))
+                        localDpiSecureTls(tls?.opt("enabled"), insecure), outbound.optString("default"))
                 }
                 val wanted = metadata.getJSONObject("services")
                 val serviceIDs = wanted.keys().asSequence().toSet()
@@ -392,13 +406,18 @@ internal class AndroidLocalDpiAdmission private constructor(
                             ?: return unavailable("prepare=fallback_unprotected")
                         if (fallbacks[service] != null && fallbacks[service] != vpn)
                             return unavailable("prepare=fallback_conflict")
-                        if (mode == "smart_safe" && vpn != finalTag)
+                        val group = vpnOutbounds.singleOrNull { it.tag == vpn && it.type == "pokrov-youtube" }
+                        if (group != null && (service != "youtube" || group.children.size < 2))
+                            return unavailable("prepare=fallback_mismatch")
+                        val matchesFinal = if (group == null) vpn == finalTag
+                            else group.children.first() == localDpiPrimaryPath(vpnOutbounds, finalTag)
+                        if (mode != "selective" && !matchesFinal)
                             return unavailable("prepare=fallback_mismatch")
                         fallbacks[service] = vpn
                         controlInScope = controlInScope || !suffix && name == host
                         replacements.add(rule to tag)
                     }
-                    if (mode == "smart_safe" && !controlInScope) return unavailable("prepare=control_scope")
+                    if (mode != "selective" && !controlInScope) return unavailable("prepare=control_scope")
                     if (fallbacks.containsKey(service)) { controls[service] = host; tags[service] = tag }
                 }
                 if (controls.isEmpty()) return unavailable("prepare=no_matching_rules")

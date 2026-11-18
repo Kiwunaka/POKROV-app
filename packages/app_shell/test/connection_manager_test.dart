@@ -2806,8 +2806,8 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.text('Применить'));
         await tester.pumpAndSettle();
-        expect(find.text('Работает в режимах «Россия напрямую» и «Только выбранные сервисы».'), findsOneWidget);
-        expect(find.byKey(const ValueKey('rules-local-dpi')), findsNothing);
+        expect(find.textContaining('YouTube и Discord используют твой обычный IP.'), findsOneWidget);
+        expect(find.byKey(const ValueKey('rules-local-dpi')), findsOneWidget);
       }
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump();

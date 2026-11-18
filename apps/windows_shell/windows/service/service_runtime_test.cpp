@@ -138,8 +138,8 @@ void TestWindowsTelegramMetadataComposition() {
          "Smart Safe YouTube intent did not reach Core admission");
   auto full = smart_safe;
   full.replace(full.find("smart_safe"), std::string("smart_safe").size(), "full");
-  Expect(StripWindowsLocalDpiMetadata(full, &runtime_copy, &dpi) && !dpi,
-         "Full requested a local DPI executor");
+  Expect(StripWindowsLocalDpiMetadata(full, &runtime_copy, &dpi) && dpi,
+         "Full did not dispatch the signed local service rule to Core");
   const auto receipt = ReadWindowsTelegramWSPreparation(
       "{\"schema_version\":1,\"profile\":" + prepared +
       R"(,"issued_at":"2020-01-01T00:00:00Z","expires_at":"2099-01-01T00:00:00Z","services":[{"service_id":"telegram","outbound_tag":"tg"}]})");

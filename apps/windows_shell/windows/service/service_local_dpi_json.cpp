@@ -527,7 +527,7 @@ bool StripWindowsLocalDpiMetadata(const std::string& original,
     // This dispatches proof preparation; Core verifies the signed service scope
     // and the protected VPN fallback before returning any admission holders.
     *requested = String(dpi.Get(), L"platform") == "windows" &&
-        (mode == "selective" || mode == "smart_safe");
+        (mode == "selective" || mode == "smart_safe" || mode == "full");
   }
   if (telegram_requested) {
     const auto telegram = meta ? Object(meta.Get(), L"telegram_ws") : ComPtr<IJsonObject>{};

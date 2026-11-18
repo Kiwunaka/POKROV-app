@@ -69,7 +69,9 @@ void main() {
               'tls': {'enabled': true}, 'server': '$ref.example', 'server_port': 443},
             {'tag': 'direct', 'type': 'direct'},
           ],
-          'route': {'final': 'vpn', 'rules': [firstRule, {'process_name': ['chrome.exe'], 'outbound': 'vpn'}]},
+          'route': {'final': 'vpn', 'rules': [firstRule, {'process_name': ['chrome.exe'], 'outbound': 'vpn'},
+            {'domain': ['www.youtube.com'], 'pokrov_catalog_window': {'service_id': 'youtube'},
+              'action': 'route', 'outbound': 'vpn'}]},
         }));
     final base = profile('de').copyWith(candidateMaterials: {
       for (final c in catalog.candidates) c.candidateRef: profile(c.candidateRef),
@@ -82,6 +84,9 @@ void main() {
     expect(manual['route']['rules'].first, firstRule);
     expect(manual['route']['rules'][1]['rules'][0], {'process_name': ['chrome.exe']});
     expect(manual['route']['rules'].last['domain_suffix'], contains('googlevideo.com'));
+    final signed = manual['route']['rules'].where((r) => r['pokrov_catalog_window'] != null).single;
+    expect(signed['outbound'], 'pokrov-youtube');
+    expect(signed['domain'], ['www.youtube.com']);
     expect(configured(true)['outbounds'].where((x) => x['server'] != null).map((x) => x['server']),
         ['de.example', 'de2.example', 'us.example']);
     expect(applyPokrovYouTubeFailover(profile('de'), autoCountry: false).configPayload, profile('de').configPayload);

@@ -59,6 +59,18 @@ ManagedProfilePayload applyPokrovYouTubeFailover(ManagedProfilePayload payload, 
   final service = {'domain_suffix': _youtubeDomains, 'port': 443};
   final splitRules = <Map<String, dynamic>>[];
   for (final rule in rules) {
+    final window = rule['pokrov_catalog_window'];
+    if (window is Map) {
+      // Native DPI matches the signed rule itself. A logical rule before it
+      // would take YouTube traffic before the local route can be tried.
+      if (window['service_id'] == 'youtube' && !window.containsKey('lease_id') &&
+          !window.containsKey('lease_group') && rule['action'] == 'route' && ordinaryTags.contains(rule['outbound'])) {
+        splitRules.add({...rule, 'outbound': _youtubeGroup});
+      } else {
+        splitRules.add(rule);
+      }
+      continue;
+    }
     if (ordinaryTags.contains(rule['outbound']) && (rule['action'] == null || rule['action'] == 'route')) {
       final predicate = Map.of(rule)..remove('outbound')..remove('action');
       // Native proof, app scope and classifiers retain their original order.
@@ -69,7 +81,7 @@ ManagedProfilePayload applyPokrovYouTubeFailover(ManagedProfilePayload payload, 
     splitRules.add(rule);
   }
   if (ordinaryTags.contains(route['final'])) splitRules.add({...service, 'outbound': _youtubeGroup});
-  if (splitRules.length == rules.length) return payload;
+  if (!splitRules.any((rule) => rule['outbound'] == _youtubeGroup)) return payload;
   config['route'] = {...route, 'rules': splitRules};
   config['outbounds'] = [...outbounds, {'type': _youtubeGroup, 'tag': _youtubeGroup, 'outbounds': paths}];
   return payload.copyWith(configPayload: jsonEncode(config));
