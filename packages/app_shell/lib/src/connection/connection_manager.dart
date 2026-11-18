@@ -3167,6 +3167,7 @@ class ConnectionManager extends ChangeNotifier {
       _candidateNetworkKey = key;
       _candidateOfflineNetworkKey = offlineKey;
       _candidateRef = payload.materialCandidate!.candidateRef;
+      payload = payload.copyWith(candidateMaterials: materialized);
     } else if (discoverCandidates && catalog == null) {
       // Older servers still own the legacy Smart Connect path.
       payload = await resolve();
@@ -3414,6 +3415,7 @@ class ConnectionManager extends ChangeNotifier {
       _candidatePhysicalNetwork = network;
       _candidateNetworkKey = key;
       _candidateOfflineNetworkKey = _offlineCandidateNetworkKey(key, context, network.networkClass);
+      selected = selected.copyWith(candidateMaterials: available);
     }
     _transportCatalog = selected.transportCatalog;
     _candidateRef = selected.materialCandidate?.candidateRef;
@@ -3796,7 +3798,7 @@ class ConnectionManager extends ChangeNotifier {
           profileRevision != _managedProfileRevision) {
         throw const ConnectionOperationSuperseded();
       }
-      configuredPayload = applyPokrovRoutingPreferences(
+      final routedPayload = applyPokrovRoutingPreferences(
         runtimePayload,
         _pendingFirstProviderQaAdmissionId == null ? _clientExperience.routingPreferences
             : _clientExperience.routingPreferences.copyWith(localDpiEnabled: false,
@@ -3811,6 +3813,12 @@ class ConnectionManager extends ChangeNotifier {
             ? pokrovRuAppCatalog.map((entry) => entry.packageId).toList()
             : const <String>[],
       );
+      configuredPayload = !warpRuntimeAttemptEnabled &&
+              _runtimeSnapshot?.availableTransportFeatures.contains(RuntimeTransportFeature.youtubeFailover) == true
+          ? applyPokrovYouTubeFailover(routedPayload,
+              autoCountry: _clientExperience.preferredCountryCode.isEmpty &&
+                  _preferredNodeCode.isEmpty && _clientExperience.preferredCandidateRef.isEmpty)
+          : routedPayload;
       if (_pendingFirstProviderQaAdmissionId != null) {
         _validateFirstProviderQaRuleOrder(configuredPayload.configPayload,
           _activeFirstProviderQa!.permit);

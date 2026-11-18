@@ -52,6 +52,38 @@ Map _dnsConfig(PokrovRoutingPreferences preferences, HostPlatform platform,
         .configPayload) as Map)['dns'] as Map;
 
 void main() {
+  test('YouTube reserve follows the manual country and earlier direct rules', () {
+    TransportCandidate candidate(String node, String country) => TransportCandidate(
+        candidateRef: node, profileRef: node, nodeCode: node, countryCode: country, protocol: 'vless',
+        transport: 'tcp', protection: 'reality', priority: 0, network: 'tcp', flow: '',
+        minimumClientRelease: '', minimumCoreRelease: null, platforms: {HostPlatform.android, HostPlatform.windows},
+        requiredFeatures: {});
+    final catalog = TransportCandidateCatalog(revision: 'current', selectedCandidateRef: 'de',
+        candidates: [candidate('de', 'DE'), candidate('us', 'US'), candidate('de2', 'DE')]);
+    final firstRule = {'domain_suffix': ['ytimg.com'], 'outbound': 'direct'};
+    ManagedProfilePayload profile(String ref) => ManagedProfilePayload(profileName: 'fixture',
+        transportCatalog: catalog, materialCandidateRef: ref, configPayload: jsonEncode({
+          'outbounds': [
+            {'tag': 'vpn', 'type': 'vless', 'server': '$ref.example', 'server_port': 443},
+            {'tag': 'direct', 'type': 'direct'},
+          ],
+          'route': {'final': 'vpn', 'rules': [firstRule, {'process_name': ['chrome.exe'], 'outbound': 'vpn'}]},
+        }));
+    final base = profile('de').copyWith(candidateMaterials: {
+      for (final c in catalog.candidates) c.candidateRef: profile(c.candidateRef),
+    });
+    Map configured(bool auto) => jsonDecode(applyPokrovYouTubeFailover(base, autoCountry: auto).configPayload);
+    final manual = configured(false);
+    expect(manual['outbounds'].where((x) => x['server'] != null).map((x) => x['server']),
+        ['de.example', 'de2.example']);
+    expect(manual['route']['final'], 'vpn');
+    expect(manual['route']['rules'].first, firstRule);
+    expect(manual['route']['rules'][1]['rules'][0], {'process_name': ['chrome.exe']});
+    expect(manual['route']['rules'].last['domain_suffix'], contains('googlevideo.com'));
+    expect(configured(true)['outbounds'].where((x) => x['server'] != null).map((x) => x['server']),
+        ['de.example', 'de2.example', 'us.example']);
+    expect(applyPokrovYouTubeFailover(profile('de'), autoCountry: false).configPayload, profile('de').configPayload);
+  });
   test('connection helper selection survives saved preferences', () {
     final helper = const PokrovRoutingPreferences.defaults().copyWith(connectionHelper: WarpRuntimeTransport.masqueH2);
     expect(PokrovRoutingPreferences.fromJson(Map<String, dynamic>.from(helper.toJson())).connectionHelper, WarpRuntimeTransport.masqueH2);

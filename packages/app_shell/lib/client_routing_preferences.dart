@@ -8,6 +8,8 @@ import 'routing_catalog_contract.dart';
 import 'routing_catalog_materializer.dart';
 import 'routing_catalog_policy.dart';
 
+part 'src/connection/youtube_routing.dart';
+
 enum PokrovPurposeRoute { video, ai, social, games, ruDirect }
 
 enum PokrovRouteAction { vpn, direct }

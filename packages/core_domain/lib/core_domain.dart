@@ -18,7 +18,8 @@ enum RuntimeTransportFeature {
   utls('singbox_utls_v1'),
   vless('singbox_vless_v1'),
   xhttp('singbox_xhttp_v1'),
-  slipstreamVless('slipstream_vless_v1');
+  slipstreamVless('slipstream_vless_v1'),
+  youtubeFailover('pokrov_youtube_failover_v1');
 
   const RuntimeTransportFeature(this.wireName);
   final String wireName;

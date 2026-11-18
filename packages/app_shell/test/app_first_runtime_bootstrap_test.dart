@@ -2076,7 +2076,8 @@ void main() {
       httpClientFactory: offline ? () => throw StateError('offline restore used HTTP') : null);
     const inputs = ManagedProfileCacheInputs(hostPlatform: HostPlatform.windows,
       routeMode: RouteMode.fullTunnel, preferredCountryCode: 'DE');
-    final features = RuntimeTransportFeature.values.toSet()..remove(RuntimeTransportFeature.slipstreamVless);
+    final features = RuntimeTransportFeature.values.toSet()
+      ..removeAll({RuntimeTransportFeature.slipstreamVless, RuntimeTransportFeature.mtsVless, RuntimeTransportFeature.vkVless});
     final online = create();
     final selected = await online.resolveManagedProfile(hostPlatform: inputs.hostPlatform,
       routeMode: inputs.routeMode, preferredCountryCode: inputs.preferredCountryCode,
@@ -2084,6 +2085,9 @@ void main() {
     expect(queries.single['selected_country_code'], 'DE');
     expect(queries.single['candidate_material_limit'], '6');
     expect(selected.materialCandidate?.candidateRef, realityRef);
+    final playerProfile = jsonDecode(applyPokrovYouTubeFailover(selected, autoCountry: false).configPayload);
+    expect((playerProfile['outbounds'] as List).singleWhere((row) => row['type'] == 'pokrov-youtube')['outbounds'],
+        hasLength(2));
     await online.markManagedProfileProven(inputs, selected.cacheEntryId);
     final restarted = create(offline: true);
     final reserve = await restarted.loadCachedManagedProfile(inputs,

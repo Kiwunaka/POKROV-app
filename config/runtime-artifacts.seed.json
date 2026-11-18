@@ -3,7 +3,7 @@
     "repository": "Kiwunaka/pokrov-core",
     "version": "1.2.22",
     "release_tag": "v1.2.22",
-    "source_commit": "f390c595988355c1c86be513804a5c77acf2de60",
+    "source_commit": "28c432883d5daca1d7e180540f28dca1977268d6",
     "android_package": "space.pokrov.core",
     "desktop_abi": {
       "version": 2
@@ -11,14 +11,14 @@
     "assets": {
       "android": {
         "entry": "pokrov-core.aar",
-        "size": 88075672,
-        "sha256": "45d145eed3556ec8b8a5f35e882e9c682ecdde24fbea721a4fdd69181d411078",
+        "size": 88134842,
+        "sha256": "9e744c56355946485154f72645eb564674a7cbf2a5c427d44314c12b9825b156",
         "sync_destination": "apps/android_shell/android/app/libs"
       },
       "windows": {
         "entry": "pokrov-core.dll",
-        "size": 58252288,
-        "sha256": "a79c931a36b568a524243ff41dfbd5db45ada8b72de5ecae09a32b9c6db72bff",
+        "size": 58309120,
+        "sha256": "799abd70c5bbcc92ee2d36680dd6b46453acc0f66c89743eb40445668a87082b",
         "sync_destination": "apps/windows_shell/windows/runner/resources/runtime",
         "runtime_dependencies": [
           "libcronet.dll",
@@ -27,12 +27,12 @@
         ],
         "runtime_dependency_size": {
           "libcronet.dll": 9529344,
-          "slipstream-client.exe": 5696000,
+          "slipstream-client.exe": 5696512,
           "slipstream-LICENSE.txt": 11565
         },
         "runtime_dependency_sha256": {
           "libcronet.dll": "3217c6260fbca5f16072e0b79735742f40109a63bb0ff88fd6b96dd6b54a2928",
-          "slipstream-client.exe": "05e3ee81e3fca4a90c79dd20d7000ca8e0da15eb0a039778c5eae14160c838f6",
+          "slipstream-client.exe": "d058d4b5a073d5d674c6ecbcb742e19b5c8b4794eeb786f5f2ba3ffdc9f1be41",
           "slipstream-LICENSE.txt": "cacf078b978a768b9696928cde383db0846ff797a4917acd29b0093a86a876c6"
         }
       }

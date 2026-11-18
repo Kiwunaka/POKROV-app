@@ -17,6 +17,8 @@ The native host accepts the prepared identity and owns the VPN service or instal
 
 Use the runtime's owned egress check for the selected route before reporting a usable connection. Windows uses the longer carrier timeout for Slipstream's initial and periodic HTTPS checks. A resolved address, native process start or transport socket alone does not establish protection. A failed reserve or expired grant must not be presented as an active route.
 
+When a managed profile provides a protected reserve, the client can recover YouTube separately. A manual country selection limits both routes to that country. Auto tries other routes in the current country first. The player's existing direct, blocked and app-specific rules take precedence.
+
 ## Update handoff
 
 The About sheet can retry a validated update after a failed download or missing install permission. Automatic prompts are deduplicated. Android accepts the stable channel and a bounded metadata record with the canonical GitHub release asset, size and SHA-256. The direct flavor verifies the downloaded APK, package identity, version increase, SDK/ABI and signing continuity before handing it to the OS installer. The store flavor opens only the configured Play listing.
