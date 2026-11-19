@@ -152,12 +152,14 @@ class _CustomRoutingCard extends StatelessWidget {
   const _CustomRoutingCard({
     required this.preferences,
     required this.fallbackMode,
+    required this.hostPlatform,
     required this.onChanged,
     required this.onRoutingLessonCompleted,
   });
 
   final PokrovRoutingPreferences preferences;
   final RouteMode fallbackMode;
+  final HostPlatform hostPlatform;
   final ValueChanged<PokrovRoutingPreferences> onChanged;
   final VoidCallback onRoutingLessonCompleted;
 
@@ -240,6 +242,7 @@ class _CustomRoutingCard extends StatelessWidget {
           _RouteDecisionProbe(
             preferences: preferences,
             fallbackMode: fallbackMode,
+            hostPlatform: hostPlatform,
             onLessonCompleted: onRoutingLessonCompleted,
           ),
         ],
@@ -869,11 +872,13 @@ class _RouteDecisionProbe extends StatefulWidget {
   const _RouteDecisionProbe({
     required this.preferences,
     required this.fallbackMode,
+    required this.hostPlatform,
     required this.onLessonCompleted,
   });
 
   final PokrovRoutingPreferences preferences;
   final RouteMode fallbackMode;
+  final HostPlatform hostPlatform;
   final VoidCallback onLessonCompleted;
 
   @override
@@ -909,6 +914,7 @@ class _RouteDecisionProbeState extends State<_RouteDecisionProbe> {
         destination: value,
         preferences: widget.preferences,
         fallbackMode: widget.fallbackMode,
+        hostPlatform: widget.hostPlatform,
       );
       _error = null;
     });

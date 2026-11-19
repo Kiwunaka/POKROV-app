@@ -10,11 +10,18 @@ String _routeModeShortLabel(RouteMode mode, {bool smartDnsActive = false}) {
   };
 }
 
-String _routeModeRowSummary(RouteMode mode, {bool smartDnsActive = false}) {
+String _routeModeRowSummary(RouteMode mode, {
+  required HostPlatform hostPlatform,
+  bool smartDnsActive = false,
+}) {
+  final windows = hostPlatform == HostPlatform.windows;
   return switch (mode) {
-    RouteMode.allExceptRu =>
-      'Российские сервисы работают напрямую, остальное через POKROV VPN.',
-    RouteMode.fullTunnel => 'Весь трафик идет через POKROV VPN.',
+    RouteMode.allExceptRu => windows
+      ? 'Российские сервисы и загрузки Steam идут напрямую. Остальное по умолчанию идёт через POKROV VPN.'
+      : 'Российские сервисы работают напрямую, остальное через POKROV VPN.',
+    RouteMode.fullTunnel => windows
+      ? 'По умолчанию трафик идёт через POKROV VPN. Steam скачивает игры напрямую.'
+      : 'Весь трафик идет через POKROV VPN.',
     RouteMode.selectiveServices => smartDnsActive
       ? 'Умный DNS для поддерживаемых сервисов, VPN при сбое. Остальное — напрямую.'
       : 'Защищённый маршрут только для выбранных сервисов. Остальное — напрямую.',

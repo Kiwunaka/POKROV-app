@@ -17,7 +17,7 @@ The native host accepts the prepared identity and owns the VPN service or instal
 
 Use the runtime's owned egress check for the selected route before reporting a usable connection. Windows uses the longer carrier timeout for Slipstream's initial and periodic HTTPS checks. A resolved address, native process start or transport socket alone does not establish protection. A failed reserve or expired grant must not be presented as an active route.
 
-With local access enabled in Full mode, YouTube and Discord can use the device's ordinary IP after the platform verifies the signed service rule and the local connection. Other services use the chosen VPN exit. If local access fails, these two services use the VPN. When the managed profile provides a protected reserve, the client can switch YouTube separately. A manual country selection keeps its VPN routes in that country. Auto tries routes in the current country first.
+Full mode uses the chosen VPN exit by default. With local access enabled, YouTube and Discord can use the device's ordinary IP after the platform verifies the signed service rule and the local connection. If local access fails, these two services use the VPN. On Windows, Full and Russia Direct send downloads from known Steam content servers directly. When the managed profile provides a protected reserve, the client can switch YouTube separately. A manual country selection keeps its VPN routes in that country. Auto tries routes in the current country first.
 
 ## Update handoff
 

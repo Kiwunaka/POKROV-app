@@ -141,6 +141,12 @@ void main() {
         fallbackMode: RouteMode.fullTunnel).action, PokrovRouteAction.vpn);
     expect(explainPokrovRouteDecision(destination: 'youtube.com', preferences: preferences,
         fallbackMode: RouteMode.allExceptRu).action, PokrovRouteAction.direct);
+    PokrovRouteAction? windowsRoute(String host) => explainPokrovRouteDecision(
+      destination: host, preferences: preferences, fallbackMode: RouteMode.fullTunnel,
+      hostPlatform: HostPlatform.windows,
+    ).action;
+    expect(windowsRoute('cache1.steamcontent.com'), PokrovRouteAction.direct);
+    expect(windowsRoute('steamserver.net'), PokrovRouteAction.vpn);
     expect(preferences.dnsTransport, PokrovDnsTransport.direct);
     expect(preferences.overrides.first.action, PokrovRouteAction.direct);
   });

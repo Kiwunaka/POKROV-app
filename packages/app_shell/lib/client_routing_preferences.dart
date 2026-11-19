@@ -425,6 +425,7 @@ PokrovRouteDecision explainPokrovRouteDecision({
   required String destination,
   required PokrovRoutingPreferences preferences,
   required RouteMode fallbackMode,
+  HostPlatform? hostPlatform,
 }) {
   final normalized = _normalizeRouteMatch(destination);
   if (normalized != null) {
@@ -464,6 +465,15 @@ PokrovRouteDecision explainPokrovRouteDecision({
             matchedValue: purpose.name,
           );
         }
+      }
+      if (_windowsSteamDownloadsDirect(hostPlatform, fallbackMode) &&
+          (_domainMatches(normalized.$1, _steamDownloadSuffix) ||
+              _steamDownloadHosts.contains(normalized.$1))) {
+        return PokrovRouteDecision(
+          action: PokrovRouteAction.direct,
+          reason: 'Загрузки Steam с этого адреса идут напрямую.',
+          matchedValue: normalized.$1,
+        );
       }
     }
   }
@@ -610,6 +620,10 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
       'domain_suffix': _purposeDomains[purpose],
       'outbound': purpose == PokrovPurposeRoute.ruDirect ? directTag : proxyTag,
     });
+  }
+  if (_windowsSteamDownloadRoute(hostPlatform, payload.routeMode, directTag)
+      case final steamDownloadRoute?) {
+    _appendUniqueRule(injected, steamDownloadRoute);
   }
   rules.insertAll(0, protectedRules);
   rules.insertAll(
@@ -1055,6 +1069,10 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
     'domain': protectedApiDomains, 'network': 'tcp', 'port': [443],
     'action': 'route', 'outbound': vpn,
   };
+  if (_windowsSteamDownloadRoute(hostPlatform, payload.routeMode, direct)
+      case final steamDownloadRoute?) {
+    _appendUniqueRule(remaining, steamDownloadRoute);
+  }
   route['rules'] = [
     if (windowsAppScope) ...[
       {'port': 53, 'action': 'hijack-dns'},
@@ -1171,6 +1189,37 @@ Set<String> localDpiServiceIdsForPayload(ManagedProfilePayload payload) {
 }
 
 const _windowsProcessKeys = ['process_name', 'process_path', 'process_path_regex'];
+
+const _steamDownloadSuffix = 'steamcontent.com';
+const _steamDownloadHosts = [
+  'steampipe.akamaized.net',
+  'steampipe-kr.akamaized.net',
+  'steampipe-partner.akamaized.net',
+  'steam.cdn.on.net',
+  'steam.cdn.orcon.net.nz',
+  'steam.cdn.slingshot.co.nz',
+  'steam.cdn.webra.ru',
+];
+
+bool _windowsSteamDownloadsDirect(HostPlatform? platform, RouteMode mode) =>
+    platform == HostPlatform.windows &&
+    (mode == RouteMode.fullTunnel || mode == RouteMode.allExceptRu);
+
+Map<String, dynamic>? _windowsSteamDownloadRoute(
+  HostPlatform platform,
+  RouteMode mode,
+  String direct,
+) {
+  if (!_windowsSteamDownloadsDirect(platform, mode)) return null;
+  return {
+    'domain_suffix': const [_steamDownloadSuffix],
+    'domain': _steamDownloadHosts,
+    'network': 'tcp',
+    'port': const [80, 443],
+    'action': 'route',
+    'outbound': direct,
+  };
+}
 
 Map<String, dynamic> _windowsNativeProbeRoute(String vpn) => {
   'domain': const ['api.pokrov.space', 'birch.portal-privacy.online'],

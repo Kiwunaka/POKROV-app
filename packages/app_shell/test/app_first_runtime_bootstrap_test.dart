@@ -421,20 +421,29 @@ void main() {
             {'tag': 'dns-direct', 'address': 'local', 'detour': 'direct'},
           ], 'final': 'dns-remote'},
         }));
-      final configured = jsonDecode(applyPokrovRoutingPreferences(profile, preferences,
-        hostPlatform: HostPlatform.windows, catalogPolicy: compiled,
-        catalogAccessState: 'paid_unlimited', nativeCatalogWindowVersion: 1).configPayload) as Map;
-      final rules = (configured['route']['rules'] as List).cast<Map>();
-      expect(rules.any((rule) => rule['domain_suffix']?.contains('youtube.com') == true &&
-        rule['outbound'] == 'direct'), !full);
-      expect(rules.any((rule) => rule['domain_suffix']?.contains('ru') == true &&
-        rule['outbound'] == 'direct'), !full);
-      expect(rules.any((rule) => rule['ip_cidr']?.contains('10.20.0.0/16') == true &&
-        rule['outbound'] == 'direct'), isTrue);
-      final dns = configured['dns'] as Map;
-      final resolver = (dns['servers'] as List).cast<Map>()
-        .singleWhere((server) => server['tag'] == dns['final']);
-      expect(resolver['detour'], full ? 'proxy' : isNull);
+      for (final policy in [compiled, null]) {
+        final configured = jsonDecode(applyPokrovRoutingPreferences(profile, preferences,
+          hostPlatform: HostPlatform.windows, catalogPolicy: policy,
+          catalogAccessState: 'paid_unlimited', nativeCatalogWindowVersion: 1).configPayload) as Map;
+        final rules = (configured['route']['rules'] as List).cast<Map>();
+        expect(rules.any((rule) => rule['domain_suffix']?.contains('youtube.com') == true &&
+          rule['outbound'] == 'direct'), !full);
+        expect(rules.any((rule) => rule['domain_suffix']?.contains('ru') == true &&
+          rule['outbound'] == 'direct'), !full);
+        expect(rules.any((rule) => rule['ip_cidr']?.contains('10.20.0.0/16') == true &&
+          rule['outbound'] == 'direct'), isTrue);
+        final steamRoute = rules.singleWhere((rule) =>
+          rule['domain_suffix']?.contains('steamcontent.com') == true);
+        expect(steamRoute['domain'], contains('steampipe.akamaized.net'));
+        expect(steamRoute['network'], 'tcp');
+        expect(steamRoute['port'], [80, 443]);
+        expect(steamRoute['outbound'], 'direct');
+        expect(configured['route']['final'], 'proxy');
+        final dns = configured['dns'] as Map;
+        final resolver = (dns['servers'] as List).cast<Map>()
+          .singleWhere((server) => server['tag'] == dns['final']);
+        expect(resolver['detour'], full ? 'proxy' : isNull);
+      }
     }
     final appScopeProfile = ManagedProfilePayload(
       profileName: 'routing-fixture',
@@ -472,6 +481,8 @@ void main() {
         catalogAccessState: 'paid_unlimited', nativeCatalogWindowVersion: 1,
       ).configPayload) as Map;
       final rules = (configured['route']['rules'] as List).cast<Map>();
+      expect(rules.any((rule) =>
+        rule['domain_suffix']?.contains('steamcontent.com') == true), isFalse);
       expect(rules.take(3), [
         {'port': 53, 'action': 'hijack-dns'},
         {'action': 'sniff'},

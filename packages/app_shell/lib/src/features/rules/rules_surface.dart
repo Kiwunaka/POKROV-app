@@ -124,7 +124,8 @@ class _RulesSectionState extends State<_RulesSection> {
             RouteMode.excludedApps => 'Все, кроме выбранных приложений',
             RouteMode.selectiveServices => 'Только выбранные сервисы',
           },
-          description: _routeModeRowSummary(mode, smartDnsActive: widget.smartDnsActive),
+          description: _routeModeRowSummary(mode, hostPlatform: widget.appContext.hostPlatform,
+            smartDnsActive: widget.smartDnsActive),
           recommended: mode == RouteMode.allExceptRu,
         )],
         selectedId: _draftMode.name,
@@ -314,6 +315,7 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
                     _CustomRoutingCard(
                       preferences: _draftPreferences,
                       fallbackMode: widget.fallbackMode,
+                      hostPlatform: widget.hostPlatform,
                       onChanged: _stage,
                       onRoutingLessonCompleted: widget.onRoutingLessonCompleted,
                     ),
