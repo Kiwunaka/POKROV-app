@@ -33,6 +33,7 @@ class ServiceNetworkObserver {
   std::optional<std::uint64_t> Sample();
   std::optional<ServiceNetworkContext> ReadContext();
   std::optional<CandidateNetworkContext> ReadCandidateContext();
+  std::uint64_t Revision() const;
   bool IsCurrent(std::uint64_t revision) const;
 
  private:

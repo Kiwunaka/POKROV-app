@@ -337,8 +337,12 @@ std::optional<std::uint64_t> ServiceNetworkObserver::Sample() {
   return captured;  // A later callback invalidates this value, never joins it.
 }
 
+std::uint64_t ServiceNetworkObserver::Revision() const {
+  return state_->revision.load();
+}
+
 bool ServiceNetworkObserver::IsCurrent(std::uint64_t revision) const {
-  return state_->ready && state_->revision.load() == revision;
+  return state_->ready && Revision() == revision;
 }
 
 std::optional<ServiceNetworkContext> ServiceNetworkObserver::ReadContext() {

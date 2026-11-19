@@ -8,6 +8,7 @@
 
 namespace pokrov::service {
 namespace {
+constexpr ULONGLONG kEgressRetryIntervalMs = 2000;
 bool SameTarget(const CancellationTarget& left, const CancellationTarget& right) {
   return left.session_token == right.session_token && left.operation_nonce == right.operation_nonce;
 }
@@ -49,6 +50,21 @@ RuntimeResult WithTransportState(RuntimeResult result, bool pending, bool active
 }
 }
 
+bool EgressCheckSchedule::IsDue(ULONGLONG now, std::uint64_t network_revision) {
+  if (next_check_ == 0) {
+    Checked(now, true);
+  } else if (network_revision_ != network_revision) {
+    next_check_ = (std::min)(next_check_, now + (std::min)(interval_ms_, kEgressRetryIntervalMs));
+  }
+  network_revision_ = network_revision;
+  return now >= next_check_;
+}
+
+void EgressCheckSchedule::Checked(ULONGLONG now, bool healthy) {
+  const auto interval = healthy ? interval_ms_ : (std::min)(interval_ms_, kEgressRetryIntervalMs);
+  next_check_ = now + interval + now % (interval / 10 + 1);
+}
+
 RuntimeDispatcher::RuntimeDispatcher(RuntimeHost* runtime,
     std::function<std::optional<CandidateNetworkContext>()> candidate_network,
     std::function<bool(std::uint64_t)> candidate_current,
@@ -57,7 +73,7 @@ RuntimeDispatcher::RuntimeDispatcher(RuntimeHost* runtime,
       candidate_network_(candidate_network ? std::move(candidate_network) : [this] { return network_.ReadCandidateContext(); }),
       candidate_current_(candidate_current ? std::move(candidate_current) : [this](std::uint64_t revision) { return network_.IsCurrent(revision); }),
       snapshot_(runtime->Snapshot()),
-      egress_interval_ms_(egress_interval_ms),
+      egress_schedule_(egress_interval_ms),
       watcher_([this] { WatchBoundConnect(); }) {}
 
 RuntimeDispatcher::~RuntimeDispatcher() {
@@ -245,24 +261,25 @@ void RuntimeDispatcher::CheckRunningEgress() {
   std::unique_lock<std::mutex> execution(execution_lock_, std::try_to_lock);
   if (!execution.owns_lock()) return;
   if (!runtime_->CanRecheckEgress()) {
-    next_egress_check_ = 0;
+    egress_schedule_.Reset();
     return;
   }
   const auto now = ::GetTickCount64();
-  if (next_egress_check_ == 0) next_egress_check_ = now + egress_interval_ms_;
-  if (now < next_egress_check_) return;
+  if (!egress_schedule_.IsDue(now, network_.Revision())) return;
   auto cancelled = std::make_shared<std::atomic<bool>>(false);
   egress_check_cancelled_ = cancelled;
   state.unlock();
   const auto deadline = now + runtime_->EgressCheckBudgetMs();
-  runtime_->RecheckEgress([cancelled, deadline] {
+  const auto result = runtime_->RecheckEgress([cancelled, deadline] {
     if (cancelled->load()) return OperationInterruption::kCancelled;
     return ::GetTickCount64() >= deadline ? OperationInterruption::kDeadlineExceeded
                                         : OperationInterruption::kNone;
   }, deadline);
-  next_egress_check_ = ::GetTickCount64() + egress_interval_ms_;
   state.lock();
-  if (!cancelled->load() && !closing_) snapshot_ = runtime_->Snapshot();
+  if (!cancelled->load() && !closing_) {
+    egress_schedule_.Checked(::GetTickCount64(), result.status == Status::kOk);
+    snapshot_ = runtime_->Snapshot();
+  }
   egress_check_cancelled_.reset();
 }
 
@@ -409,7 +426,7 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
     return ProjectBoundState(WithFailure(snapshot_, Status::kNotReady, "runtime_busy"));
   }
   if (request.command != Command::kReadSmartAccessRestrictions &&
-      request.command != Command::kReadSmartAccessLeases) next_egress_check_ = 0;
+      request.command != Command::kReadSmartAccessLeases) egress_schedule_.Reset();
   std::optional<std::uint64_t> network_revision;
   std::optional<CandidateNetworkContext> local_dpi_network;
   const bool requests_dpi = IsConnectCommand(request.command) &&

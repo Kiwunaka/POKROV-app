@@ -82,6 +82,20 @@ class HealthProbe final : public RuntimeEgressProbe {
   std::atomic<bool> overlapped{false};
 };
 
+void TestPeriodicEgressSchedule() {
+  EgressCheckSchedule schedule(15000);
+  Expect(!schedule.IsDue(1000, 1) && !schedule.IsDue(15999, 1) &&
+             schedule.IsDue(17500, 1), "healthy egress check ran too frequently or too late");
+  schedule.Checked(17500, true);
+  Expect(!schedule.IsDue(18000, 2) && !schedule.IsDue(19000, 3) &&
+             schedule.IsDue(20000, 3), "network changes did not advance or postponed the probe");
+  schedule.Checked(20000, false);
+  Expect(!schedule.IsDue(21999, 3) && schedule.IsDue(22200, 3),
+         "failed check did not use the fast retry interval");
+  schedule.Checked(22200, true);
+  Expect(!schedule.IsDue(30000, 3), "successful retry did not restore the healthy interval");
+}
+
 void TestPeriodicEgressLifecycle(const std::filesystem::path& root, HANDLE stop) {
   auto core = std::make_unique<ProbeCore>();
   auto* observed = core.get();
@@ -174,7 +188,7 @@ void TestPeriodicEgressDeadlineRetainsTun(const std::filesystem::path& root, HAN
   auto* health = probe.get();
   RuntimeHost runtime(std::move(core), std::move(probe), std::make_unique<Recovery>(),
       root.wstring(), false);
-  RuntimeDispatcher dispatcher(&runtime);
+  RuntimeDispatcher dispatcher(&runtime, {}, {}, 2000);
   const auto call = [&](Command command, const std::string& body = "") {
     Frame request{};
     request.command = command;
@@ -321,16 +335,28 @@ void TestBoundSmartAccessStartupHandoff(const std::filesystem::path& root, HANDL
 }
 
 int main(int argc, char** argv) {
+  const bool egress_only = argc == 2 && std::string(argv[1]) == "--egress-checks";
   const auto root = std::filesystem::temp_directory_path() /
       ("pokrov-candidate-test-" + std::to_string(::GetCurrentProcessId()));
-  auto core = std::make_unique<ProbeCore>();
-  auto* observed = core.get();
-  auto recovery = std::make_unique<Recovery>();
-  auto* network_mutations = recovery.get();
+  std::error_code setup_error;
+  std::filesystem::create_directories(root, setup_error);
+  if (setup_error) {
+    std::cerr << "test directory setup failed: " << setup_error.value() << '\n';
+    return 1;
+  }
   HANDLE stop = ::CreateEventW(nullptr, TRUE, FALSE, nullptr);
-  {
+  if (!egress_only) {
+    auto core = std::make_unique<ProbeCore>();
+    auto* observed = core.get();
+    auto recovery = std::make_unique<Recovery>();
+    auto* network_mutations = recovery.get();
     RuntimeHost runtime(std::move(core), nullptr, std::move(recovery), root.wstring(), false);
-    Expect(runtime.Initialize().status == Status::kOk, "runtime initialization failed");
+    const auto initialized = runtime.Initialize();
+    if (initialized.status != Status::kOk) {
+      std::cerr << "runtime initialization failed: " << initialized.body << '\n';
+      ::CloseHandle(stop);
+      return 1;
+    }
     const auto before = runtime.Snapshot().body;
     std::atomic<bool> current{true};
     const std::string reference = "network_" + std::string(32, 'a');
@@ -406,9 +432,10 @@ int main(int argc, char** argv) {
            "isolated probe changed TUN state or failed to close");
   }
   if (argc != 2 || std::string(argv[1]) != "--candidate-response") {
+    TestPeriodicEgressSchedule();
     TestPeriodicEgressLifecycle(root / "periodic", stop);
     TestPeriodicEgressDeadlineRetainsTun(root / "periodic-deadline", stop);
-    TestBoundSmartAccessStartupHandoff(root / "bound-smart", stop);
+    if (!egress_only) TestBoundSmartAccessStartupHandoff(root / "bound-smart", stop);
   }
   ::CloseHandle(stop);
   std::filesystem::remove_all(root);

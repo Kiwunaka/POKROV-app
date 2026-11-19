@@ -15,6 +15,19 @@
 
 namespace pokrov::service {
 
+class EgressCheckSchedule {
+ public:
+  explicit EgressCheckSchedule(ULONGLONG interval_ms) : interval_ms_(interval_ms) {}
+  bool IsDue(ULONGLONG now, std::uint64_t network_revision);
+  void Checked(ULONGLONG now, bool healthy);
+  void Reset() { next_check_ = 0; }
+
+ private:
+  const ULONGLONG interval_ms_;
+  ULONGLONG next_check_ = 0;
+  std::uint64_t network_revision_ = 0;
+};
+
 // Session threads may serve status/cancel concurrently. All RuntimeHost access
 // and network mutations remain serialized, including cancellation rollback.
 class RuntimeDispatcher {
@@ -22,7 +35,7 @@ class RuntimeDispatcher {
   explicit RuntimeDispatcher(RuntimeHost* runtime,
       std::function<std::optional<CandidateNetworkContext>()> candidate_network = {},
       std::function<bool(std::uint64_t)> candidate_current = {},
-      ULONGLONG egress_interval_ms = 2000);
+      ULONGLONG egress_interval_ms = 15000);
   ~RuntimeDispatcher();
   RuntimeResult Execute(const Frame& request, HANDLE stop_event,
                         ULONGLONG monotonic_deadline, HANDLE client_pipe);
@@ -97,8 +110,7 @@ class RuntimeDispatcher {
   std::optional<CancellationTarget> stopped_connect_;
   std::condition_variable watch_changed_;
   bool closing_ = false;
-  const ULONGLONG egress_interval_ms_;
-  ULONGLONG next_egress_check_ = 0;  // execution_lock_ held
+  EgressCheckSchedule egress_schedule_;  // execution_lock_ held
   std::shared_ptr<std::atomic<bool>> egress_check_cancelled_;  // state_lock_ held
   std::thread watcher_;
   std::mutex probes_lock_;
