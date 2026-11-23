@@ -31,6 +31,9 @@ internal fun PersistedRuntimeProfile.canStartFromQuickSettings(): Boolean =
     quickSettingsEligible && !requiresBoundConnect && !catalogAppIdentityRequired && lanScopeVersion == 1 &&
         routeMode.isNotBlank() && isRuntimeProfileDigest(configDigest)
 
+internal fun PersistedRuntimeProfile.canResumeService(confirmedDigest: String?): Boolean =
+    canStartFromQuickSettings() && coreEgressProbeRequired && confirmedDigest == configDigest
+
 internal fun activeRuntimeDisplayNodeCode(
     snapshot: Map<String, Any?>,
     loadProfile: () -> PersistedRuntimeProfile?,
@@ -129,6 +132,34 @@ internal fun decodeRuntimeProfileStorage(
  */
 internal object AndroidRuntimeProfileStore {
     private const val PREFERENCES_NAME = "pokrov_runtime_profile"
+    private const val SERVICE_RESTART_DIGEST = "service_restart_digest"
+
+    @Synchronized
+    fun restoreForServiceStart(context: Context, systemAlwaysOn: Boolean): PersistedRuntimeProfile? {
+        val profile = load(context) ?: return null
+        val restartDigest = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+            .getString(SERVICE_RESTART_DIGEST, null)
+        val eligible = if (systemAlwaysOn) profile.canStartFromQuickSettings()
+            else profile.canResumeService(restartDigest)
+        return if (eligible) restoreIntoRuntimeState(context, profile) else null
+    }
+
+    @Synchronized
+    fun confirmServiceRestart(context: Context, digest: String) {
+        val preferences = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+        if (preferences.getString(SERVICE_RESTART_DIGEST, null) == digest ||
+            !AndroidRuntimeState.hasProvenActiveProfile(digest) ||
+            load(context)?.canResumeService(digest) != true) return
+        preferences.edit().putString(SERVICE_RESTART_DIGEST, digest).commit()
+    }
+
+    @Synchronized
+    fun cancelServiceRestart(context: Context) {
+        val preferences = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+        if (preferences.contains(SERVICE_RESTART_DIGEST)) {
+            preferences.edit().remove(SERVICE_RESTART_DIGEST).commit()
+        }
+    }
 
     @Synchronized
     fun save(context: Context, profile: PersistedRuntimeProfile) {
@@ -221,8 +252,10 @@ internal object AndroidRuntimeProfileStore {
     }
 
     @Synchronized
-    fun restoreIntoRuntimeState(context: Context): PersistedRuntimeProfile? {
-        val profile = load(context) ?: return null
+    fun restoreIntoRuntimeState(context: Context): PersistedRuntimeProfile? =
+        load(context)?.let { restoreIntoRuntimeState(context, it) }
+
+    private fun restoreIntoRuntimeState(context: Context, profile: PersistedRuntimeProfile): PersistedRuntimeProfile? {
         AndroidRuntimeState.resolveEnvironment(context) ?: return null
         if (AndroidRuntimeState.stagedConfigPath().isNullOrBlank()) {
             AndroidRuntimeState.markProfileStaged(

@@ -68,4 +68,19 @@ class AndroidRuntimeProfileIdentityTest {
         assertTrue(profile.canStartFromQuickSettings())
         assertFalse(profile.copy(configDigest = "").canStartFromQuickSettings())
     }
+
+    @Test
+    fun serviceRestartRequiresProofForTheReusableProfile() {
+        val digest = "a".repeat(64)
+        val profile = PersistedRuntimeProfile(
+            configPath = "/synthetic/profile.json", configDigest = digest,
+            routeMode = "device", quickSettingsEligible = true, lanScopeVersion = 1,
+        )
+        assertTrue(profile.canResumeService(digest))
+        assertFalse(profile.canResumeService(null))
+        assertFalse(profile.canResumeService("b".repeat(64)))
+        assertFalse(profile.copy(requiresBoundConnect = true).canResumeService(digest))
+        assertFalse(profile.copy(catalogAppIdentityRequired = true).canResumeService(digest))
+        assertFalse(profile.copy(coreEgressProbeRequired = false).canResumeService(digest))
+    }
 }

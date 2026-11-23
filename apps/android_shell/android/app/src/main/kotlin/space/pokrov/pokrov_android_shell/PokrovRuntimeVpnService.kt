@@ -187,16 +187,20 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         return super.onBind(intent)
     }
 
+    private var restartMode = START_NOT_STICKY
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // Android starts always-on VPN without our explicit START command.
-        // Reuse only the previously confirmed, digest-bound profile; the normal
-        // start path below still validates its contents before creating a TUN.
+        // A sticky restart reuses only the last proven profile. System always-on
+        // uses its existing Quick Settings eligibility and checks the file too.
         val commandIntent = if (intent?.action == null || intent.action == SERVICE_INTERFACE) {
             if (isTunEstablished() || AndroidRuntimeState.isConnectionPending()) {
-                return START_NOT_STICKY
+                return restartMode
             }
-            val profile = AndroidRuntimeProfileStore.restoreIntoRuntimeState(this)
-                ?.takeIf { it.canStartFromQuickSettings() }
+            val systemAlwaysOn = intent?.action == SERVICE_INTERFACE ||
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && isAlwaysOn)
+            val profile = if (prepare(this) == null) {
+                AndroidRuntimeProfileStore.restoreForServiceStart(this, systemAlwaysOn)
+            } else null
             Intent(this, PokrovRuntimeVpnService::class.java).apply {
                 action = ACTION_START
                 profile?.let {
@@ -224,8 +228,10 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     // a replacement. The process owner rejects the former when
                     // START arrives; neither case may stop a different attempt.
                     if (serviceCommandGeneration.get() == 0L) stopSelfResult(startId)
-                    return START_NOT_STICKY
+                    return restartMode
                 }
+                restartMode = START_NOT_STICKY
+                AndroidRuntimeProfileStore.cancelServiceRestart(this)
                 if (cancelledRequest == null) AndroidConnectRequestOwner.invalidate()
                 AndroidOperationalJournal.record(
                     AndroidOperationalEvent.VPN_SERVICE,
@@ -255,7 +261,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 if (protectedHandoff.retainsTun && activeTun != null) {
                     AndroidRuntimeState.markDegraded("protected_handoff_required",
                         "Для смены подключения нужна защищенная передача профиля.")
-                    return START_NOT_STICKY
+                    return restartMode
                 }
                 val connectRequestId = commandIntent.getStringExtra(EXTRA_CONNECT_REQUEST)
                 val expectedCoreModuleSha256 = commandIntent.getStringExtra(EXTRA_CORE_MODULE_SHA256)
@@ -266,7 +272,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     (expectedCoreModuleSha256 != null && serviceCommandGeneration.get() != 0L)) {
                     runCatching { beginForegroundRuntime() }
                     if (serviceCommandGeneration.get() == 0L) stopSelfResult(startId)
-                    return START_NOT_STICKY
+                    return restartMode
                 }
                 val deadline = if (expectedCoreModuleSha256 == null) null else AndroidConnectDeadline(
                     commandIntent.getStringExtra(EXTRA_CONNECT_BOOT_REF).orEmpty(),
@@ -283,13 +289,14 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                             AndroidRuntimeSafety.publicFailureMessage("connect_deadline"))
                     }
                     if (serviceCommandGeneration.get() == 0L) stopSelfResult(startId)
-                    return START_NOT_STICKY
+                    return restartMode
                 }
                 if (connectRequestId != null && !AndroidConnectRequestOwner.admitService(connectRequestId, this)) {
                     runCatching { beginForegroundRuntime() }
                     if (serviceCommandGeneration.get() == 0L) stopSelfResult(startId)
-                    return START_NOT_STICKY
+                    return restartMode
                 }
+                restartMode = START_NOT_STICKY
                 acceptedConnectRequestId = connectRequestId
                 AndroidOperationalJournal.record(
                     AndroidOperationalEvent.VPN_SERVICE,
@@ -361,6 +368,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                             startRuntime(configPath, tileGeneration, routeMode, expectedDigest,
                                 commandGeneration, connectRequestId, expectedCoreModuleSha256, deadline)
                         }
+                        if (expectedCoreModuleSha256 == null) restartMode = START_STICKY
                     } catch (_: Throwable) {
                         AndroidOperationalJournal.record(
                             AndroidOperationalEvent.VPN_SERVICE,
@@ -386,7 +394,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             }
             else -> Unit
         }
-        return START_NOT_STICKY
+        return restartMode
     }
 
     override fun onDestroy() {
@@ -423,6 +431,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     }
 
     override fun onRevoke() {
+        AndroidRuntimeProfileStore.cancelServiceRestart(this)
         AndroidConnectRequestOwner.invalidate()
         AndroidOperationalJournal.record(
             AndroidOperationalEvent.VPN_SERVICE,
@@ -1247,6 +1256,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 stopReason = stopReason,
             )
         }
+        AndroidRuntimeProfileStore.cancelServiceRestart(this)
         // Publish the stopped service only after cleanup and the terminal
         // state, so host polling cannot recover from an interim disconnect.
         markServiceStopped()
@@ -2076,6 +2086,9 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 AndroidRuntimeState.updateCoreEgressValidation(
                     probeResult == AndroidCoreEgressProbeResult.HEALTHY,
                 )
+                if (probeResult == AndroidCoreEgressProbeResult.HEALTHY) {
+                    activeStartupProfileDigest?.let { AndroidRuntimeProfileStore.confirmServiceRestart(this, it) }
+                }
                 updateRuntimeNotification()
             }
             return
@@ -2732,6 +2745,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         }
 
         fun stop(context: Context, tileGeneration: Long? = null) {
+            AndroidRuntimeProfileStore.cancelServiceRestart(context)
             val intent = Intent(context, PokrovRuntimeVpnService::class.java).apply {
                 action = ACTION_STOP
                 tileGeneration?.let {

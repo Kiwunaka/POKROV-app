@@ -542,20 +542,33 @@ class ConnectionManager extends ChangeNotifier {
     if (!pending.replaced && failed.protectionRetained) return blocked(_NativeRecoveryBlockReason.failedGuardRetained);
     if (failed.transportProofPending == true || failed.transportLeaseActive == true)
       return blocked(_NativeRecoveryBlockReason.failedBoundTransport);
-    // Android publishes effective identity only with a valid egress proof.
-    // Its failed snapshot retains the exact staged identity; the new healthy
-    // observation must prove that same staged input as the effective owner.
-    final digest = _appContext.hostPlatform == HostPlatform.android
-        ? failed.stagedProfileDigest : failed.effectiveProfileDigest;
-    final source = failed.stagedProfileSource;
-    final currentSource = current.effectiveProfileSource;
-    if (digest == null || digest != failed.stagedProfileDigest ||
-        digest != current.stagedProfileDigest || digest != current.effectiveProfileDigest)
-      return blocked(_NativeRecoveryBlockReason.digestMismatch);
-    if (source == null || source.revision.isEmpty || currentSource == null)
-      return blocked(_NativeRecoveryBlockReason.sourceMissing);
-    if (source.revision != currentSource.revision || source.origin != currentSource.origin || source.protocol != currentSource.protocol)
-      return blocked(_NativeRecoveryBlockReason.sourceMismatch);
+    final confirmed = _confirmedCandidate;
+    if (_appContext.hostPlatform == HostPlatform.android && !pending.replaced &&
+        confirmed != null && confirmed.candidate.candidateRef == pending.candidateRef &&
+        current.stagedProfileDigest == null && current.stagedConfigPath == null) {
+      // Clearing Quick Settings reuse leaves the running Android profile intact.
+      // Its fresh native proof must identify the last confirmed active profile.
+      if (current.profileIdentityOrigin != 'android_private_stage_request_sha256' ||
+          current.effectiveProfileDigest != confirmed.digest) {
+        return blocked(_NativeRecoveryBlockReason.digestMismatch);
+      }
+    } else {
+      final digest = _appContext.hostPlatform == HostPlatform.android
+          ? failed.stagedProfileDigest : failed.effectiveProfileDigest;
+      final source = failed.stagedProfileSource;
+      final currentSource = current.effectiveProfileSource;
+      if (digest == null || digest != failed.stagedProfileDigest ||
+          digest != current.stagedProfileDigest || digest != current.effectiveProfileDigest) {
+        return blocked(_NativeRecoveryBlockReason.digestMismatch);
+      }
+      if (source == null || source.revision.isEmpty || currentSource == null) {
+        return blocked(_NativeRecoveryBlockReason.sourceMissing);
+      }
+      if (source.revision != currentSource.revision || source.origin != currentSource.origin ||
+          source.protocol != currentSource.protocol) {
+        return blocked(_NativeRecoveryBlockReason.sourceMismatch);
+      }
+    }
     // Selection can advance before preparation fails without changing Core's
     // active owner. Attribute its fresh proof to that owner, not the proposal.
     _candidateRef = pending.candidateRef;

@@ -768,6 +768,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   bool failHandoff = false;
   bool failedHandoffKeepsRunning = false;
   bool omitUnverifiedEffectiveDigest = false;
+  bool stagedReuseInvalidated = false;
   String? nativeHandoffFailureKind;
   final failedProbeProtocols = <String>{};
   final failedProbeProfiles = <String>{};
@@ -950,7 +951,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
         artifactDirectory: null,
         coreBinaryPath: null,
         helperBinaryPath: null,
-        stagedConfigPath: phase.index >= RuntimePhase.configStaged.index
+         stagedConfigPath: phase.index >= RuntimePhase.configStaged.index && !stagedReuseInvalidated
             ? '/test/profile.json'
             : null,
         supportsLiveConnect: true,
@@ -965,10 +966,10 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
         connectionPending: connectionPending,
         lastStopReason: lastStopReason,
         fetchedProfileSource: profileSource,
-        stagedProfileSource: profileSource,
+         stagedProfileSource: stagedReuseInvalidated ? null : profileSource,
         effectiveProfileSource: profileDigest != null && phase == RuntimePhase.running &&
-            !warpEgressFailure && !pendingFirstEgress ? profileSource : null,
-        stagedProfileDigest: stagedProfile == null ? null : profileDigest,
+             !stagedReuseInvalidated && !warpEgressFailure && !pendingFirstEgress ? profileSource : null,
+         stagedProfileDigest: stagedProfile == null || stagedReuseInvalidated ? null : profileDigest,
         effectiveProfileDigest: phase == RuntimePhase.running &&
             (!omitUnverifiedEffectiveDigest || !warpEgressFailure && !pendingFirstEgress)
             ? profileDigest : null,
@@ -6556,7 +6557,7 @@ void main() {
     addTearDown(manager.dispose);
     await manager.connect();
     bootstrapper.failure = const BootstrapFailure('profile API unavailable', code: 'managed_profile_unavailable');
-    runtime..candidateKey = 'network-b'..candidateContext = 'context-b';
+    runtime..candidateKey = 'network-b'..candidateContext = 'context-b'..stagedReuseInvalidated = true;
     await manager.resume();
     expect(manager.status.phase, ConnectionPhase.actionRequired);
     expect(manager.retainsProtection, isTrue);
@@ -6564,6 +6565,10 @@ void main() {
     await manager.refresh();
     expect(manager.retainsProtection, isTrue, reason: 'the previous network proof cannot acknowledge this recovery');
     await Future<void>.delayed(const Duration(milliseconds: 20));
+    runtime..profileDigest = 'b' * 64..proofObservedAt = DateTime.now().toUtc();
+    await manager.refresh();
+    expect(manager.retainsProtection, isTrue, reason: 'fresh proof from a different profile cannot release protection');
+    runtime.profileDigest = 'a' * 64;
     runtime.proofObservedAt = DateTime.now().toUtc();
     await manager.refresh();
     expect(manager.status.phase, ConnectionPhase.connected,

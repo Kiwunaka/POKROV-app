@@ -461,6 +461,10 @@ internal object AndroidRuntimeState {
     }
 
     @Synchronized
+    fun hasProvenActiveProfile(digest: String): Boolean =
+        phase == AndroidRuntimePhase.RUNNING && activeProfileDigest == digest && coreEgressValidated == true
+
+    @Synchronized
     fun markRunning(message: String) {
         lastFailureSignature = null
         phase = AndroidRuntimePhase.RUNNING
