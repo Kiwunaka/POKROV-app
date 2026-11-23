@@ -2956,9 +2956,10 @@ class ConnectionManager extends ChangeNotifier {
     if (useCandidateProbes && catalog != null) {
       final probing = engine as RuntimeCandidateProbing;
       final baseWarpPolicy = payload.warpPolicy.withClientLocalDefaults();
-      final hasWarpCandidates = catalog.candidates.any((candidate) =>
-          candidate.warpMode != null);
-      final warpStatus = hasWarpCandidates
+      final shouldCheckWarpCandidates = !suppressWarpRuntime &&
+          _explicitWarpRuntimeConsent == true &&
+          catalog.candidates.any((candidate) => candidate.warpMode != null);
+      final warpStatus = shouldCheckWarpCandidates
           ? await _fetchWarpStatusOrNull(ownerGeneration: generation,
               cancelled: cancelled)
           : null;

@@ -1,7 +1,7 @@
 name: pokrov_android_shell
 description: Android host for the POKROV client program.
 publish_to: none
-version: 2.0.13+4297
+version: 2.1.0+4298
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

@@ -905,30 +905,46 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     await _clientExperienceRestore;
     if (!mounted) return;
     final accountRevision = _accountUiRevision;
+    final subscriptionSettled = showFailure ? Completer<void>() : null;
     var subscriptionRequested = false;
-    var subscriptionRefreshed = false;
     Future<void> refreshSummary() => _accountSessionCoordinator.refreshSummary(
         refreshSubscription: () async {
           subscriptionRequested = true;
-          subscriptionRefreshed = await _refreshSubscriptionInfo(showFailure: showFailure);
-          return subscriptionRefreshed;
+          final refreshed =
+              await _refreshSubscriptionInfo(showFailure: showFailure);
+          if (showFailure &&
+              refreshed &&
+              mounted &&
+              accountRevision == _accountUiRevision) {
+            showPokrovSnack(context, 'Данные доступа обновлены',
+                tone: PokrovSnackTone.success);
+          }
+          subscriptionSettled?.complete();
+          return refreshed;
         },
         refreshBonus: _loadBonusSummary,
         refreshInbox: _refreshNotifications,
         isActive: () => mounted,
       );
-    await refreshSummary();
-    // A manual refresh that joined an older read still needs its own fresh result.
-    if (showFailure && !subscriptionRequested && mounted &&
-        accountRevision == _accountUiRevision && !_accountSessionChanging &&
-        !_accountSessionCoordinator.loginRecoveryRequired) {
+    Future<void> finishSummary() async {
       await refreshSummary();
+      // A manual refresh that joined an older read still needs its own fresh result.
+      if (showFailure &&
+          !subscriptionRequested &&
+          mounted &&
+          accountRevision == _accountUiRevision &&
+          !_accountSessionChanging &&
+          !_accountSessionCoordinator.loginRecoveryRequired) {
+        await refreshSummary();
+      }
+      await _connectionManager._refreshSmartAccessLeases();
     }
-    if (showFailure && subscriptionRefreshed && mounted &&
-        accountRevision == _accountUiRevision) {
-      showPokrovSnack(context, 'Данные доступа обновлены', tone: PokrovSnackTone.success);
-    }
-    await _connectionManager._refreshSmartAccessLeases();
+
+    final summary = finishSummary();
+    // Bonus, inbox and lease refresh still finish in their existing order.
+    return subscriptionSettled == null
+        ? summary
+        : Future.any<void>([subscriptionSettled.future, summary]);
   }
 
   Future<void> _manualRefreshAccountSummary() async {

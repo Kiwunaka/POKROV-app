@@ -261,13 +261,19 @@ class _ControlledWarpBootstrapper extends _CachedBootstrapper implements AppFirs
   _ControlledWarpBootstrapper() : super(warpEnabled: true) { cacheAvailable = false; }
   WarpControlStatus warpStatus = WarpControlStatus.fromPolicy(
       WarpRuntimePolicy.clientLocalDefault.withUserConsent(true));
+  int warpStatusReads = 0;
   final statusReplies = <WarpControlStatus>[];
   final consentStarted = Completer<void>();
   Future<void>? consentGate;
 
   @override
-  Future<WarpControlStatus> fetchWarpStatus({required HostPlatform hostPlatform, Future<void>? cancelled}) async =>
-      statusReplies.isEmpty ? warpStatus : statusReplies.removeAt(0);
+  Future<WarpControlStatus> fetchWarpStatus({
+    required HostPlatform hostPlatform,
+    Future<void>? cancelled,
+  }) async {
+    warpStatusReads++;
+    return statusReplies.isEmpty ? warpStatus : statusReplies.removeAt(0);
+  }
   @override
   Future<WarpControlStatus> setWarpConsent({required HostPlatform hostPlatform, required bool enabled,
       String reasonCode = ''}) async {
@@ -676,6 +682,7 @@ class _StartupAccountBootstrapper extends _StatsBootstrapper implements AppFirst
   ClientSubscriptionInfo? subscription;
   BootstrapFailure? subscriptionFailure;
   Completer<ClientSubscriptionInfo>? subscriptionGate;
+  Completer<ClientNotificationInbox>? notificationsGate;
 
   @override
   Future<ClientSubscriptionInfo> fetchClientSubscription({required HostPlatform hostPlatform,
@@ -687,6 +694,14 @@ class _StartupAccountBootstrapper extends _StatsBootstrapper implements AppFirst
       expiresAt: '', daysLeft: 1, autoRenew: false, renewUrl: null,
       plans: [], trafficPolicy: {});
   }
+
+  @override
+  Future<ClientNotificationInbox> fetchClientNotifications({
+    required HostPlatform hostPlatform,
+    String after = '',
+  }) async =>
+      await notificationsGate?.future ??
+      const ClientNotificationInbox(items: [], nextCursor: '', unreadCount: 0);
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -2396,7 +2411,9 @@ void main() {
     await tester.pumpAndSettle();
     bootstrapper.subscriptionFailure = null;
     final fresh = Completer<ClientSubscriptionInfo>();
+    final inbox = Completer<ClientNotificationInbox>();
     bootstrapper.subscriptionGate = fresh;
+    bootstrapper.notificationsGate = inbox;
     await tester.tap(button, kind: PointerDeviceKind.mouse);
     await tester.pump();
     expect(bootstrapper.subscriptionReads, beforeBackground + 3);
@@ -2407,6 +2424,10 @@ void main() {
     expect(profile().subscriptionInfo, same(renewed));
     expect(find.text('Данные доступа обновлены'), findsOneWidget);
     expect(tester.widget<OutlinedButton>(button).onPressed, isNotNull);
+    inbox.complete(
+      const ClientNotificationInbox(items: [], nextCursor: '', unreadCount: 0),
+    );
+    await tester.pumpAndSettle();
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
     debugDefaultTargetPlatformOverride = null;
@@ -5581,6 +5602,8 @@ void main() {
     final manager = _manager(runtime, bootstrapper);
     addTearDown(manager.dispose);
     await manager.connect();
+    expect(bootstrapper.warpStatusReads, 1,
+        reason: 'ordinary Auto reads the display status at staging only');
     expect(runtime.probedWarpModes, [''], reason: 'stored consent does not inject WARP into Auto');
     expect(runtime.stagedPayloads.last.warpPolicy.canEnableRuntime, isFalse);
     expect((await manager.loadWarpPolicy())?.userConsented, isTrue,
