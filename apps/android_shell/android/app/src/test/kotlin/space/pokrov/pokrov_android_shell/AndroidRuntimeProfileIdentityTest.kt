@@ -75,6 +75,7 @@ class AndroidRuntimeProfileIdentityTest {
         val profile = PersistedRuntimeProfile(
             configPath = "/synthetic/profile.json", configDigest = digest,
             routeMode = "device", quickSettingsEligible = true, lanScopeVersion = 1,
+            displayRouteMode = "fullTunnel",
         )
         assertTrue(profile.canResumeService(digest))
         assertFalse(profile.canResumeService(null))
@@ -82,5 +83,11 @@ class AndroidRuntimeProfileIdentityTest {
         assertFalse(profile.copy(requiresBoundConnect = true).canResumeService(digest))
         assertFalse(profile.copy(catalogAppIdentityRequired = true).canResumeService(digest))
         assertFalse(profile.copy(coreEgressProbeRequired = false).canResumeService(digest))
+        assertTrue(profile.copy(quickSettingsEligible = false).canResumeService(digest))
+        val restartOnly = profile.copy(restartOnly = true)
+        assertTrue(profile.canRetainAfterCatalogControl(digest))
+        assertFalse(profile.copy(displayRouteMode = "allExceptRu").canRetainAfterCatalogControl(digest))
+        assertTrue(restartOnly.canResumeService(digest))
+        assertFalse(restartOnly.canStartFromQuickSettings())
     }
 }

@@ -4806,6 +4806,7 @@ class ConnectionManager extends ChangeNotifier {
           current,
           ownerGeneration: generation,
           waitForEgressProof: qa != null,
+          boundAndroidQa: qa != null && _appContext.hostPlatform == HostPlatform.android,
         );
         if (_disposed || !_connectionCoordinator.ownsOperation(generation)) {
           return;
@@ -6104,6 +6105,7 @@ class ConnectionManager extends ChangeNotifier {
     RuntimeSnapshot snapshot, {
     int? ownerGeneration,
     bool waitForEgressProof = false,
+    bool boundAndroidQa = false,
   }) async {
     final engine = _runtimeEngine;
     final RuntimeConnectCancellation? cancellation =
@@ -6116,6 +6118,7 @@ class ConnectionManager extends ChangeNotifier {
           ownerGeneration: ownerGeneration,
           requestId: requestId,
           waitForEgressProof: waitForEgressProof,
+          boundAndroidQa: boundAndroidQa,
           deadline: requestId == null
               ? null
               : _withinConnectBudget(snapshot.connectionPending || waitForEgressProof
@@ -6131,6 +6134,7 @@ class ConnectionManager extends ChangeNotifier {
   Future<RuntimeSnapshot> _settleOwnedRuntimeTransition(
     RuntimeSnapshot snapshot, {
     required String? requestId,
+    required bool boundAndroidQa,
     int? ownerGeneration,
     Duration? deadline,
     bool waitForEgressProof = false,
@@ -6140,7 +6144,6 @@ class ConnectionManager extends ChangeNotifier {
     if (!_connectionCoordinator.ownsOperation(generation)) {
       throw const ConnectionOperationSuperseded();
     }
-    final boundAndroidQa = waitForEgressProof && _appContext.hostPlatform == HostPlatform.android;
     if (boundAndroidQa && (requestId == null || _runtimeEngine is! RuntimeConnectProgress)) {
       throw const RoutingCatalogFailure('smart_access_qa_connect_unsupported');
     }

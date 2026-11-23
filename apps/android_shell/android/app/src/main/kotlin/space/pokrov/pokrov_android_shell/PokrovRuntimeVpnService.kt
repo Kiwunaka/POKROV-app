@@ -192,25 +192,28 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // A sticky restart reuses only the last proven profile. System always-on
         // uses its existing Quick Settings eligibility and checks the file too.
-        val commandIntent = if (intent?.action == null || intent.action == SERVICE_INTERFACE) {
+        val resume = intent?.action == null || intent.action == SERVICE_INTERFACE
+        val restoredProfile = if (resume) {
             if (isTunEstablished() || AndroidRuntimeState.isConnectionPending()) {
                 return restartMode
             }
             val systemAlwaysOn = intent?.action == SERVICE_INTERFACE ||
                 (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && isAlwaysOn)
-            val profile = if (prepare(this) == null) {
+            if (prepare(this) == null) {
                 AndroidRuntimeProfileStore.restoreForServiceStart(this, systemAlwaysOn)
             } else null
+        } else null
+        val commandIntent = if (resume) {
             Intent(this, PokrovRuntimeVpnService::class.java).apply {
                 action = ACTION_START
-                profile?.let {
+                restoredProfile?.let {
                     putExtra(EXTRA_CONFIG_PATH, it.configPath)
                     putExtra(EXTRA_ROUTE_MODE, it.routeMode)
                     putExtra(EXTRA_PROFILE_DIGEST, it.configDigest)
                 }
             }
         } else {
-            intent
+            checkNotNull(intent)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) !=
@@ -366,7 +369,8 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                                 return@execute
                             }
                             startRuntime(configPath, tileGeneration, routeMode, expectedDigest,
-                                commandGeneration, connectRequestId, expectedCoreModuleSha256, deadline)
+                                commandGeneration, connectRequestId, expectedCoreModuleSha256, deadline,
+                                allowRestartOnly = restoredProfile?.restartOnly == true)
                         }
                         if (expectedCoreModuleSha256 == null) restartMode = START_STICKY
                     } catch (_: Throwable) {
@@ -562,6 +566,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         connectRequestId: String?,
         expectedCoreModuleSha256: String?,
         deadline: AndroidConnectDeadline?,
+        allowRestartOnly: Boolean,
     ) {
         fun ownsRequest(): Boolean = ownsServiceCommand(commandGeneration) &&
             (connectRequestId == null || AndroidConnectRequestOwner.ownsStart(
@@ -585,7 +590,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             if (activeTun == null) stopSelf()
             return
         }
-        val persistedProfile = AndroidRuntimeProfileStore.load(this)
+        val persistedProfile = AndroidRuntimeProfileStore.load(this, allowRestartOnly = allowRestartOnly)
         val stagedContent = runCatching { File(configPath).readText() }.getOrNull()
         if (!ownsRequest()) { stopExpiredRequest(); return }
         val missingBoundOwner = persistedProfile?.requiresBoundConnect == true &&
@@ -604,7 +609,8 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             return
         }
         // Pin the verified immutable bytes before replacing any live session.
-        val rawContent = stagedContent.removePrefix("\uFEFF")
+        val stagedJson = stagedContent.removePrefix("\uFEFF")
+        val restartWithoutCatalog = persistedProfile?.restartOnly == true
         markServiceStarting()
         val session = replaceRuntimeSession(commandGeneration, expectedDigest, connectRequestId, deadline)
         if (!ownsRuntimeSession(session)) {
@@ -659,9 +665,10 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 !AndroidRuntimeState.matchesCoreModuleSha256(expectedCoreModuleSha256)) {
                 throw CoreIdentityMismatch()
             }
-            if (rawContent.isBlank()) {
+            if (stagedJson.isBlank()) {
                 throw IllegalStateException("Staged runtime config is missing or empty.")
             }
+            val rawContent = if (restartWithoutCatalog) restrictCatalogOnServiceRestart(stagedJson) else stagedJson
             val runtimeConfig = prepareRuntimeConfig(rawContent, routeMode)
             val endpoints = runtimeConfig.optJSONArray("endpoints")
             val outbounds = runtimeConfig.optJSONArray("outbounds")
@@ -2587,7 +2594,8 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     // bytes obsolete without a later UI callback. Persist reuse
                     // invalidation before enabling either native operation.
                     val reuseInvalidated = current && server != null && (!invalidateBefore ||
-                        AndroidRuntimeProfileStore.invalidateMatchingProfile(owner, profileDigest))
+                        AndroidRuntimeProfileStore.invalidateMatchingProfile(owner, profileDigest,
+                            retainFullTunnelRestart = true))
                     val revoked = if (!reuseInvalidated || server == null || !ownsConnect()) {
                         onUnconfirmed?.invoke(when {
                             !current -> "owner_changed_before_control"

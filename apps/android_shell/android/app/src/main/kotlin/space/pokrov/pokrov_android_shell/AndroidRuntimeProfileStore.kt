@@ -1,6 +1,8 @@
 package space.pokrov.pokrov_android_shell
 
 import android.content.Context
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.File
 
 internal data class PersistedRuntimeProfile(
@@ -25,14 +27,40 @@ internal data class PersistedRuntimeProfile(
     val displayCountry: String = "",
     val displayNodeCode: String = "",
     val displayRouteMode: String = "",
+    val restartOnly: Boolean = false,
 )
 
-internal fun PersistedRuntimeProfile.canStartFromQuickSettings(): Boolean =
-    quickSettingsEligible && !requiresBoundConnect && !catalogAppIdentityRequired && lanScopeVersion == 1 &&
+private fun PersistedRuntimeProfile.eligibleForAutonomousStart(): Boolean =
+    !requiresBoundConnect && !catalogAppIdentityRequired && lanScopeVersion == 1 &&
         routeMode.isNotBlank() && isRuntimeProfileDigest(configDigest)
 
+internal fun PersistedRuntimeProfile.canStartFromQuickSettings(): Boolean =
+    !restartOnly && quickSettingsEligible && eligibleForAutonomousStart()
+
 internal fun PersistedRuntimeProfile.canResumeService(confirmedDigest: String?): Boolean =
-    canStartFromQuickSettings() && coreEgressProbeRequired && confirmedDigest == configDigest
+    eligibleForAutonomousStart() && coreEgressProbeRequired && confirmedDigest == configDigest &&
+        (!restartOnly || displayRouteMode == "fullTunnel")
+
+internal fun PersistedRuntimeProfile.canRetainAfterCatalogControl(confirmedDigest: String?): Boolean =
+    displayRouteMode == "fullTunnel" && canResumeService(confirmedDigest)
+
+internal fun restrictCatalogOnServiceRestart(content: String): String {
+    val config = JSONObject(content)
+    config.optJSONObject("_meta")?.remove("local_dpi")
+    // Timed catalog rules can have been withdrawn by the previous process.
+    // The compiler already places an untimed reject after each such rule.
+    for (name in listOf("route", "dns")) {
+        val section = config.optJSONObject(name) ?: continue
+        val rules = section.optJSONArray("rules") ?: continue
+        val retained = JSONArray()
+        for (index in 0 until rules.length()) {
+            val rule = rules.getJSONObject(index)
+            if (!rule.has("pokrov_catalog_window")) retained.put(rule)
+        }
+        section.put("rules", retained)
+    }
+    return config.toString()
+}
 
 internal fun activeRuntimeDisplayNodeCode(
     snapshot: Map<String, Any?>,
@@ -122,6 +150,7 @@ internal fun decodeRuntimeProfileStorage(
         displayCountry = (values["display_country"] as? String).orEmpty(),
         displayNodeCode = (values["display_node_code"] as? String).orEmpty(),
         displayRouteMode = (values["display_route_mode"] as? String).orEmpty(),
+        restartOnly = values["restart_only"] == true,
     )
 }
 
@@ -133,14 +162,14 @@ internal fun decodeRuntimeProfileStorage(
 internal object AndroidRuntimeProfileStore {
     private const val PREFERENCES_NAME = "pokrov_runtime_profile"
     private const val SERVICE_RESTART_DIGEST = "service_restart_digest"
+    private const val RESTART_ONLY = "restart_only"
 
     @Synchronized
     fun restoreForServiceStart(context: Context, systemAlwaysOn: Boolean): PersistedRuntimeProfile? {
-        val profile = load(context) ?: return null
+        val profile = load(context, allowRestartOnly = true) ?: return null
         val restartDigest = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
             .getString(SERVICE_RESTART_DIGEST, null)
-        val eligible = if (systemAlwaysOn) profile.canStartFromQuickSettings()
-            else profile.canResumeService(restartDigest)
+        val eligible = profile.canResumeService(restartDigest) || systemAlwaysOn && profile.canStartFromQuickSettings()
         return if (eligible) restoreIntoRuntimeState(context, profile) else null
     }
 
@@ -177,7 +206,7 @@ internal object AndroidRuntimeProfileStore {
     }
 
     @Synchronized
-    fun load(context: Context): PersistedRuntimeProfile? {
+    fun load(context: Context, allowRestartOnly: Boolean = false): PersistedRuntimeProfile? {
         val preferences = context.getSharedPreferences(
             PREFERENCES_NAME,
             Context.MODE_PRIVATE,
@@ -197,7 +226,7 @@ internal object AndroidRuntimeProfileStore {
         if (schemaRoute == RuntimeProfileSchemaRoute.LEGACY_V0) {
             if (runCatching { save(context, profile) }.isFailure) return null
         }
-        return profile
+        return profile.takeIf { allowRestartOnly || !it.restartOnly }
     }
 
     @Synchronized
@@ -234,12 +263,16 @@ internal object AndroidRuntimeProfileStore {
      * A failed commit is not acknowledged as durable invalidation.
      */
     @Synchronized
-    fun invalidateMatchingProfile(context: Context, profileDigest: String): Boolean {
+    fun invalidateMatchingProfile(context: Context, profileDigest: String, retainFullTunnelRestart: Boolean = false): Boolean {
         val durable = try {
             val preferences = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
             val values = preferences.all
             when {
                 runtimeProfileSchemaRoute(values) == RuntimeProfileSchemaRoute.FORWARD_UNKNOWN -> false
+                values["config_digest"] == profileDigest && retainFullTunnelRestart &&
+                    load(context, allowRestartOnly = true)?.canRetainAfterCatalogControl(
+                        preferences.getString(SERVICE_RESTART_DIGEST, null)) == true ->
+                    preferences.edit().putBoolean(RESTART_ONLY, true).commit()
                 values["config_digest"] == profileDigest || values.isEmpty() ->
                     // commit() can clear memory even when the disk write fails.
                     // Retry that write instead of treating empty memory as proof.

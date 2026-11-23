@@ -918,6 +918,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
     await handoffRelease?.future;
     warpEgressFailure = failHandoff || failedHandoffProfile == payload.profileName || cancelled.contains(_request);
     if (!warpEgressFailure) restoredHandoffGuard = false;
+    if (pendingHandoffEgress) pendingFirstEgress = true;
     phase = hostPlatform == HostPlatform.windows && warpEgressFailure && !failedHandoffKeepsRunning
         ? RuntimePhase.configStaged : RuntimePhase.running;
     return value(phase);
@@ -936,6 +937,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   bool releaseConnectOnCancel = false;
   bool overlappingMutation = false;
   bool pendingFirstEgress = false;
+  bool pendingHandoffEgress = false;
   bool resolveFirstEgressOnSnapshot = true;
   bool connectionPending = false;
   String statusMessage = '';
@@ -1043,6 +1045,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   @override
   Future<RuntimeSnapshot> snapshotForConnectRequest(String requestId) {
     expect(requestId, _request);
+    if (requestId.startsWith('handoff-')) throw StateError('connect_progress_superseded');
     return snapshot();
   }
 
@@ -3242,7 +3245,7 @@ void main() {
   });
 
   test('Android foreground network context changes use authorized cache before a hanging API', () async {
-    final runtime = _Runtime()..supportsCandidates = true..captivePortal = false;
+    final runtime = _Runtime()..supportsCandidates = true..captivePortal = false..pendingHandoffEgress = true;
     final bootstrapper = _CachedBootstrapper();
     final manager = _manager(runtime, bootstrapper,
         currentWifiProbe: () async => _foregroundWifi(runtime));
@@ -3256,6 +3259,7 @@ void main() {
     expect(bootstrapper.resolutions, hasLength(resolutionsBefore),
         reason: 'an uplink change must not wait for the API before trying an authorized saved route');
     expect(runtime.handoffCalls, 1);
+    expect(manager.presentation.isVerified, isTrue);
     expect(runtime.handoffProfiles.single, _candidates.first.candidateRef);
     expect(runtime.connectCalls, 1);
     expect(runtime.calls, isNot(contains('disconnect')));
