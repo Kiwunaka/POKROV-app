@@ -188,21 +188,43 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     }
 
     private var restartMode = START_NOT_STICKY
+    private val renewRecoveryAlarm = object : Runnable {
+        override fun run() {
+            val digest = activeStartupProfileDigest ?: return
+            if (lifecycleActive.get() && isTunEstablished() &&
+                AndroidRuntimeProfileStore.renewServiceRecoveryAlarm(this@PokrovRuntimeVpnService, digest)) {
+                mainHandler.postDelayed(this, AndroidVpnRecoveryAlarm.REFRESH_AFTER_MS)
+            }
+        }
+    }
+
+    private fun refreshRecoveryAlarm() {
+        mainHandler.removeCallbacks(renewRecoveryAlarm)
+        renewRecoveryAlarm.run()
+    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // A sticky restart reuses only the last proven profile. System always-on
         // uses its existing Quick Settings eligibility and checks the file too.
-        val resume = intent?.action == null || intent.action == SERVICE_INTERFACE
+        val recoveryAlarm = intent?.action == AndroidVpnRecoveryAlarm.ACTION_RECOVER
+        val resume = recoveryAlarm || intent?.action == null || intent.action == SERVICE_INTERFACE
         val restoredProfile = if (resume) {
-            if (isTunEstablished() || AndroidRuntimeState.isConnectionPending()) {
+            if (isTunEstablished() || AndroidRuntimeState.isConnectionPending() ||
+                recoveryAlarm && serviceCommandGeneration.get() != 0L) {
+                if (recoveryAlarm) refreshRecoveryAlarm()
                 return restartMode
             }
-            val systemAlwaysOn = intent?.action == SERVICE_INTERFACE ||
-                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && isAlwaysOn)
+            val systemAlwaysOn = !recoveryAlarm && (intent?.action == SERVICE_INTERFACE ||
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && isAlwaysOn))
             if (prepare(this) == null) {
                 AndroidRuntimeProfileStore.restoreForServiceStart(this, systemAlwaysOn)
             } else null
         } else null
+        if (recoveryAlarm && restoredProfile == null) {
+            runCatching { beginForegroundRuntime() }
+            stopSelfResult(startId)
+            return START_NOT_STICKY
+        }
         val commandIntent = if (resume) {
             Intent(this, PokrovRuntimeVpnService::class.java).apply {
                 action = ACTION_START
@@ -403,6 +425,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
 
     override fun onDestroy() {
         synchronized(serviceCommandLock) { lifecycleActive.set(false) }
+        mainHandler.removeCallbacks(renewRecoveryAlarm)
         armCatalogAppExpiry(null)
         unregisterReceiver(catalogPackageReceiver)
         unregisterReceiver(catalogTimeReceiver)
@@ -2095,6 +2118,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 )
                 if (probeResult == AndroidCoreEgressProbeResult.HEALTHY) {
                     activeStartupProfileDigest?.let { AndroidRuntimeProfileStore.confirmServiceRestart(this, it) }
+                    if (AndroidVpnRecoveryAlarm.supported) mainHandler.post { refreshRecoveryAlarm() }
                 }
                 updateRuntimeNotification()
             }

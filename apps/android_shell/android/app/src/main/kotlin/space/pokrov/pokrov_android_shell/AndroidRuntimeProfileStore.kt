@@ -183,7 +183,15 @@ internal object AndroidRuntimeProfileStore {
     }
 
     @Synchronized
+    fun renewServiceRecoveryAlarm(context: Context, digest: String): Boolean =
+        AndroidVpnRecoveryAlarm.supported &&
+            context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+                .getString(SERVICE_RESTART_DIGEST, null) == digest &&
+            AndroidVpnRecoveryAlarm.schedule(context)
+
+    @Synchronized
     fun cancelServiceRestart(context: Context) {
+        AndroidVpnRecoveryAlarm.cancel(context)
         val preferences = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
         if (preferences.contains(SERVICE_RESTART_DIGEST)) {
             preferences.edit().remove(SERVICE_RESTART_DIGEST).commit()
@@ -192,6 +200,7 @@ internal object AndroidRuntimeProfileStore {
 
     @Synchronized
     fun save(context: Context, profile: PersistedRuntimeProfile) {
+        AndroidVpnRecoveryAlarm.cancel(context)
         val editor = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
             .edit()
             .clear()
@@ -231,6 +240,7 @@ internal object AndroidRuntimeProfileStore {
 
     @Synchronized
     fun clear(context: Context) {
+        AndroidVpnRecoveryAlarm.cancel(context)
         check(context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
             .edit()
             .clear()
@@ -273,10 +283,12 @@ internal object AndroidRuntimeProfileStore {
                     load(context, allowRestartOnly = true)?.canRetainAfterCatalogControl(
                         preferences.getString(SERVICE_RESTART_DIGEST, null)) == true ->
                     preferences.edit().putBoolean(RESTART_ONLY, true).commit()
-                values["config_digest"] == profileDigest || values.isEmpty() ->
+                values["config_digest"] == profileDigest || values.isEmpty() -> {
+                    AndroidVpnRecoveryAlarm.cancel(context)
                     // commit() can clear memory even when the disk write fails.
                     // Retry that write instead of treating empty memory as proof.
                     preferences.edit().clear().commit()
+                }
                 else -> preferences.edit().commit()
             }
         } catch (_: Exception) { false }
