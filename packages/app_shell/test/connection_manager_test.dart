@@ -1152,6 +1152,7 @@ class _PersistentCatalogRuntime extends _Runtime implements RuntimeSmartAccessCo
   }
   bool retainedWorker = true;
   bool workerStops = true;
+  String? crashedCatalogDigest;
   RuntimePhase stageNativePhase = RuntimePhase.configStaged;
   int acknowledgements = 0;
   @override
@@ -1166,9 +1167,10 @@ class _PersistentCatalogRuntime extends _Runtime implements RuntimeSmartAccessCo
   Future<String> readSmartAccessRestrictions() async {
     final entries = <Object>[
       if (acknowledgements == 0) {
-        'catalog_sha256': 'c' * 64, 'catalog_withdrawn': false,
+        'catalog_sha256': crashedCatalogDigest ?? 'c' * 64, 'catalog_withdrawn': false,
         'expires_at': _smartDnsTime(DateTime.now().toUtc().add(const Duration(hours: 1))),
-        'generation': 'd' * 32, 'leases': <Object>[], 'live': retainedWorker, 'pending': retainedWorker,
+        'generation': 'd' * 32, 'leases': <Object>[], 'live': retainedWorker,
+        'pending': retainedWorker || crashedCatalogDigest != null,
         'policy_action': 'none', 'profile_digest': 'e' * 64, 'scope_actions': <String, Object>{},
       },
     ];
@@ -1464,9 +1466,10 @@ Future<void> _openTechnicalDiagnostics(WidgetTester tester) async {
 
 void main() {
   for (final scenario in [
-    (name: 'settles a stopped native worker before staging a proven candidate', liveTunnel: false, workerStops: true),
-    (name: 'keeps the live tunnel when its catalog worker is active', liveTunnel: true, workerStops: true),
-    (name: 'rejects stage when the stopped native worker cannot settle', liveTunnel: false, workerStops: false),
+    (name: 'settles a stopped native worker before staging a proven candidate', liveTunnel: false, workerStops: true, crashed: false),
+    (name: 'keeps the live tunnel when its catalog worker is active', liveTunnel: true, workerStops: true, crashed: false),
+    (name: 'rejects stage when the stopped native worker cannot settle', liveTunnel: false, workerStops: false, crashed: false),
+    (name: 'reconnects the full tunnel after a catalog worker crash', liveTunnel: false, workerStops: true, crashed: true),
   ]) {
     test('Android ${scenario.name}', () async {
       TestWidgetsFlutterBinding.ensureInitialized();
@@ -1478,7 +1481,7 @@ void main() {
       final service = (payload['services'] as List).single as Map;
       service['platforms'] = ['android'];
       service['classification'] = 'ordinary';
-      service['route_intents'] = [{'mode': 'smart_safe', 'action': 'vpn'}];
+      service['route_intents'] = [{'mode': scenario.crashed ? 'full' : 'smart_safe', 'action': 'vpn'}];
       service['provider_capability_refs'] = <String>[];
       service['external_gateway_policy'] = 'forbidden';
       final catalog = await RoutingCatalogVerifier(publicKeysById: {
@@ -1491,19 +1494,32 @@ void main() {
       final runtime = _PersistentCatalogRuntime()
         ..phase = RuntimePhase.configStaged..stagedProfile = 'old-profile'..profileDigest = 'e' * 64
         ..stageNativePhase = scenario.liveTunnel ? RuntimePhase.running : RuntimePhase.configStaged
+        ..retainedWorker = !scenario.crashed
+        ..crashedCatalogDigest = scenario.crashed ? catalog.payloadSha256 : null
         ..workerStops = scenario.workerStops;
       final store = _ExperienceStore();
       final manager = _manager(runtime, bootstrapper, experienceStore: store,
         actionTimeout: scenario.workerStops ? const Duration(seconds: 18) : const Duration(seconds: 1));
       addTearDown(manager.dispose);
+      if (scenario.crashed) manager.selectRouteMode(RouteMode.fullTunnel);
       await manager.connect();
       final succeeds = !scenario.liveTunnel && scenario.workerStops;
       expect(manager.status.phase, succeeds ? ConnectionPhase.connected : ConnectionPhase.actionRequired,
         reason: '${store.saved.protectionEvents.map((event) => event.detail).join('; ')} ${bootstrapper.actualReports}');
-      expect(runtime.calls.where((call) => call == 'disconnect'), hasLength(scenario.liveTunnel ? 0 : 1));
+      expect(runtime.calls.where((call) => call == 'disconnect'), hasLength(scenario.liveTunnel || scenario.crashed ? 0 : 1));
       expect(runtime.connectCalls, succeeds ? 1 : 0);
       expect(runtime.stagedPayloads, hasLength(succeeds ? 1 : 0));
       expect(runtime.acknowledgements, succeeds ? 1 : 0);
+      if (scenario.crashed) {
+        final config = jsonDecode(runtime.stagedPayloads.single.configPayload) as Map;
+        expect((config['route'] as Map)['final'], 'proxy');
+        for (final key in ['route', 'dns']) {
+          final rules = ((config[key] as Map)['rules'] as List).cast<Map>();
+          expect(rules.any((rule) => rule.containsKey('pokrov_catalog_window')), isFalse);
+          expect(rules.any((rule) => rule['action'] == 'reject' &&
+            (rule['domain'] as List?)?.contains('gemini.google.com') == true), isTrue);
+        }
+      }
     });
   }
   testWidgets('aggregate Connect deadline cancels and joins a hung native phase and allows a fresh attempt', (tester) async {

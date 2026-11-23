@@ -199,11 +199,11 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
         !identical(grants.single, qa.permit.grant) || !DateTime.now().toUtc().isBefore(qa.permit.expiresAt))) {
       throw const RoutingCatalogFailure('smart_access_qa_scope_changed');
     }
-    final catalog = _preparedCatalogPolicies[payload];
+    var catalog = _preparedCatalogPolicies[payload];
     if (catalog != null && _connectionCoordinator.isCatalogRevoked(catalog.payloadSha256, DateTime.now().toUtc())) {
       throw const RoutingCatalogFailure('catalog_stage_revoked');
     }
-    final identity = catalog == null ? null : await catalogRuntimeIdentity(catalog,
+    var identity = catalog == null ? null : await catalogRuntimeIdentity(catalog,
       localDpiServiceIds: localDpiServiceIdsForPayload(payload));
     if (!current()) throw const ConnectionOperationSuperseded();
     if (catalog != null && identity != null && _connectionCoordinator.isCatalogServiceRevoked(
@@ -211,7 +211,18 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
       throw const RoutingCatalogFailure('catalog_service_stage_revoked');
     }
     final engine = _runtimeEngine;
-    final RuntimeSnapshot staged;
+    Future<RuntimeSnapshot> stage(ManagedProfilePayload profile, {
+      Future<String> Function(String, RuntimeSnapshot)? persistRestrictions,
+    }) {
+      if (replaceProtected) {
+        return (engine as RuntimeProtectedHandoff).replaceManagedProfile(profile,
+          operationIsCurrent: current, persistRestrictions: persistRestrictions);
+      }
+      return persistRestrictions == null ? engine.stageManagedProfile(profile)
+          : (engine as RuntimeSmartAccessControl).stageSmartAccessProfile(profile,
+              operationIsCurrent: current, persistRestrictions: persistRestrictions);
+    }
+    RuntimeSnapshot staged;
     if (grants.isNotEmpty || catalog != null) {
       if (engine is! RuntimeSmartAccessControl) throw const RoutingCatalogFailure('smart_access_stage_unsupported');
       Future<String> persistRestrictions(String identityInput, RuntimeSnapshot native) async {
@@ -231,15 +242,29 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
             isCurrent: current);
           return digest;
       }
-      staged = replaceProtected
-          ? await (engine as RuntimeProtectedHandoff).replaceManagedProfile(payload,
-              operationIsCurrent: current, persistRestrictions: persistRestrictions)
-          : await (engine as RuntimeSmartAccessControl).stageSmartAccessProfile(payload,
-              operationIsCurrent: current, persistRestrictions: persistRestrictions);
+      try {
+        staged = await stage(payload, persistRestrictions: persistRestrictions);
+      } on RoutingCatalogFailure catch (error) {
+        if (error.code != 'smart_access_native_recovery_required' ||
+            _appContext.hostPlatform != HostPlatform.android || payload.routeMode != RouteMode.fullTunnel ||
+            grants.isNotEmpty || qa != null || _accessDenialPending ||
+            _cachedProfileFallbackGate.authorizationDenied || !current()) rethrow;
+        // Preserve the catalogue's deny rules while the crashed worker's
+        // previous service admissions remain unconfirmed.
+        final config = jsonDecode(payload.configPayload) as Map<String, dynamic>;
+        (config['_meta'] as Map?)?.remove('local_dpi');
+        for (final key in ['route', 'dns']) {
+          final section = config[key] as Map<String, dynamic>;
+          final rules = section['rules'] as List;
+          section['rules'] = rules.where((rule) => !(rule as Map).containsKey('pokrov_catalog_window')).toList();
+        }
+        staged = await stage(payload.copyWith(configPayload: jsonEncode(config)));
+        catalog = null;
+        identity = null;
+        _preparedCatalogPolicies[payload] = null;
+      }
     } else {
-      staged = replaceProtected
-          ? await (engine as RuntimeProtectedHandoff).replaceManagedProfile(payload, operationIsCurrent: current)
-          : await engine.stageManagedProfile(payload);
+      staged = await stage(payload);
     }
     if (current()) {
       if (qa != null) {
