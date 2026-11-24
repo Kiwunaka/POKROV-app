@@ -568,12 +568,19 @@ void main() {
       expect(servers.singleWhere((resolver) => resolver['tag'] == 'dns-direct')['type'], 'local');
       final tun = (configured['inbounds'] as List).cast<Map>()
           .singleWhere((inbound) => inbound['type'] == 'tun');
-      expect(tun['exclude_package'],
-          containsAll(['ru.rt.key', 'ru.nspk.mirpay', 'com.idamob.tinkoff.android']));
+      expect(tun['exclude_package'], containsAll([
+        'ru.rt.key',
+        'ru.nspk.mirpay',
+        'com.idamob.tinkoff.android',
+        'com.punicapp.whoosh',
+        'ru.dodopizza.app',
+      ]));
       final route = configured['route'] as Map;
       final routes = (route['rules'] as List).cast<Map>();
       final dnsRules = (dns['rules'] as List).cast<Map>();
-      for (final suffix in ['.ru', 'wildberries.com', 'vk.com']) {
+      for (final suffix in [
+        '.ru', 'wildberries.com', 'vk.com', 'whoosh.bike', 'dodostatic.net',
+      ]) {
         expect(routes.any((rule) =>
             rule['domain_suffix'] == suffix && rule['outbound'] == 'direct'), isTrue);
         expect(dnsRules.any((rule) =>

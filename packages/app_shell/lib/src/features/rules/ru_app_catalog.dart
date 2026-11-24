@@ -18,7 +18,7 @@ class PokrovRuAppCatalogEntry {
   final PokrovRuAppCategory category;
 }
 
-const pokrovRuAppCatalogVersion = '2026-11-24.1';
+const pokrovRuAppCatalogVersion = '2026-11-24.2';
 
 /// Exact package IDs for local classification and Android TUN bypass.
 const pokrovRuAppCatalog = <PokrovRuAppCatalogEntry>[
@@ -173,6 +173,8 @@ const pokrovRuAppCatalog = <PokrovRuAppCatalogEntry>[
       'ru.ostrovok.android', 'Островок', PokrovRuAppCategory.transport),
   PokrovRuAppCatalogEntry(
       'com.citymobil', 'Ситимобил', PokrovRuAppCategory.transport),
+  PokrovRuAppCatalogEntry(
+      'com.punicapp.whoosh', 'Whoosh', PokrovRuAppCategory.transport),
   PokrovRuAppCatalogEntry(
       'ru.urentbike.app', 'Юрент', PokrovRuAppCategory.transport),
   PokrovRuAppCatalogEntry(
