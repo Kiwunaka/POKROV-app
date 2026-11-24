@@ -16,7 +16,7 @@ Current responsibility:
 - keeping the Android consumer lane `tun`-first, with desktop loopback listener surfaces stripped from the staged mobile runtime config and only present address families receiving default routes
 - preserving backend-managed mobile-safe `dns` and `route` semantics instead of collapsing Android into a seed-only universal DNS profile
 - keeping Android route ownership explicit by disabling sing-box interface auto-detection, writing `exclude_package` for `space.pokrov.pokrov_android_shell`, enforcing the same exclusion through `VpnService.Builder`, and retaining the route-level self-package bypass rule, so control and core uplink traffic cannot fold back into the TUN
-- letting `All except RU` classify RU traffic on-device before connect by consuming cached local sing-box `.srs` rule-sets from the shared bootstrapper, while still keeping the older `.ru`, `.xn--p1ai`, and `.su` suffix bypass rules as a fallback if the cache cannot refresh
+- routing cataloged Android packages outside the VPN in `All except RU`. Device-side routing and DNS use `.ru`, `.рф`, `.su`, known service domains, and cached local sing-box rule sets for Russian domains and IP addresses.
 - keeping raw runtime diagnostics and local smoke-profile controls out of the first-layer shell; release diagnostics remain support/internal
 - exporting structured Android host diagnostics into the shared runtime snapshot, including uplink interface and index, DNS readiness, route counts, package-filter counts, and the last failure or stop reason
 - binding Core event ABI 1 with run/attempt/generation/sequence fencing; unknown

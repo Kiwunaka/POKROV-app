@@ -11,7 +11,6 @@ import android.net.Uri
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.provider.Settings
-import android.util.Base64
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
@@ -256,6 +255,7 @@ class RuntimeHostBridge(
             METHOD_DEVICE_NAME -> result.success(deviceName())
             METHOD_SUPPORTED_ABIS -> result.success(supportedAbis())
             METHOD_LIST_INSTALLED_APPS -> listInstalledApps(result)
+            "runtimeEngine.installedAppIcon" -> installedAppIcon(call, result)
             "runtimeEngine.catalogAppIdentities" -> catalogAppIdentities(call, result)
             METHOD_CURRENT_WIFI -> result.success(currentWifiWithEligibility())
             "runtimeEngine.foregroundConnectContext" -> result.success(setForegroundConnectContext(call))
@@ -1713,6 +1713,26 @@ class RuntimeHostBridge(
         }
     }
 
+    @Suppress("DEPRECATION")
+    private fun installedAppIcon(call: MethodCall, result: MethodChannel.Result) {
+        val packageName = call.argument<String>("identifier") ?: return result.success(null)
+        executeHostTask<ByteArray?>(result, null) {
+            val manager = activity.packageManager
+            val intent = Intent(Intent.ACTION_MAIN)
+                .addCategory(Intent.CATEGORY_LAUNCHER)
+                .setPackage(packageName)
+            val launcher = manager.queryIntentActivities(intent, 0).firstOrNull()
+            val icon = launcher?.loadIcon(manager) ?: manager.getApplicationIcon(packageName)
+            val bytes = ByteArrayOutputStream()
+            val bitmap = icon.toBitmap(width = 72, height = 72)
+            if (bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, bytes)) {
+                bytes.toByteArray()
+            } else {
+                null
+            }
+        }
+    }
+
     private fun catalogAppIdentities(call: MethodCall, result: MethodChannel.Result) {
         val packages = call.argument<Any>("packages") as? List<*>
         val digest = call.argument<Any>("catalogDigest") as? String
@@ -1915,56 +1935,27 @@ class RuntimeHostBridge(
         }
         return packageManager.queryIntentActivities(launcherIntent, 0)
             .asSequence()
-            .mapNotNull { resolveInfo ->
-                val packageName = resolveInfo.activityInfo?.packageName
-                    ?: return@mapNotNull null
-                if (packageName == activity.packageName) {
-                    return@mapNotNull null
+            .filter { it.activityInfo != null && it.activityInfo.packageName != activity.packageName }
+            .distinctBy { it.activityInfo.packageName }
+            .map { launcher ->
+                val appInfo = launcher.activityInfo.applicationInfo
+                val label = launcher.loadLabel(packageManager).toString().trim()
+                val appLabel = if (label.equals("Android", ignoreCase = true) || label.isBlank()) {
+                    appInfo.loadLabel(packageManager).toString().trim()
+                } else {
+                    label
                 }
-                val label = resolveInfo.loadLabel(packageManager)
-                    ?.toString()
-                    ?.trim()
-                    .orEmpty()
-                Triple(
-                    packageName,
-                    if (label.isBlank()) packageName else label,
-                    resolveInfo,
+                mapOf(
+                    "label" to appLabel,
+                    "identifier" to appInfo.packageName,
+                    "subtitle" to appInfo.packageName,
                 )
-            }
-            // Resolve duplicate launcher activities before bitmap work. Keep
-            // every app searchable, but only encode the first icons: some
-            // Huawei builds expose hundreds of activities and encoding every
-            // bitmap used to make the picker look empty while it was loading.
-            .distinctBy { (packageName, _, _) -> packageName }
-            .sortedBy { (_, label, _) -> label.lowercase() }
-            .mapIndexed { index, (packageName, label, resolveInfo) ->
-                buildMap<String, String> {
-                    put("label", label)
-                    put("identifier", packageName)
-                    put("subtitle", packageName)
-                    if (index < MAX_INSTALLED_APP_ICONS) {
-                        encodeLauncherIcon(resolveInfo.loadIcon(packageManager))?.let {
-                            put("iconPngBase64", it)
-                        }
-                    }
-                }
             }
             .toList()
     }
 
-    private fun encodeLauncherIcon(drawable: android.graphics.drawable.Drawable): String? =
-        runCatching {
-            val bitmap = drawable.toBitmap(width = 72, height = 72)
-            val stream = ByteArrayOutputStream()
-            if (!bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, stream)) {
-                return@runCatching null
-            }
-            Base64.encodeToString(stream.toByteArray(), Base64.NO_WRAP)
-        }.getOrNull()
-
     companion object {
         private val apiProxyOwner = ApiLoopbackProxyOwner()
-        private const val MAX_INSTALLED_APP_ICONS = 80
         private const val MAX_VARIANT_PROBE_CONFIG_BYTES = 4L * 1024L * 1024L
         private val SUPPORTED_UPDATE_ABIS = setOf("arm64-v8a", "armeabi-v7a", "x86_64")
         const val CHANNEL_NAME = "space.pokrov/runtime_engine"

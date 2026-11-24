@@ -2691,6 +2691,70 @@ void main() {
     await tester.pump();
   });
 
+  testWidgets('Android keeps app search while picking several apps', (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    const disk = 'ru.yandex.disk';
+    const music = 'ru.yandex.music';
+    final iconRequests = <String>{};
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'runtimeEngine.listInstalledApps') {
+        return [
+          {'identifier': disk, 'label': 'Диск'},
+          {'identifier': music, 'label': 'Музыка'},
+        ];
+      }
+      if (call.method == 'runtimeEngine.installedAppIcon') {
+        iconRequests.add(call.arguments['identifier'] as String);
+        return null;
+      }
+      return {'phase': 'initialized', 'supportsLiveConnect': true,
+        'canInitialize': false, 'canConnect': true};
+    });
+    tester.view.physicalSize = const Size(450, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(channel, null);
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    final store = _CatalogPickerExperience(routeMode: RouteMode.excludedApps);
+    await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: _Bootstrapper(), firstLaunchStore: _FirstLaunchStore(),
+      clientExperienceStore: store, themeMode: ThemeMode.light,
+      onThemeModeChanged: (_) {},
+    )));
+    await tester.pumpAndSettle();
+    await _openRules(tester);
+    await tester.ensureVisible(find.text('Приложения'));
+    await tester.tap(find.text('Приложения'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('rules-selected-app-pick')));
+    await tester.pumpAndSettle();
+
+    final search = find.byKey(const ValueKey('rules-selected-app-search'));
+    await tester.enterText(search, 'Яндекс');
+    await tester.pumpAndSettle();
+    for (final id in [disk, music]) {
+      await tester.tap(find.byKey(ValueKey('rules-selected-app-option-$id')));
+      await tester.pumpAndSettle();
+      expect(tester.widget<TextField>(search).controller!.text, 'Яндекс');
+    }
+    expect(iconRequests, containsAll([disk, music]));
+    expect(store.saved.selectedAppIds, isEmpty);
+    await tester.tap(find.text('Добавить (2)'));
+    await tester.pumpAndSettle();
+    expect(store.saved.selectedAppIds, unorderedEquals([disk, music]));
+
+    Navigator.of(tester.element(find.byKey(const ValueKey('rules-selected-app-pick')))).pop();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Приложения'));
+    await tester.pumpAndSettle();
+    expect(find.text('Диск'), findsOneWidget);
+    expect(find.text('Музыка'), findsOneWidget);
+  });
+
   testWidgets('Rules keeps failed apply and later edits available for retry', (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;

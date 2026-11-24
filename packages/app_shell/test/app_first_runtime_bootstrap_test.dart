@@ -566,6 +566,20 @@ void main() {
         {'tag': 'google', 'type': 'udp', 'server': '8.8.8.8', 'detour': 'proxy'});
       expect(servers.singleWhere((resolver) => resolver['tag'] == dns['final'])['detour'], configured['route']['final']);
       expect(servers.singleWhere((resolver) => resolver['tag'] == 'dns-direct')['type'], 'local');
+      final tun = (configured['inbounds'] as List).cast<Map>()
+          .singleWhere((inbound) => inbound['type'] == 'tun');
+      expect(tun['exclude_package'],
+          containsAll(['ru.rt.key', 'ru.nspk.mirpay', 'com.idamob.tinkoff.android']));
+      final route = configured['route'] as Map;
+      final routes = (route['rules'] as List).cast<Map>();
+      final dnsRules = (dns['rules'] as List).cast<Map>();
+      for (final suffix in ['.ru', 'wildberries.com', 'vk.com']) {
+        expect(routes.any((rule) =>
+            rule['domain_suffix'] == suffix && rule['outbound'] == 'direct'), isTrue);
+        expect(dnsRules.any((rule) =>
+            rule['domain_suffix'] == suffix && rule['server'] == 'dns-direct'), isTrue);
+      }
+      expect(route['final'], 'proxy');
       final invalid = jsonDecode(material.configPayload) as Map;
       (invalid['dns']['servers'] as List).add({...profileDns, 'tag': 'dns-remote', 'detour': 'direct'});
       expect(() => applyPokrovRoutingPreferences(material.copyWith(configPayload: jsonEncode(invalid)),

@@ -3385,6 +3385,26 @@ class AppFirstRuntimeBootstrapper
   static const _ruDomainCategoryRuleSetTag = 'pokrov-ru-domain-category';
   static const _ruIpCountryRuleSetTag = 'pokrov-ru-ip-country';
   static const _ruIpWhitelistRuleSetTag = 'pokrov-ru-ip-whitelist';
+  // Keep the main service domains available before the regional feeds load.
+  static const _androidRuDirectDomainSuffixes = <String>[
+    '.ru',
+    '.xn--p1ai',
+    '.su',
+    '2gis.com',
+    'aviasales.com',
+    'emias.info',
+    'kinopoisk-ru.clstorage.net',
+    'korona.com',
+    'userapi.com',
+    'vk-cdn.me',
+    'vk-cdn.net',
+    'vk.com',
+    'vkuser.net',
+    'wildberries.com',
+    'yandex.com',
+    'yandex.net',
+    'yastatic.net',
+  ];
   static const Map<String, List<String>> _defaultAllExceptRuRuleSetUrlsByTag =
       <String, List<String>>{
     _ruDomainWhitelistRuleSetTag: <String>[
@@ -8753,12 +8773,10 @@ class AppFirstRuntimeBootstrapper
         serverTag: localBootstrapServerTag,
       );
       if (routeMode == RouteMode.allExceptRu) {
-        _ensureDnsDomainSuffixRule(
-            existingRules, '.ru', localBootstrapServerTag);
-        _ensureDnsDomainSuffixRule(
-            existingRules, '.xn--p1ai', localBootstrapServerTag);
-        _ensureDnsDomainSuffixRule(
-            existingRules, '.su', localBootstrapServerTag);
+        for (final suffix in _androidRuDirectDomainSuffixes) {
+          _ensureDnsDomainSuffixRule(
+              existingRules, suffix, localBootstrapServerTag);
+        }
         _ensureDnsRuleSetServerRule(
           rules: existingRules,
           ruleSetTags: clientRuleSetCatalog.domainRuleSetTags,
@@ -8831,20 +8849,11 @@ class AppFirstRuntimeBootstrapper
         'server': localServerTag,
       },
       if (routeMode == RouteMode.allExceptRu)
-        <String, dynamic>{
-          'domain_suffix': '.ru',
-          'server': localServerTag,
-        },
-      if (routeMode == RouteMode.allExceptRu)
-        <String, dynamic>{
-          'domain_suffix': '.xn--p1ai',
-          'server': localServerTag,
-        },
-      if (routeMode == RouteMode.allExceptRu)
-        <String, dynamic>{
-          'domain_suffix': '.su',
-          'server': localServerTag,
-        },
+        for (final suffix in _androidRuDirectDomainSuffixes)
+          <String, dynamic>{
+            'domain_suffix': suffix,
+            'server': localServerTag,
+          },
       if (routeMode == RouteMode.allExceptRu &&
           clientRuleSetCatalog.domainRuleSetTags.isNotEmpty)
         <String, dynamic>{
@@ -8892,9 +8901,9 @@ class AppFirstRuntimeBootstrapper
         ruleSetTags: clientRuleSetCatalog.allRuleSetTags,
         directTag: directTag,
       );
-      _ensureDomainSuffixDirectRule(existingRules, '.ru', directTag);
-      _ensureDomainSuffixDirectRule(existingRules, '.xn--p1ai', directTag);
-      _ensureDomainSuffixDirectRule(existingRules, '.su', directTag);
+      for (final suffix in _androidRuDirectDomainSuffixes) {
+        _ensureDomainSuffixDirectRule(existingRules, suffix, directTag);
+      }
     }
 
     // DNS must win before private-address and package bypass rules. Android's
@@ -9136,9 +9145,7 @@ class AppFirstRuntimeBootstrapper
       return true;
     }
     final suffixes = _readTagSet(rule['domain_suffix']);
-    return suffixes.contains('.ru') ||
-        suffixes.contains('.xn--p1ai') ||
-        suffixes.contains('.su');
+    return _androidRuDirectDomainSuffixes.any(suffixes.contains);
   }
 
   Map<String, dynamic> _buildLogBlock(Object? value) {

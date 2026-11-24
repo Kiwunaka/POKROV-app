@@ -962,6 +962,11 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
   config['inbounds'] = inbounds;
 
   final servers = _routingListOfMaps(dns['servers']);
+  final androidLocalResolver = hostPlatform == HostPlatform.android
+      ? servers.where((server) =>
+          server['detour'] == direct &&
+          (server['type'] == 'local' || server['address'] == 'local')).firstOrNull
+      : null;
   var vpnDns = 'dns-remote';
   var directDns = 'dns-direct';
   final dnsAddress = preferences.effectiveDnsAddress;
@@ -986,13 +991,11 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
     final protectedResolver = servers.where((server) => server['tag'] == previousDnsFinal &&
       server['detour'] == vpn && server['type'] != 'local' && server['address'] != 'local' &&
       !_routingText(server['address']).startsWith('rcode://')).firstOrNull;
-    final directResolver = servers.where((server) => server['detour'] == direct &&
-      (server['type'] == 'local' || server['address'] == 'local')).firstOrNull;
     if (!servers.any((server) => server['tag'] == vpnDns) && protectedResolver != null) {
       servers.add({...protectedResolver, 'tag': vpnDns});
     }
-    if (!servers.any((server) => server['tag'] == directDns) && directResolver != null) {
-      servers.add({...directResolver, 'tag': directDns});
+    if (!servers.any((server) => server['tag'] == directDns) && androidLocalResolver != null) {
+      servers.add({...androidLocalResolver, 'tag': directDns});
     }
   }
   for (final (tag, target) in [if (policy.vpnAvailable) (vpnDns, vpn), (directDns, direct)]) {
@@ -1095,7 +1098,11 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
       (_routingText(rule['server']).isEmpty && _routingText(rule['action']) != 'route') ||
       blockedDns.contains(rule['server'])).toList();
   final directDnsClassifications = policy.mode == CatalogRoutingMode.smartSafe
-      ? _routingListOfMaps(dns['rules']).where((rule) => rule['server'] == 'dns-direct')
+      ? _routingListOfMaps(dns['rules']).where((rule) =>
+          rule['server'] == 'dns-direct' ||
+          (androidLocalResolver != null &&
+              rule['server'] == androidLocalResolver['tag'] &&
+              (rule.containsKey('domain_suffix') || rule.containsKey('rule_set'))))
           .map((rule) => <String, dynamic>{...rule, 'server': directDns}).toList()
       : const <Map<String, dynamic>>[];
   final bootstrapDomains = <String>{

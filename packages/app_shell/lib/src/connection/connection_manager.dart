@@ -6645,15 +6645,19 @@ class ConnectionManager extends ChangeNotifier {
     }
   }
 
-  void addSelectedAppId(String value) {
-    final normalized = normalizePokrovSelectedAppIdentifier(
-      value,
-      hostPlatform: _appContext.hostPlatform,
-    );
-    if (normalized == null || _selectedAppIds.contains(normalized)) {
-      return;
-    }
-    if (_selectedAppIds.length >= 128) {
+  void addSelectedAppId(String value) => addSelectedAppIds([value]);
+
+  bool addSelectedAppIds(Iterable<String> values) {
+    final newIds = values
+        .map((value) => normalizePokrovSelectedAppIdentifier(
+              value,
+              hostPlatform: _appContext.hostPlatform,
+            ))
+        .whereType<String>()
+        .toSet()
+        .difference(_selectedAppIds.toSet());
+    if (newIds.isEmpty) return false;
+    if (_selectedAppIds.length + newIds.length > 128) {
       _update(() {
         _runtimeHeadline =
             'Можно выбрать не больше 128 приложений. Удали одно, чтобы добавить другое.';
@@ -6662,13 +6666,13 @@ class ConnectionManager extends ChangeNotifier {
         'Можно выбрать не больше 128 приложений. Удали одно, чтобы добавить другое.',
         tone: PokrovSnackTone.danger,
       );
-      return;
+      return false;
     }
     final wasConnected = _runtimeSnapshot?.phase == RuntimePhase.running;
     final useSelectedApps = _selectedRouteMode != RouteMode.excludedApps &&
         _appContext.runtimeProfile.supportedRouteModes.contains(RouteMode.selectedApps);
     _update(() {
-      _selectedAppIds.add(normalized);
+      _selectedAppIds.addAll(newIds);
       if (useSelectedApps) {
         _selectedRouteMode = RouteMode.selectedApps;
       }
@@ -6692,6 +6696,7 @@ class ConnectionManager extends ChangeNotifier {
         ),
       );
     }
+    return true;
   }
 
   void applyRuAppPreset(

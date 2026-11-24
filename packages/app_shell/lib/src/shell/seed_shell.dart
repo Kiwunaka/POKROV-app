@@ -368,7 +368,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   void _setRoutingPreferences(PokrovRoutingPreferences value) { PokrovHaptics.tap(); _connectionManager.setRoutingPreferences(value); }
   Future<bool> _applyRoutingPreferences(PokrovRoutingPreferences value) => _connectionManager.applyRoutingPreferences(value);
   Future<void> _setPreferredLocation(String node, String variant) { PokrovHaptics.tap(); return _connectionManager.setPreferredLocation(node, variant); }
-  void _addSelectedAppId(String value) => _connectionManager.addSelectedAppId(value);
   void _applyRuAppPreset(RouteMode mode, List<String> apps, bool verified) { PokrovHaptics.tap(); _connectionManager.applyRuAppPreset(mode, apps, verified); }
   Future<void> _setAutomaticLocation() { PokrovHaptics.tap(); return _connectionManager.setAutomaticLocation(); }
   void _removeSelectedAppId(String value) => _connectionManager.removeSelectedAppId(value);
@@ -4128,7 +4127,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             onRouteModeSelected: (mode) {
               _selectRouteMode(mode);
             },
-            onSelectedAppAdded: _addSelectedAppId,
+            onSelectedAppsAdded: _connectionManager.addSelectedAppIds,
             onSelectedAppRemoved: _removeSelectedAppId,
             onRuAppPresetApplied: _applyRuAppPreset,
             loadVerifiedCatalogApps: _routingCatalogEnabled && widget.appContext.hostPlatform == HostPlatform.android

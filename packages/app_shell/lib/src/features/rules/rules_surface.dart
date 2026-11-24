@@ -9,7 +9,7 @@ class _RulesSection extends StatefulWidget {
     required this.selectedAppIds,
     required this.routingPreferences,
     required this.onRouteModeSelected,
-    required this.onSelectedAppAdded,
+    required this.onSelectedAppsAdded,
     required this.onSelectedAppRemoved,
     required this.onRuAppPresetApplied,
     this.loadVerifiedCatalogApps,
@@ -39,7 +39,7 @@ class _RulesSection extends StatefulWidget {
   final List<String> selectedAppIds;
   final PokrovRoutingPreferences routingPreferences;
   final ValueChanged<RouteMode> onRouteModeSelected;
-  final ValueChanged<String> onSelectedAppAdded;
+  final bool Function(List<String>) onSelectedAppsAdded;
   final ValueChanged<String> onSelectedAppRemoved;
   final void Function(RouteMode mode, List<String> appIds, bool verifiedCatalog) onRuAppPresetApplied;
   final Future<Set<String>> Function(bool fresh)? loadVerifiedCatalogApps;
@@ -80,9 +80,10 @@ class _RulesSectionState extends State<_RulesSection> {
         child: _SelectedAppsEditor(
           hostPlatform: widget.appContext.hostPlatform, routeMode: _draftMode,
           selectedAppIds: selected,
-          onAdd: (id) {
-            widget.onSelectedAppAdded(id);
-            setSheetState(() => selected = [...selected, if (!selected.contains(id)) id]);
+          onAdd: (ids) {
+            if (widget.onSelectedAppsAdded(ids)) {
+              setSheetState(() => selected = {...selected, ...ids}.toList());
+            }
           },
           onRemove: (id) {
             widget.onSelectedAppRemoved(id);
@@ -548,7 +549,7 @@ class _RuAppsPresetCardState extends State<_RuAppsPresetCard> with WidgetsBindin
                       return ListTile(
                         dense: true,
                         contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.apps_rounded),
+                        leading: _SelectedAppIcon(candidate: candidate, size: 34),
                         title: Text(candidate.label),
                         subtitle: Text(
                           candidate.subtitle,
@@ -692,7 +693,7 @@ class _SelectedAppsEditor extends StatefulWidget {
   final HostPlatform hostPlatform;
   final RouteMode routeMode;
   final List<String> selectedAppIds;
-  final ValueChanged<String> onAdd;
+  final ValueChanged<List<String>> onAdd;
   final ValueChanged<String> onRemove;
 
   @override
@@ -709,6 +710,10 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
   void initState() {
     super.initState();
     _controller = TextEditingController();
+    if (widget.hostPlatform == HostPlatform.android &&
+        widget.selectedAppIds.isNotEmpty) {
+      _candidateFuture = _loadSelectedAppCandidates(widget.hostPlatform);
+    }
   }
 
   @override
@@ -731,7 +736,7 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
       });
       return;
     }
-    widget.onAdd(normalized);
+    widget.onAdd([normalized]);
     _controller.clear();
     setState(() {
       _manualError = null;
@@ -739,11 +744,13 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
   }
 
   Future<void> _openPicker() async {
-    final candidateFuture = _loadSelectedAppCandidates(widget.hostPlatform);
+    final candidateFuture = widget.hostPlatform == HostPlatform.android
+        ? _candidateFuture ?? _loadSelectedAppCandidates(widget.hostPlatform)
+        : _loadSelectedAppCandidates(widget.hostPlatform);
     setState(() {
       _candidateFuture = candidateFuture;
     });
-    final candidate = await showModalBottomSheet<_SelectedAppCandidate>(
+    final appIds = await showModalBottomSheet<List<String>>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
@@ -756,13 +763,16 @@ class _SelectedAppsEditorState extends State<_SelectedAppsEditor> {
         routeMode: widget.routeMode,
         candidatesFuture: candidateFuture,
         selectedAppIds: widget.selectedAppIds,
+        onCandidatesRefreshed: (future) {
+          setState(() {
+            _candidateFuture = future;
+          });
+        },
       ),
     );
-    if (candidate == null) {
-      return;
-    }
+    if (!mounted || appIds == null) return;
     Feedback.forTap(context);
-    widget.onAdd(candidate.identifier);
+    widget.onAdd(appIds);
   }
 
   @override
@@ -944,37 +954,11 @@ class _SelectedAppIdRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       child: Row(
         children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: p.accent.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: candidate?.iconBytes == null
-                ? Icon(
-                    candidate?.icon ?? Icons.apps_rounded,
-                    color: p.accent,
-                    size: 18,
-                  )
-                : ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.memory(
-                      candidate!.iconBytes!,
-                      fit: BoxFit.cover,
-                      filterQuality: FilterQuality.medium,
-                      errorBuilder: (_, __, ___) => Icon(
-                        candidate?.icon ?? Icons.apps_rounded,
-                        color: p.accent,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-          ),
+          _SelectedAppIcon(candidate: candidate, size: 34),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              _friendlySelectedAppName(appId),
+              candidate?.label ?? _friendlySelectedAppName(appId),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -1008,7 +992,7 @@ class _SelectedAppCandidate {
     required this.subtitle,
     required this.source,
     required this.icon,
-    this.iconBytes,
+    this.loadIcon,
     this.ruCatalogEntry,
   });
 
@@ -1017,10 +1001,52 @@ class _SelectedAppCandidate {
   final String subtitle;
   final _SelectedAppCandidateSource source;
   final IconData icon;
-  final Uint8List? iconBytes;
+  final Future<Uint8List?> Function()? loadIcon;
   final PokrovRuAppCatalogEntry? ruCatalogEntry;
 
-  String get searchText => '$label $identifier $subtitle'.toLowerCase().trim();
+  String get searchText =>
+      '$label $identifier $subtitle ${ruCatalogEntry?.label ?? ''}'.toLowerCase();
+}
+
+class _SelectedAppIcon extends StatelessWidget {
+  const _SelectedAppIcon({required this.candidate, required this.size});
+
+  final _SelectedAppCandidate? candidate;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = PokrovPalette.of(context);
+    final fallback = Icon(
+      candidate?.icon ?? Icons.apps_rounded,
+      color: p.accent,
+      size: size / 2,
+    );
+    final loadIcon = candidate?.loadIcon;
+    return Container(
+      width: size,
+      height: size,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: p.accent.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: loadIcon == null
+          ? fallback
+          : FutureBuilder<Uint8List?>(
+              future: loadIcon(),
+              builder: (context, snapshot) {
+                final bytes = snapshot.data;
+                if (bytes == null) return fallback;
+                return Image.memory(
+                  bytes,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => fallback,
+                );
+              },
+            ),
+    );
+  }
 }
 
 class _SelectedAppsPickerSheet extends StatefulWidget {
@@ -1029,12 +1055,14 @@ class _SelectedAppsPickerSheet extends StatefulWidget {
     required this.routeMode,
     required this.candidatesFuture,
     required this.selectedAppIds,
+    required this.onCandidatesRefreshed,
   });
 
   final HostPlatform hostPlatform;
   final RouteMode routeMode;
   final Future<List<_SelectedAppCandidate>> candidatesFuture;
   final List<String> selectedAppIds;
+  final ValueChanged<Future<List<_SelectedAppCandidate>>> onCandidatesRefreshed;
 
   @override
   State<_SelectedAppsPickerSheet> createState() =>
@@ -1044,6 +1072,7 @@ class _SelectedAppsPickerSheet extends StatefulWidget {
 class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
   final TextEditingController _searchController = TextEditingController();
   late Future<List<_SelectedAppCandidate>> _candidatesFuture;
+  final _pendingAppIds = <String>{};
   String _query = '';
   bool _ruOnly = false;
 
@@ -1054,9 +1083,11 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
   }
 
   void _refreshCandidates() {
+    final future = _loadSelectedAppCandidates(widget.hostPlatform);
     setState(() {
-      _candidatesFuture = _loadSelectedAppCandidates(widget.hostPlatform);
+      _candidatesFuture = future;
     });
+    widget.onCandidatesRefreshed(future);
   }
 
   @override
@@ -1070,6 +1101,7 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
     final motion = _MotionScope.of(context);
     final p = PokrovPalette.of(context);
     final title = 'Выбор приложений';
+    final multiSelect = widget.hostPlatform == HostPlatform.android;
     final mediaQuery = MediaQuery.of(context);
     final bottomInset = mediaQuery.viewInsets.bottom;
     final availableHeight = math.max(0.0, mediaQuery.size.height - bottomInset);
@@ -1290,11 +1322,13 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
                                 const SizedBox(height: 8),
                             itemBuilder: (context, index) {
                               final candidate = candidates[index];
-                              final selected = widget.selectedAppIds
+                              final saved = widget.selectedAppIds
                                   .contains(candidate.identifier);
+                              final pending =
+                                  _pendingAppIds.contains(candidate.identifier);
                               return AnimatedOpacity(
                                 duration: motion.duration(_MotionTokens.short),
-                                opacity: selected ? 0.62 : 1,
+                                opacity: saved ? 0.62 : 1,
                                 child: _SelectedAppCandidateRow(
                                   key: ValueKey(
                                     'rules-selected-app-option-${candidate.identifier}',
@@ -1304,11 +1338,23 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
                                       displayLabels[candidate.identifier] ??
                                           candidate.label,
                                   compact: compact,
-                                  selected: selected,
-                                  onTap: selected
+                                  selected: saved || pending,
+                                  onTap: saved
                                       ? null
-                                      : () =>
-                                          Navigator.of(context).pop(candidate),
+                                      : () {
+                                          final id = candidate.identifier;
+                                          if (!multiSelect) {
+                                            Navigator.of(context).pop([id]);
+                                            return;
+                                          }
+                                          setState(() {
+                                            if (pending) {
+                                              _pendingAppIds.remove(id);
+                                            } else {
+                                              _pendingAppIds.add(id);
+                                            }
+                                          });
+                                        },
                                 ),
                               );
                             },
@@ -1316,6 +1362,24 @@ class _SelectedAppsPickerSheetState extends State<_SelectedAppsPickerSheet> {
                         },
                       ),
                     ),
+                    if (multiSelect) ...[
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          key: const ValueKey('rules-selected-app-confirm'),
+                          onPressed: _pendingAppIds.isEmpty
+                              ? null
+                              : () => Navigator.of(context)
+                                  .pop(_pendingAppIds.toList()),
+                          child: Text(
+                            _pendingAppIds.isEmpty
+                                ? 'Добавить'
+                                : 'Добавить (${_pendingAppIds.length})',
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               );
@@ -1359,29 +1423,7 @@ class _SelectedAppCandidateRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: compact ? 36 : 42,
-            height: compact ? 36 : 42,
-            decoration: BoxDecoration(
-              color: p.accent.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: candidate.iconBytes == null
-                ? Icon(candidate.icon, color: p.accent, size: 21)
-                : ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.memory(
-                      candidate.iconBytes!,
-                      fit: BoxFit.cover,
-                      filterQuality: FilterQuality.medium,
-                      errorBuilder: (_, __, ___) => Icon(
-                        candidate.icon,
-                        color: p.accent,
-                        size: 21,
-                      ),
-                    ),
-                  ),
-          ),
+          _SelectedAppIcon(candidate: candidate, size: compact ? 36 : 42),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -1431,7 +1473,11 @@ class _SelectedAppCandidateRow extends StatelessWidget {
       selected: selected,
       label: displayLabel,
       value: selected ? 'Уже выбрано' : 'Не выбрано',
-      hint: selected ? null : 'Добавить приложение',
+      hint: onTap == null
+          ? null
+          : selected
+              ? 'Снять выбор'
+              : 'Выбрать приложение',
       child: ExcludeSemantics(child: row),
     );
   }
@@ -1473,17 +1519,12 @@ String _friendlySelectedAppName(String identifier) {
     'steam.exe': 'Steam',
     'msedge.exe': 'Edge',
   };
-  final knownName = known[lower];
+  final knownName = known[lower] ?? pokrovRuAppCatalogEntry(lower)?.label;
   if (knownName != null) {
     return knownName;
   }
-  final parts =
-      value.split(RegExp(r'[._:-]+')).where((part) => part.isNotEmpty).toList();
-  final base = lower.endsWith('.exe')
-      ? value.substring(0, value.length - 4)
-      : parts.isEmpty
-          ? value
-          : parts.last;
+  if (!lower.endsWith('.exe')) return value;
+  final base = value.substring(0, value.length - 4);
   final words = base
       .replaceAll(RegExp(r'[_:-]+'), ' ')
       .split(RegExp(r'\s+'))
@@ -1536,6 +1577,19 @@ Future<List<_SelectedAppCandidate>> _loadAndroidInstalledAppCandidates() async {
     return const <_SelectedAppCandidate>[];
   } on PlatformException {
     return const <_SelectedAppCandidate>[];
+  }
+}
+
+Future<Uint8List?> _loadAndroidInstalledAppIcon(String identifier) async {
+  try {
+    return await _selectedAppsRuntimeChannel.invokeMethod<Uint8List>(
+      'runtimeEngine.installedAppIcon',
+      {'identifier': identifier},
+    );
+  } on MissingPluginException {
+    return null;
+  } on PlatformException {
+    return null;
   }
 }
 
@@ -1650,8 +1704,9 @@ List<_SelectedAppCandidate> _candidatesFromHostMaps(
     if (item is! Map) {
       continue;
     }
+    final rawIdentifier = item['identifier']?.toString() ?? '';
     final identifier = normalizePokrovSelectedAppIdentifier(
-      item['identifier']?.toString() ?? '',
+      rawIdentifier,
       hostPlatform: hostPlatform,
     );
     if (identifier == null) {
@@ -1659,14 +1714,17 @@ List<_SelectedAppCandidate> _candidatesFromHostMaps(
     }
     final label = item['label']?.toString().trim();
     final subtitle = item['subtitle']?.toString().trim();
-    final iconBytes = _decodeSelectedAppIcon(item['iconPngBase64']);
     final ruCatalogEntry = hostPlatform == HostPlatform.android
         ? pokrovRuAppCatalogEntry(identifier)
         : null;
-    final safeLabel =
-        label == null || label.isEmpty || _looksLikeSelectedAppIdentifier(label)
-            ? _friendlySelectedAppName(identifier)
-            : label;
+    final safeLabel = label == null ||
+            label.isEmpty ||
+            _looksLikeSelectedAppIdentifier(label) ||
+            (hostPlatform == HostPlatform.android &&
+                label.toLowerCase() == 'android')
+        ? _friendlySelectedAppName(identifier)
+        : label;
+    Future<Uint8List?>? iconFuture;
     candidates.add(
       _SelectedAppCandidate(
         label: safeLabel,
@@ -1674,25 +1732,14 @@ List<_SelectedAppCandidate> _candidatesFromHostMaps(
         subtitle: subtitle == null || subtitle.isEmpty ? identifier : subtitle,
         source: source,
         icon: icon,
-        iconBytes: iconBytes,
+        loadIcon: source == _SelectedAppCandidateSource.installed
+            ? () => iconFuture ??= _loadAndroidInstalledAppIcon(rawIdentifier)
+            : null,
         ruCatalogEntry: ruCatalogEntry,
       ),
     );
   }
   return candidates;
-}
-
-Uint8List? _decodeSelectedAppIcon(Object? value) {
-  final encoded = value?.toString().trim() ?? '';
-  if (encoded.isEmpty || encoded.length > 196000) {
-    return null;
-  }
-  try {
-    final bytes = base64Decode(encoded);
-    return bytes.isEmpty || bytes.length > 128000 ? null : bytes;
-  } on FormatException {
-    return null;
-  }
 }
 
 List<_SelectedAppCandidate> _suggestedSelectedAppCandidates(
