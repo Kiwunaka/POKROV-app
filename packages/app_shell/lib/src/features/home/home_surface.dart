@@ -4,6 +4,7 @@ class _QuickConnectSection extends StatelessWidget {
   const _QuickConnectSection({
     required this.tiles,
     required this.onEditTiles,
+    required this.onOpenWhitelist,
     required this.actionRequired,
     required this.connectionFailureMessage,
     required this.retainsProtection,
@@ -28,6 +29,7 @@ class _QuickConnectSection extends StatelessWidget {
   final SeedAppContext appContext;
   final List<ui.HomeTile> tiles;
   final VoidCallback onEditTiles;
+  final VoidCallback? onOpenWhitelist;
   final bool actionRequired;
   final String? connectionFailureMessage;
   final bool retainsProtection;
@@ -90,6 +92,7 @@ class _QuickConnectSection extends StatelessWidget {
       onToggle: presentation.primaryActionEnabled
           ? () => unawaited(protectionIntents.activatePrimaryAction(presentation)) : null,
       onOpenStatus: pokrovPrivateClient && !pokrovPrivateTools ? null : protectionIntents.openConnectionDetails,
+      onOpenWhitelist: onOpenWhitelist,
       onOpenAccess: pokrovPrivateClient ? null : onOpenProfile,
       onNotifications: pokrovPrivateClient ? null : onOpenNotifications,
       onEditTiles: pokrovPrivateClient && !pokrovPrivateTools ? null : onEditTiles,

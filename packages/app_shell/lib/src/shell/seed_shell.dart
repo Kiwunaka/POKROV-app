@@ -436,6 +436,61 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
+  Future<void> _openWhitelistConnections() async {
+    PokrovHaptics.tap();
+    final loading = _prepareLocationsTransportCatalog().then((_) =>
+        _connectionManager.transportCatalog?.candidates
+            .where((candidate) => candidate.usesWhitelistTransport)
+            .toList(growable: false) ?? const <domain.TransportCandidate>[]);
+    final selected = await ui.showPokrovSheet<String>(
+      context,
+      (sheetContext) => FutureBuilder<List<domain.TransportCandidate>>(
+        future: loading,
+        builder: (context, state) {
+          final candidates = state.data ?? const <domain.TransportCandidate>[];
+          return SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Обход БС', style: Theme.of(context).textTheme.titleLarge),
+                if (state.connectionState != ConnectionState.done)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Text('Загружаем доступные подключения…'),
+                  )
+                else if (candidates.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Text('Пока нет доступных подключений для белых списков.'),
+                  ),
+                for (final candidate in candidates)
+                  ListTile(
+                    key: ValueKey('whitelist-candidate-' + candidate.candidateRef),
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(switch (candidate.transport) {
+                      'mts' => 'МТС Доски',
+                      'vk' => 'VK Звонки',
+                      'dnstt' => 'DNS · DNSTT',
+                      'slipstream' => 'DNS · Slipstream',
+                      _ => _locationCandidateLabel(candidate),
+                    }),
+                    subtitle: Text(_locationCountryDisplayName(candidate.countryCode, candidate.countryCode)),
+                    trailing: candidate.candidateRef == _clientExperience.preferredCandidateRef
+                        ? const Icon(Icons.check_rounded) : null,
+                    onTap: () => Navigator.of(sheetContext).pop(candidate.candidateRef),
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+    if (!mounted || selected == null || selected == _clientExperience.preferredCandidateRef) return;
+    await _connectionManager.setPreferredCandidate(selected, enableManual: true);
+  }
+
   Future<void> _openMtsBridge() async {
     if (_mtsBridgeBusy) return;
     String? currentStatus;
@@ -3906,6 +3961,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       (context) => _QuickConnectSection(
             tiles: _homeTileViews(context, selectedCountry),
             onEditTiles: () => _openHomeTilesSheet(context),
+            onOpenWhitelist: const {HostPlatform.android, HostPlatform.windows}
+                .contains(widget.appContext.hostPlatform)
+                ? () => unawaited(_openWhitelistConnections()) : null,
             actionRequired: _connectionManager._activePhase == ConnectionPhase.actionRequired,
             connectionFailureMessage: _connectionManager._connectionFailureMessage,
             retainsProtection: _connectionManager.retainsProtection,

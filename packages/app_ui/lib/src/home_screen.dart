@@ -15,6 +15,7 @@ class HomeScreen extends StatelessWidget {
     required this.data,
     required this.onToggle,
     this.onOpenStatus,
+    this.onOpenWhitelist,
     this.onOpenAccess,
     this.onNotifications,
     this.onEditTiles,
@@ -26,6 +27,7 @@ class HomeScreen extends StatelessWidget {
   final HomeViewData data;
   final VoidCallback? onToggle;
   final VoidCallback? onOpenStatus;
+  final VoidCallback? onOpenWhitelist;
   final VoidCallback? onOpenAccess;
   final VoidCallback? onNotifications;
   final VoidCallback? onEditTiles;
@@ -54,6 +56,15 @@ class HomeScreen extends StatelessWidget {
           ),
           SizedBox(height: 6),
           Center(child: _StatusPill(data: data, onTap: onOpenStatus)),
+          if (onOpenWhitelist != null)
+            Center(
+              child: TextButton.icon(
+                key: const ValueKey('home-whitelist-action'),
+                onPressed: onOpenWhitelist,
+                icon: const Icon(Icons.route_outlined, size: 18),
+                label: const Text('Обход БС'),
+              ),
+            ),
           SizedBox(height: 16),
           if (error) ...[
             WarnCard(

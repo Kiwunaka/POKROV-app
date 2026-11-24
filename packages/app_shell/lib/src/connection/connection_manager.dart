@@ -6458,11 +6458,13 @@ class ConnectionManager extends ChangeNotifier {
     ));
   }
 
-  Future<void> setPreferredCandidate(String value) async {
+  Future<void> setPreferredCandidate(String value, {bool enableManual = false}) async {
     final candidateRef = value.trim();
-    if (_nodePreferenceBusy || _clientExperience.interfaceMode != PokrovInterfaceMode.advanced) return;
+    if (_nodePreferenceBusy ||
+        (!enableManual && _clientExperience.interfaceMode != PokrovInterfaceMode.advanced)) return;
     if (!(_transportCatalog?.candidates.any((candidate) => candidate.candidateRef == candidateRef) ?? false)) return;
     await _saveConnectionPreference(_clientExperience.copyWith(
+      interfaceMode: PokrovInterfaceMode.advanced,
       preferredCountryCode: '', preferredNodeCode: '',
       preferredVariantId: 'direct', preferredCandidateRef: candidateRef,
     ));

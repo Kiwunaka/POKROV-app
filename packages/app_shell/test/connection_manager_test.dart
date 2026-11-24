@@ -5329,7 +5329,7 @@ void main() {
     expect(disconnects, 1);
   });
 
-  testWidgets('fresh Android opens manual MTS selection from the home country tile without VPN', (tester) async {
+  testWidgets('fresh Android selects MTS from Обход БС without starting VPN', (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     final features = RuntimeTransportFeature.values.map((feature) => feature.wireName).toList()..sort();
@@ -5395,14 +5395,15 @@ void main() {
     await tester.pumpAndSettle();
     expect(nativeMutations, isEmpty);
     available = true;
-    await tester.tap(find.byKey(const ValueKey('home-tile-country')));
+    await tester.tap(find.byKey(const ValueKey('home-whitelist-action')));
     await tester.pumpAndSettle();
     expect(nativeMutations, ['runtimeEngine.initialize']);
     expect(bootstrapper.refreshedFeatures, isNotEmpty);
     expect(bootstrapper.refreshedFeatures.every((features) => features.contains(RuntimeTransportFeature.mtsVless)), isTrue);
-    await tester.tap(find.byKey(const ValueKey('locations-select-connection')));
+    expect(find.text('МТС Доски'), findsOneWidget);
+    await tester.tap(find.byKey(ValueKey('whitelist-candidate-' + mts.candidateRef)));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(ValueKey('location-candidate-${mts.candidateRef}')));
+    await tester.tap(find.byKey(const ValueKey('home-tile-country')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('locations-mts-bridge')), findsOneWidget);
     expect(nativeMutations, ['runtimeEngine.initialize']);

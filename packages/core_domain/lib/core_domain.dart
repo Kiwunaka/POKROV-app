@@ -74,6 +74,9 @@ class TransportCandidate {
   final Set<HostPlatform> platforms;
   final Set<RuntimeTransportFeature> requiredFeatures;
 
+  bool get usesWhitelistTransport =>
+      warpMode == null && const {'mts', 'vk', 'dnstt', 'slipstream'}.contains(transport);
+
   /// Location selection follows the Node; WARP's final exit stays unknown.
   String nodeCountryCode(Iterable<TransportCandidate> catalogCandidates) {
     if (warpMode != 'warp_over_proxy') return countryCode;
