@@ -30,9 +30,25 @@ class SmartConnectSelectionExhausted implements Exception {
 class SmartConnectCandidateSelector {
   static String? _bridgeHost(TransportCandidate candidate) => switch (candidate.bridgeId) {
     'mini' || 'mini-xhttp' => 'cinema',
-    'rf2' || 'rf2-xhttp' || 'ru_spb' || 'ru_spb-xhttp' => 'lampa',
+    'lampa' || 'rf2' || 'rf2-xhttp' || 'ru_spb' || 'ru_spb-xhttp' => 'lampa',
+    'runode' => 'runode',
     _ => null,
   };
+
+  static TransportCandidate? _independentIngress(
+      TransportCandidate selected, Iterable<TransportCandidate> candidates) {
+    final selectedHost = _bridgeHost(selected);
+    if (selectedHost == null) return null;
+    final bridges = candidates.where((candidate) {
+      final host = _bridgeHost(candidate);
+      return host != null && host != selectedHost;
+    });
+    final direct = candidates.where((candidate) =>
+        candidate.bridgeId == null && candidate.warpMode == null);
+    bool anotherExit(TransportCandidate candidate) => candidate.nodeCode != selected.nodeCode;
+    return bridges.where(anotherExit).firstOrNull ?? bridges.firstOrNull ??
+        direct.where(anotherExit).firstOrNull ?? direct.firstOrNull;
+  }
 
   static bool _familySiblings(TransportCandidate a, TransportCandidate b) =>
       a.warpMode == null && b.warpMode == null &&
@@ -52,20 +68,16 @@ class SmartConnectCandidateSelector {
       ..sort((a, b) => a.priority.compareTo(b.priority));
     final alternatives = <TransportCandidate>[];
     final variants = {(selected.protocol, selected.transport, selected.protection, selected.bridgeId)};
-    final selectedHost = _bridgeHost(selected);
-    bool independentBridge(TransportCandidate candidate) => selectedHost != null &&
-        _bridgeHost(candidate) != null && _bridgeHost(candidate) != selectedHost;
-    final first = ordered.where((candidate) => candidate.nodeCode != selected.nodeCode &&
-        independentBridge(candidate)).firstOrNull ??
-        ordered.where(independentBridge).firstOrNull ??
+    final ingressReserve = _independentIngress(selected, ordered);
+    final first = ingressReserve ??
         ordered.where((candidate) => candidate.nodeCode != selected.nodeCode).firstOrNull;
     if (first != null) {
       alternatives.add(first);
       variants.add((first.protocol, first.transport, first.protection, first.bridgeId));
-      if (independentBridge(first)) {
+      if (first == ingressReserve && first.bridgeId != null) {
         // RAW/XHTTP aliases share an ingress. Keep a protocol reserve beside
         // the independent bridge so recovery's UDP slot does not evict it.
-        final protocol = ordered.where((candidate) =>
+        final protocol = ordered.where((candidate) => candidate != first &&
             (candidate.protocol, candidate.transport, candidate.protection) !=
                 (selected.protocol, selected.transport, selected.protection)).firstOrNull;
         if (protocol != null) {
@@ -236,22 +248,28 @@ class SmartConnectCandidateSelector {
         if (insertAt < naiveIndex) candidates.insert(insertAt, candidates.removeAt(naiveIndex));
       }
     }
-    // Reserve a different network family before spending every recovery slot
-    // on TCP or UDP. Otherwise retain diversity between protocol variants.
+    // Keep an independent ingress and a different network or protocol within
+    // the recovery budget, then probe them in their existing priority groups.
     if (recoveryCandidateRef.isNotEmpty && candidates.length > 3) {
-      final networks = candidates.take(3).map((candidate) => candidate.network).toSet();
-      var reserve = networks.length == 1 ? candidates.skip(3).where((candidate) =>
+      final previous = ordered.where((candidate) => candidate.candidateRef == recoveryCandidateRef).firstOrNull;
+      final ingress = previous == null ? null : _independentIngress(previous, candidates);
+      final alternate = ingress != null && ingress != candidates.first ? ingress : candidates[1];
+      final attempts = [candidates.first, alternate];
+      final remaining = candidates.where((candidate) => !attempts.contains(candidate)).toList();
+      attempts.add(remaining.first);
+      final networks = attempts.map((candidate) => candidate.network).toSet();
+      var reserve = networks.length == 1 ? remaining.skip(1).where((candidate) =>
           !networks.contains(candidate.network)).firstOrNull : null;
       if (reserve == null) {
-        final transports = candidates.take(3).map((candidate) =>
+        final transports = attempts.map((candidate) =>
             (candidate.protocol, candidate.transport, candidate.protection)).toSet();
         if (transports.length == 1) {
-          reserve = candidates.skip(3).where((candidate) =>
+          reserve = remaining.skip(1).where((candidate) =>
               !transports.contains((candidate.protocol, candidate.transport, candidate.protection))).firstOrNull;
         }
       }
-      if (reserve != null) candidates[2] = reserve;
-      candidates.removeRange(3, candidates.length);
+      if (reserve != null) attempts[2] = reserve;
+      candidates.retainWhere(attempts.contains);
       final refs = candidates.map((candidate) => candidate.candidateRef).toSet();
       ipv6Siblings.removeWhere((ref, sibling) =>
           !refs.contains(ref) || !refs.contains(sibling.candidateRef));

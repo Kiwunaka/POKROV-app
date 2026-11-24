@@ -144,6 +144,38 @@ void main() {
         reason: 'the three-probe recovery cap must retain RF2 beside current Mini and UDP');
   });
 
+  test('RUnode recovery keeps Lampa within three probes even with several cached exits', () async {
+    final selected = _candidate(0, bridge: 'runode');
+    final shared = [
+      _candidate(1, node: 'de2', bridge: 'runode'),
+      _candidate(2, node: 'ch', country: 'CH', bridge: 'runode'),
+      _candidate(3, node: 'nl', country: 'NL', bridge: 'runode'),
+    ];
+    final direct = _candidate(4, udp: true);
+    final lampa = _candidate(5, node: 'nl', country: 'NL', bridge: 'lampa');
+    final catalog = _catalog([selected, ...shared, direct, lampa]);
+    final saved = SmartConnectCandidateSelector.cacheAlternatives(selected,
+        catalog.candidates, countryOnly: false, catalog: catalog);
+    expect(saved, [lampa, direct]);
+    expect(SmartConnectCandidateSelector.cacheAlternatives(selected,
+        catalog.candidates, countryOnly: true, catalog: catalog).first, direct);
+
+    final probed = <TransportCandidate>[];
+    final recovered = await SmartConnectCandidateSelector().select(
+      catalog: _catalog([selected, ...shared, ...saved]), network: 'cellular',
+      platform: HostPlatform.android, recoveryCandidateRef: selected.candidateRef,
+      excludedCandidateRefs: {selected.candidateRef}, serialProbes: true,
+      cancelled: Completer<void>().future,
+      probe: (candidate, _, __) async {
+        probed.add(candidate);
+        return candidate == lampa ? _success(candidate)
+            : const SmartConnectCandidateProbeResult.failure('connect_failed');
+      },
+    );
+    expect(recovered.profileName, lampa.candidateRef);
+    expect(probed, [shared.first, direct, lampa]);
+  });
+
   test('Auto settles bridges in server priority order before trying a remembered direct route', () async {
     final selector = SmartConnectCandidateSelector();
     final direct = _candidate(3, node: 'us', country: 'US');
