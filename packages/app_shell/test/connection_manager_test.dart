@@ -308,7 +308,7 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
   @override
   Future<bool> reportRuntimeStats({
     required HostPlatform hostPlatform, required String runtimePhase,
-    required bool connected, String errorCode = '', String failureKind = '',
+    required bool? connected, String errorCode = '', String failureKind = '',
     String? failureOperation,
     int? failureHttpStatus,
     PortalFailureReason? failureReason,
@@ -326,6 +326,7 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
     runtimeCalls.add({'runtime_phase': runtimePhase, 'error_code': errorCode});
     actualReports.add({'runtime_phase': runtimePhase, 'duration_ms': durationMs,
       'attempt_number': attemptNumber, 'error_code': errorCode, 'retryable': retryable,
+      'connected': connected, 'has_delivery_receipt': onDeliveryReceipt != null,
       'failure_kind': failureKind, 'connectivity': runtimeConnectivityReport(connectivitySnapshot),
       'failure_operation': failureOperation,
       'failure_http_status': failureHttpStatus,
@@ -467,7 +468,7 @@ class _QaProfileFailureBootstrapper extends AppFirstRuntimeBootstrapper {
 
   @override
   Future<bool> reportRuntimeStats({
-    required HostPlatform hostPlatform, required String runtimePhase, required bool connected,
+    required HostPlatform hostPlatform, required String runtimePhase, required bool? connected,
     String errorCode = '', String failureKind = '', String? failureOperation,
     int? failureHttpStatus,
     PortalFailureReason? failureReason,
@@ -2469,6 +2470,9 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
       final report = bootstrapper.actualReports.singleWhere(
         (value) => value['error_code'] == 'subscription_refresh_failed');
+      expect(report['connected'], isNull);
+      expect(report['attempt_number'], isNull);
+      expect(report['has_delivery_receipt'], isFalse);
       final isHttpResponse = failure.operation != null;
       expect(report['failure_operation'], isHttpResponse ? 'subscription_refresh' : null);
       expect(report['failure_http_status'], isHttpResponse ? 503 : null);

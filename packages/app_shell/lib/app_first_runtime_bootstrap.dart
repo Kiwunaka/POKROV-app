@@ -800,10 +800,11 @@ final class RuntimeStatsDeliveryReceipt {
 /// Best-effort app UX telemetry. The platform must not treat this as trusted
 /// connection evidence; observer traffic remains the verification authority.
 abstract interface class AppFirstExperienceService {
+  /// Omit connection status for an advisory subscription failure.
   Future<bool> reportRuntimeStats({
     required HostPlatform hostPlatform,
     required String runtimePhase,
-    required bool connected,
+    required bool? connected,
     String errorCode = '',
     String failureKind = '',
     String? failureOperation,
@@ -4661,7 +4662,7 @@ class AppFirstRuntimeBootstrapper
   Future<bool> reportRuntimeStats({
     required HostPlatform hostPlatform,
     required String runtimePhase,
-    required bool connected,
+    required bool? connected,
     String errorCode = '',
     String failureKind = '',
     String? failureOperation,
@@ -4759,9 +4760,9 @@ class AppFirstRuntimeBootstrapper
     }
     final reportProbes = safeCandidateProbes.isNotEmpty &&
         (phase == 'running' || phase == 'failed' ||
-            (phase == 'runtime_observed' && connected));
+            (phase == 'runtime_observed' && connected == true));
     final probeAttempt = jsonEncode([hostPlatform.name, binding?.accountId, binding?.installId, attemptNumber]);
-    if (_runtimeProbeAttempt != probeAttempt) {
+    if (connected != null && _runtimeProbeAttempt != probeAttempt) {
       _runtimeProbeAttempt = probeAttempt;
       _runtimeProbeReports.clear();
     }
@@ -4789,7 +4790,7 @@ class AppFirstRuntimeBootstrapper
             ? connectivitySnapshot?.egressProbeObservation : null;
     final body = <String, Object?>{
         'runtime_phase': phase.length <= 32 ? phase : phase.substring(0, 32),
-        'connected': connected,
+        if (connected != null) 'connected': connected,
         'client_application': 'pokrov',
         'platform': hostPlatform.name,
         if (pokrovClientVersion.isNotEmpty) 'app_version': pokrovClientVersion,
@@ -4798,7 +4799,7 @@ class AppFirstRuntimeBootstrapper
         'report_run_id': _runtimeReportRunId,
         'report_sequence': reportSequence,
         'occurred_at': occurredAt.toIso8601String(),
-        'connectivity': runtimeConnectivityReport(connectivitySnapshot),
+        if (connected != null) 'connectivity': runtimeConnectivityReport(connectivitySnapshot),
         if (egressObservation case final observation?)
           'egress_probe': {'stage': observation.stage, 'outcome': observation.outcome,
             'error_domain': observation.errorDomain, 'error_code': observation.errorCode,
@@ -4878,7 +4879,7 @@ class AppFirstRuntimeBootstrapper
           }
         }
       }
-      if (state?.hasSession == true && !invitationNetworkDeferred &&
+      if (connected != null && state?.hasSession == true && !invitationNetworkDeferred &&
           const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform) &&
           const {'app_opened', 'connect_requested', 'running', 'failed'}.contains(phase)) {
         unawaited(_reportAutomaticNetworkContext(phase, hostPlatform, loadedState: state));

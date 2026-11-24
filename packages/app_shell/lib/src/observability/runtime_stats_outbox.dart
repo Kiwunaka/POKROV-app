@@ -36,6 +36,9 @@ final class _RuntimeStatsRecord {
       throw const FormatException('runtime_stats_record_invalid');
     }
     final body = value['body'] as Map;
+    final subscriptionFailure = !body.containsKey('connected') &&
+        body['runtime_phase'] == 'failed' &&
+        body['error_code'] == 'subscription_refresh_failed';
     const fields = {
       'runtime_phase',
       'connected',
@@ -80,7 +83,7 @@ final class _RuntimeStatsRecord {
             entry.value is! int &&
             entry.value is! bool) ||
         body['runtime_phase'] is! String ||
-        (body['network_observation'] == null && body['connected'] is! bool) ||
+        (body['network_observation'] == null && !subscriptionFailure && body['connected'] is! bool) ||
         body['report_run_id'] is! String ||
         !RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$')
             .hasMatch(body['report_run_id'] as String) ||
@@ -128,7 +131,7 @@ final class _RuntimeStatsRecord {
       'proof_stage',
       'observed_at_ms'
     };
-    if ((observation == null || connectivity != null) && (connectivity is! Map ||
+    if (((observation == null && !subscriptionFailure) || connectivity != null) && (connectivity is! Map ||
         connectivity.keys.any((key) => !connectivityFields.contains(key)) ||
         connectivity.values.any((value) => value is! String && value is! int))) {
       throw const FormatException('runtime_stats_connectivity_invalid');

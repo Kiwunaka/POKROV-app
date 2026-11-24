@@ -1936,12 +1936,22 @@ void main() {
         runtimePhase: 'failed', connected: false, attemptNumber: 3, candidateProbes: [probe]);
     await sessionReadStarted.future;
     expect(await bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.windows,
+        runtimePhase: 'failed', connected: null, errorCode: 'subscription_refresh_failed',
+        failureOperation: 'subscription_refresh', failureHttpStatus: 503), isFalse);
+    expect(await bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.windows,
         runtimePhase: 'failed', connected: false, attemptNumber: 3, candidateProbes: [probe]), isFalse);
     releaseSessionRead.complete();
     expect(await overlappingReport, isFalse);
-    expect(pending(), hasLength(2));
+    expect(pending(), hasLength(3));
+    final subscriptionFailure = pending().map((item) => item['body'] as Map).singleWhere(
+        (body) => body['error_code'] == 'subscription_refresh_failed');
+    expect(subscriptionFailure['failure_operation'], 'subscription_refresh');
+    expect(subscriptionFailure['failure_http_status'], 503);
+    expect(subscriptionFailure.keys.where(const {
+      'connected', 'connectivity', 'attempt_number', 'candidate_probes',
+    }.contains), isEmpty);
     expect(pending().where((item) => (item['body'] as Map).containsKey('candidate_probes')),
-        hasLength(1), reason: 'overlapping reports reserve each probe before the first state read');
+        hasLength(1), reason: 'a subscription failure must preserve the earlier probe reservation');
     await restart().reportRuntimeStats(hostPlatform: HostPlatform.windows,
         runtimePhase: 'app_opened', connected: false);
     expect(pending(), isEmpty);

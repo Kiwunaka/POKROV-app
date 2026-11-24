@@ -1491,6 +1491,26 @@ class ConnectionManager extends ChangeNotifier {
     if (service == null) {
       return;
     }
+    if (errorCode == 'subscription_refresh_failed') {
+      try {
+        await service.reportRuntimeStats(
+          hostPlatform: _appContext.hostPlatform,
+          runtimePhase: phase,
+          connected: null,
+          errorCode: errorCode,
+          failureKind: failureKind,
+          failureOperation: failureOperation,
+          failureHttpStatus: failureHttpStatus,
+          failureReason: failureReason,
+          failureRequestId: failureRequestId,
+          routeMode: _selectedRouteMode.name,
+          networkClass: _candidateNetworkClass ?? '',
+        );
+      } on Object {
+        // Diagnostics must never replace the original user-facing failure.
+      }
+      return;
+    }
     final currentSnapshot = _runtimeStatsSnapshotAttempt == _connectionAttemptNumber;
     final attemptReport = const {'connect_requested', 'failed'}.contains(phase) ||
         (phase == 'runtime_observed' && _connectionCoordinator.actionInFlight);
