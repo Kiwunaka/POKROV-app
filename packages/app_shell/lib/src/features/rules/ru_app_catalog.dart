@@ -18,7 +18,7 @@ class PokrovRuAppCatalogEntry {
   final PokrovRuAppCategory category;
 }
 
-const pokrovRuAppCatalogVersion = '2026-11-24.2';
+const pokrovRuAppCatalogVersion = '2026-11-24.3';
 
 /// Exact package IDs for local classification and Android TUN bypass.
 const pokrovRuAppCatalog = <PokrovRuAppCatalogEntry>[
@@ -65,6 +65,8 @@ const pokrovRuAppCatalog = <PokrovRuAppCatalogEntry>[
       'ru.kinopoisk', 'Кинопоиск', PokrovRuAppCategory.yandex),
   PokrovRuAppCatalogEntry(
       'com.vkontakte.android', 'ВКонтакте', PokrovRuAppCategory.social),
+  PokrovRuAppCatalogEntry(
+      'com.vtosters.lite', 'VTosters Lite', PokrovRuAppCategory.social),
   PokrovRuAppCatalogEntry(
       'ru.ok.android', 'Одноклассники', PokrovRuAppCategory.social),
   PokrovRuAppCatalogEntry(
@@ -120,7 +122,13 @@ const pokrovRuAppCatalog = <PokrovRuAppCatalogEntry>[
   PokrovRuAppCatalogEntry(
       'ru.myspar', 'Мой SPAR', PokrovRuAppCategory.shopping),
   PokrovRuAppCatalogEntry(
+      'www.metro.com', 'METRO', PokrovRuAppCategory.shopping),
+  PokrovRuAppCatalogEntry(
+      'com.getmeback.vshop', 'VS', PokrovRuAppCategory.shopping),
+  PokrovRuAppCatalogEntry(
       'ru.dodopizza.app', 'Додо Пицца', PokrovRuAppCategory.shopping),
+  PokrovRuAppCatalogEntry('com.yamiyami.ozdigital.yamiyami', 'Yami Yami',
+      PokrovRuAppCategory.shopping),
   PokrovRuAppCatalogEntry(
       'ru.devcluster.mafia', 'Pizza Mafia', PokrovRuAppCategory.shopping),
   PokrovRuAppCatalogEntry(
@@ -172,6 +180,10 @@ const pokrovRuAppCatalog = <PokrovRuAppCatalogEntry>[
   PokrovRuAppCatalogEntry(
       'ru.ostrovok.android', 'Островок', PokrovRuAppCategory.transport),
   PokrovRuAppCatalogEntry(
+      'com.onetwotrip.onetwotrip', 'OneTwoTrip', PokrovRuAppCategory.transport),
+  PokrovRuAppCatalogEntry(
+      'com.mileonair', 'MILE·ON·AIR', PokrovRuAppCategory.transport),
+  PokrovRuAppCatalogEntry(
       'com.citymobil', 'Ситимобил', PokrovRuAppCategory.transport),
   PokrovRuAppCatalogEntry(
       'com.punicapp.whoosh', 'Whoosh', PokrovRuAppCategory.transport),
@@ -189,6 +201,8 @@ const pokrovRuAppCatalog = <PokrovRuAppCatalogEntry>[
       PokrovRuAppCategory.transport),
   PokrovRuAppCatalogEntry('com.nixesea.travelcardreader', 'Баланс проездного',
       PokrovRuAppCategory.transport),
+  PokrovRuAppCatalogEntry('plus.yeti.plantain', 'Подорожка (Зеленая ветка)',
+      PokrovRuAppCategory.transport),
   PokrovRuAppCatalogEntry(
       'com.vk.vkvideo', 'VK Видео', PokrovRuAppCategory.media),
   PokrovRuAppCatalogEntry(
@@ -200,6 +214,8 @@ const pokrovRuAppCatalog = <PokrovRuAppCatalogEntry>[
       'ru.rutube.studio', 'Студия RUTUBE', PokrovRuAppCategory.media),
   PokrovRuAppCatalogEntry(
       'ru.rtb.studio', 'Студия RUTUBE', PokrovRuAppCategory.media),
+  PokrovRuAppCatalogEntry(
+      'dev.wheremyfiji.shikidev', 'ShikiWatch', PokrovRuAppCategory.media),
   PokrovRuAppCatalogEntry(
       'ru.vk.store', 'RuStore', PokrovRuAppCategory.services),
   PokrovRuAppCatalogEntry(
@@ -217,6 +233,13 @@ const pokrovRuAppCatalog = <PokrovRuAppCatalogEntry>[
       'ru.hh.android', 'hh.ru', PokrovRuAppCategory.services),
   PokrovRuAppCatalogEntry(
       'com.bitrix24.android', 'Битрикс24', PokrovRuAppCategory.services),
+  PokrovRuAppCatalogEntry('com.e1c.mobile.ess', '1С:Кабинет сотрудника',
+      PokrovRuAppCategory.services),
+  PokrovRuAppCatalogEntry('me.sign', 'Sign.Me', PokrovRuAppCategory.services),
+  PokrovRuAppCatalogEntry(
+      'com.itrack.sculptors', 'GW fitness', PokrovRuAppCategory.services),
+  PokrovRuAppCatalogEntry(
+      'com.header.bestiarydnd', 'Бестиарий DnD', PokrovRuAppCategory.services),
 ];
 
 final Map<String, PokrovRuAppCatalogEntry> _pokrovRuAppCatalogById =

@@ -574,12 +574,14 @@ void main() {
         'com.idamob.tinkoff.android',
         'com.punicapp.whoosh',
         'ru.dodopizza.app',
+        'www.metro.com',
+        'com.vtosters.lite',
       ]));
       final route = configured['route'] as Map;
       final routes = (route['rules'] as List).cast<Map>();
       final dnsRules = (dns['rules'] as List).cast<Map>();
       for (final suffix in [
-        '.ru', 'wildberries.com', 'vk.com', 'whoosh.bike', 'dodostatic.net',
+        '.ru', 'wildberries.com', 'vk.com', 'whoosh.bike', 'dodois.io', 'wbstatic.net',
       ]) {
         expect(routes.any((rule) =>
             rule['domain_suffix'] == suffix && rule['outbound'] == 'direct'), isTrue);
