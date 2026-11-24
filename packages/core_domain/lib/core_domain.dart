@@ -4,6 +4,7 @@ library pokrov_core_domain;
 enum RuntimeTransportFeature {
   dnsttVless('dnstt_vless_v1'),
   mtsVless('mts_vless_v1'),
+  avitoVless('avito_vless_v1'),
   vkVless('vk_vless_v1'),
   atsLease('pokrov_ats_lease_v1'),
   awg31('pokrov_awg31_endpoint_v1'),
@@ -75,7 +76,7 @@ class TransportCandidate {
   final Set<RuntimeTransportFeature> requiredFeatures;
 
   bool get usesWhitelistTransport =>
-      warpMode == null && const {'mts', 'vk', 'dnstt', 'slipstream'}.contains(transport);
+      warpMode == null && const {'mts', 'vk', 'dnstt', 'slipstream', 'avito'}.contains(transport);
 
   /// Location selection follows the Node; WARP's final exit stays unknown.
   String nodeCountryCode(Iterable<TransportCandidate> catalogCandidates) {

@@ -101,6 +101,7 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
             (transport == 'xhttp' && protection == 'reality') ||
             (transport == 'dnstt' && protection == 'noise') ||
             (transport == 'mts' && protection == 'noise') ||
+            (transport == 'avito' && protection == 'openflux') ||
             (transport == 'vk' && protection == 'reality') ||
             (transport == 'slipstream' && protection == 'tls'),
         'awg' => transport == 'udp' && protection == 'awg31',
@@ -116,7 +117,7 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
       if (!const {'tcp', 'udp'}.contains(parameters['network']) ||
           !const {'', 'xtls-rprx-vision'}.contains(parameters['flow'])) throw const FormatException();
       if (transport == 'xhttp' && parameters['flow'] != '') throw const FormatException();
-      if (const {'dnstt', 'slipstream', 'mts'}.contains(transport) && (parameters['network'] != 'tcp' ||
+      if (const {'dnstt', 'slipstream', 'mts', 'avito'}.contains(transport) && (parameters['network'] != 'tcp' ||
           parameters['flow'] != '' || warpMode != null || deliveryId != null)) {
         throw const FormatException();
       }
@@ -179,6 +180,7 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
           'xhttp' => RuntimeTransportFeature.xhttp,
           'dnstt' => RuntimeTransportFeature.dnsttVless,
           'mts' => RuntimeTransportFeature.mtsVless,
+          'avito' => RuntimeTransportFeature.avitoVless,
           'vk' => RuntimeTransportFeature.vkVless,
           'slipstream' => RuntimeTransportFeature.slipstreamVless,
           _ => RuntimeTransportFeature.reality,

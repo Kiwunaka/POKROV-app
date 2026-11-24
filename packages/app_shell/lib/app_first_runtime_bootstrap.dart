@@ -74,6 +74,12 @@ const _correlationIdHeader = 'X-Correlation-ID';
 const _androidCoreEgressProbeUrl =
     'https://api.pokrov.space/api/public/authenticated-egress-probe';
 const _smartConnectProfileRefreshTimeout = Duration(seconds: 6);
+const _additionalCatalogFeatures = {
+  RuntimeTransportFeature.slipstreamVless,
+  RuntimeTransportFeature.mtsVless,
+  RuntimeTransportFeature.vkVless,
+  RuntimeTransportFeature.avitoVless,
+};
 const _windowsDiscordUpdaterPath =
     r'(?i)[\\/]Discord[\\/](?:app-[^\\/]+[\\/])?Update\.exe$';
 const _windowsSelectedServiceDomains = <String, List<String>>{
@@ -4777,7 +4783,8 @@ class AppFirstRuntimeBootstrapper
       if (ref is! String || transport is! String || stage != 'probe' || outcome is! bool ||
           duration is! int || !RegExp(r'^[a-z0-9][a-z0-9_.:-]{0,127}$').hasMatch(ref) ||
           !const {'vless_reality', 'vless_grpc_tls', 'xhttp_reality',
-            'xhttp_tls', 'vless_dnstt_noise', 'vless_slipstream_tls', 'vless_mts_noise', 'naive', 'hysteria2', 'awg31', 'warp'}.contains(transport)) continue;
+            'xhttp_tls', 'vless_dnstt_noise', 'vless_slipstream_tls', 'vless_mts_noise', 'vless_avito_openflux',
+            'naive', 'hysteria2', 'awg31', 'warp'}.contains(transport)) continue;
       if (!outcome && (failure is! String ||
           !RegExp(r'^[a-z][a-z0-9_]{0,31}$').hasMatch(failure))) continue;
       final safeProbe = <String, Object?>{
@@ -4892,7 +4899,8 @@ class AppFirstRuntimeBootstrapper
             !RegExp(r'[\x00-\x1f\x7f]').hasMatch(safeCarrierName))
           'carrier_name': safeCarrierName,
         if (const {'vless_reality', 'vless_grpc_tls', 'xhttp_reality',
-          'xhttp_tls', 'vless_dnstt_noise', 'vless_slipstream_tls', 'vless_mts_noise', 'naive', 'hysteria2', 'awg31', 'warp'}.contains(safeCandidateTransport))
+          'xhttp_tls', 'vless_dnstt_noise', 'vless_slipstream_tls', 'vless_mts_noise', 'vless_avito_openflux',
+          'naive', 'hysteria2', 'awg31', 'warp'}.contains(safeCandidateTransport))
           'candidate_transport': safeCandidateTransport,
         if (RegExp(r'^[a-z0-9][a-z0-9_.:-]{0,127}$').hasMatch(safeCandidateRef))
           'candidate_ref': safeCandidateRef,
@@ -7812,7 +7820,7 @@ class AppFirstRuntimeBootstrapper
       final query = <String, String>{
         'catalog_version': '1', 'client_platform': hostPlatform.name,
         'candidate_material_limit': selectedCandidateRef.isNotEmpty && !includePlayerReserves ? '1'
-            : '${6 + (runtimeFeatures.contains(RuntimeTransportFeature.slipstreamVless) ? 1 : 0) + (runtimeFeatures.contains(RuntimeTransportFeature.mtsVless) ? 1 : 0) + (runtimeFeatures.contains(RuntimeTransportFeature.vkVless) ? 1 : 0)}',
+            : '${6 + runtimeFeatures.intersection(_additionalCatalogFeatures).length}',
         'client_release': _managedCatalogClientRelease,
         'runtime_features': (runtimeFeatures.map((feature) => feature.wireName).toList()..sort()).join(','),
         if (coreRelease != null && coreRelease.isNotEmpty) 'core_release': coreRelease,
@@ -10323,7 +10331,7 @@ class AppFirstRuntimeBootstrapper
 
   bool _isProxyTransportOutbound(Map<String, dynamic> outbound) {
     final type = _readText(outbound['type']).toLowerCase();
-    return !const {'direct', 'block', 'dns', 'selector', 'urltest', 'dnstt', 'slipstream', 'mts', 'vk'}
+    return !const {'direct', 'block', 'dns', 'selector', 'urltest', 'dnstt', 'slipstream', 'mts', 'vk', 'avito'}
         .contains(type);
   }
 

@@ -116,31 +116,79 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
           board.userInfo.isNotEmpty || board.hasFragment) {
         throw const FormatException();
       }
-      final tags = <String>{};
-      for (final outbound in outbounds) {
-        if (!tags.add(_readText(outbound['tag'])) ||
-            !const {'vless', 'mts', 'selector', 'urltest', 'direct', 'block', 'dns'}.contains(outbound['type']) ||
-            (outbound['type'] != 'vless' && outbound.containsKey('detour')) ||
-            outbound['default'] == 'mts-tunnel' ||
-            ((outbound['outbounds'] as List? ?? const []).contains('mts-tunnel'))) {
-          throw const FormatException();
-        }
+      _validateTcpCarrierGraph(config, outbounds, 'mts', 'mts-tunnel');
+    } on Object {
+      throw const TransportManifestFailure('transport_catalog_profile_mismatch');
+    }
+  }
+
+  void _validateTcpCarrierGraph(Map<String, dynamic> config, List<Map<String, dynamic>> outbounds,
+      String carrierType, String carrierTag) {
+    final tags = <String>{};
+    for (final outbound in outbounds) {
+      if (!tags.add(_readText(outbound['tag'])) ||
+          !{'vless', carrierType, 'selector', 'urltest', 'direct', 'block', 'dns'}.contains(outbound['type']) ||
+          (outbound['type'] != 'vless' && outbound.containsKey('detour')) ||
+          outbound['default'] == carrierTag ||
+          ((outbound['outbounds'] as List? ?? const []).contains(carrierTag))) {
+        throw const FormatException();
       }
-      // Also cover route/DNS rules in already materialized cached profiles.
-      void rejectCarrierRoute(Object? value) {
-        if (value is Map) {
-          for (final entry in value.entries) {
-            if (const {'outbound', 'final', 'detour'}.contains(entry.key) && entry.value == 'mts-tunnel') {
-              throw const FormatException();
-            }
-            rejectCarrierRoute(entry.value);
+    }
+    // The carrier is reachable only as the VLESS outbound's detour.
+    void rejectCarrierRoute(Object? value) {
+      if (value is Map) {
+        for (final entry in value.entries) {
+          if (const {'outbound', 'final', 'detour'}.contains(entry.key) && entry.value == carrierTag) {
+            throw const FormatException();
           }
-        } else if (value is List) {
-          value.forEach(rejectCarrierRoute);
+          rejectCarrierRoute(entry.value);
         }
+      } else if (value is List) {
+        value.forEach(rejectCarrierRoute);
       }
-      rejectCarrierRoute(config['route']);
-      rejectCarrierRoute(config['dns']);
+    }
+    rejectCarrierRoute(config['route']);
+    rejectCarrierRoute(config['dns']);
+  }
+
+  void _validateAvitoMaterial(Object raw, TransportCandidate? candidate, Object? access,
+      Set<RuntimeTransportFeature> runtimeFeatures, {required String kind}) {
+    try {
+      final config = _readMap(raw is String ? jsonDecode(raw) : raw);
+      final outbounds = (config['outbounds'] as List? ?? const []).map(_readMap).toList();
+      final carriers = outbounds.where((outbound) => outbound['type'] == 'avito').toList();
+      if (carriers.isEmpty && candidate?.transport != 'avito' && kind != 'avito') return;
+      _requirePremiumTransportAccess(access);
+      if (candidate?.transport != 'avito' ||
+          !runtimeFeatures.containsAll({RuntimeTransportFeature.vless, RuntimeTransportFeature.avitoVless}) ||
+          carriers.length != 1 ||
+          (config['endpoints'] is List && (config['endpoints'] as List).isNotEmpty)) {
+        throw const FormatException();
+      }
+      final leaf = outbounds.where((outbound) => outbound['type'] == 'vless').single;
+      final carrier = carriers.single;
+      final roomId = RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$');
+      final rooms = carrier['rooms'];
+      final key = _readText(carrier['session_key']);
+      final address = InternetAddress.tryParse(_readText(carrier['server']));
+      final resolver = _readMap(carrier['domain_resolver']);
+      bool exactKeys(Map<String, dynamic> value, Set<String> keys) =>
+          value.length == keys.length && value.keys.every(keys.contains);
+      if (!exactKeys(leaf, const {'type', 'tag', 'server', 'server_port', 'uuid', 'flow', 'network', 'detour'}) ||
+          !exactKeys(carrier, const {'type', 'tag', 'server', 'server_port', 'rooms', 'session_key', 'domain_resolver'}) ||
+          leaf['tag'] != 'proxy' || leaf['flow'] != '' || leaf['network'] != 'tcp' ||
+          leaf['detour'] != 'avito-tunnel' || carrier['tag'] != 'avito-tunnel' ||
+          !roomId.hasMatch(_readText(leaf['uuid']).toLowerCase()) ||
+          address?.type != InternetAddressType.IPv4 || leaf['server'] != carrier['server'] ||
+          leaf['server_port'] != 12543 || carrier['server_port'] != 12543 ||
+          rooms is! List || rooms.length != 2 || rooms[0] == rooms[1] ||
+          rooms.any((room) => room is! String || !roomId.hasMatch(room)) ||
+          !RegExp(r'^[A-Za-z0-9_-]{43}$').hasMatch(key) ||
+          base64Url.decode(base64Url.normalize(key)).length != 32 ||
+          !exactKeys(resolver, const {'server'}) || resolver['server'] != 'dns-direct') {
+        throw const FormatException();
+      }
+      _validateTcpCarrierGraph(config, outbounds, 'avito', 'avito-tunnel');
     } on Object {
       throw const TransportManifestFailure('transport_catalog_profile_mismatch');
     }
@@ -358,7 +406,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
             requestedCandidateRef: selectedCandidateRef)
         : null;
     if (transportCatalog?.candidates.any((candidate) =>
-        const {'dnstt', 'slipstream', 'mts', 'vk'}.contains(candidate.transport) || candidate.protocol == 'naive') == true) {
+        const {'dnstt', 'slipstream', 'mts', 'vk', 'avito'}.contains(candidate.transport) || candidate.protocol == 'naive') == true) {
       _requirePremiumTransportAccess(response['access']);
     }
     if (selectedCandidateRef.isNotEmpty && transportCatalog == null) {
@@ -412,6 +460,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
         'xhttp' => ('vless', 'xhttp', candidate.protection),
         'dnstt' => ('vless', 'dnstt', 'noise'),
         'mts' => ('vless', 'mts', 'noise'),
+        'avito' => ('vless', 'avito', 'openflux'),
         'vk' => ('vless', 'vk', 'reality'),
         'slipstream' => ('vless', 'slipstream', 'tls'),
         'naive' => ('naive', 'h2', 'tls'),
@@ -424,6 +473,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
       }
       _validateDnsttMaterial(raw, candidate, response['access'], runtimeFeatures, kind: kind);
       _validateMtsMaterial(raw, candidate, response['access'], runtimeFeatures, kind: kind);
+      _validateAvitoMaterial(raw, candidate, response['access'], runtimeFeatures, kind: kind);
       _validateVkMaterial(raw, candidate, response['access'], runtimeFeatures, kind: kind);
       _validateSlipstreamMaterial(raw, candidate, response['access'], runtimeFeatures, kind: kind);
       _validateNaiveMaterial(raw, candidate, response['access'], runtimeFeatures, kind: kind);
@@ -524,7 +574,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
           'awg2' => 'awg2', 'awg31' => 'awg31', 'hysteria2' => 'hysteria2',
           'warp_direct' => 'warp',
           'naive' => 'naive',
-          'reality' || 'grpc' || 'xhttp' || 'ru_bridge' || 'dnstt' || 'slipstream' || 'mts' || 'vk' => 'vless',
+          'reality' || 'grpc' || 'xhttp' || 'ru_bridge' || 'dnstt' || 'slipstream' || 'mts' || 'vk' || 'avito' => 'vless',
           _ => 'unknown',
         },
       ),
@@ -565,9 +615,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
     final bundled = <String, ManagedProfilePayload>{};
     final ManagedProfilePayload payload;
     if (response.containsKey('candidate_materials')) {
-      final materialLimit = 6 + (runtimeFeatures.contains(RuntimeTransportFeature.slipstreamVless) ? 1 : 0) +
-          (runtimeFeatures.contains(RuntimeTransportFeature.mtsVless) ? 1 : 0) +
-          (runtimeFeatures.contains(RuntimeTransportFeature.vkVless) ? 1 : 0);
+      final materialLimit = 6 + runtimeFeatures.intersection(_additionalCatalogFeatures).length;
       if (transportCatalog == null || supplied is! List || supplied.isEmpty || supplied.length > materialLimit) {
         throw const TransportManifestFailure('transport_catalog_materials_mismatch');
       }

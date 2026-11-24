@@ -1405,6 +1405,7 @@ class ConnectionManager extends ChangeNotifier {
       if (candidate.transport == 'xhttp' && candidate.protection == 'reality') return 'xhttp_reality';
       if (candidate.transport == 'xhttp' && candidate.protection == 'tls') return 'xhttp_tls';
       if (candidate.transport == 'mts' && candidate.protection == 'noise') return 'vless_mts_noise';
+      if (candidate.transport == 'avito' && candidate.protection == 'openflux') return 'vless_avito_openflux';
       if (candidate.transport == 'vk' && candidate.protection == 'reality') return 'vless_vk_reality';
       if (candidate.transport == 'dnstt' && candidate.protection == 'noise') return 'vless_dnstt_noise';
       if (candidate.transport == 'slipstream' && candidate.protection == 'tls') return 'vless_slipstream_tls';

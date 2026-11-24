@@ -471,6 +471,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                     contentPadding: EdgeInsets.zero,
                     title: Text(switch (candidate.transport) {
                       'mts' => 'МТС Доски',
+                      'avito' => 'Avito Code',
                       'vk' => 'VK Звонки',
                       'dnstt' => 'DNS · DNSTT',
                       'slipstream' => 'DNS · Slipstream',

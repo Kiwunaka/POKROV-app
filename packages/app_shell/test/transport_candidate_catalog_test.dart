@@ -92,6 +92,16 @@ void main() {
       throwsA(isA<TransportManifestFailure>()));
   });
 
+  test('Avito appears in Обход БС when Core advertises OpenFlux', () {
+    final row = candidate('de', 'avito_vless', transport: 'avito',
+      protection: 'openflux', features: ['avito_vless_v1', 'singbox_vless_v1']);
+    (row['requirements'] as Map)['minimum_client_release'] = '2.1.0';
+    expect(parse(catalog([row]), clientRelease: '2.1.0').selected.usesWhitelistTransport, isTrue);
+    expect(() => decodeManagedTransportCatalog(catalog([row]), platform: HostPlatform.windows,
+      clientRelease: '2.1.0', runtimeFeatures: {RuntimeTransportFeature.vless}),
+      throwsA(isA<TransportManifestFailure>()));
+  });
+
   test('Slipstream catalog requires its own compiled capability and TCP-only VLESS chain', () {
     final row = candidate('de', 'slipstream_vless', transport: 'slipstream',
       protection: 'tls', features: ['singbox_vless_v1', 'slipstream_vless_v1']);
