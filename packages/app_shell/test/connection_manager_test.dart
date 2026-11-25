@@ -100,6 +100,7 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
     bool selectCandidate = true,
     String selectedCandidateRef = '',
     bool cacheResult = true,
+    bool waitForVpnNode = false,
     Duration? timeout,
     Future<void>? cancelled,
   }) async {
@@ -433,7 +434,7 @@ class _QaProfileFailureBootstrapper extends AppFirstRuntimeBootstrapper {
     String preferredCandidateRef = '', Set<String> excludedNodeCodes = const {},
     String tcpFallbackFromRevision = '', Set<RuntimeTransportFeature> runtimeFeatures = const {},
     String? coreRelease, bool selectCandidate = true, String selectedCandidateRef = '',
-    bool cacheResult = true, Duration? timeout, Future<void>? cancelled,
+    bool cacheResult = true, bool waitForVpnNode = false, Duration? timeout, Future<void>? cancelled,
   }) => cached.resolveManagedProfile(hostPlatform: hostPlatform, routeMode: routeMode,
       timeout: timeout, cancelled: cancelled);
 
@@ -4572,41 +4573,6 @@ void main() {
     expect(bootstrapper.lastSuccessfulNetworkKey, 'asn:AS12345');
   });
 
-  test('first Windows Russia Direct connection refreshes a catalog with no eligible routes',
-      () async {
-    final ipv6 = TransportCandidate(
-      candidateRef: 'de:profile_tcp:endpoint_v6:ipv6:g1', profileRef: 'profile_tcp',
-      nodeCode: 'de', countryCode: 'DE', protocol: 'vless', transport: 'tcp',
-      protection: 'reality', priority: 0, network: 'tcp', flow: '',
-      minimumClientRelease: '1.2.0', minimumCoreRelease: null,
-      platforms: const {HostPlatform.windows}, requiredFeatures: const {},
-      family: 'ipv6', deliveryEndpointId: 'v6', endpointGeneration: 1,
-    );
-    final network = Completer<RuntimeCandidateNetwork>();
-    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
-      ..supportsCandidates = true
-      ..nextNetworkRead = network;
-    final bootstrapper = _Bootstrapper(catalog: true, bundle: true)..candidates = [ipv6];
-    final manager = _manager(runtime, bootstrapper,
-        authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
-    addTearDown(manager.dispose);
-    manager.selectRouteMode(RouteMode.allExceptRu);
-
-    final connecting = manager.connect();
-    await runtime.networkReadEntered.future;
-    bootstrapper.candidates = [_candidates.first];
-    network.complete(RuntimeCandidateNetwork(selectionKey: runtime.candidateKey,
-      contextRef: runtime.candidateContext, networkClass: 'ethernet', ipv6Available: false));
-    await connecting;
-
-    expect(manager.status.phase, ConnectionPhase.connected);
-    expect(bootstrapper.resolutions, hasLength(2));
-    expect(runtime.probedPayloads.single.materialCandidateRef, _candidates.first.candidateRef);
-    expect(runtime.stagedPayloads.single.routeMode, RouteMode.allExceptRu);
-    expect(runtime.connectCalls, 1);
-    expect(manager.status.egress.validated, isTrue);
-  });
-
   test('final stats preserve bridge identity and consume the verified attempt once', () async {
     final xhttp = TransportCandidate(candidateRef: 'de:xhttp', profileRef: 'xhttp',
       nodeCode: 'de', countryCode: 'DE', protocol: 'vless', transport: 'xhttp',
@@ -7154,6 +7120,8 @@ void main() {
       FlutterSecureStoragePlatform.instance = originalStorage;
     });
     var catalogRequests = 0;
+    var managedProfileRequests = 0;
+    final preparationWaits = <Duration>[];
     var managedApiUnavailable = false;
     var failedManagedRequests = 0;
     var catalogApiUnavailable = false;
@@ -7186,6 +7154,34 @@ void main() {
           failedManagedRequests++;
           request.response.statusCode = HttpStatus.serviceUnavailable;
           request.response.write('{"detail":"temporarily unavailable"}');
+        } else if (request.uri.path == '/api/client/profile/managed' && ++managedProfileRequests == 1) {
+          const warpRef = 'warp:warp_free:warp_direct';
+          request.response.write(jsonEncode({
+            'profile_revision': 'synthetic-warp', 'config_format': 'singbox-json',
+            'transport_profile': 'warp_free', 'transport_kind': 'warp_direct',
+            'transport_catalog': {
+              'schema_version': 'pokrov-transport-catalog-v1', 'revision': 'synthetic-warp',
+              'selected_candidate_ref': warpRef,
+              'candidates': [{
+                'candidate_ref': warpRef, 'profile_ref': 'warp_free', 'warp_mode': 'warp_direct',
+                'node_code': '', 'country_code': 'ZZ', 'protocol': 'warp',
+                'transport': 'udp', 'protection': 'warp', 'priority': 0,
+                'parameters': {'network': 'udp', 'flow': ''},
+                'requirements': {'minimum_client_release': '1.2.0', 'minimum_core_release': null,
+                  'platforms': ['windows'], 'required_features': <String>[]},
+              }],
+            },
+            'provisioning': {'status': 'ready', 'sync_ok': false, 'readiness_source': 'client_local_warp'},
+            'access': {'access_state': 'trial_premium',
+              'expiry_at': catalogNow.add(const Duration(days: 2)).toIso8601String()},
+            'config_payload': {
+              'outbounds': [
+                {'type': 'selector', 'tag': 'proxy', 'outbounds': ['block'], 'default': 'block'},
+                {'type': 'block', 'tag': 'block'},
+              ],
+              'route': {'final': 'proxy'},
+            },
+          }));
         } else if (request.uri.path == '/api/client/profile/managed') {
           request.response.write(jsonEncode({
             'profile_revision': 'synthetic-profile', 'config_format': 'singbox-json',
@@ -7243,6 +7239,7 @@ void main() {
         verifier: RoutingCatalogVerifier(publicKeysById: {'synthetic': base64Encode(List.filled(32, 1))},
           audience: 'production')),
       allExceptRuRuleSetUrlsResolver: (tag) => ['http://127.0.0.1:${server.port}/rule-sets/$tag.srs'],
+      delayScheduler: (delay) async => preparationWaits.add(delay),
       maxRequestAttempts: 1,
     );
     final runtime = _Runtime(hostPlatform: HostPlatform.windows)..supportsCandidates = true;
@@ -7265,6 +7262,8 @@ void main() {
     expect(manager.status.routes.ipv6, isNull);
     expect(manager.status.dns.ready, isTrue);
     expect(manager.status.egress.validated, isTrue);
+    expect(managedProfileRequests, 2);
+    expect(preparationWaits, [const Duration(seconds: 2)]);
     expect(catalogRequests, greaterThan(0));
     expect(runtime.probedProtocols, ['vless']);
     final config = jsonDecode(runtime.stagedPayloads.single.configPayload) as Map;

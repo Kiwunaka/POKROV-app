@@ -413,7 +413,6 @@ class ConnectionManager extends ChangeNotifier {
   final Set<Future<Object?>> _runtimeActionsInFlight = {};
   ConnectionPhase? _activePhase;
   static const _initialProfilePreparationTimeout = Duration(seconds: 40);
-  static const _initialWindowsCatalogHasNoRoute = 'candidate_catalog_no_eligible_route';
   static const _dnsCandidateSelectionTimeout = Duration(seconds: 30);
   static const _nativeConnectSettlementTimeout = Duration(seconds: 81);
   Duration _dnsCandidateTimeoutFor(ManagedProfileCacheInputs inputs) =>
@@ -2991,6 +2990,9 @@ class ConnectionManager extends ChangeNotifier {
       preferredCandidateRef: inputs.preferredCandidateRef,
       excludedNodeCodes: inputs.preferredNodeCode.trim().isEmpty ? _activeAutomaticNodeExclusions() : const <String>{},
       selectCandidate: select, selectedCandidateRef: candidateRef, cacheResult: cache,
+      waitForVpnNode: initialProfilePreparation && candidateRef.isEmpty &&
+          inputs.hostPlatform == HostPlatform.windows &&
+          inputs.routeMode == RouteMode.allExceptRu && _explicitWarpRuntimeConsent != true,
     );
     if (_bootstrapper is AppFirstRuntimeBootstrapper) {
       invitation = await (_bootstrapper as AppFirstRuntimeBootstrapper).openOfflineInvitationProfile(inputs,
@@ -3095,7 +3097,6 @@ class ConnectionManager extends ChangeNotifier {
         if (useWarpCandidates && candidateWarpPolicy.transport != WarpRuntimeTransport.psiphon) directWarpCandidates,
       ];
       var selectedCandidate = false;
-      var startedCandidate = false;
       BootstrapFailure? apiFailure;
       for (final group in groups) {
         if (group.isEmpty) continue;
@@ -3151,7 +3152,6 @@ class ConnectionManager extends ChangeNotifier {
             },
             prepare: (candidate, stop) async {
               requireCurrent();
-              startedCandidate = true;
               var stopped = false;
               unawaited(stop.then((_) => stopped = true));
               final exact = materialized[candidate.candidateRef] ??
@@ -3191,13 +3191,8 @@ class ConnectionManager extends ChangeNotifier {
         }
       }
       if (!selectedCandidate) {
-        final refreshCatalog = !startedCandidate && initialProfilePreparation &&
-            invitation == null && inputs.hostPlatform == HostPlatform.windows &&
-            inputs.routeMode == RouteMode.allExceptRu;
-        throw apiFailure ?? BootstrapFailure(
-            'Рабочее подключение не найдено. Проверь сеть и попробуй ещё раз.',
-            code: refreshCatalog ? _initialWindowsCatalogHasNoRoute : 'candidate_selection_exhausted',
-            operationalCode: 'CONN-008');
+        throw apiFailure ?? const BootstrapFailure('Рабочее подключение не найдено. Проверь сеть и попробуй ещё раз.',
+            code: 'candidate_selection_exhausted', operationalCode: 'CONN-008');
       }
       requireCurrent();
       final currentNetwork = await Future.any<RuntimeCandidateNetwork>([
@@ -4715,31 +4710,20 @@ class ConnectionManager extends ChangeNotifier {
         ManagedProfilePayload? managedProfile;
         Object? refreshFailure;
         final refreshClock = Stopwatch()..start();
-        Future<ManagedProfilePayload> refreshManagedProfile() => _resolveManagedProfile(
-          ownerGeneration: generation,
-          onMaterialOrigin: (origin) => materialOrigin = origin,
-          initialProfilePreparation: initialProfilePreparation,
-          coldConnect: actionIntent == ConnectionTransitionIntent.connect,
-          smartAccessVpnFallback: smartAccessVpnFallback,
-          deadline: cachedProfileFallbackAllowed
-              ? _cachedProfileRefreshDeadline
-              : initialProfilePreparation
-                  ? _initialProfilePreparationTimeout : _actionTimeout,
-        );
         try {
           failureOperation = 'managed_profile_refresh';
           failureStage = ConnectionStage.profile;
-          try {
-            managedProfile = await refreshManagedProfile();
-          } on BootstrapFailure catch (error) {
-            if (error.code != _initialWindowsCatalogHasNoRoute) rethrow;
-            if (_disposed || !_connectionCoordinator.ownsOperation(generation) ||
-                profileRevision != _managedProfileRevision) {
-              throw const ConnectionOperationSuperseded();
-            }
-            // Refresh the catalog once inside the original connection attempt.
-            managedProfile = await refreshManagedProfile();
-          }
+          managedProfile = await _resolveManagedProfile(
+            ownerGeneration: generation,
+            onMaterialOrigin: (origin) => materialOrigin = origin,
+            initialProfilePreparation: initialProfilePreparation,
+            coldConnect: actionIntent == ConnectionTransitionIntent.connect,
+            smartAccessVpnFallback: smartAccessVpnFallback,
+            deadline: cachedProfileFallbackAllowed
+                ? _cachedProfileRefreshDeadline
+                : initialProfilePreparation
+                    ? _initialProfilePreparationTimeout : _actionTimeout,
+          );
         } on TimeoutException catch (error) {
           refreshClock.stop();
           if (!cachedProfileFallbackAllowed ||

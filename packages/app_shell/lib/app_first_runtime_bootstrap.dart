@@ -133,6 +133,7 @@ abstract interface class ManagedProfileBootstrapper {
     bool selectCandidate = true,
     String selectedCandidateRef = '',
     bool cacheResult = true,
+    bool waitForVpnNode = false,
     Duration? timeout,
     Future<void>? cancelled,
   });
@@ -3885,6 +3886,7 @@ class AppFirstRuntimeBootstrapper
     bool selectCandidate = true,
     String selectedCandidateRef = '',
     bool cacheResult = true,
+    bool waitForVpnNode = false,
     Duration? timeout,
     Future<void>? cancelled,
   }) async {
@@ -3996,6 +3998,7 @@ class AppFirstRuntimeBootstrapper
             runtimeFeatures: runtimeFeatures,
             coreRelease: coreRelease,
             selectedCandidateRef: selectedCandidateRef,
+            waitForVpnNode: waitForVpnNode,
             includePlayerReserves: preferredCandidateRef.isNotEmpty &&
                 preferredCandidateRef == selectedCandidateRef &&
                 runtimeFeatures.contains(RuntimeTransportFeature.youtubeFailover),
@@ -7786,6 +7789,7 @@ class AppFirstRuntimeBootstrapper
     String? coreRelease,
     String selectedCandidateRef = '',
     bool includePlayerReserves = false,
+    bool waitForVpnNode = false,
     String preferredCountryCode = '',
     Duration? profileTimeout,
     Future<void> Function(Duration)? waitForRetry,
@@ -7854,7 +7858,11 @@ class AppFirstRuntimeBootstrapper
         onProgress: onProgress,
         waitForRetry: waitForRetry,
       );
-      if (response['status'] != 'access_preparing') break;
+      final onlyLocalWarp = waitForVpnNode && switch (response['transport_catalog']) {
+        {'candidates': [{'candidate_ref': pokrovDirectWarpCandidateRef}]} => true,
+        _ => false,
+      };
+      if (response['status'] != 'access_preparing' && !onlyLocalWarp) break;
       onAccessPreparing?.call();
       if (attempt >= preparingPullLimit - 1) {
         throw const BootstrapFailure(
