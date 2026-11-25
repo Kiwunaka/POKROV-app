@@ -4572,6 +4572,41 @@ void main() {
     expect(bootstrapper.lastSuccessfulNetworkKey, 'asn:AS12345');
   });
 
+  test('first Windows Russia Direct connection refreshes a catalog with no eligible routes',
+      () async {
+    final ipv6 = TransportCandidate(
+      candidateRef: 'de:profile_tcp:endpoint_v6:ipv6:g1', profileRef: 'profile_tcp',
+      nodeCode: 'de', countryCode: 'DE', protocol: 'vless', transport: 'tcp',
+      protection: 'reality', priority: 0, network: 'tcp', flow: '',
+      minimumClientRelease: '1.2.0', minimumCoreRelease: null,
+      platforms: const {HostPlatform.windows}, requiredFeatures: const {},
+      family: 'ipv6', deliveryEndpointId: 'v6', endpointGeneration: 1,
+    );
+    final network = Completer<RuntimeCandidateNetwork>();
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+      ..supportsCandidates = true
+      ..nextNetworkRead = network;
+    final bootstrapper = _Bootstrapper(catalog: true, bundle: true)..candidates = [ipv6];
+    final manager = _manager(runtime, bootstrapper,
+        authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    addTearDown(manager.dispose);
+    manager.selectRouteMode(RouteMode.allExceptRu);
+
+    final connecting = manager.connect();
+    await runtime.networkReadEntered.future;
+    bootstrapper.candidates = [_candidates.first];
+    network.complete(RuntimeCandidateNetwork(selectionKey: runtime.candidateKey,
+      contextRef: runtime.candidateContext, networkClass: 'ethernet', ipv6Available: false));
+    await connecting;
+
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(bootstrapper.resolutions, hasLength(2));
+    expect(runtime.probedPayloads.single.materialCandidateRef, _candidates.first.candidateRef);
+    expect(runtime.stagedPayloads.single.routeMode, RouteMode.allExceptRu);
+    expect(runtime.connectCalls, 1);
+    expect(manager.status.egress.validated, isTrue);
+  });
+
   test('final stats preserve bridge identity and consume the verified attempt once', () async {
     final xhttp = TransportCandidate(candidateRef: 'de:xhttp', profileRef: 'xhttp',
       nodeCode: 'de', countryCode: 'DE', protocol: 'vless', transport: 'xhttp',
