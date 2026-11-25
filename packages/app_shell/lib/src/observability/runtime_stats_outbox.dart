@@ -36,7 +36,8 @@ final class _RuntimeStatsRecord {
       throw const FormatException('runtime_stats_record_invalid');
     }
     final body = value['body'] as Map;
-    final diagnostic = _isRuntimeDiagnosticPhase(body['runtime_phase']);
+    final diagnosticField = _runtimeDiagnosticFields[body['runtime_phase']];
+    final diagnostic = diagnosticField != null;
     final subscriptionFailure = !body.containsKey('connected') &&
         body['runtime_phase'] == 'failed' &&
         body['error_code'] == 'subscription_refresh_failed';
@@ -75,6 +76,7 @@ final class _RuntimeStatsRecord {
       'network_observation',
       'connection_diagnostic',
       'exit_diagnostic',
+      'connection_trace',
     };
     if (body.keys.any((key) => !fields.contains(key)) ||
         body.entries.any((entry) =>
@@ -84,6 +86,7 @@ final class _RuntimeStatsRecord {
             entry.key != 'network_observation' &&
             entry.key != 'connection_diagnostic' &&
             entry.key != 'exit_diagnostic' &&
+            entry.key != 'connection_trace' &&
             entry.value is! String &&
             entry.value is! int &&
             entry.value is! bool) ||
@@ -101,14 +104,12 @@ final class _RuntimeStatsRecord {
       throw const FormatException('runtime_stats_body_invalid');
     }
     if (diagnostic) {
-      final connection = body['runtime_phase'] == 'connect_diagnostic';
-      final field = connection ? 'connection_diagnostic' : 'exit_diagnostic';
-      final other = connection ? 'exit_diagnostic' : 'connection_diagnostic';
-      if (body[field] is! Map || body.containsKey(other) ||
+      if (body[diagnosticField] is! Map ||
+          _runtimeDiagnosticFields.values.where(body.containsKey).length != 1 ||
           const {'connected', 'connectivity', 'network_observation', 'candidate_probes'}.any(body.containsKey)) {
         throw const FormatException('runtime_stats_diagnostic_invalid');
       }
-    } else if (body.containsKey('connection_diagnostic') || body.containsKey('exit_diagnostic')) {
+    } else if (_runtimeDiagnosticFields.values.any(body.containsKey)) {
       throw const FormatException('runtime_stats_diagnostic_invalid');
     }
     if (body.containsKey('failure_operation') && !connectionFailureOperations.contains(body['failure_operation'])) {
@@ -188,8 +189,13 @@ final class _RuntimeStatsRecord {
   }
 }
 
-bool _isRuntimeDiagnosticPhase(Object? phase) =>
-    phase == 'connect_diagnostic' || phase == 'exit_diagnostic';
+const _runtimeDiagnosticFields = {
+  'connect_diagnostic': 'connection_diagnostic',
+  'exit_diagnostic': 'exit_diagnostic',
+  'connect_trace': 'connection_trace',
+};
+
+bool _isRuntimeDiagnosticPhase(Object? phase) => _runtimeDiagnosticFields.containsKey(phase);
 
 final _runtimeStatsDeliveryFlights = <String, Future<Set<String>>>{};
 

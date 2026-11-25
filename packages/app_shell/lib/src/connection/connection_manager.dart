@@ -2432,6 +2432,9 @@ class ConnectionManager extends ChangeNotifier {
         (observed != null &&
             refreshed != null &&
             observed.hasSameStateAs(refreshed));
+    if (refreshed != null && _runtimeStatsSnapshotAttempt == _connectionAttemptNumber) {
+      _connectionDiagnostic?.recordRuntime(refreshed);
+    }
     if (!unchanged) {
       _update(() {
         _runtimeSnapshot = refreshed;
@@ -3261,6 +3264,9 @@ class ConnectionManager extends ChangeNotifier {
     }
     final transport = _candidateTransport(candidate);
     if (transport.isEmpty) return;
+    if (_connectionCoordinator.actionInFlight) {
+      _connectionDiagnostic?.recordCandidate(candidate.nodeCode, transport, result);
+    }
     if (_candidateProbeReports.length >= 16) return;
     _candidateProbeReports.add({
       'candidate_ref': candidate.candidateRef,
@@ -4617,6 +4623,7 @@ class ConnectionManager extends ChangeNotifier {
         if (_disposed || !_connectionCoordinator.ownsOperation(generation))
           return;
         _runtimeStatsSnapshotAttempt = _connectionAttemptNumber;
+        diagnostic?.recordRuntime(proven);
         if (proven.phase == RuntimePhase.running) diagnostic?.confirmPermission();
         _finishAndroidVpnPermission(proven);
         _update(() {
@@ -4915,6 +4922,7 @@ class ConnectionManager extends ChangeNotifier {
           return;
         }
         _finishAndroidVpnPermission(current);
+        diagnostic?.recordRuntime(current);
         if (current.lastFailureKind == 'vpn_permission_denied') {
           diagnostic?.complete('unknown');
           diagnostic?.enter(ConnectionDiagnosticStage.permission);
@@ -5123,6 +5131,9 @@ class ConnectionManager extends ChangeNotifier {
       final closedFailure = _connectionPlatformFailureCode(error);
       final errorCode = OperationalFailureMapper.connection(closedFailure,
           timedOut: error is TimeoutException);
+      if (error is RuntimeBoundConnectFailure && error.egressProbeObservation != null) {
+        diagnostic?.recordEgressFailure(error.egressProbeObservation!, errorCode);
+      }
       if (diagnostic != null) _finishConnectionDiagnostic('failed', errorCode: errorCode);
       final closedOperation = error is RuntimeBoundConnectFailure ? error.operation
           : connectionFailureOperations.contains(failureOperation) ? failureOperation : null;
@@ -5377,6 +5388,7 @@ class ConnectionManager extends ChangeNotifier {
 
   void _finalizeProvenConnection(RuntimeSnapshot snapshot) {
     if (_runtimeStatsSnapshotAttempt == _connectionAttemptNumber && _isConnectionProven(snapshot)) {
+      _connectionDiagnostic?.recordRuntime(snapshot);
       _connectionDiagnostic?.confirmPermission();
       _finishConnectionDiagnostic('verified', egressDurationMs: snapshot.egressProbeObservation?.elapsedMs);
     }
@@ -5495,6 +5507,9 @@ class ConnectionManager extends ChangeNotifier {
           refreshedPath.isNotEmpty &&
           connectedPath != refreshedPath) {
         return;
+      }
+      if (_runtimeStatsSnapshotAttempt == _connectionAttemptNumber) {
+        _connectionDiagnostic?.recordRuntime(refreshed);
       }
       if (refreshed.phase != RuntimePhase.running ||
           refreshed.hasCoreEgressProbeFailure) {

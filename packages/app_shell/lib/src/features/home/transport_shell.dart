@@ -355,13 +355,17 @@ extension _TransportShellOperations on ConnectionManager {
               'mode': selection.context.mode.name, 'family': family,
             });
             try {
+              final diagnosticRoute = diagnostic?.nextProofRoute();
               diagnostic?.enter(ConnectionDiagnosticStage.profile);
               final acknowledgement = await _connectionCoordinator.resolveAndConnectTransportProfile(
                  attemptRef: attemptRef, query: query, hint: hint, service: manifestService, engine: engine,
                 generation: generation, repair: false, diagnostic: diagnostic);
               diagnostic?.enter(ConnectionDiagnosticStage.egress);
               final proof = await _connectionCoordinator.proveTransportConnection(
-                acknowledgement, generation: generation);
+                acknowledgement, generation: generation,
+                onProbe: diagnostic == null ? null : (stage, outcome, duration) {
+                  diagnostic.recordBoundProbe(diagnosticRoute!, family, stage, outcome, duration);
+                });
               if (proof.allStagesPassed) {
                 final native = _connectionCoordinator.snapshot;
                 if (native != null && native.phase == RuntimePhase.running &&
@@ -382,6 +386,10 @@ extension _TransportShellOperations on ConnectionManager {
               attemptedFailureDomains.add(hint.failureDomainRef);
             } on ConnectionOperationSuperseded { rethrow; }
               on Object catch (error) {
+                if (error is RuntimeBoundConnectFailure && error.egressProbeObservation != null) {
+                  diagnostic?.recordEgressFailure(error.egressProbeObservation!,
+                      OperationalFailureMapper.connection(error.failureKind));
+                }
                 diagnostic?.complete('failed', errorCode: error is BootstrapFailure
                     ? error.operationalErrorCode : OperationalFailureMapper.connection(
                         error is RuntimeBoundConnectFailure ? error.failureKind : null));

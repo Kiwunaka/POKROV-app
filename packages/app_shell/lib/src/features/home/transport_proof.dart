@@ -30,7 +30,8 @@ class TransportProofBatch {
 
 extension _TransportProofExecution on TransportSelection {
   Future<TransportProofBatch> proveConnection(TransportConnectAcknowledgement acknowledgement,
-      {TransportPayloadProbePreparation? preparePayload}) async {
+      {TransportPayloadProbePreparation? preparePayload,
+      void Function(RuntimeBoundProbeStage, RuntimeBoundProbeOutcome, int?)? onProbe}) async {
     final now = await sample();
     acknowledgement.requireCurrent(this, now);
     final staged = acknowledgement.staged;
@@ -151,6 +152,8 @@ extension _TransportProofExecution on TransportSelection {
         receipt = null;
       }
       observations.add(TransportProbeObservation._(stage, outcome, receipt));
+      onProbe?.call(stage, outcome, settledAt == null ? null
+          : settledAt.sample.elapsedMilliseconds - before.sample.elapsedMilliseconds);
       if (outcome != RuntimeBoundProbeOutcome.pass) break;
     }
     return _proofBatch = TransportProofBatch._(acknowledgement, observations);

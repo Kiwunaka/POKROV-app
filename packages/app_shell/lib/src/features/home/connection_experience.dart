@@ -811,7 +811,8 @@ class ConnectionCoordinator {
   }
 
   Future<TransportProofBatch> proveTransportConnection(TransportConnectAcknowledgement acknowledgement,
-      {required int generation}) async {
+      {required int generation,
+      void Function(RuntimeBoundProbeStage, RuntimeBoundProbeOutcome, int?)? onProbe}) async {
     final selection = _transportSelection;
     if (!ownsOperation(generation) || !_actionInFlight || selection == null ||
         selection.generation != generation) throw const ConnectionOperationSuperseded();
@@ -819,7 +820,8 @@ class ConnectionCoordinator {
     var promoted = false;
     try {
       await selection.enrollRuntimeControl(acknowledgement, _enrollTransportRuntimeControl);
-      final completed = await selection.proveConnection(acknowledgement, preparePayload: _prepareTransportPayload);
+      final completed = await selection.proveConnection(acknowledgement,
+          preparePayload: _prepareTransportPayload, onProbe: onProbe);
       proof = completed;
       if (completed.allStagesPassed) {
         final native = await selection.promoteProof(completed);
