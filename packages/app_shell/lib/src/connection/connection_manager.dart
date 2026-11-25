@@ -3523,6 +3523,9 @@ class ConnectionManager extends ChangeNotifier {
             payload.routeMode == RouteMode.excludedApps);
     final optionalCatalog = payload.routeMode != RouteMode.selectiveServices &&
         !catalogAppScopeRequired;
+    final canUseBaseRuRules = _appContext.hostPlatform == HostPlatform.windows &&
+        payload.routeMode == RouteMode.allExceptRu &&
+        localSmartAccessState == null && _pendingFirstProviderQaAdmissionId == null;
     final cancelled = _connectionCoordinator.actionInFlight
         ? _connectionCoordinator.whenOperationEnds(generation)
         : _connectionCoordinator.whenOperationChanges(generation);
@@ -3618,17 +3621,27 @@ class ConnectionManager extends ChangeNotifier {
               )
               .timeout(_actionTimeout);
         } on BootstrapFailure catch (error) {
-          if (!optionalCatalog ||
-              error.statusCode != HttpStatus.serviceUnavailable ||
-              (error.code != 'routing_catalog_disabled' &&
-                  error.code != 'routing_catalog_unavailable')) {
-            rethrow;
-          }
+          final catalogDisabled = error.statusCode == HttpStatus.serviceUnavailable &&
+              (error.code == 'routing_catalog_disabled' ||
+                  error.code == 'routing_catalog_unavailable');
+          final catalogUnavailable = !error.sessionRejected &&
+              (const {
+                HttpStatus.requestTimeout, HttpStatus.tooManyRequests,
+                HttpStatus.internalServerError, HttpStatus.badGateway,
+                HttpStatus.serviceUnavailable, HttpStatus.gatewayTimeout,
+              }.contains(error.statusCode) ||
+              (error.statusCode == null &&
+                  const {'API-002', 'API-008'}.contains(error.operationalCode)));
+          if (!(optionalCatalog && catalogDisabled) &&
+              !(canUseBaseRuRules && catalogUnavailable)) rethrow;
         } on RoutingCatalogFailure catch (error) {
-          if (!offline || error.code != 'catalog_cache_unavailable' ||
-              !optionalCatalog) {
-            rethrow;
-          }
+          final missingCache = offline && optionalCatalog &&
+              error.code == 'catalog_cache_unavailable';
+          final missingResponse = canUseBaseRuRules &&
+              error.code == 'catalog_response_invalid';
+          if (!missingCache && !missingResponse) rethrow;
+        } on TimeoutException {
+          if (!canUseBaseRuRules) rethrow;
         }
         if (_disposed ||
             !_connectionCoordinator.ownsOperation(generation) ||

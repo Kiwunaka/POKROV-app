@@ -7104,7 +7104,7 @@ void main() {
     expect(manager.status.phase, ConnectionPhase.actionRequired);
   });
 
-  test('ordinary VPN tolerates an absent optional catalog and retains RU rules',
+  test('Windows Russia Direct tolerates a broken optional catalog and retains RU rules',
       () async {
     final originalHttpOverrides = HttpOverrides.current;
     HttpOverrides.global = null;
@@ -7121,6 +7121,7 @@ void main() {
     var catalogRequests = 0;
     var managedApiUnavailable = false;
     var failedManagedRequests = 0;
+    var catalogApiUnavailable = false;
     var invalidCatalogSignature = false;
     final catalogNow = DateTime.now().toUtc();
     // Alphabetical keys match the existing canonical catalog encoding.
@@ -7188,10 +7189,11 @@ void main() {
                 'payload_sha256': catalogDigest, 'payload': signedPayload,
                 'signature_b64': 'invalid'},
             }));
-          } else {
+          } else if (catalogApiUnavailable) {
             request.response.statusCode = HttpStatus.serviceUnavailable;
-            request.response.headers.set('X-POKROV-Error', 'routing_catalog_disabled');
-            request.response.write('{"detail":"routing_catalog_disabled"}');
+            request.response.write('{"detail":"temporarily unavailable"}');
+          } else {
+            request.response.write('{}');
           }
         } else {
           request.response.write('{"ok":true}');
@@ -7246,6 +7248,11 @@ void main() {
     await manager.disconnect();
     expect(manager.status.phase, ConnectionPhase.disconnected);
     expect(manager.busy, isFalse);
+    catalogApiUnavailable = true;
+    await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(jsonDecode(runtime.stagedPayloads.last.configPayload), config);
+    await manager.disconnect();
     final catalogRequestsBeforeCache = catalogRequests;
     managedApiUnavailable = true;
     await manager.connect();
@@ -7253,7 +7260,7 @@ void main() {
     expect(catalogRequests, catalogRequestsBeforeCache, reason: 'the quick path reads the absent catalog cache only');
     expect(manager.status.phase, ConnectionPhase.connected);
     expect(manager.presentation.isVerified, isTrue);
-    expect(runtime.connectCalls, 2);
+    expect(runtime.connectCalls, 3);
     expect(jsonDecode(runtime.stagedPayloads.last.configPayload), config,
       reason: 'authorized cached VPN material and all four RU direct rules are retained');
     await manager.disconnect();
@@ -7263,7 +7270,7 @@ void main() {
     expect(catalogRequests, greaterThan(catalogRequestsBeforeCache));
     expect(manager.status.phase, ConnectionPhase.actionRequired);
     expect(manager.presentation.isVerified, isFalse);
-    expect(runtime.connectCalls, 2, reason: 'signature failure cannot fall through to the VPN cache');
+    expect(runtime.connectCalls, 3, reason: 'signature failure cannot fall through to the VPN cache');
   });
 
   test('ordinary SmartDNS delivery reads signed resolver pins and scopes 403 denials', () async {
