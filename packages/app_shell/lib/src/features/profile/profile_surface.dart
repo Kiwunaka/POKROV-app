@@ -16,6 +16,7 @@ class _ProfileSection extends StatelessWidget {
     required this.onPromoEvent,
     required this.onOpenSupportHub,
     required this.onOpenDiagnostics,
+    this.onOpenConnectionDiagnostics,
     required this.onShareApp,
     required this.appShareBusy,
     required this.onCreateTelegramLink,
@@ -79,6 +80,7 @@ class _ProfileSection extends StatelessWidget {
   final void Function(AppFirstPromoSlot slot, String eventName) onPromoEvent;
   final VoidCallback onOpenSupportHub;
   final VoidCallback onOpenDiagnostics;
+  final VoidCallback? onOpenConnectionDiagnostics;
   final Future<void> Function() onShareApp;
   final bool appShareBusy;
   final VoidCallback onCreateTelegramLink;
@@ -348,6 +350,9 @@ class _ProfileSection extends StatelessWidget {
       if (appSettings != null) ui.SettingsEntry(group: app, title: 'Работа приложения',
         hint: windows ? 'Автозапуск и сворачивание в трей' : 'Плитка в шторке и уведомление о VPN',
         keywords: 'автозапуск трей шторка плитка', icon: Icons.tune_rounded, onTap: appSettings),
+      if (onOpenConnectionDiagnostics != null) ui.SettingsEntry(group: app, title: 'Диагностика подключений',
+        hint: 'Отправка сведений о подключениях и сбоях',
+        icon: Icons.health_and_safety_outlined, onTap: onOpenConnectionDiagnostics!),
       ui.SettingsEntry(group: app, title: 'О приложении', hint: 'Обновление, оферта и конфиденциальность',
         value: pokrovClientVersion, keywords: 'обновление версия оферта релизы', icon: Icons.info_outline_rounded,
         onTap: () => _about(context)),

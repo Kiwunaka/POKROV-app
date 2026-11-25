@@ -750,6 +750,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           transportManifestStore: transportStore,
         );
     _bootstrapper = bootstrapper;
+    unawaited(_resumeConnectionDiagnostics());
     _accountSessionCoordinator = AccountSessionCoordinator(
       accountActions: bootstrapper is AppFirstAccountActionService
           ? bootstrapper as AppFirstAccountActionService
@@ -1742,6 +1743,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       return;
     }
     if (state == AppLifecycleState.resumed) {
+      unawaited(_resumeConnectionDiagnostics());
       unawaited(_refreshMtsBridgeStatus());
       unawaited(_resumeRuntimeAndTrustedWifiChecks());
       unawaited(_checkForClientUpdate());
@@ -2257,6 +2259,18 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       failureReason: failure?.reason, failureRequestId: failure?.requestId));
   }
 
+  SnackBarAction? _loginDiagnosticAction(Object failure, {required bool pairing}) {
+    final stage = pairing ? SupportLoginStage.telegramLogin
+        : failure is BootstrapFailure && failure.operation == 'POST /api/client/session/start-trial'
+            ? SupportLoginStage.sessionStart : null;
+    if (stage == null) return null;
+    final code = _loginSupportCode(widget.appContext.hostPlatform, stage, failure);
+    return code == null ? null : SnackBarAction(
+      label: 'Код для поддержки',
+      onPressed: () => unawaited(Clipboard.setData(ClipboardData(text: code))),
+    );
+  }
+
   Future<bool> _redeemCodeInApp(String value) async {
     if (_accountSessionChanging) return false;
     final code = value.trim();
@@ -2359,9 +2373,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         context,
         error.message,
         tone: PokrovSnackTone.danger,
+        action: _loginDiagnosticAction(error, pairing: isPairingCode),
       );
       return false;
-    } on Object {
+    } on Object catch (error) {
       _reportAccountActionFailure(isPairingCode ? 'pairing_claim_failed' : 'redeem_failed', null);
       if (!mounted) {
         return false;
@@ -2370,6 +2385,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         context,
         'Не удалось активировать код. Проверь код и попробуй ещё раз.',
         tone: PokrovSnackTone.danger,
+        action: _loginDiagnosticAction(error, pairing: isPairingCode),
       );
       return false;
     }
@@ -2379,6 +2395,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     final actions = _accountActionService;
     if (actions == null || _firstSessionCoordinator.busy || _accountSessionChanging) return;
     final recovered = await _showEmailSessionRecoverySheet(context,
+      hostPlatform: widget.appContext.hostPlatform,
       onRequestCode: (email) async {
         try {
           await actions.requestEmailLoginCode(hostPlatform: widget.appContext.hostPlatform, email: email);
@@ -3530,11 +3547,64 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   Future<void> _reportClientOpenOnce() async {
+    unawaited(_resumeConnectionDiagnostics());
     if (_clientLifecycleOpenReported) {
       return;
     }
     _clientLifecycleOpenReported = true;
     await _reportClientLifecycle('app_opened');
+  }
+
+  AppFirstConnectionDiagnostics? get _detailedConnectionDiagnostics {
+    final bootstrapper = _bootstrapper;
+    return bootstrapper is AppFirstRuntimeBootstrapper &&
+            AppFirstConnectionDiagnostics.supports(widget.appContext.hostPlatform)
+        ? bootstrapper.connectionDiagnostics : null;
+  }
+
+  Future<void> _resumeConnectionDiagnostics() async {
+    await _detailedConnectionDiagnostics?.start(
+        widget.appContext.hostPlatform, widget.observability?.previousExitReport);
+  }
+
+  Future<void> _openConnectionDiagnosticsSettings() async {
+    final diagnostics = _detailedConnectionDiagnostics;
+    if (diagnostics == null) return;
+    final platform = widget.appContext.hostPlatform;
+    var enabled = await diagnostics.enabled(platform);
+    if (!mounted) return;
+    var saving = false;
+    var failed = false;
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, update) => SafeArea(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            SwitchListTile(
+              title: const Text('Отправлять подробную диагностику'),
+              subtitle: const Text('POKROV получает этапы подключения и причины сбоев, чтобы помочь тебе.'),
+              value: enabled,
+              onChanged: saving ? null : (value) async {
+                update(() { saving = true; failed = false; });
+                try {
+                  await diagnostics.setEnabled(platform, value);
+                  if (value) unawaited(_resumeConnectionDiagnostics());
+                } on Object {
+                  failed = true;
+                }
+                enabled = await diagnostics.enabled(platform);
+                if (sheetContext.mounted) update(() => saving = false);
+              },
+            ),
+            if (failed) const Padding(
+              padding: EdgeInsets.all(12),
+              child: Text('Не удалось сохранить настройку. Попробуй ещё раз.'),
+            ),
+          ]),
+        ),
+      ),
+    );
   }
 
   Future<void> _showSupportHub({int? initialTicketId, String? initialQuestion, bool human = false, bool feedback = false}) {
@@ -4075,6 +4145,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           ),
       (context) => _ProfileSection(
             part: _ProfilePart.settings,
+            onOpenConnectionDiagnostics: _detailedConnectionDiagnostics == null
+                ? null : () => unawaited(_openConnectionDiagnosticsSettings()),
             appContext: widget.appContext,
             freeProfileAccess: _accountSessionCoordinator.freeProfileAccessForDisplay,
             loginRecoveryRequired: _accountSessionCoordinator.loginRecoveryRequired,

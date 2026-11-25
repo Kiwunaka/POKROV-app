@@ -6,8 +6,93 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_first_runtime_bootstrap.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_observability_contracts/observability_contracts.dart';
+import 'package:pokrov_observability_runtime/observability_runtime.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('detailed diagnostics retry after restart and opt-out clears pending reports', () async {
+    final previousOverrides = HttpOverrides.current;
+    HttpOverrides.global = null;
+    final directory = await Directory.systemTemp.createTemp('pokrov-connect-stats-');
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() async {
+      await server.close(force: true);
+      await directory.delete(recursive: true);
+      HttpOverrides.global = previousOverrides;
+    });
+    const platform = HostPlatform.windows;
+    final reports = <Map<String, dynamic>>[];
+    var accepts = false;
+    unawaited(() async {
+      await for (final request in server) {
+        final body = await utf8.decoder.bind(request).join();
+        request.response.headers.contentType = ContentType.json;
+        switch (request.uri.path) {
+          case '/api/client/session/start-trial':
+            request.response.write(jsonEncode({'session': {
+              'session_token': 'fixture-token', 'account_id': 'fixture-account'},
+              'provisioning': {'status': 'ready', 'sync_ok': true}}));
+          case '/api/redeem':
+            request.response.write('{"ok":true,"kind":"promo","result":{}}');
+          case '/api/client/runtime/stats':
+            final report = jsonDecode(body) as Map<String, dynamic>;
+            if (accepts) reports.add(report);
+            request.response.statusCode = accepts ? HttpStatus.ok : HttpStatus.serviceUnavailable;
+            request.response.write(accepts ? '{"ok":true}' : '{}');
+          default:
+            request.response.statusCode = 404;
+        }
+        await request.response.close();
+      }
+    }());
+    final secrets = MemoryAppFirstSessionSecretStore();
+    AppFirstRuntimeBootstrapper restart() => AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => directory,
+      sessionSecretStore: secrets,
+      delayScheduler: (_) async {},
+    );
+    final original = restart();
+    await original.redeemCode(hostPlatform: platform, code: 'fixture-code');
+    await original.connectionDiagnostics.start(platform, null);
+    final attempt = original.connectionDiagnostics.beginAttempt(platform, 1)!;
+    attempt.enter(ConnectionDiagnosticStage.profile);
+    attempt.enter(ConnectionDiagnosticStage.core);
+    attempt.enter(ConnectionDiagnosticStage.egress);
+    await attempt.finish('failed', errorCode: 'EGRESS-001');
+    final outbox = File('${directory.path}/runtime-stats-outbox-windows.json');
+    Map pendingDiagnostic() {
+      final pending = (jsonDecode(outbox.readAsStringSync()) as Map)['records'] as List;
+      return (pending.firstWhere((record) =>
+        (record as Map)['body']['runtime_phase'] == 'connect_diagnostic') as Map)['body'] as Map;
+    }
+    final delayed = pendingDiagnostic();
+    expect(delayed['connected'], isNull);
+    expect(delayed['attempt_number'], 1);
+    final recovering = restart();
+    await recovering.connectionDiagnostics.start(platform, PreviousExitReport(
+      kind: PreviousExitKind.crash, runId: 'diagnostic-test', occurredAtUtc: DateTime.now().toUtc(),
+      errorCode: 'CRASH-001', crashSignature: '0123456789abcdef', breadcrumbs: const [],
+    ));
+    accepts = true;
+    expect(await recovering.reportRuntimeStats(hostPlatform: platform,
+      runtimePhase: 'app_opened', connected: false), isTrue);
+    expect(reports.singleWhere((report) => report['runtime_phase'] == 'connect_diagnostic'), delayed);
+    expect(reports.singleWhere((report) => report['runtime_phase'] == 'exit_diagnostic')['exit_diagnostic'],
+      containsPair('kind', 'dart_crash'));
+    accepts = false;
+    final second = recovering.connectionDiagnostics.beginAttempt(platform, 2)!;
+    second.enter(ConnectionDiagnosticStage.profile);
+    await second.finish('failed', errorCode: 'API-002');
+    expect(pendingDiagnostic()['attempt_number'], 2);
+    await recovering.connectionDiagnostics.setEnabled(platform, false);
+    final disabled = restart().connectionDiagnostics;
+    expect(await disabled.enabled(platform), isFalse);
+    expect(disabled.beginAttempt(platform, 3), isNull);
+    expect((jsonDecode(outbox.readAsStringSync()) as Map)['records'], isEmpty);
+  });
+
   test('account-action diagnostics survive the real runtime stats outbox', () async {
     final previousOverrides = HttpOverrides.current;
     HttpOverrides.global = null;

@@ -45,7 +45,7 @@ extension _TransportShellOperations on ConnectionManager {
   }
 
   Future<RuntimeSnapshot> _connectWithTransportManifest(RuntimeSnapshot runtime,
-      int generation, {bool smartAccessVpnFallback = false}) async {
+      int generation, {bool smartAccessVpnFallback = false, ConnectionDiagnosticAttempt? diagnostic}) async {
     final service = _bootstrapper;
     final engine = _runtimeEngine;
     _setPhase(ConnectionPhase.probing, generation);
@@ -355,9 +355,11 @@ extension _TransportShellOperations on ConnectionManager {
               'mode': selection.context.mode.name, 'family': family,
             });
             try {
+              diagnostic?.enter(ConnectionDiagnosticStage.profile);
               final acknowledgement = await _connectionCoordinator.resolveAndConnectTransportProfile(
                  attemptRef: attemptRef, query: query, hint: hint, service: manifestService, engine: engine,
-                generation: generation, repair: false);
+                generation: generation, repair: false, diagnostic: diagnostic);
+              diagnostic?.enter(ConnectionDiagnosticStage.egress);
               final proof = await _connectionCoordinator.proveTransportConnection(
                 acknowledgement, generation: generation);
               if (proof.allStagesPassed) {
@@ -374,12 +376,19 @@ extension _TransportShellOperations on ConnectionManager {
                 }
                 _transportSelectionFail('transport_protection_unconfirmed');
               }
+              diagnostic?.complete('failed',
+                  errorCode: OperationalFailureMapper.connection(_connectionCoordinator.snapshot?.lastFailureKind));
+              diagnostic?.enter(ConnectionDiagnosticStage.routeSwitch);
               attemptedFailureDomains.add(hint.failureDomainRef);
             } on ConnectionOperationSuperseded { rethrow; }
-              on Object {
+              on Object catch (error) {
+                diagnostic?.complete('failed', errorCode: error is BootstrapFailure
+                    ? error.operationalErrorCode : OperationalFailureMapper.connection(
+                        error is RuntimeBoundConnectFailure ? error.failureKind : null));
                 attemptedFailureDomains.add(hint.failureDomainRef);
                 if (selection.stopReason != null || selection.hasOwnedTunnel ||
                     selection.hasPendingChildren) rethrow;
+                diagnostic?.enter(ConnectionDiagnosticStage.routeSwitch);
                 // The coordinator settled the exact failed attempt; the signed
                 // budget decides whether another endpoint can be tried.
               }

@@ -36,6 +36,7 @@ final class _RuntimeStatsRecord {
       throw const FormatException('runtime_stats_record_invalid');
     }
     final body = value['body'] as Map;
+    final diagnostic = _isRuntimeDiagnosticPhase(body['runtime_phase']);
     final subscriptionFailure = !body.containsKey('connected') &&
         body['runtime_phase'] == 'failed' &&
         body['error_code'] == 'subscription_refresh_failed';
@@ -71,7 +72,9 @@ final class _RuntimeStatsRecord {
       'candidate_variant',
       'access_network_asn',
       'candidate_probes',
-      'network_observation'
+      'network_observation',
+      'connection_diagnostic',
+      'exit_diagnostic',
     };
     if (body.keys.any((key) => !fields.contains(key)) ||
         body.entries.any((entry) =>
@@ -79,11 +82,13 @@ final class _RuntimeStatsRecord {
             entry.key != 'egress_probe' &&
             entry.key != 'candidate_probes' &&
             entry.key != 'network_observation' &&
+            entry.key != 'connection_diagnostic' &&
+            entry.key != 'exit_diagnostic' &&
             entry.value is! String &&
             entry.value is! int &&
             entry.value is! bool) ||
         body['runtime_phase'] is! String ||
-        (body['network_observation'] == null && !subscriptionFailure && body['connected'] is! bool) ||
+        (body['network_observation'] == null && !diagnostic && !subscriptionFailure && body['connected'] is! bool) ||
         body['report_run_id'] is! String ||
         !RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$')
             .hasMatch(body['report_run_id'] as String) ||
@@ -94,6 +99,17 @@ final class _RuntimeStatsRecord {
         (body.containsKey('client_application') &&
             body['client_application'] != 'pokrov')) {
       throw const FormatException('runtime_stats_body_invalid');
+    }
+    if (diagnostic) {
+      final connection = body['runtime_phase'] == 'connect_diagnostic';
+      final field = connection ? 'connection_diagnostic' : 'exit_diagnostic';
+      final other = connection ? 'exit_diagnostic' : 'connection_diagnostic';
+      if (body[field] is! Map || body.containsKey(other) ||
+          const {'connected', 'connectivity', 'network_observation', 'candidate_probes'}.any(body.containsKey)) {
+        throw const FormatException('runtime_stats_diagnostic_invalid');
+      }
+    } else if (body.containsKey('connection_diagnostic') || body.containsKey('exit_diagnostic')) {
+      throw const FormatException('runtime_stats_diagnostic_invalid');
     }
     if (body.containsKey('failure_operation') && !connectionFailureOperations.contains(body['failure_operation'])) {
       throw const FormatException('runtime_stats_body_invalid');
@@ -131,7 +147,7 @@ final class _RuntimeStatsRecord {
       'proof_stage',
       'observed_at_ms'
     };
-    if (((observation == null && !subscriptionFailure) || connectivity != null) && (connectivity is! Map ||
+    if (((observation == null && !diagnostic && !subscriptionFailure) || connectivity != null) && (connectivity is! Map ||
         connectivity.keys.any((key) => !connectivityFields.contains(key)) ||
         connectivity.values.any((value) => value is! String && value is! int))) {
       throw const FormatException('runtime_stats_connectivity_invalid');
@@ -171,6 +187,9 @@ final class _RuntimeStatsRecord {
         bodyJson);
   }
 }
+
+bool _isRuntimeDiagnosticPhase(Object? phase) =>
+    phase == 'connect_diagnostic' || phase == 'exit_diagnostic';
 
 final _runtimeStatsDeliveryFlights = <String, Future<Set<String>>>{};
 
@@ -261,6 +280,8 @@ final class _RuntimeStatsOutbox {
     if (utf8.encode(jsonEncode(record.toJson())).length > maximumRecordBytes)
       return false;
     return _withAppFirstStateFileLock(file, () async {
+      if (_isRuntimeDiagnosticPhase(record.body['runtime_phase']) &&
+          !await owner.connectionDiagnostics.enabled(platform)) return false;
       final records = await _read(file);
       records.removeWhere((item) => item.occurredAt
           .isBefore(DateTime.now().toUtc().subtract(maximumAge)));
@@ -274,6 +295,30 @@ final class _RuntimeStatsOutbox {
           utf8.encode(encoded).length > maximumBytes) return false;
       await owner._stateFileWriter(file, encoded);
       return true;
+    });
+  }
+
+  Future<void> clearDiagnostics(HostPlatform platform) async {
+    final file = await _file(platform);
+    await _withAppFirstStateFileLock(file, () async {
+      final records = await _read(file);
+      final retained = records.where((record) =>
+          !_isRuntimeDiagnosticPhase(record.body['runtime_phase'])).toList();
+      if (retained.length != records.length) {
+        await owner._stateFileWriter(file, _encode(retained));
+      }
+    });
+  }
+
+  Future<String?> nextDiagnosticKey(HostPlatform platform, _RuntimeStatsBinding? binding) async {
+    if (binding == null) return null;
+    final file = await _file(platform);
+    return _withAppFirstStateFileLock(file, () async {
+      for (final record in await _read(file)) {
+        if (record.binding.accountId == binding.accountId && record.binding.installId == binding.installId &&
+            _isRuntimeDiagnosticPhase(record.body['runtime_phase'])) return record.key;
+      }
+      return null;
     });
   }
 
@@ -298,6 +343,7 @@ final class _RuntimeStatsOutbox {
       HostPlatform platform, File file, String? priorityPacketKey,
       void Function(int? httpStatus, String? failureKind)? onCurrentPacketResult) async {
     final accepted = <String>{};
+    final diagnosticRevision = owner.connectionDiagnostics._preferenceRevision;
     final records = await _withAppFirstStateFileLock(file, () async {
       final records = await _read(file);
       // Persist TTL cleanup even when another account owns the current session.
@@ -320,17 +366,21 @@ final class _RuntimeStatsOutbox {
     if (priorityIndex > 0) matching.insert(0, matching.removeAt(priorityIndex));
     final elapsed = Stopwatch()..start();
     for (final record in matching.take(16)) {
+      final diagnostic = _isRuntimeDiagnosticPhase(record.body['runtime_phase']);
       final state = await owner._loadState(platform);
       if (!record.binding.matches(state) || owner.invitationNetworkDeferred)
         return accepted;
       final cancelled = Completer<void>();
       var requestStarted = false;
+      var rejectedDiagnostic = false;
       try {
         for (var attempt = 0;; attempt++) {
           final remaining =
               owner.smartConnectTelemetryDeadline - elapsed.elapsed;
           if (remaining <= Duration.zero) return accepted;
           try {
+            if (diagnostic && (!await owner.connectionDiagnostics.enabled(platform) ||
+                diagnosticRevision != owner.connectionDiagnostics._preferenceRevision)) break;
             requestStarted = true;
             final response = await owner
                 ._requestClientJsonWithSession(
@@ -350,6 +400,10 @@ final class _RuntimeStatsOutbox {
               onCurrentPacketResult?.call(
                   error.statusCode ?? error.observedHttpStatus, error.apiFailureKind);
             }
+            if (diagnostic && (error.statusCode ?? error.observedHttpStatus) == 422) {
+              rejectedDiagnostic = true;
+              break;
+            }
             if (record.body['candidate_probes'] == null ||
                 attempt > 0 ||
                 (error.operationalCode != 'API-002' &&
@@ -368,7 +422,7 @@ final class _RuntimeStatsOutbox {
       } finally {
         cancelled.complete();
       }
-      accepted.add(record.key);
+      if ((!diagnostic || requestStarted) && !rejectedDiagnostic) accepted.add(record.key);
       await _withAppFirstStateFileLock(file, () async {
         final retained = await _read(file);
         retained.removeWhere((item) => item.key == record.key);

@@ -123,6 +123,7 @@ class ConnectionManager extends ChangeNotifier {
   }
 
   Future<void> invalidateAccountSession() async {
+    _connectionDiagnostic = null;
     _managedProfileDirty = true;
     _confirmedCandidate = null;
     _transportCatalog = null;
@@ -611,6 +612,24 @@ class ConnectionManager extends ChangeNotifier {
   set _connectionAttemptStartedAt(DateTime? value) =>
       _connectionCoordinator.updateAttemptStartedAt(value);
   int get _connectionAttemptNumber => _connectionCoordinator.attemptNumber;
+  ConnectionDiagnosticAttempt? _connectionDiagnostic;
+
+  void _finishConnectionDiagnostic(String outcome, {String? errorCode, int? egressDurationMs}) {
+    final diagnostic = _connectionDiagnostic;
+    if (diagnostic == null || diagnostic.finished) return;
+    final candidate = _reportedCandidate(_candidateRef ?? _activeCandidateRef);
+    unawaited(diagnostic.finish(outcome, errorCode: errorCode,
+        egressDurationMs: egressDurationMs, network: _candidateNetworkClass,
+        transport: _candidateTransport(candidate), node: candidate?.nodeCode ?? _stagedNodeCode));
+  }
+
+  void _recordDiagnosticEgressFailure(RuntimeSnapshot snapshot) {
+    final diagnostic = _connectionDiagnostic;
+    if (diagnostic == null || diagnostic.finished) return;
+    diagnostic.enter(ConnectionDiagnosticStage.egress);
+    diagnostic.complete('failed', errorCode: OperationalFailureMapper.connection(snapshot.lastFailureKind),
+        durationMs: snapshot.egressProbeObservation?.elapsedMs);
+  }
 
   RuntimeSnapshot? get snapshot => _runtimeSnapshot;
   ConnectionExperienceState get experience => _connectionExperience;
@@ -4360,11 +4379,21 @@ class ConnectionManager extends ChangeNotifier {
       _candidateAccessNetworkAsn = null;
     }
     if (actionIntent == ConnectionTransitionIntent.connect) {
+      if (!_automaticFailoverInFlight) {
+        unawaited(_connectionDiagnostic?.finish('unknown'));
+        final bootstrapper = _bootstrapper;
+        _connectionDiagnostic = bootstrapper is AppFirstRuntimeBootstrapper
+            ? bootstrapper.connectionDiagnostics.beginAttempt(_appContext.hostPlatform, _connectionAttemptNumber)
+            : null;
+      }
       _candidateProbeReports.clear();
       _runtimeStatsDelivery = null;
       unawaited(_reportClientLifecycle('connect_requested'));
     }
     final generation = _connectionCoordinator.operationGeneration;
+    final diagnostic = actionIntent == ConnectionTransitionIntent.connect ||
+            actionIntent == ConnectionTransitionIntent.reconnect ? _connectionDiagnostic : null;
+    diagnostic?.enter(ConnectionDiagnosticStage.profile);
     Future<T> runOwnedRuntimeAction<T>(
       String operation,
       Future<T> Function() action,
@@ -4501,6 +4530,7 @@ class ConnectionManager extends ChangeNotifier {
           current.phase == RuntimePhase.artifactReady) {
         failureOperation = 'core_initialize';
         failureStage = ConnectionStage.coreStart;
+        diagnostic?.enter(ConnectionDiagnosticStage.core);
         current = await runOwnedRuntimeAction(
           'initialize',
           _runtimeEngine.initialize,
@@ -4523,6 +4553,7 @@ class ConnectionManager extends ChangeNotifier {
             code: 'core_initialize_unconfirmed',
           );
         }
+        diagnostic?.enter(ConnectionDiagnosticStage.profile);
       }
 
       final transportService = _bootstrapper;
@@ -4547,14 +4578,25 @@ class ConnectionManager extends ChangeNotifier {
         if (_runtimeEngine is! RuntimeBoundConnectivityProbe) {
           _transportSelectionFail('transport_runtime_unavailable');
         }
-        if (!_foregroundAutoConnect && !await _authorizeAndroidVpnConnect()) return;
+        if (!_foregroundAutoConnect && _appContext.hostPlatform == HostPlatform.android) {
+          diagnostic?.enter(ConnectionDiagnosticStage.permission);
+          if (!await _authorizeAndroidVpnConnect()) {
+            _finishConnectionDiagnostic('cancelled');
+            return;
+          }
+          diagnostic?.complete('unknown');
+          diagnostic?.enter(ConnectionDiagnosticStage.profile);
+        } else if (!_foregroundAutoConnect && !await _authorizeAndroidVpnConnect()) {
+          return;
+        }
         if (_disposed || !_connectionCoordinator.ownsOperation(generation))
           return;
         final proven = await _connectWithTransportManifest(current, generation,
-            smartAccessVpnFallback: smartAccessVpnFallback);
+            smartAccessVpnFallback: smartAccessVpnFallback, diagnostic: diagnostic);
         if (_disposed || !_connectionCoordinator.ownsOperation(generation))
           return;
         _runtimeStatsSnapshotAttempt = _connectionAttemptNumber;
+        if (proven.phase == RuntimePhase.running) diagnostic?.confirmPermission();
         _finishAndroidVpnPermission(proven);
         _update(() {
           _runtimeSnapshot = proven;
@@ -4764,8 +4806,15 @@ class ConnectionManager extends ChangeNotifier {
       if ((current.stagedConfigPath ?? '').isNotEmpty || current.canConnect) {
         failureOperation = 'vpn_permission';
         failureStage = ConnectionStage.permission;
+        if (!_foregroundAutoConnect && _appContext.hostPlatform == HostPlatform.android) {
+          diagnostic?.enter(ConnectionDiagnosticStage.permission);
+        }
         if (!_foregroundAutoConnect && !await _authorizeAndroidVpnConnect()) {
+          _finishConnectionDiagnostic('cancelled');
           return;
+        }
+        if (diagnostic?.stage == ConnectionDiagnosticStage.permission) {
+          diagnostic?.complete('unknown');
         }
         if (actionIntent == ConnectionTransitionIntent.connect) {
           unawaited(
@@ -4781,6 +4830,7 @@ class ConnectionManager extends ChangeNotifier {
         _activeConnectUsedWarp = warpRuntimeAttempted;
         failureOperation = 'core_connect';
         failureStage = ConnectionStage.coreStart;
+        diagnostic?.enter(ConnectionDiagnosticStage.core);
         if (materialStageAcknowledged && !_disposed && _connectionCoordinator.ownsOperation(generation) &&
             profileRevision == _managedProfileRevision) {
           _observability?._completeProfileMaterialStage(profileAttempt, materialOrigin: materialOrigin);
@@ -4833,6 +4883,15 @@ class ConnectionManager extends ChangeNotifier {
           return;
         }
         _finishAndroidVpnPermission(current);
+        if (current.lastFailureKind == 'vpn_permission_denied') {
+          diagnostic?.complete('unknown');
+          diagnostic?.enter(ConnectionDiagnosticStage.permission);
+          _finishConnectionDiagnostic('failed',
+              errorCode: OperationalFailureMapper.connection(current.lastFailureKind));
+        } else if (current.phase == RuntimePhase.running || current.hasCoreEgressProbeFailure) {
+          diagnostic?.confirmPermission();
+          diagnostic?.enter(ConnectionDiagnosticStage.egress);
+        }
         var warpFallbackUsed = false;
         if (_transportCatalog == null && current.phase != RuntimePhase.running && warpRuntimeAttempted) {
           final fallback = await runOwnedRuntimeAction(
@@ -4968,6 +5027,11 @@ class ConnectionManager extends ChangeNotifier {
             _handleFailedManagedProfile(current)) {
           return;
         }
+        if (current.phase != RuntimePhase.running || current.hasCoreEgressProbeFailure) {
+          _finishConnectionDiagnostic('failed',
+              errorCode: OperationalFailureMapper.connection(current.lastFailureKind),
+              egressDurationMs: current.egressProbeObservation?.elapsedMs);
+        }
         if (current.phase != RuntimePhase.running &&
             current.message.trim().isNotEmpty) {
           unawaited(
@@ -4986,6 +5050,10 @@ class ConnectionManager extends ChangeNotifier {
       return;
     } on BootstrapFailure catch (error) {
       if (!_connectionCoordinator.ownsOperation(generation)) return;
+      if (diagnostic?.stage == null && diagnostic?.finished == false) {
+        diagnostic?.enter(ConnectionDiagnosticStage.profile);
+      }
+      if (diagnostic != null) _finishConnectionDiagnostic('failed', errorCode: error.operationalErrorCode);
       final businessOperation = _bootstrapFailureOperation(error.operation);
       final ioKind = const {'request_socket', 'request_http', 'request_timeout'}.contains(error.apiFailureKind)
           ? error.apiFailureKind : null;
@@ -5023,6 +5091,7 @@ class ConnectionManager extends ChangeNotifier {
       final closedFailure = _connectionPlatformFailureCode(error);
       final errorCode = OperationalFailureMapper.connection(closedFailure,
           timedOut: error is TimeoutException);
+      if (diagnostic != null) _finishConnectionDiagnostic('failed', errorCode: errorCode);
       final closedOperation = error is RuntimeBoundConnectFailure ? error.operation
           : connectionFailureOperations.contains(failureOperation) ? failureOperation : null;
       _observability?.recordConnectionFailure(
@@ -5062,6 +5131,7 @@ class ConnectionManager extends ChangeNotifier {
       }
       if (_connectionCoordinator.ownsOperation(generation) && !_candidateRecoveryPending &&
           _runtimeSnapshot?.phase != RuntimePhase.running) {
+        if (!_automaticFailoverInFlight && !_warpFallbackInFlight) unawaited(diagnostic?.finish('unknown'));
         _connectionCoordinator.clearAttempt();
       }
       if (!completion.isCompleted) completion.complete();
@@ -5124,6 +5194,7 @@ class ConnectionManager extends ChangeNotifier {
             code: 'connect_cancel_unconfirmed',
             operation: 'cancel_connect');
       }
+      _finishConnectionDiagnostic('cancelled');
       _update(() {
         _runtimeHeadline = _protectedHandoffActive
             ? 'Восстановление отменено. Повтори подключение или отключи POKROV.'
@@ -5273,6 +5344,10 @@ class ConnectionManager extends ChangeNotifier {
       );
 
   void _finalizeProvenConnection(RuntimeSnapshot snapshot) {
+    if (_runtimeStatsSnapshotAttempt == _connectionAttemptNumber && _isConnectionProven(snapshot)) {
+      _connectionDiagnostic?.confirmPermission();
+      _finishConnectionDiagnostic('verified', egressDurationMs: snapshot.egressProbeObservation?.elapsedMs);
+    }
     final directWarp = materialCandidate?.warpMode == 'warp_direct';
     final cacheService = _bootstrapper;
     final cacheInputs = _stagedCacheInputs;
@@ -5393,13 +5468,18 @@ class ConnectionManager extends ChangeNotifier {
           refreshed.hasCoreEgressProbeFailure) {
         _cancelPostConnectHostHealthPolling();
         if (_transportCatalog != null && _candidateRef != null) {
-          _scheduleCandidateRecovery(refreshed);
+          if (!_scheduleCandidateRecovery(refreshed) && !_candidateRecoveryPending) {
+            _recordDiagnosticEgressFailure(refreshed);
+            _finishConnectionDiagnostic('failed');
+          }
           return;
         }
         final shouldFallbackFromWarp = _activeConnectUsedWarp &&
             !_warpFallbackInFlight &&
             _mustRefreshProfileAfterRuntimeFailure(refreshed);
         if (shouldFallbackFromWarp) {
+          _recordDiagnosticEgressFailure(refreshed);
+          _connectionDiagnostic?.enter(ConnectionDiagnosticStage.routeSwitch);
           _warpFallbackInFlight = true;
           _update(() {
             _runtimeSnapshot = refreshed;
@@ -5414,7 +5494,10 @@ class ConnectionManager extends ChangeNotifier {
           _publish();
           return;
         }
-        _handleFailedManagedProfile(refreshed);
+        if (!_handleFailedManagedProfile(refreshed)) {
+          _recordDiagnosticEgressFailure(refreshed);
+          _finishConnectionDiagnostic('failed');
+        }
         _publish();
         return;
       }
@@ -5685,6 +5768,8 @@ class ConnectionManager extends ChangeNotifier {
     final currentRef = localFailure != null ? '' : previousCandidateRef ?? _activeCandidateRef ?? _candidateRef;
     if (currentRef == null) return false;
     _candidateRecoveryPending = true;
+    _recordDiagnosticEgressFailure(failed);
+    _connectionDiagnostic?.enter(ConnectionDiagnosticStage.routeSwitch);
     final command = _commandNumber;
     final budget = _currentConnectBudget;
     final completing = _primaryConnectCompletion?.future;
@@ -5814,6 +5899,7 @@ class ConnectionManager extends ChangeNotifier {
             smartAccessVpnFallback: smartAccessVpnFallback);
       }
       for (var activation = 0; activation < 3; activation++) {
+      _connectionDiagnostic?.enter(ConnectionDiagnosticStage.profile);
       var usedCachedProfile = false;
       ManagedProfilePayload? payload;
       if (confirmedFailure || preferCachedProfile) {
@@ -5856,6 +5942,7 @@ class ConnectionManager extends ChangeNotifier {
         throw const ConnectionOperationSuperseded();
       }
       RuntimeSnapshot current;
+      _connectionDiagnostic?.enter(ConnectionDiagnosticStage.core);
       if (retryInitialActivation) {
         // A stopped runtime has no live owner to replace. Stage/connect retains
         // any native transition guard, both on initial failure and recovery.
@@ -5889,6 +5976,9 @@ class ConnectionManager extends ChangeNotifier {
       current = await _settleRuntimeTransition(current, ownerGeneration: generation,
           waitForEgressProof: true);
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
+      if (current.hasCoreEgressProbeFailure) {
+        _recordDiagnosticEgressFailure(current);
+      }
       final fallbackPolicy = _preparedCatalogPolicies[prepared];
       final fallbackDigest = current.effectiveProfileDigest ?? current.stagedProfileDigest;
       _smartAccessRouteProfile = smartAccessVpnFallback && current.isCleanlyHealthy &&
@@ -5927,6 +6017,7 @@ class ConnectionManager extends ChangeNotifier {
         if (!current.isCleanlyHealthy) terminalCode = current.lastFailureKind ?? 'connect_not_running';
         return;
       }
+      _connectionDiagnostic?.enter(ConnectionDiagnosticStage.routeSwitch);
       failedActivations.add(_candidateRef!);
       if (_candidateNetworkKey != null) _candidateSelector.recordFailure(
           _candidateNetworkKey!, _candidateRef!, current.lastFailureKind ?? '');
@@ -5949,6 +6040,9 @@ class ConnectionManager extends ChangeNotifier {
     } finally {
       if (terminalCode != null &&
           !_disposed && _connectionCoordinator.ownsOperation(generation)) {
+        _finishConnectionDiagnostic('failed',
+            errorCode: KnownOperationalErrorCodes.contains(terminalCode)
+                ? terminalCode : OperationalFailureMapper.connection(terminalCode));
         await _reportClientLifecycle('failed', errorCode: terminalCode, retryable: true);
         if (!_disposed && _connectionCoordinator.ownsOperation(generation)) {
           _connectionCoordinator.clearAttempt();
@@ -6011,6 +6105,8 @@ class ConnectionManager extends ChangeNotifier {
       _cachedProfileFallbackGate.markRuntimeFailure();
     }
     if (shouldRetryAutomatically) {
+      _recordDiagnosticEgressFailure(failed);
+      _connectionDiagnostic?.enter(ConnectionDiagnosticStage.routeSwitch);
       _automaticFailoverAttempts += 1;
       _automaticFailoverInFlight = true;
       unawaited(

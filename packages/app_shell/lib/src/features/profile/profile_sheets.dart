@@ -76,17 +76,40 @@ Future<void> _showRedeemSheet(
 }
 
 Future<bool?> _showEmailSessionRecoverySheet(BuildContext context, {
+  required HostPlatform hostPlatform,
   required Future<void> Function(String) onRequestCode,
   required Future<void> Function(String, String) onRecover,
 }) => showModalBottomSheet<bool>(
   context: context, isScrollControlled: true,
   isDismissible: false, enableDrag: false,
   showDragHandle: true, sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
-  builder: (_) => _EmailSessionRecoverySheet(onRequestCode: onRequestCode, onRecover: onRecover),
+  builder: (_) => _EmailSessionRecoverySheet(hostPlatform: hostPlatform, onRequestCode: onRequestCode, onRecover: onRecover),
 );
 
+String? _loginSupportCode(HostPlatform platform, SupportLoginStage stage, Object failure) {
+  if (!AppFirstConnectionDiagnostics.supports(platform)) return null;
+  final reason = switch (failure) {
+    BootstrapFailure(code: 'email_otp_expired') => SupportLoginFailure.expired,
+    BootstrapFailure(statusCode: final status?) when status >= 500 => SupportLoginFailure.server,
+    BootstrapFailure(statusCode: final status?) when status >= 400 => SupportLoginFailure.rejected,
+    BootstrapFailure(apiFailureKind: 'request_socket' || 'request_tls' || 'request_timeout') ||
+        TimeoutException() || SocketException() => SupportLoginFailure.network,
+    _ => SupportLoginFailure.unknown,
+  };
+  try {
+    final id = OperationalIdFactory().uuidV4().replaceAll('-', '').substring(0, 24);
+    return SupportDiagnosticCode.encode(diagnosticId: 'diag-$id', platform: platform.name,
+        routeMode: 'full_tunnel', connectionState: 'disconnected',
+        appVersion: '${pokrovClientVersion.split('+').first}+$pokrovClientBuildNumber',
+        generatedAt: DateTime.now().toUtc(), loginStage: stage, loginFailure: reason);
+  } on SupportBundleFailure {
+    return null;
+  }
+}
+
 class _EmailSessionRecoverySheet extends StatefulWidget {
-  const _EmailSessionRecoverySheet({required this.onRequestCode, required this.onRecover});
+  const _EmailSessionRecoverySheet({required this.hostPlatform, required this.onRequestCode, required this.onRecover});
+  final HostPlatform hostPlatform;
   final Future<void> Function(String) onRequestCode;
   final Future<void> Function(String, String) onRecover;
 
@@ -100,6 +123,7 @@ class _EmailSessionRecoverySheetState extends State<_EmailSessionRecoverySheet> 
   bool _requested = false;
   bool _busy = false;
   String? _error;
+  String? _supportCode;
 
   @override
   void dispose() {
@@ -111,10 +135,13 @@ class _EmailSessionRecoverySheetState extends State<_EmailSessionRecoverySheet> 
   Future<void> _submit() async {
     if (_busy) return;
     if (_email.text.trim().isEmpty || (_requested && _code.text.trim().length != 6)) {
-      setState(() => _error = _requested ? 'Введи 6 цифр из письма.' : 'Введи почту аккаунта.');
+      setState(() {
+        _error = _requested ? 'Введи 6 цифр из письма.' : 'Введи почту аккаунта.';
+        _supportCode = null;
+      });
       return;
     }
-    setState(() { _busy = true; _error = null; });
+    setState(() { _busy = true; _error = null; _supportCode = null; });
     try {
       if (_requested) {
         await widget.onRecover(_email.text.trim(), _code.text.trim());
@@ -124,9 +151,11 @@ class _EmailSessionRecoverySheetState extends State<_EmailSessionRecoverySheet> 
         if (mounted) setState(() => _requested = true);
       }
     } on Object catch (error) {
-      if (mounted) setState(() => _error = error is BootstrapFailure
-          ? error.message
-          : 'Не удалось восстановить вход. Сохранённые данные устройства не удалены. Попробуй ещё раз.');
+      if (mounted) setState(() {
+        _error = error is BootstrapFailure ? error.message : 'Не удалось восстановить вход. Попробуй ещё раз.';
+        _supportCode = _loginSupportCode(widget.hostPlatform,
+            _requested ? SupportLoginStage.emailCodeVerify : SupportLoginStage.emailCodeRequest, error);
+      });
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -160,12 +189,20 @@ class _EmailSessionRecoverySheetState extends State<_EmailSessionRecoverySheet> 
         if (_error != null) Padding(padding: const EdgeInsets.only(top: 12),
           child: Text(_error!, key: const ValueKey('email-recovery-error'),
             style: TextStyle(color: Theme.of(context).colorScheme.error))),
+        if (_supportCode case final code?) TextButton.icon(
+          onPressed: () {
+            unawaited(Clipboard.setData(ClipboardData(text: code)));
+            showPokrovSnack(context, 'Код скопирован.');
+          },
+          icon: const Icon(Icons.copy_rounded),
+          label: const Text('Код для поддержки'),
+        ),
         const SizedBox(height: 16),
         FilledButton(key: const ValueKey('email-recovery-submit'),
           onPressed: _busy ? null : () => unawaited(_submit()),
           child: Text(_busy ? 'Подожди…' : _requested ? 'Восстановить доступ' : 'Отправить код')),
         if (_requested) TextButton(onPressed: _busy ? null : () => setState(() {
-          _requested = false; _code.clear(); _error = null;
+          _requested = false; _code.clear(); _error = null; _supportCode = null;
         }), child: const Text('Получить новый код')),
         TextButton(onPressed: _busy ? null : () => Navigator.of(context).pop(false),
           child: const Text('Отмена')),

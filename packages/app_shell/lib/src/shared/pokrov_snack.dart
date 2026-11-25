@@ -16,6 +16,7 @@ void showPokrovSnack(
   BuildContext context,
   String message, {
   PokrovSnackTone tone = PokrovSnackTone.info,
+  SnackBarAction? action,
 }) {
   final motion = _MotionScope.of(context);
   // The snack surface is inverted in the light theme (near-black ink), so
@@ -64,7 +65,8 @@ void showPokrovSnack(
           ),
     SnackBar(
       behavior: SnackBarBehavior.floating,
-      duration: const Duration(seconds: 3),
+      duration: Duration(seconds: action == null ? 3 : 8),
+      action: action,
       content: Row(
         children: [
           leadingIcon,

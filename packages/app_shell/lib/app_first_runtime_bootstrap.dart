@@ -48,6 +48,7 @@ part 'src/connection/candidate_ranker_shadow.dart';
 part 'src/connection/managed_manifest_decoder.dart';
 part 'src/connection/offline_invitation_bootstrap.dart';
 part 'src/observability/runtime_stats_outbox.dart';
+part 'src/observability/connection_diagnostics.dart';
 
 /// Build identity shared by provisioning, update checks, and diagnostics.
 ///
@@ -3285,6 +3286,7 @@ class AppFirstRuntimeBootstrapper
   int _runtimeReportSequence = 0;
   final Map<HostPlatform, _RuntimeStatsBinding> _runtimeStatsBindings = {};
   late final _RuntimeStatsOutbox _runtimeStatsOutbox = _RuntimeStatsOutbox(this);
+  late final AppFirstConnectionDiagnostics connectionDiagnostics = AppFirstConnectionDiagnostics._(this);
   String? _runtimeProbeAttempt;
   final Map<String, ({String packetKey, bool accepted})> _runtimeProbeReports = {};
   bool _networkContextInFlight = false;

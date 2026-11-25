@@ -227,6 +227,7 @@ final class PokrovClientObservability {
   bool _uiReadyRecorded = false;
   int _lastAndroidSelectedAppCount = -1;
   DiagnosticCrashRecord? _previousCrash;
+  PreviousExitReport? previousExitReport;
   DiagnosticCrashRecord? _currentCrash;
   PokrovAuthRequestDiagnostic? _authRequest;
 
@@ -929,6 +930,7 @@ final class PokrovClientObservability {
   }
 
   void _recordPreviousExit(PreviousExitReport previous) {
+    previousExitReport = previous;
     if (previous.kind == PreviousExitKind.crash) {
       _previousCrash = DiagnosticCrashRecord(
         occurredAt: previous.occurredAtUtc!,

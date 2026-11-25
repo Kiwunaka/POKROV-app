@@ -8,6 +8,21 @@ import 'package:pokrov_support_bundle/support_bundle.dart';
 void main() {
   final now = DateTime.utc(2026, 8, 21, 12);
 
+  test('offline login code round trips with the portal format', () {
+    final issued = DateTime.utc(2026, 11, 25);
+    final code = SupportDiagnosticCode.encode(
+      diagnosticId: 'diag-0123456789abcdef01234567',
+      platform: 'windows', routeMode: 'full_tunnel', connectionState: 'disconnected',
+      appVersion: '2.1.0+4298', generatedAt: issued,
+      loginStage: SupportLoginStage.emailCodeVerify, loginFailure: SupportLoginFailure.expired,
+    );
+    expect(code, 'PSD4-404X-G0G1-0000-046A-04HG-20S0');
+    final decoded = SupportDiagnosticCode.decode(code, now: issued);
+    expect(decoded.loginStage, SupportLoginStage.emailCodeVerify);
+    expect(decoded.loginFailure, SupportLoginFailure.expired);
+    expect(decoded.buildNumber, 4298);
+  });
+
   test(
     'signed recipient encrypts exact preview contents without plaintext',
     () async {

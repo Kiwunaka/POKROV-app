@@ -1,6 +1,8 @@
 package space.pokrov.pokrov_android_shell
 
 import android.app.Activity
+import android.app.ActivityManager
+import android.app.ApplicationExitInfo
 import android.Manifest
 import android.content.ClipData
 import android.content.Intent
@@ -253,6 +255,7 @@ class RuntimeHostBridge(
             METHOD_LIVE_STATS -> result.success(AndroidRuntimeState.liveStats())
             METHOD_PUSH_TOKEN -> result.success(pushToken())
             METHOD_DEVICE_NAME -> result.success(deviceName())
+            "runtimeEngine.previousExits" -> result.success(previousExits())
             METHOD_SUPPORTED_ABIS -> result.success(supportedAbis())
             METHOD_LIST_INSTALLED_APPS -> listInstalledApps(result)
             "runtimeEngine.installedAppIcon" -> installedAppIcon(call, result)
@@ -1908,6 +1911,21 @@ class RuntimeHostBridge(
         }
         if (!accepted) {
             result.success(fallback)
+        }
+    }
+
+    private fun previousExits(): List<Map<String, Any>> {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return emptyList()
+        val manager = activity.getSystemService(ActivityManager::class.java) ?: return emptyList()
+        return manager.getHistoricalProcessExitReasons(activity.packageName, 0, 8).mapNotNull { exit ->
+            if (exit.processName != activity.packageName) return@mapNotNull null
+            val kind = when (exit.reason) {
+                ApplicationExitInfo.REASON_CRASH, ApplicationExitInfo.REASON_CRASH_NATIVE -> "native_crash"
+                ApplicationExitInfo.REASON_ANR -> "anr"
+                ApplicationExitInfo.REASON_LOW_MEMORY, ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE -> "system_stop"
+                else -> return@mapNotNull null
+            }
+            mapOf("occurred_at_unix_ms" to exit.timestamp, "kind" to kind)
         }
     }
 

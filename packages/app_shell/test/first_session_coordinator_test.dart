@@ -218,6 +218,7 @@ void main() {
     await tester.tap(submit);
     await tester.pump();
     expect(find.text('Код из письма не подошёл. Запроси новый код.'), findsOneWidget);
+    expect(find.text('Код для поддержки'), findsOneWidget);
     final failed = actions.reports.lastWhere((args) => args[#errorCode] == 'email_login_failed');
     expect(failed[#failureOperation], 'email_otp_finish');
     expect(failed[#failureReason], PortalFailureReason.emailOtpInvalid);

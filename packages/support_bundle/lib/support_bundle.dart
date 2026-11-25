@@ -133,6 +133,10 @@ const _collectorByCategory = <DiagnosticCategory, String>{
   DiagnosticCategory.system: 'system_summary',
 };
 
+enum SupportLoginStage { emailCodeRequest, emailCodeVerify, telegramLogin, sessionStart }
+
+enum SupportLoginFailure { unknown, network, rejected, expired, server }
+
 final class SupportDiagnosticCodeFacts {
   const SupportDiagnosticCodeFacts({
     required this.platform,
@@ -144,6 +148,8 @@ final class SupportDiagnosticCodeFacts {
     required this.issuedOn,
     required this.expiresOn,
     required this.expired,
+    this.loginStage,
+    this.loginFailure,
   });
 
   final String platform;
@@ -155,6 +161,8 @@ final class SupportDiagnosticCodeFacts {
   final DateTime issuedOn;
   final DateTime expiresOn;
   final bool expired;
+  final SupportLoginStage? loginStage;
+  final SupportLoginFailure? loginFailure;
 }
 
 abstract final class SupportDiagnosticCode {
@@ -182,6 +190,8 @@ abstract final class SupportDiagnosticCode {
     required String connectionState,
     required String appVersion,
     required DateTime generatedAt,
+    SupportLoginStage? loginStage,
+    SupportLoginFailure? loginFailure,
   }) {
     final id = RegExp(r'^diag-([0-9a-f]{24})$').firstMatch(diagnosticId);
     final version =
@@ -197,7 +207,7 @@ abstract final class SupportDiagnosticCode {
         version == null ||
         platformIndex < 0 ||
         routeIndex < 0 ||
-        stateIndex < 0) {
+        stateIndex < 0 || (loginStage == null) != (loginFailure == null)) {
       throw const SupportBundleFailure('support_diagnostic_code_invalid');
     }
     final versionParts = <int>[
@@ -221,7 +231,7 @@ abstract final class SupportDiagnosticCode {
     }
     final hash = id.group(1)!;
     final selective = routeMode == 'selective_services';
-    final legacy = !selective && buildNumber <= 0xff;
+    final legacy = loginStage == null && !selective && buildNumber <= 0xff;
     final raw = <int>[
       selective
           ? 0x80 | (platformIndex << 6) | (routeIndex << 3) | stateIndex
@@ -239,9 +249,14 @@ abstract final class SupportDiagnosticCode {
       ],
       int.parse(hash.substring(0, 2), radix: 16),
       int.parse(hash.substring(2, 4), radix: 16),
+      if (loginStage != null) ...[loginStage.index, loginFailure!.index],
     ];
     raw.add(_crc8(raw));
     final body = _encodeCrockford(raw);
+    if (loginStage != null) {
+      final groups = [for (var i = 0; i < body.length; i += 4) body.substring(i, i + 4)];
+      return 'PSD4-${groups.join('-')}';
+    }
     if (legacy) {
       return 'PSD1-${body.substring(0, 4)}-${body.substring(4, 8)}-'
           '${body.substring(8, 12)}-${body.substring(12, 16)}';
@@ -261,25 +276,28 @@ abstract final class SupportDiagnosticCode {
         RegExp(r'^PSD1[0-9A-HJKMNPQRSTVWXYZ]{16}$').hasMatch(rawCode);
     final extended =
         RegExp(r'^PSD2[0-9A-HJKMNPQRSTVWXYZ]{21}$').hasMatch(rawCode);
-    final selective =
+    final selectiveCode =
         RegExp(r'^PSD3[0-9A-HJKMNPQRSTVWXYZ]{21}$').hasMatch(rawCode);
-    if (!legacy && !extended && !selective) {
+    final login = RegExp(r'^PSD4[0-9A-HJKMNPQRSTVWXYZ]{24}$').hasMatch(rawCode);
+    if (!legacy && !extended && !selectiveCode && !login) {
       throw const SupportBundleFailure('support_diagnostic_code_invalid');
     }
     final packed = _decodeCrockford(rawCode.substring(4));
-    final expectedLength = legacy ? 10 : 13;
+    final expectedLength = legacy ? 10 : (login ? 15 : 13);
     if (packed.length != expectedLength ||
         _crc8(packed.sublist(0, expectedLength - 1)) != packed.last) {
       throw const SupportBundleFailure('support_diagnostic_code_invalid');
     }
     final facts = packed[0];
+    final selective = selectiveCode || (login && (facts & 0x80) != 0);
     final platformIndex = (facts >> (selective ? 6 : 5)) & 1;
     final routeIndex = (facts >> 3) & (selective ? 7 : 3);
     final stateIndex = facts & 7;
     final invalidFormat = selective
         ? (facts & 0x80) == 0 || routeIndex != 4
         : (facts & 0xc0) != 0;
-    if (invalidFormat || stateIndex >= _connectionStates.length) {
+    if (invalidFormat || stateIndex >= _connectionStates.length ||
+        (login && (packed[12] >= SupportLoginStage.values.length || packed[13] >= SupportLoginFailure.values.length))) {
       throw const SupportBundleFailure('support_diagnostic_code_invalid');
     }
     final issuedOn = _epoch.add(
@@ -309,6 +327,8 @@ abstract final class SupportDiagnosticCode {
           '${packed[hashIndex + 1].toRadixString(16).padLeft(2, '0')}',
       issuedOn: issuedOn,
       expiresOn: expiresOn,
+      loginStage: login ? SupportLoginStage.values[packed[12]] : null,
+      loginFailure: login ? SupportLoginFailure.values[packed[13]] : null,
       expired: current.isAfter(expiresOn),
     );
   }

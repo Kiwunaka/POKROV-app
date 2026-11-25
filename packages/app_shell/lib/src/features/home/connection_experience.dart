@@ -737,7 +737,7 @@ class ConnectionCoordinator {
       required String attemptRef, required TransportProfileQuery query,
       required TransportEndpointHint hint,
       required AppFirstTransportManifestService service, required PokrovRuntimeEngine engine,
-      required int generation, required bool repair}) async {
+      required int generation, required bool repair, ConnectionDiagnosticAttempt? diagnostic}) async {
     final selection = _transportSelection;
     if (!ownsOperation(generation) || !_actionInFlight || selection == null ||
         selection.generation != generation) throw const ConnectionOperationSuperseded();
@@ -757,6 +757,7 @@ class ConnectionCoordinator {
       await _settleFailedTransportAttempt(selection, attemptRef, engine, generation);
       rethrow;
     }
+    diagnostic?.enter(ConnectionDiagnosticStage.core);
     return connectTransportProfile(staged, generation: generation);
   }
 
