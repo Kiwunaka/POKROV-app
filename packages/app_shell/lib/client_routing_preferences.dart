@@ -10,6 +10,12 @@ import 'routing_catalog_policy.dart';
 
 part 'src/connection/youtube_routing.dart';
 
+const _windowsDnsAddress = String.fromEnvironment('POKROV_WINDOWS_DNS_ADDRESS');
+const _windowsDnsServerName =
+    String.fromEnvironment('POKROV_WINDOWS_DNS_SERVER_NAME');
+const windowsOwnedDnsConfigured =
+    _windowsDnsAddress != '' && _windowsDnsServerName != '';
+
 enum PokrovPurposeRoute { video, ai, social, games, ruDirect }
 
 enum PokrovRouteAction { vpn, direct }
@@ -517,6 +523,14 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
   int nativeSmartAccessLeaseVersion = 0,
   List<String> defaultRuAppPackageIds = const <String>[],
 }) {
+  final ownedDns = hostPlatform == HostPlatform.windows &&
+      windowsOwnedDnsConfigured;
+  if (ownedDns) {
+    preferences = preferences.copyWith(
+      dnsPreset: PokrovDnsPreset.automatic,
+      dnsTransport: PokrovDnsTransport.vpn,
+    );
+  }
   if (catalogPolicy != null) {
     final configured = _applyCatalogRoutingPreferences(payload, preferences,
       hostPlatform: hostPlatform, policy: catalogPolicy,
@@ -524,8 +538,9 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
       physicalIpv6Available: physicalIpv6Available,
       nativeWindowVersion: nativeCatalogWindowVersion,
       nativeSmartAccessLeaseVersion: nativeSmartAccessLeaseVersion);
-    return _applyAllExceptRuDefaults(configured, hostPlatform,
+    final routed = _applyAllExceptRuDefaults(configured, hostPlatform,
         defaultRuAppPackageIds);
+    return ownedDns ? _applyWindowsOwnedDns(routed) : routed;
   }
   if (payload.routeMode == RouteMode.selectiveServices) {
     throw const RoutingCatalogFailure('catalog_selective_policy_required');
@@ -534,10 +549,12 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
   try {
     final decoded = jsonDecode(payload.configPayload);
     if (decoded is! Map) {
+      if (ownedDns) throw const RoutingCatalogFailure('windows_owned_dns_invalid');
       return payload;
     }
     config = decoded.map((key, value) => MapEntry(key.toString(), value));
   } on Object {
+    if (ownedDns) throw const RoutingCatalogFailure('windows_owned_dns_invalid');
     return payload;
   }
 
@@ -692,9 +709,66 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
     _retargetBoundAwgDnsResolver(config, previousDnsFinal);
   }
 
-  return _applyAllExceptRuDefaults(
+  final routed = _applyAllExceptRuDefaults(
       payload.copyWith(configPayload: jsonEncode(config), lanScopeVersion: 1),
       hostPlatform, defaultRuAppPackageIds);
+  return ownedDns ? _applyWindowsOwnedDns(routed) : routed;
+}
+
+ManagedProfilePayload _applyWindowsOwnedDns(ManagedProfilePayload payload) {
+  final config = _routingMap(jsonDecode(payload.configPayload));
+  final outbounds = _routingListOfMaps(config['outbounds']);
+  final endpoints = _routingListOfMaps(config['endpoints']);
+  final route = _routingMap(config['route']);
+  final vpn = _resolveProxyTag(outbounds, endpoints, route);
+  if (vpn.isEmpty || InternetAddress.tryParse(_windowsDnsAddress) == null) {
+    throw const RoutingCatalogFailure('windows_owned_dns_invalid');
+  }
+
+  const owned = 'pokrov-owned-dns';
+  const bootstrap = 'pokrov-node-bootstrap';
+  var needsPeerResolver = false;
+  // Peer hostnames must resolve before the tunnel can carry client DNS.
+  for (final dialer in [...outbounds, ...endpoints]) {
+    final addresses = [
+      _routingText(dialer['server']),
+      for (final peer in _routingListOfMaps(dialer['peers']))
+        _routingText(peer['address']),
+    ];
+    if (addresses.any((address) =>
+        address.isNotEmpty && InternetAddress.tryParse(address) == null)) {
+      dialer['domain_resolver'] = {
+        ..._routingMap(dialer['domain_resolver']),
+        'server': bootstrap,
+      };
+      needsPeerResolver = true;
+    }
+  }
+  Map<String, dynamic> resolver(String tag) => {
+    'tag': tag,
+    'type': 'tls',
+    'server': _windowsDnsAddress,
+    'server_port': 853,
+    'detour': vpn,
+    'tls': {'enabled': true, 'server_name': _windowsDnsServerName},
+  };
+  final dns = _routingMap(config['dns']);
+  dns['servers'] = [
+    for (final server in _routingListOfMaps(dns['servers']))
+      if (const {'hosts', 'fakeip'}.contains(server['type']) ||
+          _routingText(server['address']).startsWith('rcode://'))
+        server
+      else
+        resolver(_routingText(server['tag'])),
+    resolver(owned),
+    if (needsPeerResolver) {'tag': bootstrap, 'type': 'local'},
+  ];
+  dns['final'] = owned;
+  config['dns'] = dns;
+
+  if (outbounds.isNotEmpty) config['outbounds'] = outbounds;
+  if (endpoints.isNotEmpty) config['endpoints'] = endpoints;
+  return payload.copyWith(configPayload: jsonEncode(config));
 }
 
 void _retargetBoundAwgDnsResolver(

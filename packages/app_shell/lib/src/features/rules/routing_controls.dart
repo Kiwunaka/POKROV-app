@@ -273,15 +273,17 @@ class _DnsAndLanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final customDnsError = preferences.customDnsError;
+    final ownedWindowsDns =
+        hostPlatform == HostPlatform.windows && windowsOwnedDnsConfigured;
     final windowsAppScope = hostPlatform == HostPlatform.windows &&
         const {RouteMode.selectedApps, RouteMode.excludedApps}.contains(fallbackMode);
     return _SectionCard(
       key: const ValueKey('rules-dns-lan'),
       title: 'Блокировка и DNS',
       lines: [
-        if (windowsAppScope)
+        if (windowsAppScope && !ownedWindowsDns)
           'Системный DNS всех приложений идёт через VPN, включая приложения с прямым маршрутом. Собственный DoH приложения следует маршруту его данных.',
-        customDnsError != null
+        if (!ownedWindowsDns) customDnsError != null
             ? 'Сохранённый адрес DNS не поддерживается. Используется DNS профиля POKROV; исправь адрес в настройке DNS.'
             : windowsAppScope
                 ? preferences.effectiveDnsTransport == PokrovDnsTransport.direct
@@ -300,27 +302,30 @@ class _DnsAndLanCard extends StatelessWidget {
             key: const ValueKey('rules-dns-picker'),
             icon: Icons.dns_outlined,
             title: 'DNS',
-            value: customDnsError == null ? preferences.dnsPreset.title : 'Нужен другой адрес',
-            valueIsAction: true,
-            onTap: () => _showDnsPresetSheet(
+            value: ownedWindowsDns ? 'POKROV через VPN' :
+                customDnsError == null ? preferences.dnsPreset.title : 'Нужен другой адрес',
+            valueIsAction: !ownedWindowsDns,
+            onTap: ownedWindowsDns ? null : () => _showDnsPresetSheet(
               context,
               preferences: preferences,
               onChanged: onChanged,
             ),
           ),
-          const _SettingsRowDivider(),
-          _SettingsRow(
-            key: const ValueKey('rules-smart-dns-provider-picker'),
-            icon: Icons.dns_outlined,
-            title: 'SmartDNS-провайдер',
-            value: !smartDnsEligible ? 'Доступно с Premium' : preferences.smartDnsProviderId.isEmpty
-                ? 'Автоматически' : 'Выбран вручную',
-            valueIsAction: smartDnsEligible,
-            onTap: smartDnsEligible ? () => _showSmartDnsProviderSheet(context,
-              preferences: preferences, hostPlatform: hostPlatform,
-              load: loadSmartDnsProviders, onChanged: onChanged) : null,
-          ),
-          if (preferences.dnsPreset != PokrovDnsPreset.automatic && customDnsError == null) ...[
+          if (!ownedWindowsDns) ...[
+            const _SettingsRowDivider(),
+            _SettingsRow(
+              key: const ValueKey('rules-smart-dns-provider-picker'),
+              icon: Icons.dns_outlined,
+              title: 'SmartDNS-провайдер',
+              value: !smartDnsEligible ? 'Доступно с Premium' : preferences.smartDnsProviderId.isEmpty
+                  ? 'Автоматически' : 'Выбран вручную',
+              valueIsAction: smartDnsEligible,
+              onTap: smartDnsEligible ? () => _showSmartDnsProviderSheet(context,
+                preferences: preferences, hostPlatform: hostPlatform,
+                load: loadSmartDnsProviders, onChanged: onChanged) : null,
+            ),
+          ],
+          if (!ownedWindowsDns && preferences.dnsPreset != PokrovDnsPreset.automatic && customDnsError == null) ...[
             const _SettingsRowDivider(),
             _RoutingToggleRow(
               key: const ValueKey('rules-dns-direct-toggle'),

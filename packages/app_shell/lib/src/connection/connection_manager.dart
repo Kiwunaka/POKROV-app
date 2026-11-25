@@ -833,7 +833,7 @@ class ConnectionManager extends ChangeNotifier {
   ({String? admissionId, bool pendingPresent, PokrovFirstProviderQaAvailabilityReason reason}) _firstProviderQaEligibility() {
     final id = _subscriptionInfo?.firstProviderQaAdmissionId;
     final preferences = _clientExperience.routingPreferences;
-    final reason = !const {HostPlatform.android, HostPlatform.windows}.contains(_appContext.hostPlatform) ? PokrovFirstProviderQaAvailabilityReason.unsupportedPlatform
+    final reason = _usesOwnedWindowsDns || !const {HostPlatform.android, HostPlatform.windows}.contains(_appContext.hostPlatform) ? PokrovFirstProviderQaAvailabilityReason.unsupportedPlatform
         : _bootstrapper is! AppFirstRuntimeBootstrapper ? PokrovFirstProviderQaAvailabilityReason.unsupportedBootstrapper
         : !(_bootstrapper as AppFirstRuntimeBootstrapper).firstProviderQaConfigured ? PokrovFirstProviderQaAvailabilityReason.unconfigured
         : _disposed ? PokrovFirstProviderQaAvailabilityReason.disposed
@@ -957,6 +957,9 @@ class ConnectionManager extends ChangeNotifier {
         if (!await _connectionCoordinator.stopTransportConnect() ||
             !await (_runtimeEngine as RuntimeConnectSettlement).cancelAndConfirmConnectStopped(requestId)) {
           throw StateError('connect_cancel_unconfirmed');
+        }
+        if (_appContext.hostPlatform == HostPlatform.windows) {
+          return _runtimeEngine.disconnect();
         }
         return _runtimeEngine.snapshot();
       }, ownerGeneration: generation);
@@ -2602,13 +2605,18 @@ class ConnectionManager extends ChangeNotifier {
       (_appContext.hostPlatform == HostPlatform.android ||
           _appContext.hostPlatform == HostPlatform.windows);
 
+  bool get _usesOwnedWindowsDns =>
+      _appContext.hostPlatform == HostPlatform.windows && windowsOwnedDnsConfigured;
+
   bool get _localSmartAccessSelected =>
+      !_usesOwnedWindowsDns &&
       _selectedRouteMode == RouteMode.selectiveServices &&
       _selectiveServicesAvailable &&
       _bootstrapper is AppFirstRuntimeBootstrapper &&
       (_bootstrapper as AppFirstRuntimeBootstrapper).smartAccessEnabled;
 
-  bool get _smartAccessEligible => _subscriptionInfo?.smartAccessEligible == true;
+  bool get _smartAccessEligible =>
+      !_usesOwnedWindowsDns && _subscriptionInfo?.smartAccessEligible == true;
 
   String? get _catalogSelectionAccessState {
     final access = _freeProfileAccess;

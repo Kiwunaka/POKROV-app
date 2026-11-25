@@ -243,7 +243,7 @@ void RuntimeDispatcher::WatchBoundConnect() {
       if (active_connect_ != operation || operation->cleanup_attempted) continue;
       operation->cleanup_attempted = true;
     }
-    const auto stopped = runtime_->Disconnect();
+    const auto stopped = runtime_->Disconnect(false);
     std::lock_guard<std::mutex> state(state_lock_);
     snapshot_ = runtime_->Snapshot();
     if (stopped.status == Status::kOk) {
@@ -325,7 +325,7 @@ RuntimeResult RuntimeDispatcher::CancelAndConfirm(const std::string& body) {
     if (active_connect_ != operation) return {Status::kOk, "settled=0"};
     operation->cleanup_attempted = true;
   }
-  const auto result = runtime_->Disconnect();
+  const auto result = runtime_->Disconnect(false);
   std::lock_guard<std::mutex> state(state_lock_);
   snapshot_ = runtime_->Snapshot();
   if (result.status != Status::kOk) return {Status::kOk, "settled=0"};
@@ -489,7 +489,7 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
       }
     }
     // The Core may have accepted a promotion before the owner or ACK changed.
-    const auto stopped = runtime_->Disconnect();
+    const auto stopped = runtime_->Disconnect(false);
     {
       std::lock_guard<std::mutex> state(state_lock_);
       snapshot_ = runtime_->Snapshot();
@@ -536,7 +536,7 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
         return ProjectBoundState(snapshot_);
       }
     }
-    const auto stopped = runtime_->Disconnect();
+    const auto stopped = runtime_->Disconnect(false);
     {
       std::lock_guard<std::mutex> state(state_lock_);
       snapshot_ = runtime_->Snapshot();
@@ -750,7 +750,7 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
   }
   if (cancel_after_commit) {
     result = operation->protected_handoff
-        ? runtime_->CancelProtectedHandoff() : runtime_->Disconnect();
+        ? runtime_->CancelProtectedHandoff() : runtime_->Disconnect(false);
     if (result.status == Status::kOk) {
       result = WithFailure(std::move(result), operation->FailureStatus(), operation->FailureCode());
     }

@@ -52,6 +52,25 @@ Map _dnsConfig(PokrovRoutingPreferences preferences, HostPlatform platform,
         .configPayload) as Map)['dns'] as Map;
 
 void main() {
+  test('Windows owned DNS replaces public and direct resolvers', () {
+    final dns = _dnsConfig(
+      _storedDns('https://1.1.1.1/dns-query', transport: PokrovDnsTransport.direct),
+      HostPlatform.windows,
+    );
+    expect(dns['final'], 'pokrov-owned-dns');
+    final servers = (dns['servers'] as List).cast<Map>();
+    for (final server in servers) {
+      expect(server['type'], 'tls');
+      expect(server['server'],
+          const String.fromEnvironment('POKROV_WINDOWS_DNS_ADDRESS'));
+      expect(server['server_port'], 853);
+      expect(server['detour'], 'proxy');
+      expect(server['tls']['server_name'],
+          const String.fromEnvironment('POKROV_WINDOWS_DNS_SERVER_NAME'));
+      expect(server['tls']['insecure'], isNull);
+    }
+  }, skip: !windowsOwnedDnsConfigured);
+
   test('YouTube reserve follows the manual country and earlier direct rules', () {
     TransportCandidate candidate(String node, String country, {String protocol = 'vless'}) => TransportCandidate(
         candidateRef: node, profileRef: node, nodeCode: node, countryCode: country, protocol: protocol,

@@ -65,6 +65,17 @@ class Recovery final : public RuntimeRecovery {
   std::function<void()> before_restore;
 };
 
+class TransitionGuard final : public RuntimeTransitionGuard {
+ public:
+  std::string Start() override { armed_ = true; return {}; }
+  std::string Finish() override { armed_ = false; return {}; }
+  std::string ExplicitOff() override { armed_ = false; return {}; }
+  bool IsArmed() const override { return armed_; }
+
+ private:
+  bool armed_ = false;
+};
+
 class HealthProbe final : public RuntimeEgressProbe {
  public:
   std::string Verify(const CheckInterruption& interrupted, bool = false,
@@ -223,7 +234,8 @@ void TestBoundSmartAccessStartupHandoff(const std::filesystem::path& root, HANDL
   auto* health = probe.get();
   auto recovery = std::make_unique<Recovery>();
   auto* restored = recovery.get();
-  RuntimeHost runtime(std::move(core), std::move(probe), std::move(recovery), root.wstring(), false);
+  RuntimeHost runtime(std::move(core), std::move(probe), std::move(recovery),
+      root.wstring(), false, nullptr, std::make_unique<TransitionGuard>());
   RuntimeDispatcher dispatcher(&runtime, {}, {}, 10);
   // A real local pipe supplies the kernel-owned client PID; no production Core or network mutation.
   const auto name = std::wstring(kTestPipePrefix) + L"SmartHandoff." + std::to_wstring(::GetCurrentProcessId());
@@ -297,6 +309,10 @@ void TestBoundSmartAccessStartupHandoff(const std::filesystem::path& root, HANDL
       "foreign owner crossed the configured Smart fence");
   Expect(call(Command::kCancelConnectAndConfirm, owner).body == "settled=1" && observed->stops == 1,
       "exact stop did not settle the handed-off ordinary native owner");
+  Expect(call(Command::kStatus).body.find("failure=transition_guard_active;") != std::string::npos,
+      "settlement released the physical block");
+  Expect(call(Command::kDisconnect).body.find("failure=none;") != std::string::npos,
+      "explicit disconnect did not release the physical block");
   // Explicit cancellation wins even when its rollback crosses the deadline.
   Expect(call(Command::kStageProfile, profile).status == Status::kOk, "cancellation fixture could not restage");
   const auto next_network = call(Command::kReadTransportNetworkContext);

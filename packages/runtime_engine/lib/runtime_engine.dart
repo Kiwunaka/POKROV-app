@@ -4391,7 +4391,7 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
     final boundRequestId = _boundConnectRequestId;
     if (boundRequestId != null) {
       if (!await cancelAndConfirmConnectStopped(boundRequestId)) throw StateError('connect_cancel_unconfirmed');
-      return snapshot();
+      if (hostPlatform != HostPlatform.windows) return snapshot();
     }
     final hostSnapshot = await _invokeHostSnapshot('runtimeEngine.disconnect');
     return hostSnapshot ?? await snapshot();

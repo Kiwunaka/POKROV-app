@@ -21,7 +21,9 @@ constexpr GUID kSubLayer = {0x541c71c5, 0x2ab4, 0x49b7,
                            {0xa1, 0xa3, 0x56, 0x4f, 0xc8, 0x5c, 0xef, 0x31}};
 constexpr GUID kFilterBase = {0x0a06bf20, 0xc38a, 0x4e21,
                              {0x94, 0xc6, 0x30, 0x06, 0xa8, 0x92, 0x5d, 0x10}};
-constexpr size_t kFilterCount = 8;
+constexpr size_t kGuardFilterCount = 8;
+constexpr size_t kLoopbackFilterEnd = 12;
+constexpr size_t kFilterCount = 16;
 // Request high priority. Observed BFE readback varies with installed sublayers;
 // verify actual arbitration against competing ALE permits instead of a number.
 constexpr UINT16 kSubLayerWeight = 0xfffe;
@@ -46,6 +48,7 @@ class FilterDefinitions {
   ~FilterDefinitions() {
     if (app_) ::FwpmFreeMemory0(reinterpret_cast<void**>(&app_));
     if (system_sd_) ::LocalFree(system_sd_);
+    if (dhcp_sd_) ::LocalFree(dhcp_sd_);
   }
 
   std::string Initialize(DWORD* error_code = nullptr) {
@@ -70,6 +73,12 @@ class FilterDefinitions {
       return "transition_guard_identity_failed";
     }
     system_blob_ = {sd_size, static_cast<UINT8*>(system_sd_)};
+    if (!::ConvertStringSecurityDescriptorToSecurityDescriptorW(
+            L"D:(A;;CC;;;LS)(A;;CC;;;SY)", SDDL_REVISION_1, &dhcp_sd_, &sd_size)) {
+      if (error_code) *error_code = ::GetLastError();
+      return "transition_guard_identity_failed";
+    }
+    dhcp_blob_ = {sd_size, static_cast<UINT8*>(dhcp_sd_)};
     conditions_[0].fieldKey = FWPM_CONDITION_ALE_APP_ID;
     conditions_[0].matchType = FWP_MATCH_EQUAL;
     conditions_[0].conditionValue.type = FWP_BYTE_BLOB_TYPE;
@@ -78,24 +87,59 @@ class FilterDefinitions {
     conditions_[1].matchType = FWP_MATCH_EQUAL;
     conditions_[1].conditionValue.type = FWP_SECURITY_DESCRIPTOR_TYPE;
     conditions_[1].conditionValue.sd = &system_blob_;
+    loopback_condition_.fieldKey = FWPM_CONDITION_FLAGS;
+    loopback_condition_.matchType = FWP_MATCH_FLAGS_ALL_SET;
+    loopback_condition_.conditionValue.type = FWP_UINT32;
+    loopback_condition_.conditionValue.uint32 = FWP_CONDITION_FLAG_IS_LOOPBACK;
+    for (size_t layer = 0; layer < kLayers.size(); ++layer) {
+      const UINT16 local_port = layer % 2 == 0 ? 68 : 546;
+      auto& dhcp = dhcp_conditions_[layer];
+      dhcp[0].fieldKey = FWPM_CONDITION_IP_PROTOCOL;
+      dhcp[0].matchType = FWP_MATCH_EQUAL;
+      dhcp[0].conditionValue.type = FWP_UINT8;
+      dhcp[0].conditionValue.uint8 = IPPROTO_UDP;
+      dhcp[1].fieldKey = FWPM_CONDITION_IP_LOCAL_PORT;
+      dhcp[1].matchType = FWP_MATCH_EQUAL;
+      dhcp[1].conditionValue.type = FWP_UINT16;
+      dhcp[1].conditionValue.uint16 = local_port;
+      dhcp[2].fieldKey = FWPM_CONDITION_IP_REMOTE_PORT;
+      dhcp[2].matchType = FWP_MATCH_EQUAL;
+      dhcp[2].conditionValue.type = FWP_UINT16;
+      dhcp[2].conditionValue.uint16 = layer % 2 == 0 ? local_port - 1 : local_port + 1;
+      dhcp[3].fieldKey = FWPM_CONDITION_ALE_USER_ID;
+      dhcp[3].matchType = FWP_MATCH_EQUAL;
+      dhcp[3].conditionValue.type = FWP_SECURITY_DESCRIPTOR_TYPE;
+      dhcp[3].conditionValue.sd = &dhcp_blob_;
+    }
     return {};
   }
 
   FWPM_FILTER0 At(size_t index) {
-    const bool permit = index % 2 == 0;
+    const bool service = index < kGuardFilterCount;
+    const bool loopback = !service && index < kLoopbackFilterEnd;
+    const bool permit = !service || index % 2 == 0;
+    const size_t layer = service ? index / 2 :
+        loopback ? index - kGuardFilterCount : index - kLoopbackFilterEnd;
     FWPM_FILTER0 filter{};
     filter.filterKey = FilterKey(index);
     filter.displayData.name = const_cast<wchar_t*>(
+        loopback ? L"POKROV loopback" : !service ? L"POKROV DHCP" :
         permit ? L"POKROV transition service" : L"POKROV transition block");
     filter.flags = FWPM_FILTER_FLAG_PERSISTENT;
-    filter.layerKey = *kLayers[index / 2];
+    filter.layerKey = *kLayers[layer];
     filter.subLayerKey = kSubLayer;
     filter.weight.type = FWP_UINT64;
     filter.weight.uint64 = permit ? &permit_weight_ : &block_weight_;
     filter.action.type = permit ? FWP_ACTION_PERMIT : FWP_ACTION_BLOCK;
-    if (permit) {
+    if (service && permit) {
       filter.numFilterConditions = static_cast<UINT32>(conditions_.size());
       filter.filterCondition = conditions_.data();
+    } else if (loopback) {
+      filter.numFilterConditions = 1;
+      filter.filterCondition = &loopback_condition_;
+    } else if (!service) {
+      filter.numFilterConditions = static_cast<UINT32>(dhcp_conditions_[layer].size());
+      filter.filterCondition = dhcp_conditions_[layer].data();
     }
     // Soft permit applies only inside our sublayer; it cannot override another
     // firewall's block. The unconditional default block is a hard block.
@@ -105,8 +149,12 @@ class FilterDefinitions {
  private:
   FWP_BYTE_BLOB* app_ = nullptr;
   PSECURITY_DESCRIPTOR system_sd_ = nullptr;
+  PSECURITY_DESCRIPTOR dhcp_sd_ = nullptr;
   FWP_BYTE_BLOB system_blob_{};
+  FWP_BYTE_BLOB dhcp_blob_{};
   std::array<FWPM_FILTER_CONDITION0, 2> conditions_{};
+  FWPM_FILTER_CONDITION0 loopback_condition_{};
+  std::array<std::array<FWPM_FILTER_CONDITION0, 4>, kLayers.size()> dhcp_conditions_{};
   UINT64 permit_weight_ = 2;
   UINT64 block_weight_ = 1;
 };
@@ -190,10 +238,25 @@ bool Matches(const FWPM_FILTER0& actual, const FWPM_FILTER0& expected) {
     const auto& e = expected.filterCondition[i];
     if (a.fieldKey != e.fieldKey || a.matchType != e.matchType ||
         a.conditionValue.type != e.conditionValue.type) return false;
-    const bool equal = e.conditionValue.type == FWP_BYTE_BLOB_TYPE
-        ? SameBlob(a.conditionValue.byteBlob, e.conditionValue.byteBlob)
-        : SameBlob(a.conditionValue.sd, e.conditionValue.sd);
-    if (!equal) return false;
+    switch (e.conditionValue.type) {
+      case FWP_BYTE_BLOB_TYPE:
+        if (!SameBlob(a.conditionValue.byteBlob, e.conditionValue.byteBlob)) return false;
+        break;
+      case FWP_SECURITY_DESCRIPTOR_TYPE:
+        if (!SameBlob(a.conditionValue.sd, e.conditionValue.sd)) return false;
+        break;
+      case FWP_UINT8:
+        if (a.conditionValue.uint8 != e.conditionValue.uint8) return false;
+        break;
+      case FWP_UINT16:
+        if (a.conditionValue.uint16 != e.conditionValue.uint16) return false;
+        break;
+      case FWP_UINT32:
+        if (a.conditionValue.uint32 != e.conditionValue.uint32) return false;
+        break;
+      default:
+        return false;
+    }
   }
   return true;
 }
@@ -288,6 +351,7 @@ DWORD VerifyGuardPriority(HANDLE engine, UINT16 guard_weight,
 class WindowsGuardBackend final : public TransitionGuardBackend {
  public:
   ~WindowsGuardBackend() override {
+    if (tunnel_engine_) ::FwpmEngineClose0(tunnel_engine_);
     // Non-dynamic session: closing the handle NEVER removes committed filters.
     if (engine_) ::FwpmEngineClose0(engine_);
   }
@@ -368,6 +432,59 @@ class WindowsGuardBackend final : public TransitionGuardBackend {
                     TransitionGuardStage::kInstallCommit);
   }
 
+  std::string PermitTunnel() override {
+    NET_LUID luid{};
+    DWORD result = ::ConvertInterfaceAliasToLuid(L"POKROV", &luid);
+    if (result != NO_ERROR)
+      return Fail(TransitionGuardStage::kInstallApply, result, "transition_guard_tun_missing");
+    FWPM_SESSION0 session{};
+    session.flags = FWPM_SESSION_FLAG_DYNAMIC;
+    session.txnWaitTimeoutInMSec = 5000;
+    session.displayData.name = const_cast<wchar_t*>(L"POKROV verified tunnel");
+    HANDLE engine = nullptr;
+    result = ::FwpmEngineOpen0(nullptr, RPC_C_AUTHN_WINNT, nullptr, &session, &engine);
+    if (result != ERROR_SUCCESS)
+      return Fail(TransitionGuardStage::kEngineOpen, result, "transition_guard_tun_failed");
+    result = ::FwpmTransactionBegin0(engine, 0);
+    if (result == ERROR_SUCCESS) {
+      UINT64 weight = 2;
+      FWPM_FILTER_CONDITION0 condition{};
+      condition.fieldKey = FWPM_CONDITION_IP_LOCAL_INTERFACE;
+      condition.matchType = FWP_MATCH_EQUAL;
+      condition.conditionValue.type = FWP_UINT64;
+      condition.conditionValue.uint64 = &luid.Value;
+      for (size_t layer = 0; layer < kLayers.size() && result == ERROR_SUCCESS; ++layer) {
+        FWPM_FILTER0 filter{};
+        filter.displayData.name = const_cast<wchar_t*>(L"POKROV tunnel permit");
+        filter.layerKey = *kLayers[layer];
+        filter.subLayerKey = kSubLayer;
+        filter.weight.type = FWP_UINT64;
+        filter.weight.uint64 = &weight;
+        filter.action.type = FWP_ACTION_PERMIT;
+        filter.numFilterConditions = 1;
+        filter.filterCondition = &condition;
+        result = ::FwpmFilterAdd0(engine, &filter, nullptr, nullptr);
+      }
+      if (result == ERROR_SUCCESS) result = ::FwpmTransactionCommit0(engine);
+      if (result != ERROR_SUCCESS) ::FwpmTransactionAbort0(engine);
+    }
+    if (result != ERROR_SUCCESS) {
+      ::FwpmEngineClose0(engine);
+      return Fail(TransitionGuardStage::kInstallApply, result, "transition_guard_tun_failed");
+    }
+    tunnel_engine_ = engine;
+    return {};
+  }
+
+  std::string BlockTunnel() override {
+    if (!tunnel_engine_) return {};
+    const DWORD result = ::FwpmEngineClose0(tunnel_engine_);
+    if (result != ERROR_SUCCESS)
+      return Fail(TransitionGuardStage::kRemoveApply, result, "transition_guard_tun_block_failed");
+    tunnel_engine_ = nullptr;
+    return {};
+  }
+
   std::string Remove() override {
     last_failure_ = {TransitionGuardStage::kRemoveApply, 0};
     if (const auto error = Open(); !error.empty()) return error;
@@ -423,6 +540,7 @@ class WindowsGuardBackend final : public TransitionGuardBackend {
   }
 
   HANDLE engine_ = nullptr;
+  HANDLE tunnel_engine_ = nullptr;
   TransitionGuardFailure last_failure_;
 };
 
@@ -435,6 +553,9 @@ class Guard final : public RuntimeTransitionGuard {
   }
 
   std::string Start() override {
+    if (const auto error = backend_->BlockTunnel(); !error.empty())
+      return Report(TransitionGuardOperation::kStart, error);
+    tunnel_allowed_ = false;
     const auto read_error = Refresh();
     if (!read_error.empty()) return Report(TransitionGuardOperation::kStart, read_error);
     if (state_ == TransitionGuardState::kArmed) return {};
@@ -450,11 +571,18 @@ class Guard final : public RuntimeTransitionGuard {
   }
 
   std::string Finish() override {
-    const auto error = ExplicitOff();
-    return error.empty() ? error : Report(TransitionGuardOperation::kFinish, error);
+    if (tunnel_allowed_) return {};
+    if (state_ != TransitionGuardState::kArmed)
+      return Report(TransitionGuardOperation::kFinish, "transition_guard_not_verified");
+    if (const auto error = backend_->PermitTunnel(); !error.empty())
+      return Report(TransitionGuardOperation::kFinish, error);
+    tunnel_allowed_ = true;
+    return {};
   }
 
   std::string ExplicitOff() override {
+    if (const auto error = backend_->BlockTunnel(); !error.empty()) return error;
+    tunnel_allowed_ = false;
     state_ = TransitionGuardState::kIncomplete;
     if (const auto error = backend_->Remove(); !error.empty()) return error;
     if (const auto error = Refresh(); !error.empty()) return error;
@@ -462,7 +590,9 @@ class Guard final : public RuntimeTransitionGuard {
         ? "" : "transition_guard_remove_not_verified";
   }
 
-  bool IsArmed() const override { return state_ != TransitionGuardState::kOff; }
+  bool IsArmed() const override {
+    return state_ != TransitionGuardState::kOff && !tunnel_allowed_;
+  }
 
  private:
   std::string Refresh() {
@@ -475,11 +605,7 @@ class Guard final : public RuntimeTransitionGuard {
   std::string Report(TransitionGuardOperation operation,
                      const std::string& error) {
     if (events_ != nullptr) {
-      auto failure = backend_->LastFailure();
-      if (operation == TransitionGuardOperation::kFinish &&
-          error == "transition_guard_remove_not_verified") {
-        failure = {TransitionGuardStage::kRemoveVerify, 0};
-      }
+      const auto failure = backend_->LastFailure();
       events_->RecordTransitionGuardFailure(operation, failure.stage,
                                             failure.wfp_error);
     }
@@ -489,6 +615,7 @@ class Guard final : public RuntimeTransitionGuard {
   std::unique_ptr<TransitionGuardBackend> backend_;
   ServiceEventSink* events_ = nullptr;
   TransitionGuardState state_ = TransitionGuardState::kIncomplete;
+  bool tunnel_allowed_ = false;
 };
 
 }  // namespace
@@ -521,8 +648,7 @@ bool WindowsLocalDpiControlPermit::OpenBoundSocket(std::uintptr_t bound_socket,
     return false;
   GUID sublayer = kSubLayer;
   if (standalone) {
-    // Guard Finish removes its persistent sublayer. A running connection's
-    // fresh proof owns a separate dynamic sublayer for this exact permit only.
+    // Standalone proof uses a separate scope before the guard is installed.
     if (FAILED(::CoCreateGuid(&sublayer))) return false;
     FWPM_SUBLAYER0 layer{};
     layer.subLayerKey = sublayer;

@@ -1460,7 +1460,7 @@ RuntimeResult RuntimeHost::Connect(const std::string& expected_profile_digest,
                                   const std::optional<CandidateNetworkContext>& local_dpi_network,
                                   const CheckInterruption& telegram_interrupted) {
   if (requires_bound_connect_) return Fail(Status::kNotReady, "profile_identity_mismatch");
-  return ConnectImpl(expected_profile_digest, interrupted, "", true, local_dpi_network, telegram_interrupted);
+  return ConnectImpl(expected_profile_digest, interrupted, "", local_dpi_network, telegram_interrupted);
 }
 
 RuntimeResult RuntimeHost::ConnectWithIdentity(const BoundConnectTarget& target,
@@ -1476,7 +1476,7 @@ RuntimeResult RuntimeHost::ConnectWithIdentity(const BoundConnectTarget& target,
     if (pending != OperationInterruption::kNone) return pending;
     return IsConnectDeadlineCurrent(target) ? OperationInterruption::kNone
                                            : OperationInterruption::kDeadlineExceeded;
-  }, target.core_module_sha256, true, local_dpi_network, telegram_interrupted);
+  }, target.core_module_sha256, local_dpi_network, telegram_interrupted);
 }
 
 RuntimeResult RuntimeHost::PromoteTransportLease(const TransportLeasePromotion& target) {
@@ -1485,6 +1485,10 @@ RuntimeResult RuntimeHost::PromoteTransportLease(const TransportLeasePromotion& 
       effective_profile_digest_ != target.profile_digest ||
       core_->ConfirmATSLease(target) != 1) {
     return {Status::kNotReady, "transport_lease_handoff_unconfirmed"};
+  }
+  if (TransitionGuardArmed() && !transition_guard_->Finish().empty()) {
+    const auto stopped = Disconnect(false);
+    return stopped.status == Status::kOk ? Fail(Status::kNotReady, "transition_guard_failed") : stopped;
   }
   core_egress_validated_ = true;
   return Snapshot();
@@ -1497,6 +1501,8 @@ RuntimeResult RuntimeHost::RevokeTransportLease(const TransportLeaseRevocation& 
     return {Status::kNotReady, "transport_lease_revocation_unconfirmed"};
   }
   core_egress_validated_ = false;
+  if (transition_guard_ && !transition_guard_->Start().empty())
+    return Fail(Status::kNotReady, "transition_guard_failed");
   if (core_->RevokeATSLease(target) != 1) {
     return {Status::kNotReady, "transport_lease_revocation_unconfirmed"};
   }
@@ -1506,7 +1512,6 @@ RuntimeResult RuntimeHost::RevokeTransportLease(const TransportLeaseRevocation& 
 RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_digest,
                                       const CheckInterruption& interrupted,
                                       const std::string& expected_core_digest,
-                                      bool finish_transition_guard,
                                       const std::optional<CandidateNetworkContext>& local_dpi_network,
                                       const CheckInterruption& telegram_interrupted) {
   // Core and network state stay on this serial owner. An interruption never
@@ -1552,6 +1557,9 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
   }
   if (recovery_ == nullptr) {
     return Fail(Status::kNotReady, "recovery_unavailable");
+  }
+  if (transition_guard_ && !transition_guard_->Start().empty()) {
+    return Fail(Status::kNotReady, "transition_guard_failed");
   }
   egress_failure_observation_.reset();
   local_dpi_preparation_.reset();
@@ -1701,6 +1709,13 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
               ServiceEventOutcome::kSucceeded);
   if (const auto result = interruption(true)) return *result;
   if (!requires_bound_connect_) {
+    // Windows DNS and egress verification need the TUN route. The persistent
+    // guard continues to block traffic on every physical interface.
+    if (TransitionGuardArmed() && !transition_guard_->Finish().empty()) {
+      const auto rollback = RollbackRuntime();
+      phase_ = rollback.empty() ? Phase::kConfigStaged : Phase::kRecoveryRequired;
+      return Fail(Status::kNotReady, rollback.empty() ? "transition_guard_failed" : rollback.c_str());
+    }
     RecordEvent(ServiceEvent::kRuntimeEgressVerify,
                 ServiceEventOutcome::kAttempted);
     const auto egress_failure = VerifyEgress(false, interrupted);
@@ -1724,7 +1739,7 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
                 ServiceEventOutcome::kSucceeded);
   }
   // Prove the protected fallback before winws intercepts physical TCP/443.
-  // The transition guard remains armed through DPI proof and admission.
+  // The persistent physical block remains installed through DPI admission.
   std::optional<WindowsLocalDpiStrategy> proved_local_dpi_strategy;
   std::vector<WindowsLocalDpiService> admitted_local_dpi_services;
   const auto local_dpi_owner_current = [&] {
@@ -1834,11 +1849,6 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
   failure_.clear();
   RecordEvent(ServiceEvent::kRuntimeCommit,
               ServiceEventOutcome::kSucceeded);
-  if (finish_transition_guard && core_egress_validated_ && TransitionGuardArmed() &&
-      !transition_guard_->Finish().empty()) {
-    core_egress_validated_ = false;
-    return Fail(Status::kNotReady, "transition_guard_failed");
-  }
   if (proved_local_dpi_strategy && local_dpi_network && local_dpi_current()) {
     local_dpi_active_strategy_ = std::make_pair(local_dpi_network->selection_key, *proved_local_dpi_strategy);
     local_dpi_bind_interface_ = local_dpi_network->bind_interface;
@@ -2037,8 +2047,7 @@ RuntimeResult RuntimeHost::RevokeSmartAccessPolicy(const std::string& body) {
 }
 
 bool RuntimeHost::CanRecheckEgress() const {
-  return phase_ == Phase::kRunning && !requires_bound_connect_ &&
-      !TransitionGuardArmed();
+  return phase_ == Phase::kRunning && !requires_bound_connect_;
 }
 
 std::uint32_t RuntimeHost::EgressCheckBudgetMs() const {
@@ -2112,6 +2121,10 @@ RuntimeResult RuntimeHost::RecheckEgress(const CheckInterruption& interrupted,
                                        std::uint64_t deadline_tick) {
   if (!CanRecheckEgress() ||
       (interrupted && interrupted() == OperationInterruption::kCancelled)) return Snapshot();
+  const bool guarded = TransitionGuardArmed();
+  if (guarded && !transition_guard_->Finish().empty()) {
+    return Fail(Status::kNotReady, "transition_guard_failed");
+  }
   RecordEvent(ServiceEvent::kRuntimeEgressVerify, ServiceEventOutcome::kAttempted);
   const auto failure = VerifyEgress(true, interrupted, deadline_tick);
   const auto interruption = interrupted ? interrupted() : OperationInterruption::kNone;
@@ -2119,11 +2132,16 @@ RuntimeResult RuntimeHost::RecheckEgress(const CheckInterruption& interrupted,
   // Failed health leaves the current TUN in place for protected replacement.
   if (interruption == OperationInterruption::kCancelled) {
     egress_failure_observation_.reset();
+    if (guarded && !transition_guard_->Start().empty()) {
+      return Fail(Status::kNotReady, "transition_guard_failed");
+    }
     return Snapshot();
   }
   if (!failure.empty() || interruption == OperationInterruption::kDeadlineExceeded) {
     core_egress_validated_ = false;
     RecordEvent(ServiceEvent::kRuntimeEgressVerify, ServiceEventOutcome::kFailed);
+    if (transition_guard_ && !transition_guard_->Start().empty())
+      return Fail(Status::kNotReady, "transition_guard_failed");
     const bool timed_out = interruption == OperationInterruption::kDeadlineExceeded &&
         failure != "core_egress_probe_unavailable";
     return Fail(Status::kNotReady, timed_out ? "core_egress_timeout" : SafeEgressFailure(failure));
@@ -2151,7 +2169,7 @@ RuntimeResult RuntimeHost::ReplaceManagedProfile(const std::string& body,
   }
   const auto staged = StageProfile(body);
   if (staged.status != Status::kOk) return staged;
-  const auto connected = ConnectImpl(ProfileDigest(body), interrupted, "", false, local_dpi_network, telegram_interrupted);
+  const auto connected = ConnectImpl(ProfileDigest(body), interrupted, "", local_dpi_network, telegram_interrupted);
   if (connected.status != Status::kOk) return connected;
   if (phase_ != Phase::kRunning || !core_egress_validated_ ||
       effective_profile_digest_ != ProfileDigest(body)) {
@@ -2160,10 +2178,6 @@ RuntimeResult RuntimeHost::ReplaceManagedProfile(const std::string& body,
   if (interrupted && interrupted() != OperationInterruption::kNone) {
     const auto cancelled = Disconnect(false);
     return cancelled.status == Status::kOk ? Fail(Status::kNotReady, "operation_cancelled") : cancelled;
-  }
-  if (!transition_guard_->Finish().empty()) {
-    core_egress_validated_ = false;
-    return Fail(Status::kNotReady, "transition_guard_failed");
   }
   return Snapshot();
 }
@@ -2350,7 +2364,7 @@ RuntimeResult RuntimeHost::MaintainWindowsLocalDpi(const CheckInterruption& inte
       }
       const auto admitted = start_failure.empty()
           ? ProveAndAdmitWindowsLocalDpi(local_dpi_active_strategy_->first, local_dpi_bind_interface_,
-                strategy, owner_current, transition_guard_ && !transition_guard_->IsArmed())
+                strategy, owner_current, !transition_guard_)
           : std::vector<WindowsLocalDpiService>{};
       if (!admitted.empty() && current()) {
         local_dpi_active_strategy_->second = strategy;
@@ -2482,6 +2496,8 @@ std::string RuntimeHost::RecoverPendingRuntime() {
 }
 
 std::string RuntimeHost::RollbackRuntime() {
+  if (transition_guard_ && !transition_guard_->IsArmed() &&
+      !transition_guard_->Start().empty()) return "transition_guard_failed";
   // Observe a late failure before our normal withdrawal replaces the holder's
   // state. Healthy Stop keeps the same-network ordering hint.
   ReadLocalDpiRuntimeObservation();

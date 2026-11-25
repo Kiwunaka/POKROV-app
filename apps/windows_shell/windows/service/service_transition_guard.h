@@ -19,8 +19,8 @@ namespace pokrov::service {
 class RuntimeTransitionGuard {
  public:
   virtual ~RuntimeTransitionGuard() = default;
-  // Start must succeed before stopping the current Core. Finish is only for a
-  // verified replacement. Failure/destruction never releases the guard.
+  // Start blocks traffic before Core changes. Finish permits traffic on the TUN
+  // for this service session. The underlying block survives service exit.
   virtual std::string Start() = 0;
   virtual std::string Finish() = 0;
   // Also usable by the service's explicit repair/uninstall command while the
@@ -78,6 +78,8 @@ class TransitionGuardBackend {
   virtual ~TransitionGuardBackend() = default;
   virtual std::string Read(TransitionGuardState* state) = 0;
   virtual std::string Install() = 0;
+  virtual std::string PermitTunnel() = 0;
+  virtual std::string BlockTunnel() = 0;
   virtual std::string Remove() = 0;
   virtual TransitionGuardFailure LastFailure() const { return {}; }
 };

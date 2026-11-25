@@ -2160,24 +2160,29 @@ void TestProtectedHandoffRetainsGuardUntilVerifiedOrExplicitOff() {
       Expect(host.StageProfile("0\n{}").status == Status::kOk &&
              host.Connect(ProfileDigest("0\n{}")).status == Status::kOk,
              "protected handoff fixture could not connect");
+      Expect(guard_state->starts == 1 && guard_state->finishes == 1 &&
+                 !guard_state->armed,
+             "first connection must arm before permitting the tunnel");
       OperationInterruption interruption = OperationInterruption::kNone;
       core_state->on_start = [&] { Expect(guard_state->armed, "handoff Start ran without guard"); };
       probe_state->on_verify = [&] {
-        Expect(guard_state->armed && guard_state->finishes == 0, "guard released before new egress verification");
+        Expect(!guard_state->armed && guard_state->finishes == 2,
+               "egress verification runs with the new tunnel permit only");
         if (scenario == 2) interruption = OperationInterruption::kCancelled;
       };
       if (scenario == 1) core_state->start_error = "fixture failure";
       const auto result = host.ReplaceManagedProfile("1\n{}", [&] { return interruption; });
-      Expect(guard_state->starts == 1, "handoff did not arm the guard exactly once");
+      Expect(guard_state->starts == (scenario == 2 ? 4 : 3),
+             "handoff blocks the old tunnel and re-arms after a cancelled proof");
       if (scenario == 0) {
-        Expect(result.status == Status::kOk && !guard_state->armed && guard_state->finishes == 1 &&
+        Expect(result.status == Status::kOk && !guard_state->armed && guard_state->finishes == 2 &&
                    Contains(result, ";core_egress_validated=1;") &&
                    result.body.find(";effective_profile_digest=" + ProfileDigest("1\n{}")) != std::string::npos,
                "verified replacement did not finish with its exact identity");
         Expect(host.CancelProtectedHandoff().status == Status::kOk && guard_state->armed,
                "late cancellation stopped replacement without rearming guard");
       } else {
-        Expect(result.status != Status::kOk && guard_state->armed && guard_state->finishes == 0 &&
+        Expect(result.status != Status::kOk && guard_state->armed && guard_state->finishes == (scenario == 1 ? 1 : 2) &&
                    Contains(host.Snapshot(), ";core_egress_validated=0;"),
                "failed/cancelled replacement released guard or reported protection");
       }

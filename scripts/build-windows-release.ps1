@@ -37,6 +37,12 @@ if (-not $SkipBuild -and -not $TransportTrustDefinesFile) {
 $transportTrustArguments = @()
 if ($TransportTrustDefinesFile) {
   $transportTrustPath = (Resolve-Path -LiteralPath $TransportTrustDefinesFile -ErrorAction Stop).Path
+  $transportTrustDefines = [IO.File]::ReadAllText($transportTrustPath) | ConvertFrom-Json
+  $dnsIp = $null
+  if (-not [Net.IPAddress]::TryParse([string]$transportTrustDefines.POKROV_WINDOWS_DNS_ADDRESS, [ref]$dnsIp) -or
+      [string]$transportTrustDefines.POKROV_WINDOWS_DNS_SERVER_NAME -notmatch '^[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$') {
+    throw 'Windows builds require the owned DNS address and TLS server name in the transport trust defines.'
+  }
   $transportTrustArguments = @("--dart-define-from-file=$transportTrustPath")
 }
 
@@ -611,7 +617,7 @@ if (-not $SkipBuild) {
   $nativeCatalogKeys = '{}'
   $nativeCatalogAudience = 'production'
   if ($TransportTrustDefinesFile) {
-    $nativeTrustDefines = [IO.File]::ReadAllText($transportTrustPath) | ConvertFrom-Json
+    $nativeTrustDefines = $transportTrustDefines
     $nativeEnableValue = $nativeTrustDefines.POKROV_ROUTING_CATALOG_ENABLED
     $nativeCatalogEnabled = ($nativeEnableValue -is [bool] -and $nativeEnableValue) -or
       ($nativeEnableValue -is [string] -and $nativeEnableValue -ceq 'true')

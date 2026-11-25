@@ -212,7 +212,6 @@ class RuntimeHost {
   RuntimeResult ConnectImpl(const std::string& expected_profile_digest,
                             const CheckInterruption& interrupted,
                             const std::string& expected_core_digest,
-                            bool finish_transition_guard = true,
                             const std::optional<CandidateNetworkContext>& local_dpi_network = std::nullopt,
                             const CheckInterruption& telegram_interrupted = {});
   bool ClearWindowsLocalDpiAfterCoreStopped();

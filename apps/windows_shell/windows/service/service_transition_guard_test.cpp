@@ -21,13 +21,15 @@ struct StoredPolicy {
   int removes = 0;
   bool read_fails = false;
   bool install_fails = false;
-  bool remove_fails = false;
+  bool permit_fails = false;
+  bool tunnel_permitted = false;
   bool read_fails_after_install = false;
 };
 
 class FakeBackend final : public pokrov::service::TransitionGuardBackend {
  public:
   explicit FakeBackend(StoredPolicy& policy) : policy_(policy) {}
+  ~FakeBackend() override { policy_.tunnel_permitted = false; }
   std::string Read(TransitionGuardState* state) override {
     *state = policy_.state;
     return policy_.read_fails ? "read_failed" : "";
@@ -39,9 +41,17 @@ class FakeBackend final : public pokrov::service::TransitionGuardBackend {
     policy_.read_fails = policy_.read_fails_after_install;
     return {};
   }
+  std::string PermitTunnel() override {
+    if (policy_.permit_fails) return "permit_failed";
+    policy_.tunnel_permitted = true;
+    return {};
+  }
+  std::string BlockTunnel() override {
+    policy_.tunnel_permitted = false;
+    return {};
+  }
   std::string Remove() override {
     ++policy_.removes;
-    if (policy_.remove_fails) return "remove_failed";
     policy_.state = TransitionGuardState::kOff;
     return {};
   }
@@ -66,17 +76,24 @@ int main() {
     expect(!guard->IsArmed(), "clean startup is off");
     expect(guard->Start().empty() && guard->IsArmed(), "arm before Core stop");
     expect(guard->Start().empty() && persisted.installs == 1, "arm is idempotent");
+    expect(guard->Finish().empty() && !guard->IsArmed() && persisted.tunnel_permitted &&
+               persisted.state == TransitionGuardState::kArmed,
+           "verification permits the tunnel while keeping the persistent block");
   }
-  expect(persisted.state == TransitionGuardState::kArmed && persisted.removes == 0,
+  expect(persisted.state == TransitionGuardState::kArmed && persisted.removes == 0 &&
+             !persisted.tunnel_permitted,
          "destruction/crash must retain persisted block");
   {
     auto restarted = create(persisted);
     expect(restarted->IsArmed() && persisted.removes == 0,
            "restart adopts block without clearing it");
-    persisted.remove_fails = true;
+    persisted.permit_fails = true;
     expect(!restarted->Finish().empty() && restarted->IsArmed(),
            "failed finish stays armed");
-    persisted.remove_fails = false;
+    persisted.permit_fails = false;
+    expect(restarted->Finish().empty() && restarted->Start().empty() &&
+               !persisted.tunnel_permitted && restarted->IsArmed(),
+           "replacement closes the old permit before stopping the tunnel");
     expect(restarted->ExplicitOff().empty() && !restarted->IsArmed(),
            "explicit off recovers persisted policy");
   }
@@ -93,7 +110,7 @@ int main() {
            "install without readback cannot authorize Core stop");
     partial.read_fails = false;
     expect(guard->Start().empty(), "explicit retry verifies existing policy");
-    expect(guard->Finish().empty() && !guard->IsArmed(), "verified replacement releases");
+    expect(guard->Finish().empty() && !guard->IsArmed(), "verified replacement permits the TUN");
   }
   {
     StoredPolicy unknown;
@@ -149,8 +166,34 @@ int main() {
       &FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V4, &FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V6};
   size_t index = 0;
   const auto error = VisitTransitionGuardFiltersForTesting([&](const FWPM_FILTER0& f) {
-    expect(index < 8, "exactly eight owned filters");
-    if (index >= 8) return;
+    if (index >= 8) {
+      const bool loopback = index < 12;
+      const auto layer = (index - 8) % layers.size();
+      expect(f.layerKey == *layers[layer] && f.action.type == FWP_ACTION_PERMIT &&
+                 f.flags == FWPM_FILTER_FLAG_PERSISTENT &&
+                 TransitionGuardFilterMatchesForTesting(f, f),
+             "verified network maintenance permit");
+      const auto* conditions = f.filterCondition;
+      if (loopback) {
+        expect(f.numFilterConditions == 1 && conditions[0].fieldKey == FWPM_CONDITION_FLAGS &&
+                   conditions[0].matchType == FWP_MATCH_FLAGS_ALL_SET &&
+                   conditions[0].conditionValue.uint32 == FWP_CONDITION_FLAG_IS_LOOPBACK,
+               "permit only local loopback");
+      } else {
+        expect(f.numFilterConditions == 4 &&
+                   conditions[0].fieldKey == FWPM_CONDITION_IP_PROTOCOL &&
+                   conditions[0].conditionValue.uint8 == IPPROTO_UDP &&
+                   conditions[1].fieldKey == FWPM_CONDITION_IP_LOCAL_PORT &&
+                   conditions[1].conditionValue.uint16 == (layer % 2 == 0 ? 68 : 546) &&
+                   conditions[2].fieldKey == FWPM_CONDITION_IP_REMOTE_PORT &&
+                   conditions[2].conditionValue.uint16 == (layer % 2 == 0 ? 67 : 547) &&
+                   conditions[3].fieldKey == FWPM_CONDITION_ALE_USER_ID &&
+                   conditions[3].conditionValue.type == FWP_SECURITY_DESCRIPTOR_TYPE,
+               "DHCP permit matches the port pair and system service identities");
+      }
+      ++index;
+      return;
+    }
     const bool permit = index % 2 == 0;
     expect(f.layerKey == *layers[index / 2], "both ALE directions and IP families");
     expect(f.flags == FWPM_FILTER_FLAG_PERSISTENT && f.providerKey == nullptr,
@@ -238,7 +281,7 @@ int main() {
     }
     ++index;
   });
-  expect(error.empty() && index == 8, "actual policy builds read-only");
+  expect(error.empty() && index == 16, "actual policy builds read-only");
 
   // Observed Flowseal failure: the guard blocked injected control packets at
   // ALE_AUTH_CONNECT_V4. Inspect the actual temporary exception without
