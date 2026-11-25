@@ -3817,7 +3817,7 @@ void main() {
   });
 
   test(
-      'uses local selection and promotes the profile when Smart Connect advisory stalls',
+      'uses local Smart Connect when advisory stalls and keeps the profile on candidate conflict',
       () async {
     final tempDirectory = await Directory.systemTemp.createTemp(
       'pokrov-smart-connect-background-telemetry-test-',
@@ -3829,6 +3829,17 @@ void main() {
     });
 
     final selectStarted = Completer<void>();
+    const retiredRef = 'pl:reality';
+    var retireCandidate = false;
+    var conflicts = 0;
+    Map<String, Object?> catalogCandidate(String node, int priority) => {
+      'candidate_ref': '$node:reality', 'profile_ref': 'reality',
+      'node_code': node, 'country_code': node.toUpperCase(),
+      'protocol': 'vless', 'transport': 'tcp', 'protection': 'reality', 'priority': priority,
+      'parameters': {'network': 'tcp', 'flow': ''},
+      'requirements': {'minimum_client_release': '1.2.0', 'minimum_core_release': null,
+        'platforms': ['windows'], 'required_features': ['singbox_vless_v1', 'singbox_reality_v1']},
+    };
     var latencyUploads = 0;
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(server.close);
@@ -3859,6 +3870,15 @@ void main() {
           continue;
         }
         if (request.uri.path == '/api/client/profile/managed') {
+          if (request.uri.queryParameters['selected_candidate_ref'] == retiredRef) {
+            conflicts++;
+            request.response
+              ..statusCode = HttpStatus.conflict
+              ..headers.contentType = ContentType.json
+              ..write('{"detail":"Transport candidate unavailable"}');
+            await request.response.close();
+            continue;
+          }
           final profile = _readyManagedProfile('background')
             ..['smart_connect'] = <String, Object?>{
               'eligible': true,
@@ -3871,6 +3891,15 @@ void main() {
                 },
               ],
             };
+          if (retireCandidate) {
+            profile['transport_profile'] = 'reality';
+            profile['transport_kind'] = 'reality';
+            profile['transport_catalog'] = {
+              'schema_version': 'pokrov-transport-catalog-v1', 'revision': 'background',
+              'selected_candidate_ref': 'de:reality',
+              'candidates': [catalogCandidate('de', 0), catalogCandidate('pl', 1)],
+            };
+          }
           request.response
             ..headers.contentType = ContentType.json
             ..write(jsonEncode(profile));
@@ -3878,6 +3907,13 @@ void main() {
           continue;
         }
         if (request.uri.path == '/api/client/nodes/select') {
+          if (retireCandidate) {
+            request.response
+              ..headers.contentType = ContentType.json
+              ..write('{"selected_node_code":"pl"}');
+            await request.response.close();
+            continue;
+          }
           if (!selectStarted.isCompleted) {
             selectStarted.complete();
           }
@@ -3918,6 +3954,15 @@ void main() {
     await selectStarted.future.timeout(const Duration(seconds: 1));
     await Future<void>.delayed(const Duration(milliseconds: 160));
     expect(latencyUploads, 1);
+
+    retireCandidate = true;
+    final current = await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel,
+      runtimeFeatures: const {RuntimeTransportFeature.vless, RuntimeTransportFeature.reality},
+    );
+    expect(conflicts, 1);
+    expect(current.transportCatalog?.selectedCandidateRef, 'de:reality');
   });
 
   test('redeems an activation code through the app-first unified endpoint',

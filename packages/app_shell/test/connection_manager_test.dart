@@ -1750,6 +1750,31 @@ void main() {
     expect(runtime.connectCalls, 2);
   });
 
+  test('Windows Auto refreshes the catalog when candidate material is gone', () async {
+    final [unreachable, retired, replacement, ...] = _candidates;
+    final bootstrapper = _Bootstrapper(catalog: true)
+      ..candidates = [unreachable, retired]
+      ..exactProfileFailure = const BootstrapFailure('Transport candidate unavailable',
+          statusCode: 409, operation: 'GET /api/client/profile/managed?catalog_version=1',
+          preparation: {'stage': 'managed_fetch', 'elapsed_ms': 10, 'http_status': 409});
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+      ..supportsCandidates = true
+      ..failedProbeProfiles.add(unreachable.candidateRef);
+    final manager = _manager(runtime, bootstrapper,
+        authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    addTearDown(manager.dispose);
+
+    final connecting = manager.connect();
+    await runtime.probeStarted.future.timeout(const Duration(seconds: 3));
+    bootstrapper.candidates = [replacement];
+    await connecting;
+
+    expect(bootstrapper.resolutions.map((attempt) => attempt.selected),
+        ['', retired.candidateRef, '']);
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(runtime.stagedPayloads.single.materialCandidate?.candidateRef, replacement.candidateRef);
+  });
+
   test('access denial received during protected recovery stops its retained TUN', () async {
     final runtime = _Runtime()..supportsCandidates = true;
     final manager = _manager(runtime, _Bootstrapper(catalog: true));
@@ -4543,6 +4568,7 @@ void main() {
     runtime.probeRelease.complete();
     await connecting;
     expect(runtime.probedPayloads.map((payload) => payload.materialCandidate?.candidateRef), [bridgeRef]);
+    expect(runtime.probeTimeouts.single, const Duration(seconds: 8));
     expect(manager.status.phase, ConnectionPhase.connected);
     final staged = runtime.stagedPayloads.single;
     expect(staged.materialCandidate?.candidateRef, bridgeRef);

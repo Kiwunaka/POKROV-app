@@ -1244,6 +1244,10 @@ class BootstrapFailure implements Exception {
 
   PortalFailureReason? get reason => PortalFailureReason.fromCode(code);
 
+  bool get isUnavailableManagedCandidate =>
+      statusCode == HttpStatus.conflict &&
+      operation?.split('?').first == 'GET /api/client/profile/managed';
+
   int? get httpStatusForDiagnostics {
     if (apiFailureKind != null) return observedHttpStatus;
     final requestOperation = operation ?? '';
@@ -4069,7 +4073,11 @@ class AppFirstRuntimeBootstrapper
                       },
                     ).timeout(_smartConnectProfileRefreshTimeout);
                     accessPreparing = false;
-                  } on TimeoutException {
+                  } on Object catch (error) {
+                    if (error is! TimeoutException &&
+                        (error is! BootstrapFailure || !error.isUnavailableManagedCandidate)) {
+                      rethrow;
+                    }
                     requests.requireActive();
                     if (normalizedExcludedNodeCodes.isNotEmpty) rethrow;
                     // The first catalog profile is already authorized and usable.

@@ -396,9 +396,12 @@ class SmartConnectCandidateSelector {
           rethrow;
         }
         if (ended.isCompleted) return;
-        if (error.apiFailureKind != null) apiFailure ??= error;
+        if (error.isUnavailableManagedCandidate || error.apiFailureKind != null) {
+          apiFailure ??= error;
+        }
         outcome = SmartConnectCandidateProbeResult.failure(probeClock.isRunning
-            ? 'probe_adapter_failed' : switch (error.apiFailureKind) {
+            ? 'probe_adapter_failed' : switch (
+                error.isUnavailableManagedCandidate ? 'request_http' : error.apiFailureKind) {
                 'request_timeout' => 'prepare_timeout',
                 'request_http' => 'prepare_http',
                 'request_socket' => 'prepare_socket',

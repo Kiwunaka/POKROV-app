@@ -419,6 +419,19 @@ class ConnectionManager extends ChangeNotifier {
       inputs.hostPlatform == HostPlatform.android && inputs.preferredCandidateRef.isNotEmpty
           ? const Duration(seconds: 60)
           : _dnsCandidateSelectionTimeout;
+
+  Duration _ordinaryCandidateProbeTimeout(
+      ManagedProfileCacheInputs inputs, {required bool initialAndroidPreparation}) {
+    if (inputs.hostPlatform == HostPlatform.android && initialAndroidPreparation) {
+      return const Duration(seconds: 12);
+    }
+    // A country-scoped Windows probe needs time for both the 64 KiB proof
+    // and the reserve responder if the primary stalls.
+    if (inputs.hostPlatform == HostPlatform.windows && inputs.preferredCountryCode.isNotEmpty) {
+      return const Duration(seconds: 8);
+    }
+    return const Duration(seconds: 4);
+  }
   ({int command, Stopwatch clock, Duration timeout, Completer<void> expired,
     void Function() expire, void Function() close})? _connectDeadline;
 
@@ -2887,6 +2900,7 @@ class ConnectionManager extends ChangeNotifier {
     Set<String> excludedCandidateRefs = const {},
     bool smartAccessVpnFallback = false,
     void Function(String)? onMaterialOrigin,
+    bool retryCatalogConflict = true,
   }) async {
     final generation = ownerGeneration ?? _connectionCoordinator.operationGeneration;
     final profileRevision = _managedProfileRevision;
@@ -3131,10 +3145,9 @@ class ConnectionManager extends ChangeNotifier {
             excludedCandidateRefs: excludedCandidateRefs,
             probeTimeout: alternateHelper || identical(group, dnsCandidates)
                 ? selectionTimeout
-                : initialProfilePreparation &&
-                    _appContext.hostPlatform == HostPlatform.android &&
-                    identical(group, ordinaryCandidates)
-                ? const Duration(seconds: 12)
+                : identical(group, ordinaryCandidates)
+                ? _ordinaryCandidateProbeTimeout(inputs,
+                    initialAndroidPreparation: initialProfilePreparation)
                 : const Duration(seconds: 4),
             selectionTimeout: _withinConnectBudget(selectionTimeout),
             probeSettlementTimeout: _candidateWorkTimeout,
@@ -3185,12 +3198,23 @@ class ConnectionManager extends ChangeNotifier {
           // A failed WARP chain may use the ordinary candidate catalog.
         } on BootstrapFailure catch (error) {
           if (error.statusCode == 401 || error.statusCode == 403 ||
-              error.code == 'managed_profile_superseded' || error.apiFailureKind == null) rethrow;
+              error.code == 'managed_profile_superseded' ||
+              (!error.isUnavailableManagedCandidate && error.apiFailureKind == null)) rethrow;
           requireCurrent();
           apiFailure ??= error;
         }
       }
       if (!selectedCandidate) {
+        if (retryCatalogConflict && apiFailure?.isUnavailableManagedCandidate == true &&
+            inputs.hostPlatform == HostPlatform.windows && inputs.preferredCandidateRef.isEmpty &&
+            inputs.preferredNodeCode.isEmpty && invitation == null) {
+          return _resolveManagedProfile(
+              ownerGeneration: generation, deadline: deadline, coldConnect: coldConnect,
+              initialProfilePreparation: initialProfilePreparation, suppressWarpRuntime: suppressWarpRuntime,
+              recoveryCandidateRef: recoveryCandidateRef, excludedCandidateRefs: excludedCandidateRefs,
+              smartAccessVpnFallback: smartAccessVpnFallback, onMaterialOrigin: onMaterialOrigin,
+              retryCatalogConflict: false);
+        }
         throw apiFailure ?? const BootstrapFailure('Рабочее подключение не найдено. Проверь сеть и попробуй ещё раз.',
             code: 'candidate_selection_exhausted', operationalCode: 'CONN-008');
       }
@@ -3375,6 +3399,8 @@ class ConnectionManager extends ChangeNotifier {
             candidate.warpMode != null && candidate.warpMode != 'warp_direct').toList();
         final directWarpCandidates = cachedCandidates.where((candidate) =>
             candidate.warpMode == 'warp_direct').toList();
+        final ordinaryCandidates = cachedCandidates.where((candidate) => candidate.warpMode == null &&
+            !const {'dnstt', 'slipstream', 'mts', 'vk'}.contains(candidate.transport)).toList();
         final dnsCandidates = [
           ...cachedCandidates.where((candidate) => candidate.transport == 'mts').take(1),
           ...cachedCandidates.where((candidate) => candidate.transport == 'vk').take(1),
@@ -3383,8 +3409,7 @@ class ConnectionManager extends ChangeNotifier {
         ]..sort((a, b) => a.priority.compareTo(b.priority));
         final groups = [
           warpCandidates,
-          cachedCandidates.where((candidate) => candidate.warpMode == null &&
-              !const {'dnstt', 'slipstream', 'mts', 'vk'}.contains(candidate.transport)).toList(),
+          ordinaryCandidates,
           dnsCandidates,
           directWarpCandidates,
         ];
@@ -3421,9 +3446,8 @@ class ConnectionManager extends ChangeNotifier {
               probeSettlementTimeout: _candidateWorkTimeout,
               probeTimeout: alternateHelper ? helperTimeout : identical(group, dnsCandidates)
                   ? _dnsCandidateTimeoutFor(inputs)
-                  : coldConnect && inputs.hostPlatform == HostPlatform.android &&
-                      group.every((candidate) => candidate.warpMode == null)
-                  ? const Duration(seconds: 12)
+                  : identical(group, ordinaryCandidates)
+                  ? _ordinaryCandidateProbeTimeout(inputs, initialAndroidPreparation: coldConnect)
                   : const Duration(seconds: 4),
               onProbeResult: (candidate, result) {
                 if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
