@@ -4865,15 +4865,7 @@ class AppFirstRuntimeBootstrapper
         'occurred_at': occurredAt.toIso8601String(),
         if (connected != null) 'connectivity': runtimeConnectivityReport(connectivitySnapshot),
         if (egressObservation case final observation?)
-          'egress_probe': {'stage': observation.stage, 'outcome': observation.outcome,
-            'error_domain': observation.errorDomain, 'error_code': observation.errorCode,
-            'elapsed_ms': observation.elapsedMs,
-            'http_local_is_tun': observation.httpLocalIsTun,
-            if (observation.target != null) ...{
-              'target': observation.target,
-              'owner_remaining_ms_at_entry': observation.ownerRemainingMsAtEntry,
-              'dns_a_accepted': observation.dnsAAccepted,
-            }},
+          'egress_probe': _egressObservationJson(observation),
         if (KnownOperationalErrorCodes.contains(safeErrorCode) ||
             RegExp(r'^[a-z][a-z0-9_]{0,63}$').hasMatch(safeErrorCode))
           'error_code': safeErrorCode,

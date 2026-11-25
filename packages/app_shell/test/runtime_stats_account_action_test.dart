@@ -57,16 +57,25 @@ void main() {
     await original.redeemCode(hostPlatform: platform, code: 'fixture-code');
     await original.connectionDiagnostics.start(platform, null);
     final attempt = original.connectionDiagnostics.beginAttempt(platform, 1)!;
+    final outbox = File('${directory.path}/runtime-stats-outbox-windows.json');
     attempt.enter(ConnectionDiagnosticStage.profile);
+    final until = DateTime.now().add(const Duration(seconds: 2));
+    while (!await outbox.exists() && DateTime.now().isBefore(until)) {
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+    List<Map> pending() => (jsonDecode(outbox.readAsStringSync())['records'] as List)
+        .map((record) => record['body'] as Map).toList();
+    final early = pending().single;
+    expect(early['runtime_phase'], 'connect_trace');
+    expect((early['connection_trace']['points'] as List).single, containsPair('outcome', 'started'));
+    expect(early['attempt_number'], 1);
+    attempt.recordCandidate('de2', 'vless_reality',
+      const SmartConnectCandidateProbeResult.failure('timeout', duration: Duration(milliseconds: 30),
+        probeStage: 'tls_handshake'));
     attempt.enter(ConnectionDiagnosticStage.core);
     attempt.enter(ConnectionDiagnosticStage.egress);
     await attempt.finish('failed', errorCode: 'EGRESS-001');
-    final outbox = File('${directory.path}/runtime-stats-outbox-windows.json');
-    Map pendingDiagnostic() {
-      final pending = (jsonDecode(outbox.readAsStringSync()) as Map)['records'] as List;
-      return (pending.firstWhere((record) =>
-        (record as Map)['body']['runtime_phase'] == 'connect_diagnostic') as Map)['body'] as Map;
-    }
+    Map pendingDiagnostic() => pending().singleWhere((record) => record['runtime_phase'] == 'connect_diagnostic');
     final delayed = pendingDiagnostic();
     expect(delayed['connected'], isNull);
     expect(delayed['attempt_number'], 1);
@@ -79,6 +88,11 @@ void main() {
     expect(await recovering.reportRuntimeStats(hostPlatform: platform,
       runtimePhase: 'app_opened', connected: false), isTrue);
     expect(reports.singleWhere((report) => report['runtime_phase'] == 'connect_diagnostic'), delayed);
+    final trace = reports.where((report) => report['runtime_phase'] == 'connect_trace')
+      .expand((report) => (report['connection_trace']['points'] as List).cast<Map>()).toList();
+    expect(trace.where((point) => point['kind'] == 'candidate').single,
+      allOf(containsPair('transport', 'vless_reality'), containsPair('stage', 'tls_handshake')));
+    expect(trace.map((point) => point['sequence']).toSet().length, trace.length);
     expect(reports.singleWhere((report) => report['runtime_phase'] == 'exit_diagnostic')['exit_diagnostic'],
       containsPair('kind', 'dart_crash'));
     accepts = false;
@@ -86,6 +100,7 @@ void main() {
     second.enter(ConnectionDiagnosticStage.profile);
     await second.finish('failed', errorCode: 'API-002');
     expect(pendingDiagnostic()['attempt_number'], 2);
+    expect(pending().any((record) => record['runtime_phase'] == 'connect_trace'), isTrue);
     await recovering.connectionDiagnostics.setEnabled(platform, false);
     final disabled = restart().connectionDiagnostics;
     expect(await disabled.enabled(platform), isFalse);

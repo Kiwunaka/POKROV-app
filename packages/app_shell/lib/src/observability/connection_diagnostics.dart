@@ -13,16 +13,40 @@ String _diagnosticStageName(ConnectionDiagnosticStage stage) =>
         ? 'route_switch'
         : stage.name;
 
+Map<String, Object?> _egressObservationJson(
+        RuntimeEgressProbeObservation probe) =>
+    {
+      'stage': probe.stage,
+      'outcome': probe.outcome,
+      'error_domain': probe.errorDomain,
+      'error_code': probe.errorCode,
+      'elapsed_ms': probe.elapsedMs,
+      'http_local_is_tun': probe.httpLocalIsTun,
+      if (probe.target != null) ...{
+        'target': probe.target,
+        'owner_remaining_ms_at_entry': probe.ownerRemainingMsAtEntry,
+        'dns_a_accepted': probe.dnsAAccepted,
+      },
+    };
+
 final class ConnectionDiagnosticAttempt {
   ConnectionDiagnosticAttempt._(
-      this._owner, this._platform, this._binding, this.number);
+      this._owner, this._platform, this._binding, this.number)
+      : _preferenceRevision = _owner._preferenceRevision;
 
   final AppFirstConnectionDiagnostics _owner;
   final HostPlatform _platform;
   final _RuntimeStatsBinding _binding;
   final int number;
+  final int _preferenceRevision;
   final _steps = <Map<String, Object?>>[];
   final _clock = Stopwatch();
+  final _traceClock = Stopwatch()..start();
+  final _trace = <Map<String, Object?>>[];
+  Timer? _traceTimer;
+  Object? _lastRuntime;
+  int _traceCount = 0;
+  int _routeCount = 0;
   ConnectionDiagnosticStage? _stage;
   ConnectionDiagnosticStage? _lastStage;
   bool _finished = false;
@@ -38,6 +62,11 @@ final class ConnectionDiagnosticAttempt {
     _clock
       ..reset()
       ..start();
+    _tracePoint({
+      'kind': 'step',
+      'stage': _diagnosticStageName(stage),
+      'outcome': 'started'
+    });
     unawaited(_owner._rememberStage(_platform, _binding, number, stage));
   }
 
@@ -46,21 +75,153 @@ final class ConnectionDiagnosticAttempt {
     if (_finished || stage == null) return;
     _clock.stop();
     if (_steps.length == 16) _steps.removeAt(0);
-    _steps.add({
+    final step = <String, Object?>{
       'stage': _diagnosticStageName(stage),
       'outcome': outcome,
       'duration_ms':
           (durationMs ?? _clock.elapsedMilliseconds).clamp(0, 3600000),
       if (errorCode != null && KnownOperationalErrorCodes.contains(errorCode))
         'error_code': errorCode,
-    });
+    };
+    _steps.add(step);
+    _tracePoint({'kind': 'step', ...step});
     _stage = null;
+  }
+
+  void recordCandidate(
+      String node, String transport, SmartConnectCandidateProbeResult result) {
+    if (_finished || !RegExp(r'^[a-z][a-z0-9_]{0,31}$').hasMatch(transport))
+      return;
+    _tracePoint({
+      'kind': 'candidate',
+      if (RegExp(r'^[a-z0-9_-]{1,32}$').hasMatch(node)) 'node': node,
+      'transport': transport,
+      'passed': result.profile != null,
+      'duration_ms': result.duration.inMilliseconds.clamp(0, 3600000),
+      if (RuntimeCandidateProbeResult.probeStages.contains(result.probeStage))
+        'stage': result.probeStage,
+      if (OperationalAttributePolicy.managedProfilePreparation(
+              result.preparation)
+          case final preparation?)
+        'preparation': preparation,
+      if (RuntimeCandidateProbeResult.probeErrorFromWire(result.probeError)
+          case final error?)
+        'error': error,
+    });
+  }
+
+  int nextProofRoute() => ++_routeCount;
+
+  void recordBoundProbe(int route, String family, RuntimeBoundProbeStage stage,
+      RuntimeBoundProbeOutcome outcome, int? durationMs) {
+    if (_finished || route > 64) return;
+    _tracePoint({
+      'kind': 'bound_probe',
+      'route': route,
+      'family': family,
+      'stage': stage.name,
+      'outcome': outcome.name,
+      if (durationMs != null) 'duration_ms': durationMs.clamp(0, 3600000),
+    });
+  }
+
+  void recordRuntime(RuntimeSnapshot snapshot) {
+    final probe = snapshot.egressProbeObservation;
+    final verified = snapshot.isCleanlyHealthy
+        ? true
+        : snapshot.coreEgressValidated == false
+            ? false
+            : null;
+    final key = (
+      snapshot.phase,
+      snapshot.dnsState,
+      snapshot.uplinkState,
+      verified,
+      snapshot.protectionRetained,
+      snapshot.lastFailureKind,
+      probe?.stage,
+      probe?.outcome,
+      probe?.errorCode
+    );
+    if (_lastRuntime == key) return;
+    _lastRuntime = key;
+    _tracePoint({
+      'kind': 'runtime',
+      'phase': snapshot.phase.name,
+      'dns': snapshot.dnsState.name,
+      'uplink': snapshot.uplinkState.name,
+      if (verified != null) 'egress_validated': verified,
+      'protection_retained': snapshot.protectionRetained,
+      if (snapshot.lastFailureKind != null)
+        'error_code':
+            OperationalFailureMapper.connection(snapshot.lastFailureKind),
+      if (probe != null) 'probe': _egressObservationJson(probe),
+    });
+  }
+
+  void recordEgressFailure(
+      RuntimeEgressProbeObservation probe, String errorCode) {
+    _tracePoint({
+      'kind': 'runtime',
+      'probe': _egressObservationJson(probe),
+      'error_code': errorCode
+    });
+  }
+
+  bool get _canTrace =>
+      _owner._enabled == true &&
+      _owner._preferenceRevision == _preferenceRevision;
+
+  void _tracePoint(Map<String, Object?> point) {
+    if (!_canTrace || _traceCount >= 64 || _traceClock.elapsed.inHours >= 24)
+      return;
+    final item = {
+      ...point,
+      'at_ms': _traceClock.elapsedMilliseconds,
+      'sequence': _traceCount + 1
+    };
+    if (_trace.length == 8 ||
+        utf8
+                .encode(jsonEncode({
+                  'points': [..._trace, item]
+                }))
+                .length >
+            2600) {
+      unawaited(_flushTrace());
+    }
+    _trace.add(item);
+    _traceCount++;
+    if (_traceCount == 1) {
+      unawaited(_flushTrace());
+    } else {
+      _traceTimer ??=
+          Timer(const Duration(seconds: 3), () => unawaited(_flushTrace()));
+    }
+  }
+
+  Future<void> _flushTrace() async {
+    _traceTimer?.cancel();
+    _traceTimer = null;
+    if (_trace.isEmpty) return;
+    final points = _trace.toList();
+    _trace.clear();
+    if (!_canTrace) return;
+    await _owner._queue(_platform, _binding,
+        phase: 'connect_trace',
+        detail: {
+          'connection_trace': {'points': points}
+        },
+        attempt: number);
   }
 
   void confirmPermission() {
     final index = _steps.lastIndexWhere((step) =>
         step['stage'] == 'permission' && step['outcome'] == 'unknown');
-    if (index != -1) _steps[index]['outcome'] = 'succeeded';
+    if (index != -1) {
+      _steps[index]['outcome'] = 'succeeded';
+      _tracePoint(
+          {'kind': 'step', 'stage': 'permission', 'outcome': 'succeeded'});
+    }
   }
 
   Future<void> finish(
@@ -83,8 +244,12 @@ final class ConnectionDiagnosticAttempt {
                 ? 'unknown'
                 : outcome,
         errorCode: errorCode,
-        durationMs: _stage == ConnectionDiagnosticStage.egress ? egressDurationMs : null);
+        durationMs: _stage == ConnectionDiagnosticStage.egress
+            ? egressDurationMs
+            : null);
     _finished = true;
+    final traceDelivery = _flushTrace();
+    if (!_canTrace) return;
     unawaited(_owner._rememberStage(_platform, _binding, number, _lastStage,
         finished: true));
     await _owner._queue(
@@ -99,6 +264,7 @@ final class ConnectionDiagnosticAttempt {
       transport: transport,
       node: node,
     );
+    await traceDelivery;
   }
 }
 
@@ -196,8 +362,9 @@ final class AppFirstConnectionDiagnostics {
       final existing = _runBinding;
       if (existing?.accountId == binding.accountId &&
           existing?.installId == binding.installId) {
-        if (await _owner._runtimeStatsOutbox.nextDiagnosticKey(platform, binding) != null)
-          _deliver(platform);
+        if (await _owner._runtimeStatsOutbox
+                .nextDiagnosticKey(platform, binding) !=
+            null) _deliver(platform);
         return;
       }
       final file = await _file(platform, 'run');
@@ -236,8 +403,9 @@ final class AppFirstConnectionDiagnostics {
         _run = run;
         _runBinding = binding;
       });
-      if (await _owner._runtimeStatsOutbox.nextDiagnosticKey(platform, binding) != null)
-        _deliver(platform);
+      if (await _owner._runtimeStatsOutbox
+              .nextDiagnosticKey(platform, binding) !=
+          null) _deliver(platform);
     } on Object {
       // Diagnostics can be unavailable while the app and tunnel keep working.
     }
