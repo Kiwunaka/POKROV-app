@@ -56,9 +56,10 @@ bool WindowsTelegramWSPreparationCurrent(const WindowsTelegramWSPreparation& val
 // selected leaf to pass its own liveness check after the ordinary TUN proof.
 std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& profile,
     bool first_provider_qa = false, EgressProbeReserve* egress_reserve = nullptr,
-    std::string* selected_vpn_tag = nullptr);
+    std::string* selected_vpn_tag = nullptr, bool use_api_reserve = false);
 std::uint64_t WindowsConnectionHelperStartupBudgetMs(const std::string& profile);
 std::uint32_t WindowsConnectionHelperIoTimeoutMs(const std::string& profile);
+bool UsesWindowsOwnedDns(const std::string& profile);
 // Purpose check only; Core validates the complete worker config before admission.
 bool IsWindowsFirstProviderQaRuntimeControl(const std::string& config);
 // Override only cancellation status; retain the trusted Core's completed stages.

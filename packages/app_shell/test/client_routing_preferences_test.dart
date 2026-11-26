@@ -71,6 +71,20 @@ void main() {
     }
   }, skip: !windowsOwnedDnsConfigured);
 
+  test('Windows owned DNS keeps both API proof hosts on the app tunnel', () {
+    final profile = applyPokrovRoutingPreferences(
+      _profile(mode: RouteMode.selectedApps),
+      const PokrovRoutingPreferences.defaults(),
+      hostPlatform: HostPlatform.windows,
+    );
+    final config = jsonDecode(profile.configPayload) as Map;
+    final rules = (config['route']['rules'] as List).cast<Map>();
+    final probe = rules.singleWhere((rule) =>
+        (rule['process_name'] as List?)?.contains('pokrov_service.exe') == true);
+    expect(probe['domain'], ['api.pokrov.space', 'app.pokrov.space']);
+    expect(probe['outbound'], 'proxy');
+  }, skip: !windowsOwnedDnsConfigured);
+
   test('Windows owned DNS rejects a cached profile with a named VPN peer', () {
     final profile = _profile();
     final config = jsonDecode(profile.configPayload) as Map;

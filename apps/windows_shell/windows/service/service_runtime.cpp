@@ -1332,14 +1332,6 @@ RuntimeResult RuntimeHost::Initialize() {
 RuntimeResult RuntimeHost::StageProfile(const std::string& body, bool requires_bound_connect) {
   RecordEvent(ServiceEvent::kRuntimeProfileStage,
               ServiceEventOutcome::kAttempted);
-  if (!initialized_) {
-    const auto initialized = Initialize();
-    if (initialized.status != Status::kOk) {
-      RecordEvent(ServiceEvent::kRuntimeProfileStage,
-                  ServiceEventOutcome::kFailed);
-      return initialized;
-    }
-  }
   if (phase_ == Phase::kRunning || phase_ == Phase::kRecoveryRequired ||
       body.size() < 4 ||
       (body[0] != '0' && body[0] != '1') || body[1] != '\n') {
@@ -1358,6 +1350,28 @@ RuntimeResult RuntimeHost::StageProfile(const std::string& body, bool requires_b
     return Fail(Status::kInvalid, "profile_payload_invalid");
   }
   std::string profile = std::move(bundle.profile);
+  if (!IsValidUtf8JsonObject(profile)) {
+    RecordEvent(ServiceEvent::kRuntimeProfileStage,
+                ServiceEventOutcome::kFailed);
+    return Fail(Status::kInvalid, "profile_payload_invalid");
+  }
+  // The managed profile already has its peer IPs. Block the physical network
+  // before initializing Core or staging the config for this connection.
+  const bool owned_dns = UsesWindowsOwnedDns(profile);
+  if (owned_dns && transition_guard_ &&
+      !TransitionGuardArmed() && !transition_guard_->Start().empty()) {
+    RecordEvent(ServiceEvent::kRuntimeProfileStage,
+                ServiceEventOutcome::kFailed);
+    return Fail(Status::kNotReady, "transition_guard_failed");
+  }
+  if (!initialized_) {
+    const auto initialized = Initialize();
+    if (initialized.status != Status::kOk) {
+      RecordEvent(ServiceEvent::kRuntimeProfileStage,
+                  ServiceEventOutcome::kFailed);
+      return initialized;
+    }
+  }
   const int staged_rule_set_slot = bundle.rule_sets.empty()
                                        ? 0
                                        : (bundled_rule_set_slot_ == 1 ? 2 : 1);
@@ -1365,11 +1379,6 @@ RuntimeResult RuntimeHost::StageProfile(const std::string& body, bool requires_b
   if (staged_rule_set_slot != 0) {
     ReplaceAll(&profile, kRuleSetSlotMarker,
                staged_rule_set_slot == 1 ? "profile-a" : "profile-b");
-  }
-  if (!IsValidUtf8JsonObject(profile)) {
-    RecordEvent(ServiceEvent::kRuntimeProfileStage,
-                ServiceEventOutcome::kFailed);
-    return Fail(Status::kInvalid, "profile_payload_invalid");
   }
   if (staged_rule_set_slot != 0 &&
       !WriteBundledRuleSets(staged_rule_set_slot, bundle.rule_sets,
@@ -1415,6 +1424,7 @@ RuntimeResult RuntimeHost::StageProfile(const std::string& body, bool requires_b
   requires_bound_connect_ = requires_bound_connect;
   effective_profile_digest_.clear();
   profile_staged_ = true;
+  owned_dns_profile_ = owned_dns;
   egress_failure_observation_.reset();
   phase_ = Phase::kConfigStaged;
   failure_.clear();
@@ -1438,6 +1448,7 @@ RuntimeResult RuntimeHost::InvalidateProfile() {
   telegram_ws_holders_.clear();
   original_staged_config_.clear();
   staged_runtime_config_.clear();
+  owned_dns_profile_ = false;
   local_dpi_requested_ = false;
   telegram_ws_requested_ = false;
   if (!profile_path_.empty()) {
@@ -2060,7 +2071,7 @@ std::string RuntimeHost::VerifyEgress(bool periodic, const CheckInterruption& in
   EgressProbeReserve reserve = EgressProbeReserve::kStatic;
   std::string selected_vpn_tag;
   const auto target = ReadWindowsSmartAccessProbeTarget(staged_runtime_config_, false, &reserve,
-                                                      &selected_vpn_tag);
+                                                      &selected_vpn_tag, owned_dns_profile_);
   if (target) {
     if (target->empty()) return "profile_payload_invalid";
     if (core_->SmartAccessProbeVersion() != 1) return "core_egress_probe_unavailable";
@@ -2076,10 +2087,20 @@ std::string RuntimeHost::VerifyEgress(bool periodic, const CheckInterruption& in
         ? OperationInterruption::kDeadlineExceeded : OperationInterruption::kNone;
   };
   std::string failure;
+  bool retry_owned_dns = !periodic && owned_dns_profile_;
   for (;;) {
     failure = egress_probe_->Verify(probe_owner, periodic, deadline_tick, reserve,
                                     EgressCheckBudgetMs());
     const auto observation = egress_probe_->LastObservation();
+    if (retry_owned_dns && observation &&
+        observation->outcome == EgressProbeOutcome::kTimeout &&
+        ((failure == "core_egress_dns_failed" && observation->stage == EgressProbeStage::kDnsWait) ||
+         (failure == "core_egress_tls_timeout" && observation->stage == EgressProbeStage::kTls)) &&
+        probe_owner() == OperationInterruption::kNone) {
+      // Retry the timed-out check through the same protected tunnel.
+      retry_owned_dns = false;
+      continue;
+    }
     // A cold helper can still be connecting after the ordinary DNS retries.
     // Keep the full TUN proof and its cancellation while that startup settles.
     if (helper_deadline == 0 || failure != "core_egress_dns_failed" || !observation ||
@@ -2573,6 +2594,7 @@ std::string RuntimeHost::SnapshotBody(const char* pending_phase) const {
   const bool can_connect = !pending && initialized_ && profile_staged_ &&
                            !requires_bound_connect_ &&
                            phase_ == Phase::kConfigStaged;
+  const bool preparing_owned_dns = phase_ == Phase::kConfigStaged && owned_dns_profile_;
   std::string local_dpi_observation;
   if (!pending) {
     if (const auto value = ReadLocalDpiRuntimeObservation()) {
@@ -2597,7 +2619,8 @@ std::string RuntimeHost::SnapshotBody(const char* pending_phase) const {
          ";effective_profile_digest=" +
          (pending || effective_profile_digest_.empty() ? "none" : effective_profile_digest_) +
          ";failure=" +
-         (pending ? "none" : failure_.empty() ? (guarded ? "transition_guard_active" : "none") : failure_) +
+         (pending ? "none" : failure_.empty()
+             ? (guarded && !preparing_owned_dns ? "transition_guard_active" : "none") : failure_) +
          ";routing_catalog_window_version=" +
          std::to_string(initialized_ ? core_->RoutingCatalogWindowVersion() : 0) +
          ";smart_access_lease_version=" +

@@ -6,7 +6,7 @@ The Flutter shell owns user intent, candidate selection and presentation. The pl
 
 The interactive process is unprivileged. An installed service owns the tunnel, routes, DNS and scoped cleanup. The service control channel is local and authenticated. Restrict commands and request sizes and bind them to the requesting local user and operation. Activation and tray actions are separate from privileged runtime commands.
 
-The service snapshots settings before applying its network transaction. On failure or stop it restores owned interface, address, route and DNS state. An interrupted start is resolved within that transaction before another owner can apply changes. A native result is applied only to the expected runtime, prepared profile and operation. A tray process or readiness check does not establish a usable VPN.
+The service snapshots settings before applying its network transaction. On failure or stop it restores owned interface, address, route and DNS state. For ordinary profiles that use POKROV DNS, the service blocks direct traffic when staging the profile and uses the owned API mirror as the default reserve for egress checks. If the startup DNS or TLS check times out, it retries once through the same protected tunnel. An interrupted start is resolved within that transaction before another owner can apply changes. A native result is applied only to the expected runtime, prepared profile and operation. A tray process or readiness check does not establish a usable VPN.
 
 ## Android
 

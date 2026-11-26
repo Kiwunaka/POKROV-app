@@ -478,6 +478,7 @@ class FakeCoreRuntime final : public pokrov::service::CoreRuntime {
   std::string Initialize(
       const pokrov::service::RuntimeDirectories& directories) override {
     ++initialize_calls;
+    if (on_initialize) on_initialize();
     last_directories = directories;
     return initialize_error;
   }
@@ -545,6 +546,7 @@ class FakeCoreRuntime final : public pokrov::service::CoreRuntime {
   std::string secure_error;
   std::string start_error;
   std::string stop_error;
+  std::function<void()> on_initialize;
   std::function<void()> on_start;
   std::function<void()> on_stop;
   pokrov::service::FirstOwnedDnsState first_owned_dns_state =
@@ -1144,6 +1146,55 @@ void TestCoreErrorsAreSanitized() {
          "core start failure category was not sanitized");
   Expect(!Contains(result, "provider secret"),
          "raw core error crossed the service boundary");
+  RemoveTestRoot(root);
+}
+
+void TestOwnedDnsProtectsStagingAndRetriesStartupProof() {
+  using namespace pokrov::service;
+  const auto root = CreateTestRoot();
+  if (root.empty()) {
+    Expect(false, "owned DNS test root was not created");
+    return;
+  }
+  const std::string dns = R"("dns":{"final":"pokrov-owned-dns","servers":[{"tag":"pokrov-owned-dns","type":"tls"}]})";
+  const std::string body = "0\n{" + dns + "}";
+  {
+    auto core = std::make_unique<FakeCoreRuntime>();
+    auto* runtime = core.get();
+    auto guard = std::make_unique<FakeTransitionGuard>();
+    auto* protection = guard.get();
+    auto probe = std::make_unique<FakeEgressProbe>();
+    auto* egress = probe.get();
+    runtime->on_initialize = [&] {
+      Expect(protection->armed, "owned DNS initialization left the physical interfaces open");
+    };
+    EgressProbeObservation timeout{};
+    timeout.stage = EgressProbeStage::kDnsWait;
+    timeout.outcome = EgressProbeOutcome::kTimeout;
+    egress->on_verify = [&] {
+      egress->verify_error = egress->verify_calls == 1 ? "core_egress_dns_failed" : "";
+      egress->observation = egress->verify_calls == 1
+          ? std::optional<EgressProbeObservation>(timeout) : std::nullopt;
+    };
+    RuntimeHost host(std::move(core), std::move(probe), std::make_unique<FakeRecovery>(),
+                     root, false, nullptr, std::move(guard));
+    const auto staged = host.StageProfile(body);
+    Expect(staged.status == Status::kOk && protection->armed &&
+               Contains(staged, "failure=none;") && Contains(staged, "can_connect=1;"),
+           "owned DNS staging did not arm protection");
+    Expect(host.Connect(ProfileDigest(body)).status == Status::kOk &&
+               runtime->start_calls == 1 && egress->verify_calls == 2 && protection->offs == 0 &&
+               egress->last_reserve == EgressProbeReserve::kApi,
+           "owned DNS proof timeout did not retry in the same protected tunnel");
+    host.Disconnect();
+    for (const auto* helper : {
+        R"("endpoints":[{"type":"warp","tag":"pokrov-warp"}])",
+        R"("outbounds":[{"type":"psiphon","tag":"pokrov-warp"}])"}) {
+      Expect(host.StageProfile("0\n{" + dns + "," + helper + "}").status == Status::kOk &&
+                 !protection->armed,
+             "owned DNS staging changed a connection helper's startup");
+    }
+  }
   RemoveTestRoot(root);
 }
 
@@ -2266,6 +2317,7 @@ int main(int argc, char** argv) {
   TestRuntimeLifecycle();
   TestBundledRuleSetsAreStagedInsideProtectedWorkingDirectory();
   TestCoreErrorsAreSanitized();
+  TestOwnedDnsProtectsStagingAndRetriesStartupProof();
   TestConnectionHelperWaitsForFullTunProof();
   TestSlipstreamPeriodicEgressBudget();
   TestEgressFailureStopsCoreAndIsSanitized();

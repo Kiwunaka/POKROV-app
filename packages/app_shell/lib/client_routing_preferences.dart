@@ -594,7 +594,7 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
       <String, dynamic>{'action': 'sniff'},
     ]);
     if (windowsAppScope) {
-      protectedRules.add(_windowsNativeProbeRoute(proxyTag));
+      protectedRules.add(_windowsNativeProbeRoute(proxyTag, payload));
     }
   }
   final injected = <Map<String, dynamic>>[];
@@ -1149,7 +1149,7 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
     if (windowsAppScope) ...[
       {'port': 53, 'action': 'hijack-dns'},
       {'action': 'sniff'},
-      _windowsNativeProbeRoute(vpn),
+      _windowsNativeProbeRoute(vpn, payload),
       ...appScopeRules,
     ],
     ...safety, if (selective && policy.vpnAvailable) selectiveProbeRoute,
@@ -1297,8 +1297,15 @@ Map<String, dynamic>? _windowsSteamDownloadRoute(
   };
 }
 
-Map<String, dynamic> _windowsNativeProbeRoute(String vpn) => {
-  'domain': const ['api.pokrov.space', 'birch.portal-privacy.online'],
+Map<String, dynamic> _windowsNativeProbeRoute(
+    String vpn, ManagedProfilePayload payload) => {
+  'domain': [
+    'api.pokrov.space',
+    if (windowsOwnedDnsConfigured && !payload.warpPolicy.canEnableRuntime)
+      'app.pokrov.space'
+    else
+      'birch.portal-privacy.online',
+  ],
   'network': 'tcp',
   'port': const [443],
   'process_name': const ['pokrov_service.exe'],

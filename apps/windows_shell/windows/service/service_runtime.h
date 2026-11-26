@@ -266,6 +266,7 @@ class RuntimeHost {
   bool secure_storage_ = true;
   bool initialized_ = false;
   bool profile_staged_ = false;
+  bool owned_dns_profile_ = false;
   bool requires_bound_connect_ = false;
   std::string staged_profile_digest_;
   std::string effective_profile_digest_;

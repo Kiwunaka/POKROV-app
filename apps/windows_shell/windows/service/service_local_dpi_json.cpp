@@ -343,9 +343,32 @@ std::uint64_t WindowsConnectionHelperStartupBudgetMs(const std::string& encoded)
   return 0;
 }
 
+bool UsesWindowsOwnedDns(const std::string& encoded) {
+  JsonApartment apartment;
+  if (!apartment.Ready()) return false;
+  const auto profile = ParseObject(encoded);
+  if (!profile) return false;
+  const auto dns = Object(profile.Get(), L"dns");
+  if (!dns || String(dns.Get(), L"final") != "pokrov-owned-dns") return false;
+  const auto resolver = Tagged(Rows(Array(dns.Get(), L"servers").Get()),
+                               "pokrov-owned-dns");
+  if (!resolver || String(resolver.Get(), L"type") != "tls") return false;
+  for (const auto& endpoint : Rows(Array(profile.Get(), L"endpoints").Get())) {
+    if (String(endpoint.Get(), L"type") == "warp" ||
+        String(endpoint.Get(), L"tag") == "pokrov-warp") return false;
+  }
+  for (const auto& outbound : Rows(Array(profile.Get(), L"outbounds").Get())) {
+    if (String(outbound.Get(), L"type") == "psiphon") return false;
+  }
+  return true;
+}
+
 std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& encoded,
-    bool first_provider_qa, EgressProbeReserve* egress_reserve, std::string* selected_vpn_tag) {
-  if (egress_reserve) *egress_reserve = EgressProbeReserve::kStatic;
+    bool first_provider_qa, EgressProbeReserve* egress_reserve, std::string* selected_vpn_tag,
+    bool use_api_reserve) {
+  if (egress_reserve) {
+    *egress_reserve = use_api_reserve ? EgressProbeReserve::kApi : EgressProbeReserve::kStatic;
+  }
   if (selected_vpn_tag) selected_vpn_tag->clear();
   JsonApartment apartment;
   if (!apartment.Ready()) return std::string{};
@@ -360,7 +383,7 @@ std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& 
     if (!egress_reserve && !selected_vpn_tag) return std::nullopt;
     const auto routes = Rows(Array(route.Get(), L"rules").Get());
     constexpr char api_host[] = "api.pokrov.space";
-    constexpr char reserve_host[] = "birch.portal-privacy.online";
+    const char* reserve_host = use_api_reserve ? "app.pokrov.space" : "birch.portal-privacy.online";
     enum class ProbeRoute { kUnmatched, kPinned, kDirect };
     ProbeRoute api = ProbeRoute::kUnmatched;
     ProbeRoute reserve = ProbeRoute::kUnmatched;
