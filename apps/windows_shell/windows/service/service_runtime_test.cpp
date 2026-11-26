@@ -620,9 +620,11 @@ class FakeTransitionGuard final : public pokrov::service::RuntimeTransitionGuard
  public:
   std::string Start() override { armed = true; ++starts; return ""; }
   std::string Finish() override { armed = false; ++finishes; return ""; }
-  std::string ExplicitOff() override { armed = false; ++offs; return ""; }
+  std::string SetLlmnrBlock(bool enabled) override { llmnr_blocked = enabled; return ""; }
+  std::string ExplicitOff() override { armed = false; llmnr_blocked = false; ++offs; return ""; }
   bool IsArmed() const override { return armed; }
   bool armed = false;
+  bool llmnr_blocked = false;
   int starts = 0, finishes = 0, offs = 0;
 };
 
@@ -1166,7 +1168,8 @@ void TestOwnedDnsProtectsStagingAndRetriesStartupProof() {
     auto probe = std::make_unique<FakeEgressProbe>();
     auto* egress = probe.get();
     runtime->on_initialize = [&] {
-      Expect(protection->armed, "owned DNS initialization left the physical interfaces open");
+      Expect(protection->armed && protection->llmnr_blocked,
+             "owned DNS initialization started before the network protection");
     };
     EgressProbeObservation timeout{};
     timeout.stage = EgressProbeStage::kDnsWait;
@@ -1184,14 +1187,14 @@ void TestOwnedDnsProtectsStagingAndRetriesStartupProof() {
            "owned DNS staging did not arm protection");
     Expect(host.Connect(ProfileDigest(body)).status == Status::kOk &&
                runtime->start_calls == 1 && egress->verify_calls == 2 && protection->offs == 0 &&
-               egress->last_reserve == EgressProbeReserve::kApi,
+               egress->last_reserve == EgressProbeReserve::kApi && protection->llmnr_blocked,
            "owned DNS proof timeout did not retry in the same protected tunnel");
     host.Disconnect();
     for (const auto* helper : {
         R"("endpoints":[{"type":"warp","tag":"pokrov-warp"}])",
         R"("outbounds":[{"type":"psiphon","tag":"pokrov-warp"}])"}) {
       Expect(host.StageProfile("0\n{" + dns + "," + helper + "}").status == Status::kOk &&
-                 !protection->armed,
+                 !protection->armed && !protection->llmnr_blocked,
              "owned DNS staging changed a connection helper's startup");
     }
   }

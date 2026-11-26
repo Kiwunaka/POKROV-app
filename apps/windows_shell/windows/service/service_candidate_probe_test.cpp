@@ -69,6 +69,7 @@ class TransitionGuard final : public RuntimeTransitionGuard {
  public:
   std::string Start() override { armed_ = true; return {}; }
   std::string Finish() override { armed_ = false; return {}; }
+  std::string SetLlmnrBlock(bool) override { return {}; }
   std::string ExplicitOff() override { armed_ = false; return {}; }
   bool IsArmed() const override { return armed_; }
 

@@ -30,6 +30,9 @@ constexpr UINT16 kSubLayerWeight = 0xfffe;
 const std::array<const GUID*, 4> kLayers = {
     &FWPM_LAYER_ALE_AUTH_CONNECT_V4, &FWPM_LAYER_ALE_AUTH_CONNECT_V6,
     &FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V4, &FWPM_LAYER_ALE_AUTH_RECV_ACCEPT_V6};
+const std::array<const GUID*, 2> kLlmnrLayers = {
+    &FWPM_LAYER_OUTBOUND_TRANSPORT_V4, &FWPM_LAYER_OUTBOUND_TRANSPORT_V6};
+constexpr size_t kLlmnrFilterCount = 4;
 
 GUID FilterKey(size_t index) {
   GUID key = kFilterBase;
@@ -157,6 +160,39 @@ class FilterDefinitions {
   std::array<std::array<FWPM_FILTER_CONDITION0, 4>, kLayers.size()> dhcp_conditions_{};
   UINT64 permit_weight_ = 2;
   UINT64 block_weight_ = 1;
+};
+
+class LlmnrFilterDefinitions {
+ public:
+  LlmnrFilterDefinitions() {
+    condition_.fieldKey = FWPM_CONDITION_IP_REMOTE_PORT;
+    condition_.matchType = FWP_MATCH_EQUAL;
+    condition_.conditionValue.type = FWP_UINT16;
+    condition_.conditionValue.uint16 = 5355;
+  }
+
+  FWPM_FILTER0 At(size_t index) {
+    const bool boot = index >= kLlmnrLayers.size();
+    FWPM_FILTER0 filter{};
+    filter.filterKey = FilterKey(kFilterCount + index);
+    filter.displayData.name = const_cast<wchar_t*>(
+        boot ? L"POKROV LLMNR boot block" : L"POKROV LLMNR block");
+    // BFE swaps boot filters for persistent policy as it starts. Use a built-in
+    // sublayer so the boot filter is independent of the service's objects.
+    filter.flags = boot ? FWPM_FILTER_FLAG_BOOTTIME : FWPM_FILTER_FLAG_PERSISTENT;
+    filter.layerKey = *kLlmnrLayers[index % kLlmnrLayers.size()];
+    filter.subLayerKey = FWPM_SUBLAYER_UNIVERSAL;
+    filter.action.type = FWP_ACTION_BLOCK;
+    filter.weight.type = FWP_UINT64;
+    filter.weight.uint64 = &weight_;
+    filter.numFilterConditions = 1;
+    filter.filterCondition = &condition_;
+    return filter;
+  }
+
+ private:
+  FWPM_FILTER_CONDITION0 condition_{};
+  UINT64 weight_ = UINT64_MAX;
 };
 
 class LocalDpiControlFilter {
@@ -485,13 +521,26 @@ class WindowsGuardBackend final : public TransitionGuardBackend {
     return {};
   }
 
+  std::string SetLlmnrBlock(bool enabled) override {
+    const char* error = "transition_guard_llmnr_failed";
+    if (const auto open = Open(); !open.empty()) return open;
+    const DWORD code = ::FwpmTransactionBegin0(engine_, 0);
+    if (code != ERROR_SUCCESS)
+      return Fail(TransitionGuardStage::kInstallBegin, code, error);
+    return Complete(enabled ? InstallLlmnrFilters() : DeleteLlmnrFilters(), error,
+                    TransitionGuardStage::kInstallApply,
+                    TransitionGuardStage::kInstallCommit);
+  }
+
   std::string Remove() override {
     last_failure_ = {TransitionGuardStage::kRemoveApply, 0};
     if (const auto error = Open(); !error.empty()) return error;
     const DWORD code = ::FwpmTransactionBegin0(engine_, 0);
     if (code != ERROR_SUCCESS)
       return Fail(TransitionGuardStage::kRemoveBegin, code, "transition_guard_remove_failed");
-    return Complete(DeleteOwned(), "transition_guard_remove_failed",
+    DWORD result = DeleteLlmnrFilters();
+    if (result == ERROR_SUCCESS) result = DeleteOwned();
+    return Complete(result, "transition_guard_remove_failed",
                     TransitionGuardStage::kRemoveApply,
                     TransitionGuardStage::kRemoveCommit);
   }
@@ -518,6 +567,34 @@ class WindowsGuardBackend final : public TransitionGuardBackend {
     }
     const DWORD result = ::FwpmSubLayerDeleteByKey0(engine_, &kSubLayer);
     return result == FWP_E_SUBLAYER_NOT_FOUND ? ERROR_SUCCESS : result;
+  }
+
+  DWORD DeleteLlmnrFilters() {
+    for (size_t i = 0; i < kLlmnrFilterCount; ++i) {
+      const GUID key = FilterKey(kFilterCount + i);
+      const DWORD result = ::FwpmFilterDeleteByKey0(engine_, &key);
+      if (result != ERROR_SUCCESS && result != FWP_E_FILTER_NOT_FOUND) return result;
+    }
+    return ERROR_SUCCESS;
+  }
+
+  DWORD InstallLlmnrFilters() {
+    LlmnrFilterDefinitions definitions;
+    for (size_t i = 0; i < kLlmnrFilterCount; ++i) {
+      const auto expected = definitions.At(i);
+      FWPM_FILTER0* actual = nullptr;
+      DWORD result = ::FwpmFilterGetByKey0(engine_, &expected.filterKey, &actual);
+      if (result == ERROR_SUCCESS) {
+        const bool current = Matches(*actual, expected);
+        ::FwpmFreeMemory0(reinterpret_cast<void**>(&actual));
+        if (current) continue;
+        result = ::FwpmFilterDeleteByKey0(engine_, &expected.filterKey);
+      }
+      if (result != ERROR_SUCCESS && result != FWP_E_FILTER_NOT_FOUND) return result;
+      result = ::FwpmFilterAdd0(engine_, &expected, nullptr, nullptr);
+      if (result != ERROR_SUCCESS) return result;
+    }
+    return ERROR_SUCCESS;
   }
 
   std::string Complete(DWORD result, const char* error,
@@ -578,6 +655,11 @@ class Guard final : public RuntimeTransitionGuard {
       return Report(TransitionGuardOperation::kFinish, error);
     tunnel_allowed_ = true;
     return {};
+  }
+
+  std::string SetLlmnrBlock(bool enabled) override {
+    const auto error = backend_->SetLlmnrBlock(enabled);
+    return error.empty() ? error : Report(TransitionGuardOperation::kStart, error);
   }
 
   std::string ExplicitOff() override {
@@ -688,6 +770,12 @@ std::string VisitTransitionGuardFiltersForTesting(
   if (const auto error = definitions.Initialize(); !error.empty()) return error;
   for (size_t i = 0; i < kFilterCount; ++i) visitor(definitions.At(i));
   return {};
+}
+
+void VisitLlmnrFiltersForTesting(
+    const std::function<void(const FWPM_FILTER0&)>& visitor) {
+  LlmnrFilterDefinitions definitions;
+  for (size_t i = 0; i < kLlmnrFilterCount; ++i) visitor(definitions.At(i));
 }
 
 bool TransitionGuardFilterMatchesForTesting(

@@ -1359,7 +1359,8 @@ RuntimeResult RuntimeHost::StageProfile(const std::string& body, bool requires_b
   // before initializing Core or staging the config for this connection.
   const bool owned_dns = UsesWindowsOwnedDns(profile);
   if (owned_dns && transition_guard_ &&
-      !TransitionGuardArmed() && !transition_guard_->Start().empty()) {
+      ((!TransitionGuardArmed() && !transition_guard_->Start().empty()) ||
+       !transition_guard_->SetLlmnrBlock(true).empty())) {
     RecordEvent(ServiceEvent::kRuntimeProfileStage,
                 ServiceEventOutcome::kFailed);
     return Fail(Status::kNotReady, "transition_guard_failed");
@@ -1569,7 +1570,9 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
   if (recovery_ == nullptr) {
     return Fail(Status::kNotReady, "recovery_unavailable");
   }
-  if (transition_guard_ && !transition_guard_->Start().empty()) {
+  if (transition_guard_ &&
+      (!transition_guard_->Start().empty() ||
+       !transition_guard_->SetLlmnrBlock(owned_dns_profile_).empty())) {
     return Fail(Status::kNotReady, "transition_guard_failed");
   }
   egress_failure_observation_.reset();

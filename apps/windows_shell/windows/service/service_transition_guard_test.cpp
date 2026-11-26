@@ -23,6 +23,7 @@ struct StoredPolicy {
   bool install_fails = false;
   bool permit_fails = false;
   bool tunnel_permitted = false;
+  bool llmnr_blocked = false;
   bool read_fails_after_install = false;
 };
 
@@ -50,9 +51,14 @@ class FakeBackend final : public pokrov::service::TransitionGuardBackend {
     policy_.tunnel_permitted = false;
     return {};
   }
+  std::string SetLlmnrBlock(bool enabled) override {
+    policy_.llmnr_blocked = enabled;
+    return {};
+  }
   std::string Remove() override {
     ++policy_.removes;
     policy_.state = TransitionGuardState::kOff;
+    policy_.llmnr_blocked = false;
     return {};
   }
  private:
@@ -75,13 +81,15 @@ int main() {
     auto guard = create(persisted);
     expect(!guard->IsArmed(), "clean startup is off");
     expect(guard->Start().empty() && guard->IsArmed(), "arm before Core stop");
+    expect(guard->SetLlmnrBlock(true).empty() && persisted.llmnr_blocked,
+           "ordinary protection enables the LLMNR policy");
     expect(guard->Start().empty() && persisted.installs == 1, "arm is idempotent");
     expect(guard->Finish().empty() && !guard->IsArmed() && persisted.tunnel_permitted &&
                persisted.state == TransitionGuardState::kArmed,
            "verification permits the tunnel while keeping the persistent block");
   }
   expect(persisted.state == TransitionGuardState::kArmed && persisted.removes == 0 &&
-             !persisted.tunnel_permitted,
+             !persisted.tunnel_permitted && persisted.llmnr_blocked,
          "destruction/crash must retain persisted block");
   {
     auto restarted = create(persisted);
@@ -94,7 +102,8 @@ int main() {
     expect(restarted->Finish().empty() && restarted->Start().empty() &&
                !persisted.tunnel_permitted && restarted->IsArmed(),
            "replacement closes the old permit before stopping the tunnel");
-    expect(restarted->ExplicitOff().empty() && !restarted->IsArmed(),
+    expect(restarted->ExplicitOff().empty() && !restarted->IsArmed() &&
+               !persisted.llmnr_blocked,
            "explicit off recovers persisted policy");
   }
   {
@@ -121,6 +130,23 @@ int main() {
   }
 
 #ifdef _DEBUG
+  unsigned llmnr_layers = 0;
+  VisitLlmnrFiltersForTesting([&](const FWPM_FILTER0& filter) {
+    const bool v4 = filter.layerKey == FWPM_LAYER_OUTBOUND_TRANSPORT_V4;
+    const bool v6 = filter.layerKey == FWPM_LAYER_OUTBOUND_TRANSPORT_V6;
+    const bool boot = filter.flags == FWPM_FILTER_FLAG_BOOTTIME;
+    const bool persistent = filter.flags == FWPM_FILTER_FLAG_PERSISTENT;
+    expect((v4 || v6) && (boot || persistent), "LLMNR needs boot and active transport filters");
+    if (v4 || v6) llmnr_layers |= 1u << ((boot ? 2 : 0) + (v6 ? 1 : 0));
+    expect(filter.action.type == FWP_ACTION_BLOCK && filter.numFilterConditions == 1 &&
+               filter.filterCondition[0].fieldKey == FWPM_CONDITION_IP_REMOTE_PORT &&
+               filter.filterCondition[0].matchType == FWP_MATCH_EQUAL &&
+               filter.filterCondition[0].conditionValue.type == FWP_UINT16 &&
+               filter.filterCondition[0].conditionValue.uint16 == 5355,
+           "LLMNR protection must only block outbound port 5355");
+  });
+  expect(llmnr_layers == 15, "a boot or persistent LLMNR filter is missing");
+
   // Actual VM readback changed from 65534 to 65515 with twenty higher
   // WinDivert sublayers, none containing filters at our protected ALE layers.
   FWPM_SUBLAYER0 persisted_layer{};

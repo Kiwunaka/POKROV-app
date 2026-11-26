@@ -23,6 +23,7 @@ class RuntimeTransitionGuard {
   // for this service session. The underlying block survives service exit.
   virtual std::string Start() = 0;
   virtual std::string Finish() = 0;
+  virtual std::string SetLlmnrBlock(bool enabled) = 0;
   // Also usable by the service's explicit repair/uninstall command while the
   // service is stopped. Removes only this guard's fixed WFP object keys.
   virtual std::string ExplicitOff() = 0;
@@ -80,6 +81,7 @@ class TransitionGuardBackend {
   virtual std::string Install() = 0;
   virtual std::string PermitTunnel() = 0;
   virtual std::string BlockTunnel() = 0;
+  virtual std::string SetLlmnrBlock(bool enabled) = 0;
   virtual std::string Remove() = 0;
   virtual TransitionGuardFailure LastFailure() const { return {}; }
 };
@@ -92,6 +94,8 @@ std::unique_ptr<RuntimeTransitionGuard> CreateTransitionGuardForTesting(
 // Builds the actual filter definitions without opening the engine or adding or
 // deleting any WFP objects. The visitor's pointers are valid only in the call.
 std::string VisitTransitionGuardFiltersForTesting(
+    const std::function<void(const FWPM_FILTER0_&)>& visitor);
+void VisitLlmnrFiltersForTesting(
     const std::function<void(const FWPM_FILTER0_&)>& visitor);
 bool TransitionGuardFilterMatchesForTesting(
     const FWPM_FILTER0_& actual, const FWPM_FILTER0_& expected);
