@@ -1832,6 +1832,9 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             isCurrent = { ownsRuntimeSession(session) && healthGeneration.get() == generation &&
                 commandServer === probeServer && activeTun != null },
             canRepeat = { activeConnectDeadline == null && activePromotedUntilElapsed == null && !activeCatalogAppRequired },
+            scheduleCheck = { delay, check ->
+                mainHandler.postAtTime({ check() }, monitor, android.os.SystemClock.uptimeMillis() + delay)
+            },
             startProbe = { token, periodic ->
                 runCoreEgressProbe(session, generation, target, probeServer, variantConfigContent, monitor, token, periodic)
             },

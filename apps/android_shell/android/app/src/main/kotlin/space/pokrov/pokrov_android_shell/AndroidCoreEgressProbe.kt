@@ -42,11 +42,12 @@ internal enum class AndroidCoreEgressProbeResult {
     }
 }
 
-/** One current probe; only its healthy result can schedule the next check. */
+/** Serializes egress checks and coalesces repeated failure signals. */
 internal class AndroidCoreEgressMonitor(
     private val isCurrent: () -> Boolean,
     private val canRepeat: () -> Boolean,
     private val clockMillis: () -> Long = { System.nanoTime() / 1_000_000L },
+    private val scheduleCheck: (Long, () -> Unit) -> Unit,
     private val startProbe: (Long, Boolean) -> Unit,
     private val publish: (AndroidCoreEgressProbeResult, Boolean) -> Unit,
 ) {
@@ -58,6 +59,7 @@ internal class AndroidCoreEgressMonitor(
     private var lastResult = AndroidCoreEgressProbeResult.HEALTHY
     private var lastTrafficTotal: Long? = null
     private var suspectedFailure = false
+    private var checkScheduled = false
 
     @Synchronized fun start() {
         if (cancelled || inFlight != null || !isCurrent() || (periodic && !canRepeat())) return
@@ -80,9 +82,25 @@ internal class AndroidCoreEgressMonitor(
     }
 
     @Synchronized fun onSuspectedFailure() {
-        if (!periodic) return
+        if (cancelled || !periodic || !isCurrent()) return
         suspectedFailure = true
-        if (clockMillis() - lastProbeAt >= SUSPECT_INTERVAL_MILLIS) start()
+        checkSuspectedFailure()
+    }
+
+    private fun checkSuspectedFailure() {
+        if (!suspectedFailure || inFlight != null || !canRepeat()) return
+        val delay = SUSPECT_INTERVAL_MILLIS - (clockMillis() - lastProbeAt)
+        if (delay <= 0) {
+            start()
+        } else if (!checkScheduled) {
+            checkScheduled = true
+            scheduleCheck(delay, ::onCheckDue)
+        }
+    }
+
+    @Synchronized private fun onCheckDue() {
+        checkScheduled = false
+        if (!cancelled && isCurrent()) checkSuspectedFailure()
     }
 
     @Synchronized fun owns(token: Long): Boolean =
@@ -94,6 +112,7 @@ internal class AndroidCoreEgressMonitor(
         lastResult = result
         publish(result, periodic)
         periodic = true
+        if (!cancelled && isCurrent()) checkSuspectedFailure()
     }
 
     @Synchronized fun cancel() {

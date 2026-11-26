@@ -1750,30 +1750,32 @@ void main() {
     expect(runtime.connectCalls, 2);
   });
 
-  test('Windows Auto refreshes the catalog when candidate material is gone', () async {
-    final [unreachable, retired, replacement, ...] = _candidates;
-    final bootstrapper = _Bootstrapper(catalog: true)
-      ..candidates = [unreachable, retired]
-      ..exactProfileFailure = const BootstrapFailure('Transport candidate unavailable',
-          statusCode: 409, operation: 'GET /api/client/profile/managed?catalog_version=1',
-          preparation: {'stage': 'managed_fetch', 'elapsed_ms': 10, 'http_status': 409});
-    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
-      ..supportsCandidates = true
-      ..failedProbeProfiles.add(unreachable.candidateRef);
-    final manager = _manager(runtime, bootstrapper,
-        authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
-    addTearDown(manager.dispose);
+  for (final platform in [HostPlatform.android, HostPlatform.windows]) {
+    test('${platform.name} Auto refreshes the catalog when candidate material is gone', () async {
+      final [unreachable, retired, replacement, ...] = _candidates;
+      final bootstrapper = _Bootstrapper(catalog: true)
+        ..candidates = [unreachable, retired]
+        ..exactProfileFailure = const BootstrapFailure('Transport candidate unavailable',
+            statusCode: 409, operation: 'GET /api/client/profile/managed?catalog_version=1',
+            preparation: {'stage': 'managed_fetch', 'elapsed_ms': 10, 'http_status': 409});
+      final runtime = _Runtime(hostPlatform: platform)
+        ..supportsCandidates = true
+        ..failedProbeProfiles.add(unreachable.candidateRef);
+      final manager = _manager(runtime, bootstrapper,
+          authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+      addTearDown(manager.dispose);
 
-    final connecting = manager.connect();
-    await runtime.probeStarted.future.timeout(const Duration(seconds: 3));
-    bootstrapper.candidates = [replacement];
-    await connecting;
+      final connecting = manager.connect();
+      await runtime.probeStarted.future.timeout(const Duration(seconds: 3));
+      bootstrapper.candidates = [replacement];
+      await connecting;
 
-    expect(bootstrapper.resolutions.map((attempt) => attempt.selected),
-        ['', retired.candidateRef, '']);
-    expect(manager.status.phase, ConnectionPhase.connected);
-    expect(runtime.stagedPayloads.single.materialCandidate?.candidateRef, replacement.candidateRef);
-  });
+      expect(bootstrapper.resolutions.map((attempt) => attempt.selected),
+          ['', retired.candidateRef, '']);
+      expect(manager.status.phase, ConnectionPhase.connected);
+      expect(runtime.stagedPayloads.single.materialCandidate?.candidateRef, replacement.candidateRef);
+    });
+  }
 
   test('access denial received during protected recovery stops its retained TUN', () async {
     final runtime = _Runtime()..supportsCandidates = true;
@@ -6585,7 +6587,7 @@ void main() {
       minimumCoreRelease: null, platforms: {HostPlatform.android, HostPlatform.windows}, requiredFeatures: const {}, bridgeId: 'rf2');
     bootstrapper.candidates = [_candidates.first, rf2];
     runtime.failedProbeProfiles..clear()..add(_candidates.first.candidateRef);
-    bootstrapper.catalogFailure = const RoutingCatalogFailure('catalog_response_invalid');
+    bootstrapper.catalogFailure = const RoutingCatalogFailure('catalog_signature_invalid');
     final failuresBeforeSelection = bootstrapper.actualReports.where((report) => report['runtime_phase'] == 'failed').length;
     runtime.warpEgressFailure = true;
     final selectionDeadline = DateTime.now().add(const Duration(seconds: 3));

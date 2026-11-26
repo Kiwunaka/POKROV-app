@@ -17,7 +17,11 @@ namespace pokrov::service {
 
 class EgressCheckSchedule {
  public:
-  explicit EgressCheckSchedule(ULONGLONG interval_ms) : interval_ms_(interval_ms) {}
+  // A steady check fetches a 204 marker. Leave time to recover after it fails.
+  static constexpr ULONGLONG kHealthyIntervalMs = 6000;
+
+  explicit EgressCheckSchedule(ULONGLONG interval_ms = kHealthyIntervalMs)
+      : interval_ms_(interval_ms) {}
   bool IsDue(ULONGLONG now, std::uint64_t network_revision);
   void Checked(ULONGLONG now, bool healthy);
   void Reset() { next_check_ = 0; }
@@ -35,7 +39,7 @@ class RuntimeDispatcher {
   explicit RuntimeDispatcher(RuntimeHost* runtime,
       std::function<std::optional<CandidateNetworkContext>()> candidate_network = {},
       std::function<bool(std::uint64_t)> candidate_current = {},
-      ULONGLONG egress_interval_ms = 15000);
+      ULONGLONG egress_interval_ms = EgressCheckSchedule::kHealthyIntervalMs);
   ~RuntimeDispatcher();
   RuntimeResult Execute(const Frame& request, HANDLE stop_event,
                         ULONGLONG monotonic_deadline, HANDLE client_pipe);

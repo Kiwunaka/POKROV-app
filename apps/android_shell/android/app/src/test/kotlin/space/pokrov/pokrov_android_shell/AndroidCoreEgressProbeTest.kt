@@ -26,6 +26,7 @@ class AndroidCoreEgressProbeTest {
         val monitor = AndroidCoreEgressMonitor(
             isCurrent = { true }, canRepeat = { true },
             clockMillis = { now },
+            scheduleCheck = { _, _ -> error("Unexpected recheck") },
             startProbe = { token, periodic -> started.add(token to periodic) },
             publish = { result, retainTun -> published.add(result to retainTun) },
         )
@@ -170,6 +171,7 @@ class AndroidCoreEgressProbeTest {
         val monitor = AndroidCoreEgressMonitor(
             isCurrent = { current }, canRepeat = { true },
             clockMillis = { now },
+            scheduleCheck = { _, _ -> error("Unexpected recheck") },
             startProbe = { id, _ -> token = id; probes++ },
             publish = { _, _ -> publications++ },
         )
@@ -192,34 +194,45 @@ class AndroidCoreEgressProbeTest {
     }
 
     @Test
-    fun networkSuspicionAllowsEarlyRecheckButNotEverySecond() {
+    fun networkSuspicionSchedulesOneRecheckEvenWhenTrafficStops() {
         var now = 0L
         val started = mutableListOf<Long>()
         val published = mutableListOf<AndroidCoreEgressProbeResult>()
+        val scheduled = mutableListOf<Pair<Long, () -> Unit>>()
         val monitor = AndroidCoreEgressMonitor(
             isCurrent = { true }, canRepeat = { true }, clockMillis = { now },
+            scheduleCheck = { delay, check -> scheduled.add(now + delay to check) },
             startProbe = { token, _ -> started += token }, publish = { result, _ -> published += result },
         )
         monitor.start()
         monitor.complete(started.last(), AndroidCoreEgressProbeResult.HEALTHY)
-        monitor.onTraffic(0, 0)
         now = 4_000L
         monitor.onSuspectedFailure()
-        monitor.onTraffic(1, 0)
+        monitor.onSuspectedFailure()
         assertEquals(1, started.size)
+        assertEquals(5_000L, scheduled.single().first)
         now = 5_000L
-        monitor.onTraffic(2, 0)
-        assertEquals("A single throttled suspicion must survive until traffic can recheck", 2, started.size)
+        scheduled.removeAt(0).second()
+        assertEquals(2, started.size)
         now = 6_000L
         monitor.onSuspectedFailure()
+        assertTrue(scheduled.isEmpty())
         assertEquals(2, started.size)
         // An isolated AAAA failure requests this recheck; it is not a failed IPv4 probe.
         assertEquals(listOf(AndroidCoreEgressProbeResult.HEALTHY), published)
         monitor.complete(started.last(), AndroidCoreEgressProbeResult.HEALTHY)
         assertEquals(listOf(AndroidCoreEgressProbeResult.HEALTHY, AndroidCoreEgressProbeResult.HEALTHY), published)
+        assertEquals(10_000L, scheduled.single().first)
         now = 10_000L
-        monitor.onTraffic(3, 0)
+        scheduled.removeAt(0).second()
         assertEquals("A suspicion during an older probe must survive its completion", 3, started.size)
+        now = 11_000L
+        monitor.onSuspectedFailure()
+        monitor.complete(started.last(), AndroidCoreEgressProbeResult.HEALTHY)
+        monitor.cancel()
+        now = 15_000L
+        scheduled.removeAt(0).second()
+        assertEquals(3, started.size)
         monitor.complete(started.last(), AndroidCoreEgressProbeResult.HEALTHY)
         now = 15_000L
         monitor.onTraffic(4, 0)

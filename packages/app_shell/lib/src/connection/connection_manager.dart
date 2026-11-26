@@ -3214,7 +3214,8 @@ class ConnectionManager extends ChangeNotifier {
       }
       if (!selectedCandidate) {
         if (retryCatalogConflict && apiFailure?.isUnavailableManagedCandidate == true &&
-            inputs.hostPlatform == HostPlatform.windows && inputs.preferredCandidateRef.isEmpty &&
+            (inputs.hostPlatform == HostPlatform.android || inputs.hostPlatform == HostPlatform.windows) &&
+            inputs.preferredCandidateRef.isEmpty &&
             inputs.preferredNodeCode.isEmpty && invitation == null) {
           return _resolveManagedProfile(
               ownerGeneration: generation, deadline: deadline, coldConnect: coldConnect,

@@ -95,17 +95,17 @@ class HealthProbe final : public RuntimeEgressProbe {
 };
 
 void TestPeriodicEgressSchedule() {
-  EgressCheckSchedule schedule(15000);
-  Expect(!schedule.IsDue(1000, 1) && !schedule.IsDue(15999, 1) &&
-             schedule.IsDue(17500, 1), "healthy egress check ran too frequently or too late");
-  schedule.Checked(17500, true);
-  Expect(!schedule.IsDue(18000, 2) && !schedule.IsDue(19000, 3) &&
-             schedule.IsDue(20000, 3), "network changes did not advance or postponed the probe");
-  schedule.Checked(20000, false);
-  Expect(!schedule.IsDue(21999, 3) && schedule.IsDue(22200, 3),
+  EgressCheckSchedule schedule;
+  Expect(!schedule.IsDue(1000, 1) && !schedule.IsDue(6999, 1) &&
+             schedule.IsDue(7600, 1), "healthy egress check ran too frequently or too late");
+  schedule.Checked(7600, true);
+  Expect(!schedule.IsDue(8000, 2) && !schedule.IsDue(9000, 3) &&
+             schedule.IsDue(10000, 3), "network changes did not advance or postponed the probe");
+  schedule.Checked(10000, false);
+  Expect(!schedule.IsDue(11999, 3) && schedule.IsDue(12200, 3),
          "failed check did not use the fast retry interval");
-  schedule.Checked(22200, true);
-  Expect(!schedule.IsDue(30000, 3), "successful retry did not restore the healthy interval");
+  schedule.Checked(12200, true);
+  Expect(!schedule.IsDue(18000, 3), "successful retry did not restore the healthy interval");
 }
 
 void TestPeriodicEgressLifecycle(const std::filesystem::path& root, HANDLE stop) {
