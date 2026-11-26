@@ -13,6 +13,8 @@ enum ConnectionPhase {
   disconnected
 }
 
+const _windowsServiceProfileIdentityOrigin = 'windows_service_stage_request_sha256';
+
 enum _NativeRecoveryBlockReason {
   phaseMismatch, actionInFlight, accessDenied, boundTransport, proofUnavailable,
   pendingOwnerMissing, commandChanged, profileInputsChanged, candidateMismatch,
@@ -561,13 +563,14 @@ class ConnectionManager extends ChangeNotifier {
     if (failed.transportProofPending == true || failed.transportLeaseActive == true)
       return blocked(_NativeRecoveryBlockReason.failedBoundTransport);
     final confirmed = _confirmedCandidate;
-    if (_appContext.hostPlatform == HostPlatform.android && !pending.replaced &&
+    if (!pending.replaced &&
         confirmed != null && confirmed.candidate.candidateRef == pending.candidateRef &&
         current.stagedProfileDigest == null && current.stagedConfigPath == null) {
-      // Clearing Quick Settings reuse leaves the running Android profile intact.
-      // Its fresh native proof must identify the last confirmed active profile.
-      if (current.profileIdentityOrigin != 'android_private_stage_request_sha256' ||
-          current.effectiveProfileDigest != confirmed.digest) {
+      // The reusable profile can be cleared while the active tunnel keeps running.
+      final windows = _appContext.hostPlatform == HostPlatform.windows;
+      final expectedOrigin = windows ? _windowsServiceProfileIdentityOrigin : 'android_private_stage_request_sha256';
+      if (current.profileIdentityOrigin != expectedOrigin || current.effectiveProfileDigest != confirmed.digest ||
+          windows && (failed.profileIdentityOrigin != expectedOrigin || failed.effectiveProfileDigest != confirmed.digest)) {
         return blocked(_NativeRecoveryBlockReason.digestMismatch);
       }
     } else {
@@ -5436,8 +5439,13 @@ class ConnectionManager extends ChangeNotifier {
       _activeCandidateRef = _candidateRef;
       final candidate = _reportedCandidate(_activeCandidateRef);
       final digest = snapshot.effectiveProfileDigest;
+      final sameConfirmedWindowsProfile = _appContext.hostPlatform == HostPlatform.windows &&
+          snapshot.stagedProfileDigest == null && snapshot.stagedConfigPath == null &&
+          snapshot.profileIdentityOrigin == _windowsServiceProfileIdentityOrigin &&
+          _confirmedCandidate?.candidate.candidateRef == _activeCandidateRef &&
+          _confirmedCandidate?.digest == digest;
       _confirmedCandidate = candidate != null && digest != null &&
-              digest == snapshot.stagedProfileDigest && _isConnectionProven(snapshot)
+              (digest == snapshot.stagedProfileDigest || sameConfirmedWindowsProfile) && _isConnectionProven(snapshot)
           ? (generation: _connectionCoordinator.operationGeneration, digest: digest, candidate: candidate)
           : null;
       _activePhysicalNetwork = _candidatePhysicalNetwork;

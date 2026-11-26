@@ -6533,6 +6533,7 @@ void main() {
     bootstrapper.failure = const BootstrapFailure('fixture login recovery required',
       code: 'refresh_expired', statusCode: 401, sessionRejected: true);
     final requestsBeforeRecovery = bootstrapper.resolutions.length;
+    runtime.stagedReuseInvalidated = platform == HostPlatform.windows;
     runtime.warpEgressFailure = true;
     final deadline = DateTime.now().add(const Duration(seconds: 3));
     while ((!manager.busy || bootstrapper.resolutions.length == requestsBeforeRecovery) &&
@@ -6573,7 +6574,8 @@ void main() {
     expect(manager.snapshot?.isCleanlyHealthy, isTrue);
     expect(manager.snapshot?.lastFailureKind, isNull);
     expect(manager.snapshot?.proofObservedAt, runtime.proofObservedAt);
-    expect(manager.snapshot?.stagedProfileSource, runtime.profileSource);
+    expect(manager.snapshot?.stagedProfileSource,
+        platform == HostPlatform.windows ? null : runtime.profileSource);
     expect(manager.status.phase, ConnectionPhase.connected,
         reason: recoveryExperience.saved.protectionEvents.where((event) => event.kind == 'native_recovery_blocked')
             .map((event) => event.detail).join(' '));
@@ -6615,6 +6617,7 @@ void main() {
 
     runtime.failedHandoffKeepsRunning = true;
     runtime.failedHandoffProfile = rf2.candidateRef;
+    runtime.stagedReuseInvalidated = false;
     if (platform == HostPlatform.android) runtime.nativeHandoffFailureKind = 'protected_handoff_failed';
     runtime.profileDigest = 'b' * 64;
     runtime.profileSource = const RuntimeProfileSource(revision: 'rf2-owner',
