@@ -6542,6 +6542,7 @@ void main() {
     }
     expect(manager.busy, isTrue);
     // Protection/Diagnostics may observe Core recovery before preparation ends.
+    await Future<void>.delayed(const Duration(milliseconds: 20));
     runtime.warpEgressFailure = false;
     runtime.proofObservedAt = DateTime.now().toUtc();
     await manager.readSnapshot();
