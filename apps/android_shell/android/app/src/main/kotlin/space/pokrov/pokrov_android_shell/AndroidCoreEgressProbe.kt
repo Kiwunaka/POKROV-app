@@ -58,6 +58,7 @@ internal class AndroidCoreEgressMonitor(
     private var lastProbeAt = Long.MIN_VALUE
     private var lastResult = AndroidCoreEgressProbeResult.HEALTHY
     private var lastTrafficTotal: Long? = null
+    private var lastDownlinkTotal: Long? = null
     private var suspectedFailure = false
     private var checkScheduled = false
 
@@ -74,8 +75,14 @@ internal class AndroidCoreEgressMonitor(
         if (uplinkTotal == null || downlinkTotal == null) return
         val total = uplinkTotal + downlinkTotal
         val previous = lastTrafficTotal
+        val previousDownlink = lastDownlinkTotal
         lastTrafficTotal = total
-        if (previous != null && total > previous && periodic &&
+        lastDownlinkTotal = downlinkTotal
+        if (previous == null || total <= previous || !periodic) return
+        // Outgoing packets with no replies warrant a proof, even without a link change.
+        if (downlinkTotal == previousDownlink) {
+            onSuspectedFailure()
+        } else if (
             clockMillis() - lastProbeAt >= if (!suspectedFailure && lastResult == AndroidCoreEgressProbeResult.HEALTHY)
                 INTERVAL_MILLIS else SUSPECT_INTERVAL_MILLIS
         ) start()

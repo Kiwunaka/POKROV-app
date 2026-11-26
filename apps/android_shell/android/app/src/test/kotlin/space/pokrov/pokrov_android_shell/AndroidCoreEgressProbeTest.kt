@@ -36,10 +36,10 @@ class AndroidCoreEgressProbeTest {
         monitor.complete(started.single().first, AndroidCoreEgressProbe.resultFromCore(core, target))
         monitor.onTraffic(0, 0)
         now = 59_000L
-        monitor.onTraffic(1, 0)
+        monitor.onTraffic(1, 1)
         assertEquals("Traffic before one minute must not trigger a probe", 1, started.size)
         now = 60_000L
-        monitor.onTraffic(2, 0)
+        monitor.onTraffic(2, 2)
 
         core.reachable = false
         assertEquals(2, started.size)
@@ -48,10 +48,10 @@ class AndroidCoreEgressProbeTest {
         assertEquals(listOf(AndroidCoreEgressProbeResult.HEALTHY to false,
             AndroidCoreEgressProbeResult.FAILED to true), published)
         now = 64_000L
-        monitor.onTraffic(3, 0)
+        monitor.onTraffic(3, 3)
         assertEquals(2, started.size)
         now = 65_000L
-        monitor.onTraffic(4, 0)
+        monitor.onTraffic(4, 4)
         assertEquals("A failed active check can retry when traffic continues", 3, started.size)
     }
 
@@ -206,8 +206,9 @@ class AndroidCoreEgressProbeTest {
         )
         monitor.start()
         monitor.complete(started.last(), AndroidCoreEgressProbeResult.HEALTHY)
+        monitor.onTraffic(0, 0)
         now = 4_000L
-        monitor.onSuspectedFailure()
+        monitor.onTraffic(1, 0)
         monitor.onSuspectedFailure()
         assertEquals(1, started.size)
         assertEquals(5_000L, scheduled.single().first)
