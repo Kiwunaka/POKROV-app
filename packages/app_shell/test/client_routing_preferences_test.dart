@@ -71,6 +71,18 @@ void main() {
     }
   }, skip: !windowsOwnedDnsConfigured);
 
+  test('Windows owned DNS rejects a cached profile with a named VPN peer', () {
+    final profile = _profile();
+    final config = jsonDecode(profile.configPayload) as Map;
+    (config['outbounds'] as List).last['server'] = 'peer.example';
+    expect(
+      () => applyWindowsOwnedDns(profile.copyWith(configPayload: jsonEncode(config))),
+      throwsA(isA<RoutingCatalogFailure>().having(
+        (failure) => failure.code, 'code', 'windows_peer_address_unavailable',
+      )),
+    );
+  }, skip: !windowsOwnedDnsConfigured);
+
   test('YouTube reserve follows the manual country and earlier direct rules', () {
     TransportCandidate candidate(String node, String country, {String protocol = 'vless'}) => TransportCandidate(
         candidateRef: node, profileRef: node, nodeCode: node, countryCode: country, protocol: protocol,

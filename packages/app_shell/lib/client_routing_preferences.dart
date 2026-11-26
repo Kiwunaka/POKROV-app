@@ -540,7 +540,7 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
       nativeSmartAccessLeaseVersion: nativeSmartAccessLeaseVersion);
     final routed = _applyAllExceptRuDefaults(configured, hostPlatform,
         defaultRuAppPackageIds);
-    return ownedDns ? _applyWindowsOwnedDns(routed) : routed;
+    return ownedDns ? applyWindowsOwnedDns(routed) : routed;
   }
   if (payload.routeMode == RouteMode.selectiveServices) {
     throw const RoutingCatalogFailure('catalog_selective_policy_required');
@@ -712,10 +712,10 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
   final routed = _applyAllExceptRuDefaults(
       payload.copyWith(configPayload: jsonEncode(config), lanScopeVersion: 1),
       hostPlatform, defaultRuAppPackageIds);
-  return ownedDns ? _applyWindowsOwnedDns(routed) : routed;
+  return ownedDns ? applyWindowsOwnedDns(routed) : routed;
 }
 
-ManagedProfilePayload _applyWindowsOwnedDns(ManagedProfilePayload payload) {
+ManagedProfilePayload applyWindowsOwnedDns(ManagedProfilePayload payload) {
   final config = _routingMap(jsonDecode(payload.configPayload));
   final outbounds = _routingListOfMaps(config['outbounds']);
   final endpoints = _routingListOfMaps(config['endpoints']);
@@ -726,9 +726,8 @@ ManagedProfilePayload _applyWindowsOwnedDns(ManagedProfilePayload payload) {
   }
 
   const owned = 'pokrov-owned-dns';
-  const bootstrap = 'pokrov-node-bootstrap';
-  var needsPeerResolver = false;
-  // Peer hostnames must resolve before the tunnel can carry client DNS.
+  // The issuer supplies tunnel peer IPs. Older cached profiles with hostnames
+  // must refresh rather than use the Windows resolver outside the tunnel.
   for (final dialer in [...outbounds, ...endpoints]) {
     final addresses = [
       _routingText(dialer['server']),
@@ -737,11 +736,7 @@ ManagedProfilePayload _applyWindowsOwnedDns(ManagedProfilePayload payload) {
     ];
     if (addresses.any((address) =>
         address.isNotEmpty && InternetAddress.tryParse(address) == null)) {
-      dialer['domain_resolver'] = {
-        ..._routingMap(dialer['domain_resolver']),
-        'server': bootstrap,
-      };
-      needsPeerResolver = true;
+      throw const RoutingCatalogFailure('windows_peer_address_unavailable');
     }
   }
   Map<String, dynamic> resolver(String tag) => {
@@ -754,14 +749,14 @@ ManagedProfilePayload _applyWindowsOwnedDns(ManagedProfilePayload payload) {
   };
   final dns = _routingMap(config['dns']);
   dns['servers'] = [
-    for (final server in _routingListOfMaps(dns['servers']))
+    for (final server in _routingListOfMaps(dns['servers'])
+        .where((server) => server['tag'] != owned))
       if (const {'hosts', 'fakeip'}.contains(server['type']) ||
           _routingText(server['address']).startsWith('rcode://'))
         server
       else
         resolver(_routingText(server['tag'])),
     resolver(owned),
-    if (needsPeerResolver) {'tag': bootstrap, 'type': 'local'},
   ];
   dns['final'] = owned;
   config['dns'] = dns;

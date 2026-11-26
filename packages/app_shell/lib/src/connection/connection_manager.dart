@@ -3315,6 +3315,13 @@ class ConnectionManager extends ChangeNotifier {
   Future<RuntimeCandidateProbeResult> _probeManagedCandidate(RuntimeCandidateProbing probing,
       ManagedProfilePayload payload, {required String context, required Future<void> cancelled,
       required Duration timeout, required int generation, required void Function() requireCurrent}) async {
+    if (_usesOwnedWindowsDns) {
+      try {
+        payload = applyWindowsOwnedDns(payload);
+      } on RoutingCatalogFailure {
+        return RuntimeCandidateProbeResult.adapterFailed;
+      }
+    }
     final probeId = 'candidate_${generation}_${math.Random.secure().nextInt(1 << 32)}';
     final result = probing.probeCandidate(probeId: probeId, payload: payload,
         timeout: _withinConnectBudget(timeout), expectedNetworkContext: context);
