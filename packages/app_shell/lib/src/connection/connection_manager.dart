@@ -553,7 +553,11 @@ class ConnectionManager extends ChangeNotifier {
     if (!_canBindNativeRecoverySnapshot(failed, replaced: pending.replaced) ||
         !failed.isCleanlyHealthy && failed.proofObservedAt != null)
       return blocked(_NativeRecoveryBlockReason.failedSnapshotInvalid);
-    if (!pending.replaced && failed.protectionRetained) return blocked(_NativeRecoveryBlockReason.failedGuardRetained);
+    // Windows arms its guard on a failed periodic check. A fresh proof from
+    // the same running tunnel is valid once Windows has released the guard.
+    if (!pending.replaced && failed.protectionRetained && _appContext.hostPlatform == HostPlatform.android) {
+      return blocked(_NativeRecoveryBlockReason.failedGuardRetained);
+    }
     if (failed.transportProofPending == true || failed.transportLeaseActive == true)
       return blocked(_NativeRecoveryBlockReason.failedBoundTransport);
     final confirmed = _confirmedCandidate;

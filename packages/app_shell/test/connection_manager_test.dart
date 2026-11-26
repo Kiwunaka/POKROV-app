@@ -797,6 +797,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   Object? connectFailure;
   Object? stageFailure;
   bool restoredHandoffGuard = false;
+  bool guardPeriodicEgressFailure = false;
   final probeRelease = Completer<void>();
   final probeStarted = Completer<void>();
   final alternateProbeStarted = Completer<void>();
@@ -963,7 +964,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
         routingCatalogControlVersion: routingCatalogControlVersion,
         smartAccessLeaseVersion: smartAccessLeaseVersion,
         smartAccessRuntimeControlVersion: smartAccessRuntimeControlVersion,
-        protectionRetained: restoredHandoffGuard,
+        protectionRetained: restoredHandoffGuard || (guardPeriodicEgressFailure && warpEgressFailure),
         canInitialize: phase == RuntimePhase.artifactReady || coreInitializationPending,
         canConnect: phase.index >= RuntimePhase.configStaged.index,
         message: statusMessage,
@@ -6500,6 +6501,7 @@ void main() {
     final recoveryExperience = _ExperienceStore();
     final runtime = _Runtime(hostPlatform: platform)
       ..supportsCandidates = true
+      ..guardPeriodicEgressFailure = platform == HostPlatform.windows
       ..omitUnverifiedEffectiveDigest = platform == HostPlatform.android
       ..profileDigest = 'a' * 64
       ..proofObservedAt = DateTime.utc(2026, 10, 8)
