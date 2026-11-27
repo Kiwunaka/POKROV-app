@@ -3947,7 +3947,9 @@ class ConnectionManager extends ChangeNotifier {
             ? pokrovRuAppCatalog.map((entry) => entry.packageId).toList()
             : const <String>[],
       );
-      configuredPayload = !warpRuntimeAttemptEnabled &&
+      // Explicit QA proves only the admitted service on the chosen candidate.
+      configuredPayload = _pendingFirstProviderQaAdmissionId == null &&
+              !warpRuntimeAttemptEnabled &&
               _runtimeSnapshot?.availableTransportFeatures.contains(RuntimeTransportFeature.youtubeFailover) == true
           ? applyPokrovYouTubeFailover(routedPayload,
               autoCountry: _clientExperience.preferredCountryCode.isEmpty &&

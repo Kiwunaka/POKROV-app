@@ -718,6 +718,7 @@ void main() {
   ]) {
   test('${hostPlatform.name} explicit first-provider QA uses the signed disabled $serviceId projection through ordinary managed stage${resolverBootstrapIp != null ? ' with resolver bootstrap IP' : comssDns ? ' with Comss DNS' : controlFailure == null ? '' : ' with $controlFailure'}${staleReadback ? ' with stale owner readback' : ''}', () async {
     final refreshDuringStart = hostPlatform == HostPlatform.windows && serviceId == 'gemini' && controlFailure == null;
+    final youtubeFailover = hostPlatform == HostPlatform.android && !comssDns && controlFailure == null;
     final controlClientState = hostPlatform == HostPlatform.windows && controlFailure == 'smart_access_runtime_control_unconfirmed'
         ? 'protocol_incompatible' : null;
     final httpOverrides = HttpOverrides.current;
@@ -805,6 +806,28 @@ void main() {
     }
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(() => server.close(force: true));
+    const transportFeatures = ['singbox_reality_v1', 'singbox_tls_v1', 'singbox_utls_v1', 'singbox_vless_v1'];
+    Map<String, Object?> candidate(String node) => {
+      'candidate_ref': '$node:qa_vless', 'profile_ref': 'qa_vless',
+      'node_code': node, 'country_code': 'DE', 'protocol': 'vless', 'transport': 'tcp',
+      'protection': 'reality', 'priority': node == 'de' ? 0 : 1,
+      'parameters': {'network': 'tcp', 'flow': ''},
+      'requirements': {'minimum_client_release': '1.2.0', 'minimum_core_release': null,
+        'platforms': [hostPlatform.name], 'required_features': transportFeatures},
+    };
+    Map<String, Object?> candidateConfig(String endpoint) => {
+      'outbounds': [
+        {'type': 'selector', 'tag': 'proxy', 'outbounds': ['qa-vpn'], 'default': 'qa-vpn'},
+        {'type': 'vless', 'tag': 'qa-vpn', 'server': endpoint, 'server_port': 443,
+          'uuid': '11111111-1111-4111-8111-111111111111', 'tls': {'enabled': true, 'server_name': endpoint,
+            'utls': {'enabled': true, 'fingerprint': 'chrome'},
+            'reality': {'enabled': true, 'public_key': base64UrlEncode(List.filled(32, 1)).replaceAll('=', ''),
+              'short_id': '0123456789abcdef'}}},
+      ],
+      if (comssDns) 'dns': {'servers': [{'tag': 'profile-dns', 'address': '8.8.8.8', 'detour': 'proxy'}],
+        'final': 'profile-dns'},
+      'route': {'final': 'proxy'},
+    };
     unawaited(() async {
       await for (final request in server) {
         requests.add(request.uri.path);
@@ -824,18 +847,16 @@ void main() {
               'transport_profile': 'qa_vless', 'transport_kind': 'reality',
               'access': {'access_state': 'paid_unlimited', 'expiry_at': end},
               'transport_catalog': {'schema_version': 'pokrov-transport-catalog-v1', 'revision': 'qa-real-material',
-                'selected_candidate_ref': 'de:qa_vless', 'candidates': [{'candidate_ref': 'de:qa_vless', 'profile_ref': 'qa_vless',
-                  'node_code': 'de', 'country_code': 'DE', 'protocol': 'vless', 'transport': 'tcp', 'protection': 'reality',
-                  'priority': 0, 'parameters': {'network': 'tcp', 'flow': ''}, 'requirements': {'minimum_client_release': '1.2.0',
-                    'minimum_core_release': null, 'platforms': [hostPlatform.name], 'required_features': ['singbox_reality_v1', 'singbox_tls_v1', 'singbox_utls_v1', 'singbox_vless_v1']}}]},
-              'config_payload': {'outbounds': [{'type': 'selector', 'tag': 'proxy', 'outbounds': ['qa-vpn'], 'default': 'qa-vpn'},
-                {'type': 'vless', 'tag': 'qa-vpn', 'server': 'vpn.example.invalid', 'server_port': 443,
-                  'uuid': '11111111-1111-4111-8111-111111111111', 'tls': {'enabled': true, 'server_name': 'vpn.example.invalid',
-                    'utls': {'enabled': true, 'fingerprint': 'chrome'},
-                    'reality': {'enabled': true, 'public_key': base64UrlEncode(List.filled(32, 1)).replaceAll('=', ''), 'short_id': '0123456789abcdef'}}}],
-                if (comssDns) 'dns': {'servers': [{'tag': 'profile-dns', 'address': '8.8.8.8', 'detour': 'proxy'}],
-                  'final': 'profile-dns'},
-                'route': {'final': 'proxy'}}};
+                'selected_candidate_ref': 'de:qa_vless',
+                'candidates': [candidate('de'), if (youtubeFailover) candidate('de2')]},
+              'config_payload': candidateConfig('vpn.example.invalid'),
+              if (youtubeFailover) 'candidate_materials': [
+                for (final node in ['de', 'de2']) {
+                  'candidate_ref': '$node:qa_vless', 'transport_kind': 'reality',
+                  'config_format': 'singbox-json',
+                  'config_payload': candidateConfig(node == 'de' ? 'vpn.example.invalid' : 'reserve.example.invalid'),
+                },
+              ]};
           case '/api/client/routing-catalog':
             reply = {'schema': 'routing-catalog-response-v1', 'envelope': catalogEnvelope};
           case '/api/client/smart-access/first-provider-qa/claim':
@@ -942,7 +963,9 @@ void main() {
       'canInitialize': false, 'coreVersion': '1.2.10', 'coreModuleSha256': coreHash,
       'routingCatalogWindowVersion': 1, 'routingCatalogControlVersion': 4, 'smartAccessLeaseVersion': 1,
       'smartAccessRuntimeControlVersion': 1, 'coreEgressValidationRequired': true,
-      'transportCapabilitiesJson': jsonEncode({'schema': 1, 'features': ['singbox_reality_v1', 'singbox_tls_v1', 'singbox_utls_v1', 'singbox_vless_v1']})};
+      'transportCapabilitiesJson': jsonEncode({'schema': 1, 'features': [
+        if (youtubeFailover) RuntimeTransportFeature.youtubeFailover.wireName, ...transportFeatures,
+      ]})};
     final nativeCalls = <String>[];
     final bootRef = hostPlatform == HostPlatform.android ? 'android:1' : 'windows:0123456789abcdef0123456789abcdef';
     const networkRef = 'network_0123456789abcdef0123456789abcdef';
@@ -1229,14 +1252,18 @@ void main() {
       return;
     }
     await manager.startFirstProviderQa(admission);
-    expect(manager.status.phase, ConnectionPhase.connected, reason: manager.headline);
+    final qaFailure = manager.status.phase == ConnectionPhase.connected
+        ? null : (await manager.readFirstProviderQaContext())?['control_reason'];
+    expect(manager.status.phase, ConnectionPhase.connected,
+      reason: '${manager.headline} $qaFailure');
     if (refreshDuringStart) {
       await controlResumeCompleted.future.timeout(const Duration(seconds: 5));
       expect((await manager.readFirstProviderQaContext())?['control_delivery'], 'confirmed',
         reason: 'foreground observation must retain the QA owner during Start and its first control response');
       expect(controlPosts, 1);
     }
-    expect(nativeCalls.where((method) => method == 'runtimeEngine.probeCandidate'), hasLength(1));
+    expect(nativeCalls.where((method) => method == 'runtimeEngine.probeCandidate'),
+      hasLength(youtubeFailover ? 2 : 1));
     expect(nativeCalls.where((method) => method == 'runtimeEngine.stageManagedProfile'), hasLength(1));
     expect(nativeCalls, isNot(contains('runtimeEngine.connect')));
     expect(nativeCalls.where((method) => method == 'runtimeEngine.connectWithCoreIdentity'), hasLength(1));
