@@ -480,6 +480,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
         'naive' => ('naive', 'h2', 'tls'),
         'awg31' => ('awg', 'udp', 'awg31'),
         'hysteria2' => ('hysteria2', 'udp', 'tls'),
+        'bitrix' => ('hysteria2', 'bitrix', 'tls'),
         'warp_direct' => ('warp', 'udp', 'warp'),
         _ => ('', '', ''),
       }) {
@@ -585,7 +586,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
         revision: _readText(response['profile_revision']),
         origin: RuntimeProfileSourceOrigin.managedManifest,
         protocol: switch (kind) {
-          'awg2' => 'awg2', 'awg31' => 'awg31', 'hysteria2' => 'hysteria2',
+          'awg2' => 'awg2', 'awg31' => 'awg31', 'hysteria2' || 'bitrix' => 'hysteria2',
           'warp_direct' => 'warp',
           'naive' => 'naive',
           'reality' || 'grpc' || 'xhttp' || 'ru_bridge' || 'dnstt' || 'slipstream' || 'mts' || 'vk' || 'avito' => 'vless',
