@@ -13,8 +13,12 @@ import (
 // physical state returns to the same bytes before the next sample. The owned
 // POKROV route table and TUN are excluded from this observer.
 func (observer *networkContextObserver) startEvents() error {
-	const groups = syscall.RTMGRP_LINK | syscall.RTMGRP_IPV4_IFADDR |
-		syscall.RTMGRP_IPV4_ROUTE | syscall.RTMGRP_IPV6_IFADDR | syscall.RTMGRP_IPV6_ROUTE
+	// Bind expects a bit mask, while RTNLGRP constants are group numbers.
+	const groups = (1 << (syscall.RTNLGRP_LINK - 1)) |
+		(1 << (syscall.RTNLGRP_IPV4_IFADDR - 1)) |
+		(1 << (syscall.RTNLGRP_IPV4_ROUTE - 1)) |
+		(1 << (syscall.RTNLGRP_IPV6_IFADDR - 1)) |
+		(1 << (syscall.RTNLGRP_IPV6_ROUTE - 1))
 	fd, err := syscall.Socket(syscall.AF_NETLINK, syscall.SOCK_RAW|syscall.SOCK_CLOEXEC, syscall.NETLINK_ROUTE)
 	if err != nil { return err }
 	if err = syscall.SetNonblock(fd, true); err == nil {
