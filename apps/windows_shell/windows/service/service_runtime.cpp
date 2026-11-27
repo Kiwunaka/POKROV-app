@@ -1,3 +1,5 @@
+#include <winsock2.h>
+
 #include "service_runtime.h"
 #include "service_boot_clock.h"
 #include "windows_crash_profile.h"
@@ -2150,8 +2152,27 @@ RuntimeResult RuntimeHost::RecheckEgress(const CheckInterruption& interrupted,
     return Fail(Status::kNotReady, "transition_guard_failed");
   }
   RecordEvent(ServiceEvent::kRuntimeEgressVerify, ServiceEventOutcome::kAttempted);
-  const auto failure = VerifyEgress(true, interrupted, deadline_tick);
-  const auto interruption = interrupted ? interrupted() : OperationInterruption::kNone;
+  const CheckInterruption check = [&] {
+    const auto reason = interrupted ? interrupted() : OperationInterruption::kNone;
+    if (reason != OperationInterruption::kNone) return reason;
+    return deadline_tick != 0 && ::GetTickCount64() >= deadline_tick
+        ? OperationInterruption::kDeadlineExceeded : OperationInterruption::kNone;
+  };
+  auto failure = VerifyEgress(true, check, deadline_tick);
+  auto interruption = check();
+  const auto& observation = egress_failure_observation_;
+  if (owned_dns_profile_ && core_egress_validated_ && !guarded &&
+      interruption != OperationInterruption::kCancelled && observation &&
+      observation->stage == EgressProbeStage::kTls && observation->dns_a_accepted == true &&
+      (observation->outcome == EgressProbeOutcome::kTimeout ||
+       observation->outcome == EgressProbeOutcome::kDeadline ||
+       (observation->error_domain == EgressErrorDomain::kWinsock &&
+        observation->error_code == WSAECONNRESET))) {
+    // Confirm a transient TLS failure with a fresh bounded probe on the protected TUN.
+    deadline_tick = ::GetTickCount64() + EgressCheckBudgetMs();
+    failure = VerifyEgress(true, check, deadline_tick);
+    interruption = check();
+  }
   // A lifecycle command cancels and joins this check before changing its owner.
   // Failed health leaves the current TUN in place for protected replacement.
   if (interruption == OperationInterruption::kCancelled) {

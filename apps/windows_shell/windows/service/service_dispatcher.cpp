@@ -270,10 +270,8 @@ void RuntimeDispatcher::CheckRunningEgress() {
   egress_check_cancelled_ = cancelled;
   state.unlock();
   const auto deadline = now + runtime_->EgressCheckBudgetMs();
-  const auto result = runtime_->RecheckEgress([cancelled, deadline] {
-    if (cancelled->load()) return OperationInterruption::kCancelled;
-    return ::GetTickCount64() >= deadline ? OperationInterruption::kDeadlineExceeded
-                                        : OperationInterruption::kNone;
+  const auto result = runtime_->RecheckEgress([cancelled] {
+    return cancelled->load() ? OperationInterruption::kCancelled : OperationInterruption::kNone;
   }, deadline);
   state.lock();
   if (!cancelled->load() && !closing_) {
