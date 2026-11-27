@@ -13,8 +13,33 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
     }
   }
 
-  // The DNS carrier is not a standalone proxy. Only this personal VLESS leaf
-  // may use it; the Noise pin protects the otherwise plaintext loopback hop.
+  bool _validWhitelistVlessLeaf(Map<String, dynamic> leaf, String detour,
+      Set<RuntimeTransportFeature> features) {
+    final tls = leaf['tls'];
+    final keys = {'type', 'tag', 'server', 'server_port', 'uuid', 'flow', 'network', 'detour',
+      if (tls != null) 'tls'};
+    if (leaf.length != keys.length || !leaf.keys.every(keys.contains) ||
+        leaf['tag'] != 'proxy' || leaf['server'] != '127.0.0.1' || leaf['server_port'] != 12543 ||
+        leaf['network'] != 'tcp' || leaf['detour'] != detour ||
+        !RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
+            .hasMatch(_readText(leaf['uuid']))) {
+      return false;
+    }
+    if (tls == null) return leaf['flow'] == '';
+    final settings = _readMap(tls);
+    final reality = _readMap(settings['reality']);
+    final utls = _readMap(settings['utls']);
+    return features.containsAll({RuntimeTransportFeature.tls, RuntimeTransportFeature.utls,
+          RuntimeTransportFeature.reality}) &&
+        leaf['flow'] == 'xtls-rprx-vision' && settings.length == 4 && settings['enabled'] == true &&
+        RegExp(r'^[a-z0-9-]+\.portal-privacy\.online$').hasMatch(_readText(settings['server_name'])) &&
+        utls.length == 2 && utls['enabled'] == true && utls['fingerprint'] == 'chrome' &&
+        reality.length == 3 && reality['enabled'] == true &&
+        RegExp(r'^[A-Za-z0-9_-]{43}$').hasMatch(_readText(reality['public_key'])) &&
+        RegExp(r'^(?:[0-9a-fA-F]{2}){0,8}$').hasMatch(_readText(reality['short_id']));
+  }
+
+  // Only the personal VLESS leaf may use the DNS carrier.
   void _validateDnsttMaterial(Object raw, TransportCandidate? candidate,
       Object? access, Set<RuntimeTransportFeature> runtimeFeatures, {String kind = ''}) {
     try {
@@ -33,11 +58,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
       final carrier = carriers.single;
       bool exactKeys(Map<String, dynamic> value, Set<String> keys) =>
           value.length == keys.length && value.keys.every(keys.contains);
-      if (!exactKeys(leaf, const {'type', 'tag', 'server', 'server_port', 'uuid', 'flow', 'network', 'detour'}) ||
-          leaf['tag'] != 'proxy' || leaf['server'] != '127.0.0.1' || leaf['server_port'] != 12543 ||
-          !RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
-              .hasMatch(_readText(leaf['uuid'])) ||
-          leaf['flow'] != '' || leaf['network'] != 'tcp' || leaf['detour'] != 'dns-tunnel' ||
+      if (!_validWhitelistVlessLeaf(leaf, 'dns-tunnel', runtimeFeatures) ||
           !exactKeys(carrier, const {'type', 'tag', 'domain', 'publicKey', 'resolvers', 'network', 'tunnel_per_resolver'}) ||
           carrier['tag'] != 'dns-tunnel' || carrier['network'] != 'tcp' || carrier['tunnel_per_resolver'] != 1 ||
           !RegExp(r'^[0-9a-f]{64}$').hasMatch(_readText(carrier['publicKey']))) {
@@ -101,11 +122,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
       final carrier = carriers.single;
       bool exactKeys(Map<String, dynamic> value, Set<String> keys) =>
           value.length == keys.length && value.keys.every(keys.contains);
-      if (!exactKeys(leaf, const {'type', 'tag', 'server', 'server_port', 'uuid', 'flow', 'network', 'detour'}) ||
-          leaf['tag'] != 'proxy' || leaf['server'] != '127.0.0.1' || leaf['server_port'] != 12543 ||
-          !RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
-              .hasMatch(_readText(leaf['uuid'])) ||
-          leaf['flow'] != '' || leaf['network'] != 'tcp' || leaf['detour'] != 'mts-tunnel' ||
+      if (!_validWhitelistVlessLeaf(leaf, 'mts-tunnel', runtimeFeatures) ||
           !exactKeys(carrier, const {'type', 'tag', 'board_url', 'public_key', 'network'}) ||
           carrier['tag'] != 'mts-tunnel' || carrier['network'] != 'tcp' ||
           !RegExp(r'^[0-9a-f]{64}$').hasMatch(_readText(carrier['public_key']))) {
@@ -284,11 +301,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
       final carrier = carriers.single;
       bool exactKeys(Map<String, dynamic> value, Set<String> keys) =>
           value.length == keys.length && value.keys.every(keys.contains);
-      if (!exactKeys(leaf, const {'type', 'tag', 'server', 'server_port', 'uuid', 'flow', 'network', 'detour'}) ||
-          leaf['tag'] != 'proxy' || leaf['server'] != '127.0.0.1' || leaf['server_port'] != 12543 ||
-          !RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
-              .hasMatch(_readText(leaf['uuid'])) ||
-          leaf['flow'] != '' || leaf['network'] != 'tcp' || leaf['detour'] != 'dns-tunnel' ||
+      if (!_validWhitelistVlessLeaf(leaf, 'dns-tunnel', runtimeFeatures) ||
           !exactKeys(carrier, const {'type', 'tag', 'domain', 'resolvers', 'certificate', 'network'}) ||
           carrier['tag'] != 'dns-tunnel' || carrier['network'] != 'tcp') {
         throw const FormatException();

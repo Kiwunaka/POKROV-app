@@ -448,6 +448,18 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         future: loading,
         builder: (context, state) {
           final candidates = state.data ?? const <domain.TransportCandidate>[];
+          final profiles = <String, List<domain.TransportCandidate>>{};
+          for (final candidate in candidates) {
+            profiles.putIfAbsent(candidate.profileRef, () => []).add(candidate);
+          }
+          String transportName(domain.TransportCandidate candidate) => switch (candidate.transport) {
+            'mts' => 'МТС Доски',
+            'avito' => 'Avito Code',
+            'vk' => 'VK Звонки',
+            'dnstt' => 'DNS · DNSTT',
+            'slipstream' => 'DNS · Slipstream',
+            _ => _locationCandidateLabel(candidate),
+          };
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
             child: Column(
@@ -465,23 +477,37 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                     padding: EdgeInsets.symmetric(vertical: 16),
                     child: Text('Пока нет доступных подключений для белых списков.'),
                   ),
-                for (final candidate in candidates)
+                if (whitelistProfile(_clientExperience.preferredCandidateRef).isNotEmpty)
                   ListTile(
-                    key: ValueKey('whitelist-candidate-' + candidate.candidateRef),
+                    key: const ValueKey('whitelist-off'),
                     contentPadding: EdgeInsets.zero,
-                    title: Text(switch (candidate.transport) {
-                      'mts' => 'МТС Доски',
-                      'avito' => 'Avito Code',
-                      'vk' => 'VK Звонки',
-                      'dnstt' => 'DNS · DNSTT',
-                      'slipstream' => 'DNS · Slipstream',
-                      _ => _locationCandidateLabel(candidate),
-                    }),
-                    subtitle: Text(_locationCountryDisplayName(candidate.countryCode, candidate.countryCode)),
-                    trailing: candidate.candidateRef == _clientExperience.preferredCandidateRef
-                        ? const Icon(Icons.check_rounded) : null,
-                    onTap: () => Navigator.of(sheetContext).pop(candidate.candidateRef),
+                    title: const Text('Выключить обход БС'),
+                    onTap: () => Navigator.of(sheetContext).pop(''),
                   ),
+                for (final entry in profiles.entries) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Text(transportName(entry.value.first),
+                        style: Theme.of(context).textTheme.titleSmall),
+                  ),
+                  ListTile(
+                    key: ValueKey('whitelist-auto-' + entry.key),
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Авто'),
+                    trailing: automaticWhitelistPreference(entry.key) == _clientExperience.preferredCandidateRef
+                        ? const Icon(Icons.check_rounded) : null,
+                    onTap: () => Navigator.of(sheetContext).pop(automaticWhitelistPreference(entry.key)),
+                  ),
+                  for (final candidate in entry.value)
+                    ListTile(
+                      key: ValueKey('whitelist-candidate-' + candidate.candidateRef),
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(_locationCountryDisplayName(candidate.countryCode, candidate.countryCode)),
+                      trailing: candidate.candidateRef == _clientExperience.preferredCandidateRef
+                          ? const Icon(Icons.check_rounded) : null,
+                      onTap: () => Navigator.of(sheetContext).pop(candidate.candidateRef),
+                    ),
+                ],
               ],
             ),
           );

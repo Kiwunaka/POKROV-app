@@ -523,8 +523,15 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
   int nativeSmartAccessLeaseVersion = 0,
   List<String> defaultRuAppPackageIds = const <String>[],
 }) {
+  // The DNS resolver attached to the whitelist profile follows its VPN exit.
   final ownedDns = hostPlatform == HostPlatform.windows &&
-      windowsOwnedDnsConfigured;
+      windowsOwnedDnsConfigured && payload.materialCandidate?.usesWhitelistTransport != true;
+  if (payload.materialCandidate?.usesWhitelistTransport == true) {
+    preferences = preferences.copyWith(
+      dnsPreset: PokrovDnsPreset.automatic,
+      dnsTransport: PokrovDnsTransport.vpn,
+    );
+  }
   if (ownedDns) {
     preferences = preferences.copyWith(
       dnsPreset: PokrovDnsPreset.automatic,

@@ -53,6 +53,7 @@ import 'src/shell/vk_bridge_material.dart';
 import 'src/shared/pokrov_haptics.dart';
 import 'src/shared/ru_plural.dart';
 import 'src/warp/pokrov_warp_lifecycle.dart';
+import 'whitelist_preference.dart';
 export 'app_first_runtime_bootstrap.dart';
 export 'client_routing_preferences.dart';
 export 'src/features/diagnostics/client_diagnostics.dart';

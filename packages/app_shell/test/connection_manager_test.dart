@@ -4344,7 +4344,7 @@ void main() {
     expect(manager.status.phase, ConnectionPhase.connected);
   });
 
-  test('Auto retains both DNS reserves and probes them only after ordinary candidates settle', () async {
+  test('ordinary Auto does not probe whitelist transports after ordinary candidates fail', () async {
     final ordinary = [_candidates.first, _CachedBootstrapper.alternatives[1]];
     final dns = TransportCandidate(candidateRef: 'de:dnstt_vless', profileRef: 'dnstt_vless',
       nodeCode: 'de', countryCode: 'DE', protocol: 'vless', transport: 'dnstt', protection: 'noise',
@@ -4376,13 +4376,11 @@ void main() {
     runtime.probeRelease.complete();
     await connection;
     expect(runtime.activeProbes, isEmpty);
-    expect(runtime.stagedProfile, slipstream.candidateRef);
+    expect(runtime.stagedProfile, isNull);
     expect(runtime.probedPayloads.map((row) => row.materialCandidate?.candidateRef),
-      [...ordinary.map((row) => row.candidateRef), dns.candidateRef, slipstream.candidateRef]);
-    expect(runtime.probeTimeouts.last.inMilliseconds, inInclusiveRange(29000, 30000),
-      reason: 'the unchanged TLS/204/64KiB proof receives a separate bounded DNS budget');
-    expect(bootstrapper.resolutions, hasLength(1), reason: 'the authorized bundled reserve needs no extra fetch');
-    expect(manager.status.phase, ConnectionPhase.connected);
+      ordinary.map((row) => row.candidateRef));
+    expect(bootstrapper.resolutions, hasLength(1));
+    expect(manager.status.phase, isNot(ConnectionPhase.connected));
   });
 
   test('Auto omits Slipstream from profile discovery when the host CLI is unavailable', () async {

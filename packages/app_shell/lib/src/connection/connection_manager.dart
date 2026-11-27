@@ -238,7 +238,8 @@ class ConnectionManager extends ChangeNotifier {
   }
 
   Future<bool> prepareLocationsTransportCatalog() async {
-    if (_appContext.hostPlatform == HostPlatform.android && !_runtimeBusy) {
+    if ((_appContext.hostPlatform == HostPlatform.android ||
+        _appContext.hostPlatform == HostPlatform.windows) && !_runtimeBusy) {
       try {
         await _runRuntimeAction(() async {
           final current = await _withRuntimeActionTimeout('snapshot', _runtimeEngine.snapshot);
@@ -253,7 +254,7 @@ class ConnectionManager extends ChangeNotifier {
         return false;
       }
     }
-    return refreshTransportCatalog(force: _appContext.hostPlatform == HostPlatform.android);
+    return refreshTransportCatalog(force: true);
   }
 
   Future<bool> _refreshManagedProfileCache({bool alternativesOnly = false}) async {
@@ -3044,10 +3045,17 @@ class ConnectionManager extends ChangeNotifier {
     }
     _invitationAuthority = invitation;
     _invitationAuthorityGeneration = invitation == null ? null : generation;
-    var payload = invitation?.payload ?? await resolve(candidateRef: inputs.preferredCandidateRef,
+    final pinnedCandidate = pinnedCandidatePreference(inputs.preferredCandidateRef);
+    final manualWhitelistProfile = whitelistProfile(inputs.preferredCandidateRef);
+    var payload = invitation?.payload ?? await resolve(candidateRef: pinnedCandidate,
         select: !discoverCandidates, cache: !useCandidateProbes);
     requireCurrent();
     final catalog = payload.transportCatalog;
+    if (!useCandidateProbes && catalog != null &&
+        !usesSelectedWhitelistProfile(payload.materialCandidate ?? catalog.selected, inputs.preferredCandidateRef)) {
+      throw const BootstrapFailure('Рабочее подключение не найдено. Проверь сеть и попробуй ещё раз.',
+          code: 'candidate_selection_exhausted', operationalCode: 'CONN-008');
+    }
     // An unproven first attempt can expose fresh public choices after failure.
     // Keep the current catalog while a proven or restored tunnel is retained.
     if (_activeCandidateRef == null &&
@@ -3116,28 +3124,23 @@ class ConnectionManager extends ChangeNotifier {
       };
       final eligibleCandidates = catalog.candidates.where((candidate) =>
           (candidate.warpMode == 'warp_direct' || country.isEmpty || candidate.nodeCountryCode(catalog.candidates) == country) &&
-          (inputs.preferredCandidateRef.isEmpty || candidate.candidateRef == inputs.preferredCandidateRef) &&
+          usesSelectedWhitelistProfile(candidate, inputs.preferredCandidateRef) &&
+          (pinnedCandidate.isEmpty || candidate.candidateRef == pinnedCandidate) &&
           (candidate.warpMode == 'warp_direct' || inputs.preferredNodeCode.isEmpty || candidate.nodeCode == inputs.preferredNodeCode)).toList();
       final warpCandidates = eligibleCandidates.where((candidate) =>
           candidate.warpMode != null && candidate.warpMode != 'warp_direct' &&
           (candidateWarpPolicy.transport != WarpRuntimeTransport.psiphon ||
               candidate.warpMode == 'proxy_over_warp' && candidate.network == 'tcp')).toList();
-      final ordinaryCandidates = eligibleCandidates.where((candidate) =>
-          candidate.warpMode == null && !const {'dnstt', 'slipstream', 'mts', 'vk'}.contains(candidate.transport)).toList();
-      final dnsCandidates = [
-        ...eligibleCandidates.where((candidate) => candidate.transport == 'mts').take(1),
-        ...eligibleCandidates.where((candidate) => candidate.transport == 'vk').take(1),
-        ...eligibleCandidates.where((candidate) => candidate.transport == 'dnstt').take(1),
-        ...eligibleCandidates.where((candidate) => candidate.transport == 'slipstream').take(1),
-      ]..sort((a, b) => a.priority.compareTo(b.priority));
+      final ordinaryCandidates = eligibleCandidates.where((candidate) => candidate.warpMode == null).toList();
       final directWarpCandidates = eligibleCandidates.where((candidate) =>
           candidate.warpMode == 'warp_direct').toList();
-      final groups = [
-        if (useWarpCandidates && warpCandidates.isNotEmpty) warpCandidates,
-        ordinaryCandidates,
-        dnsCandidates,
-        if (useWarpCandidates && candidateWarpPolicy.transport != WarpRuntimeTransport.psiphon) directWarpCandidates,
-      ];
+      final groups = manualWhitelistProfile.isNotEmpty
+          ? [eligibleCandidates]
+          : [
+              if (useWarpCandidates && warpCandidates.isNotEmpty) warpCandidates,
+              ordinaryCandidates,
+              if (useWarpCandidates && candidateWarpPolicy.transport != WarpRuntimeTransport.psiphon) directWarpCandidates,
+            ];
       var selectedCandidate = false;
       BootstrapFailure? apiFailure;
       for (final group in groups) {
@@ -3149,7 +3152,7 @@ class ConnectionManager extends ChangeNotifier {
         // DNS handshakes plus the unchanged 64 KiB proof need their own budget.
         final selectionTimeout = alternateHelper
             ? Duration(seconds: candidateWarpPolicy.transport == WarpRuntimeTransport.psiphon ? 60 : 30)
-            : identical(group, dnsCandidates)
+            : manualWhitelistProfile.isNotEmpty
             ? _dnsCandidateTimeoutFor(inputs)
             : identical(group, directWarpCandidates)
             ? const Duration(seconds: 4)
@@ -3171,7 +3174,7 @@ class ConnectionManager extends ChangeNotifier {
             cancelled: cancelled,
             recoveryCandidateRef: recoveryCandidateRef,
             excludedCandidateRefs: excludedCandidateRefs,
-            probeTimeout: alternateHelper || identical(group, dnsCandidates)
+            probeTimeout: alternateHelper || manualWhitelistProfile.isNotEmpty
                 ? selectionTimeout
                 : identical(group, ordinaryCandidates)
                 ? _ordinaryCandidateProbeTimeout(inputs,
@@ -3182,7 +3185,7 @@ class ConnectionManager extends ChangeNotifier {
             excludeProbeCleanupFromBudget: twoWaveWarp,
             // Psiphon owns a process-wide datastore. Keep helper startup and
             // shutdown in one slot, including the preferred candidate.
-            serialProbes: alternateHelper,
+            serialProbes: alternateHelper || manualWhitelistProfile.isNotEmpty,
             mixTcpUdpProbes: inputs.hostPlatform != HostPlatform.windows &&
                 inputs.hostPlatform != HostPlatform.android &&
                 identical(group, ordinaryCandidates),
@@ -3268,7 +3271,7 @@ class ConnectionManager extends ChangeNotifier {
               eligibleCandidates.where((candidate) => materialized.containsKey(candidate.candidateRef)),
               countryOnly: inputs.preferredCountryCode.isNotEmpty, catalog: catalog);
           for (final candidate in alternatives) {
-            if (inputs.preferredCandidateRef.isNotEmpty) break;
+            if (pinnedCandidate.isNotEmpty) break;
             final alternate = materialized[candidate.candidateRef]!;
             await (cache as CachedManagedProfileBootstrapper).cacheResolvedManagedProfile(
                 inputs, alternate, cancelled: cancelled, candidateOnly: true);
@@ -3395,10 +3398,13 @@ class ConnectionManager extends ChangeNotifier {
       final probing = engine as RuntimeCandidateProbing;
       final service = cache as CachedManagedProfileBootstrapper;
       final cachedWarpAllowed = _explicitWarpRuntimeConsent == true;
+      final manualWhitelistProfile = whitelistProfile(inputs.preferredCandidateRef);
+      final pinnedCandidate = pinnedCandidatePreference(inputs.preferredCandidateRef);
       final helperTransport = _clientExperience.routingPreferences.connectionHelper;
       final features = _runtimeSnapshot?.availableTransportFeatures ?? const <RuntimeTransportFeature>{};
       final candidateRefs = catalog.candidates.where((candidate) =>
-          (inputs.preferredCandidateRef.isEmpty || candidate.candidateRef == inputs.preferredCandidateRef) &&
+          usesSelectedWhitelistProfile(candidate, inputs.preferredCandidateRef) &&
+          (pinnedCandidate.isEmpty || candidate.candidateRef == pinnedCandidate) &&
           (candidate.warpMode == 'warp_direct' || inputs.preferredCountryCode.isEmpty ||
               candidate.nodeCountryCode(catalog.candidates) == inputs.preferredCountryCode) &&
           (candidate.warpMode == 'warp_direct' || inputs.preferredNodeCode.isEmpty || candidate.nodeCode == inputs.preferredNodeCode) &&
@@ -3434,25 +3440,15 @@ class ConnectionManager extends ChangeNotifier {
       }
       try {
         final cachedCandidates = catalog.candidates.where((candidate) =>
-            available.containsKey(candidate.candidateRef)).toList();
+            candidateRefs.contains(candidate.candidateRef) && available.containsKey(candidate.candidateRef)).toList();
         final warpCandidates = cachedCandidates.where((candidate) =>
             candidate.warpMode != null && candidate.warpMode != 'warp_direct').toList();
         final directWarpCandidates = cachedCandidates.where((candidate) =>
             candidate.warpMode == 'warp_direct').toList();
-        final ordinaryCandidates = cachedCandidates.where((candidate) => candidate.warpMode == null &&
-            !const {'dnstt', 'slipstream', 'mts', 'vk'}.contains(candidate.transport)).toList();
-        final dnsCandidates = [
-          ...cachedCandidates.where((candidate) => candidate.transport == 'mts').take(1),
-          ...cachedCandidates.where((candidate) => candidate.transport == 'vk').take(1),
-          ...cachedCandidates.where((candidate) => candidate.transport == 'dnstt').take(1),
-          ...cachedCandidates.where((candidate) => candidate.transport == 'slipstream').take(1),
-        ]..sort((a, b) => a.priority.compareTo(b.priority));
-        final groups = [
-          warpCandidates,
-          ordinaryCandidates,
-          dnsCandidates,
-          directWarpCandidates,
-        ];
+        final ordinaryCandidates = cachedCandidates.where((candidate) => candidate.warpMode == null).toList();
+        final groups = manualWhitelistProfile.isNotEmpty
+            ? [cachedCandidates]
+            : [warpCandidates, ordinaryCandidates, directWarpCandidates];
         var found = false;
         for (final group in groups) {
           if (group.isEmpty) continue;
@@ -3472,7 +3468,7 @@ class ConnectionManager extends ChangeNotifier {
               contextGeneration: context,
               cancelled: _connectionCoordinator.whenOperationEnds(generation),
               recoveryCandidateRef: recoveryCandidateRef, excludedCandidateRefs: excludedCandidateRefs,
-              selectionTimeout: _withinConnectBudget(alternateHelper ? helperTimeout : identical(group, dnsCandidates)
+              selectionTimeout: _withinConnectBudget(alternateHelper ? helperTimeout : manualWhitelistProfile.isNotEmpty
                   ? _dnsCandidateTimeoutFor(inputs)
                   : identical(group, directWarpCandidates)
                   ? const Duration(seconds: 4)
@@ -3482,12 +3478,12 @@ class ConnectionManager extends ChangeNotifier {
                           ? const Duration(seconds: 7)
                           : const Duration(seconds: 12)),
               excludeProbeCleanupFromBudget: twoWaveWarp,
-              serialProbes: alternateHelper,
+              serialProbes: alternateHelper || manualWhitelistProfile.isNotEmpty,
               mixTcpUdpProbes: inputs.hostPlatform != HostPlatform.windows &&
                   inputs.hostPlatform != HostPlatform.android &&
                   identical(group, ordinaryCandidates),
               probeSettlementTimeout: _candidateWorkTimeout,
-              probeTimeout: alternateHelper ? helperTimeout : identical(group, dnsCandidates)
+              probeTimeout: alternateHelper ? helperTimeout : manualWhitelistProfile.isNotEmpty
                   ? _dnsCandidateTimeoutFor(inputs)
                   : identical(group, ordinaryCandidates)
                   ? _ordinaryCandidateProbeTimeout(inputs, initialAndroidPreparation: coldConnect)
@@ -3519,7 +3515,7 @@ class ConnectionManager extends ChangeNotifier {
             found = true;
             break;
           } on SmartConnectSelectionExhausted {
-            // Keep the online order: manual chain, ordinary paths, DNS reserve, direct WARP.
+            // Try the next eligible group in the same order as an online connection.
           }
         }
         if (!found) throw const SmartConnectSelectionExhausted();
@@ -3546,6 +3542,12 @@ class ConnectionManager extends ChangeNotifier {
       _candidateNetworkKey = key;
       _candidateOfflineNetworkKey = _offlineCandidateNetworkKey(key, context, network.networkClass);
       selected = selected.copyWith(candidateMaterials: available);
+    }
+    if (selected.transportCatalog != null &&
+        !usesSelectedWhitelistProfile(selected.materialCandidate ?? selected.transportCatalog!.selected,
+            inputs.preferredCandidateRef)) {
+      throw const BootstrapFailure('Рабочее подключение не найдено. Проверь сеть и попробуй ещё раз.',
+          code: 'candidate_selection_exhausted', operationalCode: 'CONN-008');
     }
     _transportCatalog = selected.transportCatalog;
     _candidateRef = selected.materialCandidate?.candidateRef;
@@ -3587,10 +3589,7 @@ class ConnectionManager extends ChangeNotifier {
     if (inputs.hostPlatform != HostPlatform.android || ref.isEmpty) return '';
     final candidate = _reportedCandidate(ref);
     if (candidate != null) return candidate.usesWhitelistTransport ? ref : '';
-    // A saved manual selection can outlive the catalog that offered it.
-    const profiles = {'dnstt_vless', 'slipstream_vless', 'mts_vless', 'vk_vless', 'avito_vless'};
-    final parts = ref.split(':');
-    return parts.length == 2 && profiles.contains(parts[1]) ? ref : '';
+    return whitelistProfile(ref).isEmpty ? '' : ref;
   }
 
   bool _unavailablePinnedCandidate(BootstrapFailure error) =>
@@ -6722,7 +6721,7 @@ class ConnectionManager extends ChangeNotifier {
       await _reconnectAfterManagedProfileChange(
         progressMessage: 'Применяем выбор подключения…',
         successMessage: 'Выбор подключения применён.',
-        requestedCandidateRef: next.preferredCandidateRef,
+        requestedCandidateRef: pinnedCandidatePreference(next.preferredCandidateRef),
       );
     } else if (countryChanged) {
       unawaited(refreshTransportCatalog(force: true));
@@ -6763,7 +6762,17 @@ class ConnectionManager extends ChangeNotifier {
     final candidateRef = value.trim();
     if (_nodePreferenceBusy ||
         (!enableManual && _clientExperience.interfaceMode != PokrovInterfaceMode.advanced)) return;
-    if (!(_transportCatalog?.candidates.any((candidate) => candidate.candidateRef == candidateRef) ?? false)) return;
+    if (candidateRef.isEmpty && enableManual &&
+        whitelistProfile(_clientExperience.preferredCandidateRef).isNotEmpty) {
+      await _saveConnectionPreference(_clientExperience.copyWith(preferredCandidateRef: ''));
+      return;
+    }
+    final profile = whitelistProfile(candidateRef);
+    if (profile.isNotEmpty && !enableManual) return;
+    final automatic = isAutomaticWhitelistPreference(candidateRef);
+    if (!(_transportCatalog?.candidates.any((candidate) => automatic
+        ? candidate.usesWhitelistTransport && candidate.profileRef == profile
+        : candidate.candidateRef == candidateRef) ?? false)) return;
     await _saveConnectionPreference(_clientExperience.copyWith(
       interfaceMode: PokrovInterfaceMode.advanced,
       preferredCountryCode: '', preferredNodeCode: '',

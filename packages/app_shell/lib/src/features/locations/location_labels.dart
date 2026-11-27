@@ -4,6 +4,7 @@ String _locationCountryDisplayName(String code, String fallback) {
   const names = <String, String>{
     'CH': 'Швейцария',
     'DE': 'Германия',
+    'ES': 'Испания',
     'FI': 'Финляндия',
     'FR': 'Франция',
     'GB': 'Великобритания',

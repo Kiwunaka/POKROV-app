@@ -13,6 +13,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
+
+import 'whitelist_preference.dart';
 import 'package:pokrov_observability_contracts/observability_contracts.dart'
     show KnownOperationalErrorCodes, PortalFailureReason, connectionClosedGuardCodes, connectionFailureOperations;
 import 'package:pokrov_observability_runtime/observability_runtime.dart';
@@ -3707,10 +3709,11 @@ class AppFirstRuntimeBootstrapper
       }
     });
     final bundled = payload.candidateMaterials;
-    if (!candidateOnly && bundled.isNotEmpty && inputs.preferredCandidateRef.isEmpty) {
+    if (!candidateOnly && bundled.isNotEmpty && pinnedCandidatePreference(inputs.preferredCandidateRef).isEmpty) {
       final alternatives = SmartConnectCandidateSelector.cacheAlternatives(payload.materialCandidate!,
           payload.transportCatalog!.candidates.where((candidate) =>
               bundled.containsKey(candidate.candidateRef) &&
+              usesSelectedWhitelistProfile(candidate, inputs.preferredCandidateRef) &&
               (inputs.preferredNodeCode.isEmpty || candidate.nodeCode == inputs.preferredNodeCode)),
           countryOnly: inputs.preferredCountryCode.isNotEmpty, catalog: payload.transportCatalog!);
       for (final candidate in alternatives) {
@@ -3754,8 +3757,8 @@ class AppFirstRuntimeBootstrapper
           code: 'managed_profile_superseded', statusCode: 409, operation: 'managed_profile');
       }
     }
-    var currentCandidateRef = inputs.preferredCandidateRef.isNotEmpty
-        ? inputs.preferredCandidateRef : selectedCandidateRef;
+    final pinnedCandidate = pinnedCandidatePreference(inputs.preferredCandidateRef);
+    var currentCandidateRef = pinnedCandidate.isNotEmpty ? pinnedCandidate : selectedCandidateRef;
     if (alternativesOnly) {
       final cached = await loadCachedManagedProfile(inputs, preferProven: true,
           selectedCandidateRef: selectedCandidateRef, runtimeFeatures: runtimeFeatures, coreRelease: coreRelease);
@@ -3770,10 +3773,11 @@ class AppFirstRuntimeBootstrapper
     await cacheResolvedManagedProfile(inputs, selected, cancelled: cancelled);
     final catalog = selected.transportCatalog;
     if (catalog == null) return;
-    if (inputs.preferredCandidateRef.isNotEmpty) return;
+    if (pinnedCandidate.isNotEmpty) return;
     final bundled = selected.candidateMaterials;
     final alternatives = SmartConnectCandidateSelector.cacheAlternatives(selected.materialCandidate!,
         catalog.candidates.where((candidate) =>
+            usesSelectedWhitelistProfile(candidate, inputs.preferredCandidateRef) &&
             (bundled.isEmpty || bundled.containsKey(candidate.candidateRef)) &&
             (inputs.preferredNodeCode.isEmpty || candidate.nodeCode == inputs.preferredNodeCode)),
         countryOnly: inputs.preferredCountryCode.isNotEmpty, catalog: catalog);
@@ -4002,6 +4006,7 @@ class AppFirstRuntimeBootstrapper
             runtimeFeatures: runtimeFeatures,
             coreRelease: coreRelease,
             selectedCandidateRef: selectedCandidateRef,
+            manualWhitelistProfile: whitelistProfile(preferredCandidateRef),
             waitForVpnNode: waitForVpnNode,
             includePlayerReserves: preferredCandidateRef.isNotEmpty &&
                 preferredCandidateRef == selectedCandidateRef &&
@@ -4060,6 +4065,7 @@ class AppFirstRuntimeBootstrapper
                     manifest = await _fetchManagedManifest(
                       runtimeFeatures: runtimeFeatures, coreRelease: coreRelease,
                       selectedCandidateRef: candidate.candidateRef,
+                      manualWhitelistProfile: whitelistProfile(preferredCandidateRef),
                       tcpFallbackFromRevision: tcpFallbackFromRevision,
                       state: state, hostPlatform: hostPlatform, routeMode: routeMode,
                       selectedApps: normalizedSelectedApps, preferredNodeCode: selectedNodeCode,
@@ -4100,6 +4106,7 @@ class AppFirstRuntimeBootstrapper
                   try {
                     currentOperation = 'managed_fetch';
                     manifest = await _fetchManagedManifest(
+                      manualWhitelistProfile: whitelistProfile(preferredCandidateRef),
                       tcpFallbackFromRevision: tcpFallbackFromRevision,
                       state: state,
                       hostPlatform: hostPlatform,
@@ -7796,6 +7803,7 @@ class AppFirstRuntimeBootstrapper
     Set<RuntimeTransportFeature> runtimeFeatures = const {},
     String? coreRelease,
     String selectedCandidateRef = '',
+    String manualWhitelistProfile = '',
     bool includePlayerReserves = false,
     bool waitForVpnNode = false,
     String preferredCountryCode = '',
@@ -7831,6 +7839,7 @@ class AppFirstRuntimeBootstrapper
         'runtime_features': (runtimeFeatures.map((feature) => feature.wireName).toList()..sort()).join(','),
         if (coreRelease != null && coreRelease.isNotEmpty) 'core_release': coreRelease,
         if (selectedCandidateRef.isNotEmpty) 'selected_candidate_ref': selectedCandidateRef,
+        'whitelist_profile': manualWhitelistProfile.isEmpty ? 'none' : manualWhitelistProfile,
       };
       requestPath += '${requestPath.contains('?') ? '&' : '?'}${Uri(queryParameters: query).query}';
     }

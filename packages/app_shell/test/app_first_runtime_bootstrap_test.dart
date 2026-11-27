@@ -2204,7 +2204,7 @@ void main() {
     expect(exact.candidateMaterials.keys, [realityRef]);
   });
 
-  test('Premium DNSTT reserve retains its VLESS boundary online and in the protected cache', () async {
+  test('Manually enabled Premium DNSTT retains its VLESS boundary online and in the protected cache', () async {
     final directory = await Directory.systemTemp.createTemp('pokrov-dnstt-reserve-');
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(() async {
@@ -2247,14 +2247,16 @@ void main() {
             'provisioning': {'status': 'ready', 'sync_ok': true},
           }));
         } else if (request.uri.path == '/api/client/profile/managed') {
+          final manual = request.uri.queryParameters['whitelist_profile'] == 'dnstt_vless';
           request.response.write(jsonEncode({
             'profile_revision': 'dnstt-reserve', 'config_format': 'singbox-json',
-            'transport_profile': 'legacy_reality_fallback', 'transport_kind': 'reality',
-            'config_payload': config(false),
+            'transport_profile': manual ? 'dnstt_vless' : 'legacy_reality_fallback',
+            'transport_kind': manual ? 'dnstt' : 'reality',
+            'config_payload': config(manual),
             'transport_catalog': {'schema_version': 'pokrov-transport-catalog-v1',
-              'revision': 'dnstt-reserve', 'selected_candidate_ref': ordinaryRef,
+              'revision': 'dnstt-reserve', 'selected_candidate_ref': manual ? reserveRef : ordinaryRef,
               'candidates': [candidate(false), candidate(true)]},
-            'candidate_materials': [for (final reserve in [false, true]) {
+            'candidate_materials': [for (final reserve in [manual]) {
               'candidate_ref': reserve ? reserveRef : ordinaryRef,
               'transport_kind': reserve ? 'dnstt' : 'reality',
               'config_format': 'singbox-json', 'config_payload': config(reserve),
@@ -2273,14 +2275,16 @@ void main() {
       maxRequestAttempts: 1,
       httpClientFactory: offline ? () => throw StateError('offline restore used HTTP') : null);
     const inputs = ManagedProfileCacheInputs(hostPlatform: HostPlatform.windows,
-      routeMode: RouteMode.fullTunnel, preferredCountryCode: 'CH');
+      routeMode: RouteMode.fullTunnel, preferredCountryCode: 'CH', preferredCandidateRef: 'auto:dnstt_vless');
     final features = RuntimeTransportFeature.values.toSet();
     final online = create();
     Future<ManagedProfilePayload> resolve({HostPlatform platform = HostPlatform.windows}) =>
         online.resolveManagedProfile(hostPlatform: platform, routeMode: inputs.routeMode,
-          preferredCountryCode: 'CH', runtimeFeatures: features, selectCandidate: false);
+          preferredCountryCode: 'CH', preferredCandidateRef: inputs.preferredCandidateRef,
+          runtimeFeatures: features, selectCandidate: false);
     final selected = await resolve();
-    final reserve = selected.candidateMaterials[reserveRef]!;
+    final reserve = selected;
+    expect(selected.candidateMaterials.keys, [reserveRef]);
     expect(reserve.source?.protocol, 'vless');
     expect(reserve.materialCandidate?.transport, 'dnstt');
     final decoded = jsonDecode(reserve.configPayload) as Map;
@@ -2298,7 +2302,7 @@ void main() {
     const storage = FlutterSecureStorage();
     const cacheKey = 'pokrov-managed-profile-windows-v1';
     final stored = jsonDecode((await storage.read(key: cacheKey))!) as Map<String, dynamic>;
-    final cachedMaterial = stored['candidates'][reserveRef]['payload'] as Map;
+    final cachedMaterial = stored['downloaded']['payload'] as Map;
     final altered = jsonDecode(cachedMaterial['config_payload'] as String) as Map;
     (altered['outbounds'] as List).cast<Map>().singleWhere((row) => row['type'] == 'vless').remove('detour');
     cachedMaterial['config_payload'] = jsonEncode(altered);
@@ -2308,7 +2312,7 @@ void main() {
     accessState = 'paid_unlimited';
     expiry = null; // Existing manual/admin lifetime Premium.
     final android = await resolve(platform: HostPlatform.android);
-    expect(android.candidateMaterials[reserveRef]?.materialCandidate?.transport, 'dnstt');
+    expect(android.materialCandidate?.transport, 'dnstt');
     accessState = 'free_monthly';
     await expectLater(resolve(), throwsA(isA<TransportManifestFailure>()));
     accessState = 'bonus_premium';
