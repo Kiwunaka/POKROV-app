@@ -1190,28 +1190,43 @@ void TestOwnedDnsProtectsStagingAndRetriesProof() {
                egress->last_reserve == EgressProbeReserve::kApi && protection->llmnr_blocked,
            "owned DNS proof timeout did not retry in the same protected tunnel");
     const auto initial_starts = protection->starts;
-    const auto startup_calls = egress->verify_calls;
     EgressProbeObservation tls_timeout{EgressProbeStage::kTls,
         EgressProbeOutcome::kDeadline, EgressErrorDomain::kNone, 0, 3000};
     tls_timeout.dns_a_accepted = true;
-    egress->on_verify = [&] {
-      const bool first_check = egress->verify_calls == startup_calls + 1;
-      egress->verify_error = first_check ? "core_egress_probe_failed" : "";
-      egress->observation = first_check
-          ? std::optional<EgressProbeObservation>(tls_timeout) : std::nullopt;
+    EgressProbeObservation response_timeout{EgressProbeStage::kResponse,
+        EgressProbeOutcome::kDeadline, EgressErrorDomain::kNone, 0, 3000};
+    response_timeout.http_local_is_tun = true;
+    EgressProbeObservation bad_gateway{EgressProbeStage::kProof,
+        EgressProbeOutcome::kFailed, EgressErrorDomain::kHttpStatus, 502, 210};
+    bad_gateway.http_local_is_tun = true;
+    const std::pair<EgressProbeObservation, const char*> transient_checks[] = {
+        {tls_timeout, "core_egress_tls_timeout"},
+        {timeout, "core_egress_dns_failed"},
+        {response_timeout, "core_egress_response_timeout"},
+        {bad_gateway, "core_egress_probe_unavailable"},
     };
-    const auto first_deadline = ::GetTickCount64() + 1;
-    const auto retried = host.RecheckEgress({}, first_deadline);
-    Expect(retried.status == Status::kOk && egress->verify_calls == startup_calls + 2 &&
-               egress->last_deadline_tick > first_deadline && runtime->start_calls == 1 &&
-               protection->starts == initial_starts &&
-               Contains(retried, "core_egress_validated=1;dns_ready=1"),
-           "a single periodic TLS timeout interrupted the healthy owned-DNS tunnel");
+    for (const auto& [observation, failure] : transient_checks) {
+      const auto calls_before = egress->verify_calls;
+      egress->on_verify = [&] {
+        const bool first_check = egress->verify_calls == calls_before + 1;
+        egress->verify_error = first_check ? failure : "";
+        egress->observation = first_check
+            ? std::optional<EgressProbeObservation>(observation) : std::nullopt;
+      };
+      const auto first_deadline = ::GetTickCount64() + 1;
+      const auto retried = host.RecheckEgress({}, first_deadline);
+      Expect(retried.status == Status::kOk && egress->verify_calls == calls_before + 2 &&
+                 egress->last_deadline_tick > first_deadline && runtime->start_calls == 1 &&
+                 protection->starts == initial_starts &&
+                 Contains(retried, "core_egress_validated=1;dns_ready=1"),
+             "a single periodic probe failure interrupted the healthy owned-DNS tunnel");
+    }
     egress->on_verify = {};
+    const auto calls_before = egress->verify_calls;
     egress->verify_error = "core_egress_tls_timeout";
     egress->observation = tls_timeout;
     const auto failed = host.RecheckEgress({}, ::GetTickCount64() + host.EgressCheckBudgetMs());
-    Expect(failed.status == Status::kNotReady && egress->verify_calls == startup_calls + 4 &&
+    Expect(failed.status == Status::kNotReady && egress->verify_calls == calls_before + 2 &&
                protection->armed && protection->starts == initial_starts + 1 &&
                Contains(failed, "core_egress_validated=0;dns_ready=0"),
            "consecutive TLS timeouts did not retain protection for recovery");

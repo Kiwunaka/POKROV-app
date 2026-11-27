@@ -46,6 +46,27 @@ RuntimeResult RuntimeHost::CrashDiagnostics() const {
 }
 namespace {
 
+bool IsTransientOwnedEgressFailure(const EgressProbeObservation& observation) {
+  const bool timeout = observation.outcome == EgressProbeOutcome::kTimeout ||
+                       observation.outcome == EgressProbeOutcome::kDeadline;
+  switch (observation.stage) {
+    case EgressProbeStage::kDnsWait:
+      return timeout;
+    case EgressProbeStage::kTls:
+      return observation.dns_a_accepted == true &&
+             (timeout || (observation.error_domain == EgressErrorDomain::kWinsock &&
+                          observation.error_code == WSAECONNRESET));
+    case EgressProbeStage::kResponse:
+      return observation.http_local_is_tun == true && timeout;
+    case EgressProbeStage::kProof:
+      return observation.http_local_is_tun == true &&
+             observation.error_domain == EgressErrorDomain::kHttpStatus &&
+             observation.error_code == 502;
+    default:
+      return false;
+  }
+}
+
 const char* SafeEgressFailure(const std::string& failure) {
   for (const auto* known : {
            "core_egress_dns_failed", "core_egress_connect_failed",
@@ -2163,12 +2184,8 @@ RuntimeResult RuntimeHost::RecheckEgress(const CheckInterruption& interrupted,
   const auto& observation = egress_failure_observation_;
   if (owned_dns_profile_ && core_egress_validated_ && !guarded &&
       interruption != OperationInterruption::kCancelled && observation &&
-      observation->stage == EgressProbeStage::kTls && observation->dns_a_accepted == true &&
-      (observation->outcome == EgressProbeOutcome::kTimeout ||
-       observation->outcome == EgressProbeOutcome::kDeadline ||
-       (observation->error_domain == EgressErrorDomain::kWinsock &&
-        observation->error_code == WSAECONNRESET))) {
-    // Confirm a transient TLS failure with a fresh bounded probe on the protected TUN.
+      IsTransientOwnedEgressFailure(*observation)) {
+    // Give an established tunnel one bounded confirmation before blocking traffic.
     deadline_tick = ::GetTickCount64() + EgressCheckBudgetMs();
     failure = VerifyEgress(true, check, deadline_tick);
     interruption = check();
