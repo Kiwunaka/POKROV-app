@@ -1838,6 +1838,8 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             startProbe = { token, periodic ->
                 runCoreEgressProbe(session, generation, target, probeServer, variantConfigContent, monitor, token, periodic)
             },
+            confirmPeriodicTimeout = target.kind == AndroidCoreEgressProbeTargetKind.GROUP &&
+                target.periodicTimeoutMillis == AndroidCoreEgressProbe.PERIODIC_TIMEOUT_MILLIS,
             publish = { result, periodic ->
                 handleCoreEgressProbeResult(result, generation,
                     keepRuntimeOnFailure = periodic || target.keepRuntimeOnFailure,
@@ -1860,6 +1862,10 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     ) {
         AndroidOperationalJournal.record(AndroidOperationalEvent.CORE_EGRESS_PROBE,
             AndroidOperationalOutcome.REQUIRED, generation)
+        val confirmingTimeout = monitor.isConfirmingTimeout(token)
+        val periodicTimeoutMillis = if (confirmingTimeout) {
+            AndroidCoreEgressProbe.PERIODIC_CONFIRMATION_TIMEOUT_MILLIS
+        } else target.periodicTimeoutMillis
         val probeCancelled = AtomicBoolean(false)
         val periodicCancellation = if (periodic) object : RuntimeProbeCancellation {
             override fun isCancelled(): Boolean = probeCancelled.get() || !monitor.owns(token)
@@ -1875,7 +1881,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         }
         mainHandler.postAtTime(watchdog, monitor,
             android.os.SystemClock.uptimeMillis() + if (periodic) {
-                target.periodicTimeoutMillis + 500L
+                periodicTimeoutMillis + 500L
             } else target.startupWatchdogMillis)
         if (!session.execute {
             try {
@@ -1885,7 +1891,8 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     val started = android.os.SystemClock.elapsedRealtime()
                     if (!periodic) android.util.Log.i("POKROV-Egress",
                         "post_start_probe_begin attempt=$completedAttempts kind=${target.kind.name.lowercase()}")
-                    return AndroidCoreEgressProbe.probe(target, probeServer, periodicCancellation) { code, errorType ->
+                    return AndroidCoreEgressProbe.probe(target, probeServer, periodicCancellation,
+                        periodicTimeoutMillis) { code, errorType ->
                         if (!periodic && monitor.owns(token)) {
                             val diagnostic = AndroidCoreEgressProbeDiagnostic(code, errorType,
                                 android.os.SystemClock.elapsedRealtime() - started, completedAttempts)
@@ -1927,6 +1934,9 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     executor = runtimeExecutor,
                     shouldRun = { monitor.owns(token) },
                 ) {
+                    if (confirmingTimeout) {
+                        android.util.Log.i("POKROV-Egress", "periodic_timeout_confirmation=${result.name.lowercase()}")
+                    }
                     monitor.complete(token, result)
                 }
             } catch (_: InterruptedException) {

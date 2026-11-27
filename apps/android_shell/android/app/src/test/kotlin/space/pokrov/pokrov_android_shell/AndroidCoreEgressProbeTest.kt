@@ -139,6 +139,52 @@ class AndroidCoreEgressProbeTest {
     }
 
     @Test
+    fun establishedGroupConfirmsASlowProbeBeforePublishingTimeout() {
+        val core = BoundedCore().apply { simulatedLatencyMs = 6_200 }
+        val target = AndroidCoreEgressProbeTarget("proxy", AndroidCoreEgressProbeTargetKind.GROUP)
+        val cancellation = object : RuntimeProbeCancellation {
+            override fun isCancelled(): Boolean = false
+        }
+        var now = 0L
+        var token = 0L
+        val results = mutableListOf<AndroidCoreEgressProbeResult>()
+        val monitor = AndroidCoreEgressMonitor(
+            isCurrent = { true },
+            canRepeat = { true },
+            confirmPeriodicTimeout = true,
+            clockMillis = { now },
+            scheduleCheck = { _, _ -> error("Unexpected scheduled check") },
+            startProbe = { id, _ -> token = id },
+            publish = { result, _ -> results += result },
+        )
+        fun finishPeriodicProbe() {
+            val current = token
+            val budget = if (monitor.isConfirmingTimeout(current)) {
+                AndroidCoreEgressProbe.PERIODIC_CONFIRMATION_TIMEOUT_MILLIS
+            } else target.periodicTimeoutMillis
+            monitor.complete(current, AndroidCoreEgressProbe.probe(target, core, cancellation, budget))
+        }
+
+        monitor.start()
+        monitor.complete(token, AndroidCoreEgressProbeResult.HEALTHY)
+        now = 5_000L
+        monitor.onSuspectedFailure()
+        finishPeriodicProbe()
+        assertEquals(listOf(AndroidCoreEgressProbeResult.HEALTHY), results)
+        assertTrue(monitor.isConfirmingTimeout(token))
+        finishPeriodicProbe()
+        assertEquals(listOf(AndroidCoreEgressProbeResult.HEALTHY, AndroidCoreEgressProbeResult.HEALTHY), results)
+
+        core.simulatedLatencyMs = 8_000
+        now = 20_000L
+        monitor.onSuspectedFailure()
+        finishPeriodicProbe()
+        finishPeriodicProbe()
+        assertEquals(AndroidCoreEgressProbeResult.TIMED_OUT, results.last())
+        assertEquals(4, core.calls)
+    }
+
+    @Test
     fun slowTcpCarriersAllowObservedLatencyAtStartupAndDuringPeriodicChecks() {
         for (carrier in listOf("vk", "psiphon")) {
             val types = mapOf("root" to "selector", "proxy" to "vless", "carrier" to carrier)

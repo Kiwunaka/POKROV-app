@@ -46,6 +46,7 @@ internal enum class AndroidCoreEgressProbeResult {
 internal class AndroidCoreEgressMonitor(
     private val isCurrent: () -> Boolean,
     private val canRepeat: () -> Boolean,
+    private val confirmPeriodicTimeout: Boolean = false,
     private val clockMillis: () -> Long = { System.nanoTime() / 1_000_000L },
     private val scheduleCheck: (Long, () -> Unit) -> Unit,
     private val startProbe: (Long, Boolean) -> Unit,
@@ -61,6 +62,7 @@ internal class AndroidCoreEgressMonitor(
     private var lastDownlinkTotal: Long? = null
     private var suspectedFailure = false
     private var checkScheduled = false
+    private var confirmingTimeout = false
 
     @Synchronized fun start() {
         if (cancelled || inFlight != null || !isCurrent() || (periodic && !canRepeat())) return
@@ -113,9 +115,22 @@ internal class AndroidCoreEgressMonitor(
     @Synchronized fun owns(token: Long): Boolean =
         !cancelled && inFlight == token && isCurrent()
 
+    @Synchronized fun isConfirmingTimeout(token: Long): Boolean =
+        confirmingTimeout && owns(token)
+
     @Synchronized fun complete(token: Long, result: AndroidCoreEgressProbeResult) {
         if (!owns(token)) return
         inFlight = null
+        if (periodic && confirmPeriodicTimeout && !confirmingTimeout && canRepeat() &&
+            lastResult == AndroidCoreEgressProbeResult.HEALTHY &&
+            result == AndroidCoreEgressProbeResult.TIMED_OUT
+        ) {
+            // Confirm a transient timeout on the existing tunnel before publishing a failure.
+            confirmingTimeout = true
+            start()
+            return
+        }
+        confirmingTimeout = false
         lastResult = result
         publish(result, periodic)
         periodic = true
@@ -529,6 +544,7 @@ internal object AndroidCoreEgressProbe {
         target: AndroidCoreEgressProbeTarget,
         server: Any? = null,
         periodicCancellation: RuntimeProbeCancellation? = null,
+        periodicTimeoutMillis: Int = target.periodicTimeoutMillis,
         onFailure: ((String, String) -> Unit)? = null,
     ): AndroidCoreEgressProbeResult {
         if (!isSafeTag(target.tag)) {
@@ -537,7 +553,9 @@ internal object AndroidCoreEgressProbe {
         }
         // Periodic checks use one Core deadline, without startup readiness,
         // retry or diagnostic-log waits.
-        if (periodicCancellation != null) return resultFromCore(server, target, periodicCancellation, onFailure)
+        if (periodicCancellation != null) {
+            return resultFromCore(server, target, periodicCancellation, onFailure, periodicTimeoutMillis)
+        }
         if (!target.captureSafeFailureCategory) return resultFromCore(server, target, onFailure = onFailure)
 
         // The command stream is diagnostic only. It cannot settle health.
@@ -565,6 +583,7 @@ internal object AndroidCoreEgressProbe {
         target: AndroidCoreEgressProbeTarget,
         periodicCancellation: RuntimeProbeCancellation? = null,
         onFailure: ((String, String) -> Unit)? = null,
+        periodicTimeoutMillis: Int = target.periodicTimeoutMillis,
     ): AndroidCoreEgressProbeResult {
         if (server == null || !isSafeTag(target.tag)) {
             onFailure?.invoke(if (server == null) "runtime_unavailable" else "target_unavailable", "none")
@@ -574,7 +593,7 @@ internal object AndroidCoreEgressProbe {
             val result = if (periodicCancellation != null) {
                 server.javaClass.getMethod("probeRuntimeEgress", String::class.java,
                     Int::class.javaPrimitiveType, RuntimeProbeCancellation::class.java)
-                    .invoke(server, target.tag, target.periodicTimeoutMillis, periodicCancellation)
+                    .invoke(server, target.tag, periodicTimeoutMillis, periodicCancellation)
             } else {
                 val methodName = if (target.kind == AndroidCoreEgressProbeTargetKind.ENDPOINT) {
                     "probeEndpoint"
@@ -839,6 +858,7 @@ internal object AndroidCoreEgressProbe {
         if (unixSeconds in 1..Long.MAX_VALUE / 1_000L) unixSeconds * 1_000L else 0L
 
     internal const val PERIODIC_TIMEOUT_MILLIS = 3_000
+    internal const val PERIODIC_CONFIRMATION_TIMEOUT_MILLIS = 7_000
     internal const val DNS_PERIODIC_TIMEOUT_MILLIS = 15_000
     private const val MAX_TAG_LENGTH = 128
     private const val URL_TEST_TIMEOUT_DELAY = 65_535
