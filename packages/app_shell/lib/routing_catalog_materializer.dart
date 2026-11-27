@@ -65,6 +65,15 @@ CatalogNativeRuleLayer materializeCatalogRuleLayer({
           policy.smartAccessProfile?.byService[rule.serviceId] != grants) {
         throw const RoutingCatalogFailure('catalog_gateway_lease_missing');
       }
+      if (rule.serviceId == 'gemini' &&
+          grants.any((grant) => grant.lease['provider_id'] == 'pokrov-de2')) {
+        // Cached HTTP/3 alternatives must fall back to TCP before the
+        // browser can send Gemini traffic through the ordinary VPN exit.
+        route.add(Map.unmodifiable({
+          ...match, 'network': 'udp', 'port': [443],
+          'pokrov_catalog_window': window, 'action': 'reject',
+        }));
+      }
       final group = List<String>.unmodifiable(grants.map((grant) => grant.lease['lease_id']! as String));
       for (final grant in grants) {
         final tag = smartAccessOutboundTag(grant);

@@ -719,6 +719,7 @@ void main() {
   test('${hostPlatform.name} explicit first-provider QA uses the signed disabled $serviceId projection through ordinary managed stage${resolverBootstrapIp != null ? ' with resolver bootstrap IP' : comssDns ? ' with Comss DNS' : controlFailure == null ? '' : ' with $controlFailure'}${staleReadback ? ' with stale owner readback' : ''}', () async {
     final refreshDuringStart = hostPlatform == HostPlatform.windows && serviceId == 'gemini' && controlFailure == null;
     final youtubeFailover = hostPlatform == HostPlatform.android && !comssDns && controlFailure == null;
+    final providerId = youtubeFailover ? 'pokrov-de2' : 'owned-provider';
     final controlClientState = hostPlatform == HostPlatform.windows && controlFailure == 'smart_access_runtime_control_unconfirmed'
         ? 'protocol_incompatible' : null;
     final httpOverrides = HttpOverrides.current;
@@ -760,15 +761,15 @@ void main() {
       platform: 'windows', accessState: 'paid_unlimited', vpnAvailable: true,
       now: now, selectedServiceIds: {serviceId}), throwsA(isA<RoutingCatalogFailure>()),
       reason: 'the public compiler must keep the original disabled service unavailable');
-    final permission = <String, Object?>{'permission_id': 'owned-permission', 'provider_id': 'owned-provider', 'revision': 1,
+    final permission = <String, Object?>{'permission_id': 'owned-permission', 'provider_id': providerId, 'revision': 1,
       'status': 'approved', 'embedded_use_allowed': true, 'review_ref': 'permission-review',
       'review_sha256': await _qaDigest('permission'), 'issued_at': start, 'expires_at': end,
       'max_new_connections_per_minute': 1, 'max_concurrent_connections_per_lease': 1, 'relay_connect_policy': null};
-    final provider = <String, Object?>{'provider_id': 'owned-provider', 'revision': 1, 'kind': hostPlatform == HostPlatform.android ? 'external' : 'owned', 'enabled': true,
+    final provider = <String, Object?>{'provider_id': providerId, 'revision': 1, 'kind': hostPlatform == HostPlatform.android && !youtubeFailover ? 'external' : 'owned', 'enabled': true,
       'permission_id': 'owned-permission', 'resolver_url': 'https://dns.example.test/dns-query',
       if (resolverBootstrapIp != null) 'resolver_bootstrap_ip': resolverBootstrapIp,
       'relay_addresses': ['1.1.1.1'], 'privacy_review_ref': 'privacy-review', 'privacy_review_sha256': await _qaDigest('privacy')};
-    final capability = <String, Object?>{'capability_id': '$serviceId-qa', 'provider_id': 'owned-provider', 'provider_revision': 1,
+    final capability = <String, Object?>{'capability_id': '$serviceId-qa', 'provider_id': providerId, 'provider_revision': 1,
       'service_id': serviceId, 'enabled': false, 'verification': 'source_only',
       'checks': {for (final name in const ['resolver_transport', 'dns_answer', 'tls_certificate', 'feature_request']) name: 'NOT_VERIFIED'},
       'platform': hostPlatform.name, 'origin': 'current-origin', 'family': 'ipv4', 'feature': 'web_request',
@@ -866,7 +867,7 @@ void main() {
             final issued = wire(DateTime.now().toUtc().add(hostPlatform == HostPlatform.android
                 ? const Duration(seconds: 2) : Duration.zero));
             final lease = <String, Object?>{'schema_version': 'pokrov-smart-access-lease-v1', 'lease_id': leaseId,
-              'audience': qaAudience, 'provider_id': 'owned-provider', 'provider_revision': 1, 'permission_id': 'owned-permission',
+              'audience': qaAudience, 'provider_id': providerId, 'provider_revision': 1, 'permission_id': 'owned-permission',
               'permission_revision': 1, 'capability_id': '$serviceId-qa', 'provider_policy_revision': 1, 'provider_security_revision': 1,
               'provider_policy_sha256': providerHash, 'catalog_revision': 1, 'catalog_security_revision': 1,
               'catalog_sha256': catalog.payloadSha256, 'service_id': serviceId, 'platform': hostPlatform.name, 'origin': 'current-origin',
@@ -1280,6 +1281,22 @@ void main() {
       reason: 'QA must preserve the saved automatic local DPI choice');
     expect((staged!['_meta'] as Map?)?['local_dpi'], isNull,
       reason: 'QA compiles its scoped projection with local DPI disabled');
+    final routeRules = ((staged!['route'] as Map)['rules'] as List).cast<Map>();
+    final quicRejections = routeRules.where((rule) =>
+        rule['action'] == 'reject' && rule['network'] == 'udp' &&
+        (rule['port'] as List?)?.contains(443) == true).toList();
+    if (providerId == 'pokrov-de2') {
+      expect(quicRejections.map((rule) => (rule['domain'] as List).single), unorderedEquals(domainNames));
+      for (final rejection in quicRejections) {
+        final domain = (rejection['domain'] as List).single;
+        final gateway = routeRules.firstWhere((rule) =>
+            rule['outbound'] == 'pokrov-smart-access-$leaseId' &&
+            (rule['domain'] as List?)?.singleOrNull == domain);
+        expect(routeRules.indexOf(rejection), lessThan(routeRules.indexOf(gateway)));
+      }
+    } else {
+      expect(quicRejections, isEmpty);
+    }
     final providerDns = ((staged!['dns'] as Map)['servers'] as List).cast<Map>()
         .singleWhere((server) => server['tag'] == 'pokrov-smart-access-dns-$leaseId');
     if (resolverBootstrapIp == null) {
@@ -1298,14 +1315,15 @@ void main() {
     }
     expect((staged!['outbounds'] as List).cast<Map>()
         .singleWhere((outbound) => outbound['type'] == 'pokrov-smart-access')
-        .containsKey('external_ech_outer_sni'), hostPlatform == HostPlatform.android,
+        .containsKey('external_ech_outer_sni'), provider['kind'] == 'external',
       reason: 'owned first-provider QA retains its ECH guard');
     final route = staged!['route'] as Map;
     for (final domainName in domainNames) {
     final selected = webRoute(Uri.https(domainName, '/'));
     expect(selected.outbound, 'pokrov-smart-access-$leaseId');
     expect(selected.dnsServer['tag'], 'pokrov-smart-access-dns-$leaseId');
-    final domainRules = (route['rules'] as List).cast<Map>().where((row) => (row['domain'] as List?)?.contains(domainName) == true).toList();
+    final domainRules = routeRules.where((row) =>
+        row['network'] != 'udp' && (row['domain'] as List?)?.contains(domainName) == true).toList();
     expect(domainRules[0]['pokrov_catalog_window']['lease_id'], leaseId);
     expect(domainRules[0]['network'], 'tcp');
     expect(domainRules[0]['port'], [443]);
