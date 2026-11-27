@@ -1361,6 +1361,8 @@ void main() {
     expect(closedContext!['native_stages'], 'NOT_VERIFIED');
     expect(closedContext['proof_current'], isFalse);
     expect(closedContext['fallback_guard_closed'], isTrue);
+    expect(closedContext['qa_probe_status'], 'failure');
+    expect(closedContext['qa_probe_stages'], startsWith('resolver:pass'));
     final verifier = SmartAccessVerifier(providerKeysById: {}, leaseKeysById: {'qa-test': public}, audience: qaAudience);
     if (hostPlatform == HostPlatform.android) {
       final payload = permitEnvelope!['payload'] as Map;

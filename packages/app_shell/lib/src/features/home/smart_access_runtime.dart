@@ -71,6 +71,15 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
           _firstProviderQaNativeGuardClosed = proof?.fallbackGuardClosed;
           if (proof?.fallbackGuardClosed == true || proof?.status == 'failure' ||
               (proof != null && proof.leaseId.isNotEmpty && proof.leaseId != leaseId)) {
+            final issuedAt = DateTime.parse(qa.permit.payload['issued_at']! as String).millisecondsSinceEpoch;
+            if (proof != null && proof.status == 'failure' && proof.leaseId == leaseId &&
+                proof.startedAtMs >= issuedAt &&
+                proof.completedAtMs! <= DateTime.now().toUtc().millisecondsSinceEpoch) {
+              _firstProviderQaControlDiagnostic = {
+                ...?_firstProviderQaControlDiagnostic,
+                ..._firstProviderQaProbeFailure(proof),
+              };
+            }
             _firstProviderQaProofClosed = true;
           } else if (proof?.hasCompletedStagePasses == true && selection.available && proof!.leaseId == leaseId) {
             final issuedAt = DateTime.parse(qa.permit.payload['issued_at']! as String).millisecondsSinceEpoch;
@@ -102,6 +111,13 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
           'observed_at_ms': stage.observedAtMs, 'duration_ms': stage.durationMs}]},
     });
   }
+
+  Map<String, Object> _firstProviderQaProbeFailure(RuntimeSmartAccessReadiness proof) => {
+    'qa_probe_status': proof.status,
+    'qa_probe_stages': proof.stages.isEmpty ? 'none' : proof.stages.map((stage) =>
+        '${stage.stage}:${stage.result}${stage.reason == null ? '' : ':${stage.reason}'}'
+        '${_appContext.hostPlatform == HostPlatform.windows ? ':${stage.durationMs}ms' : ''}').join(','),
+  };
 
   void _applyNativeSmartAccessRestrictions(Iterable<NativeSmartAccessRestriction> restrictions) {
     final binding = _connectionCoordinator.activeSmartAccessLeases;
@@ -641,10 +657,7 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
                 proof != null && proof.status == 'failure' && proof.leaseId == leaseId &&
                 proof.startedAtMs >= nativeProbeRequestedAtMs &&
                 proof.completedAtMs! <= DateTime.now().toUtc().millisecondsSinceEpoch) {
-              probeDiagnostic['qa_probe_status'] = proof.status;
-              probeDiagnostic['qa_probe_stages'] = proof.stages.isEmpty ? 'none' : proof.stages.map((stage) =>
-                  '${stage.stage}:${stage.result}${stage.reason == null ? '' : ':${stage.reason}'}'
-                  '${_appContext.hostPlatform == HostPlatform.windows ? ':${stage.durationMs}ms' : ''}').join(',');
+              probeDiagnostic.addAll(_firstProviderQaProbeFailure(proof));
             }
           } on Object {
             // Keep the original control failure if its local readback cannot settle.
