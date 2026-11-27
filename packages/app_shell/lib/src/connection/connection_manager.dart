@@ -3178,6 +3178,7 @@ class ConnectionManager extends ChangeNotifier {
             // shutdown in one slot, including the preferred candidate.
             serialProbes: alternateHelper,
             mixTcpUdpProbes: inputs.hostPlatform != HostPlatform.windows &&
+                inputs.hostPlatform != HostPlatform.android &&
                 identical(group, ordinaryCandidates),
             onProbeResult: (candidate, result) {
               if (_disposed || !_connectionCoordinator.ownsOperation(generation) ||
@@ -3476,6 +3477,7 @@ class ConnectionManager extends ChangeNotifier {
               excludeProbeCleanupFromBudget: twoWaveWarp,
               serialProbes: alternateHelper,
               mixTcpUdpProbes: inputs.hostPlatform != HostPlatform.windows &&
+                  inputs.hostPlatform != HostPlatform.android &&
                   identical(group, ordinaryCandidates),
               probeSettlementTimeout: _candidateWorkTimeout,
               probeTimeout: alternateHelper ? helperTimeout : identical(group, dnsCandidates)
