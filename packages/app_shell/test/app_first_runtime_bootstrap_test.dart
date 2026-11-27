@@ -2532,7 +2532,7 @@ void main() {
     var bundleMaterials = true;
     final requestedCandidates = <String>[];
     final naive = <String, Object?>{'type': 'naive', 'tag': 'proxy',
-      'server': 'naive.fixture.invalid', 'server_port': 443,
+      'server': 'naive.fixture.invalid', 'server_port': 18444,
       'username': 'synthetic@example.invalid', 'password': 'synthetic-node-key',
       'quic': false, 'udp_over_tcp': {'enabled': false},
       'tls': <String, Object?>{'enabled': true, 'server_name': 'naive.fixture.invalid'}};
@@ -2651,6 +2651,7 @@ void main() {
     final android = await resolve(platform: HostPlatform.android, selected: naiveRef);
     final androidLeaf = (jsonDecode(android.configPayload)['outbounds'] as List)
         .cast<Map>().singleWhere((row) => row['type'] == 'naive');
+      expect(androidLeaf['server_port'], 18444);
     expect(androidLeaf['tls'], naive['tls']);
     expect(androidLeaf['udp_over_tcp'], {'enabled': false});
     expect(androidLeaf['quic'], false);

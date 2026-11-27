@@ -371,8 +371,9 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
       bool hostname(String value) => value.length <= 253 && value.contains('.') && value.split('.').every(
           (label) => RegExp(r'^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$').hasMatch(label));
       final server = _readText(proxy['server']);
+      final serverPort = proxy['server_port'];
       if (proxy.keys.any((key) => !leafKeys.contains(key)) ||
-          proxy['tag'] != 'proxy' || proxy['server_port'] != 443 ||
+          proxy['tag'] != 'proxy' || serverPort is! int || serverPort < 1 || serverPort > 65535 ||
           (InternetAddress.tryParse(server) == null && !hostname(server)) ||
           proxy['username'] is! String || (proxy['username'] as String).isEmpty ||
           proxy['password'] is! String || (proxy['password'] as String).isEmpty ||
