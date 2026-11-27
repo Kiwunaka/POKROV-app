@@ -6126,8 +6126,7 @@ class ConnectionManager extends ChangeNotifier {
             ownerGeneration: generation);
       } else {
         _protectedHandoffActive = true;
-        if (confirmedFailure && _appContext.hostPlatform == HostPlatform.windows &&
-            _pendingNativeRecovery?.replaced == false) {
+        if (confirmedFailure && !pinnedProfileFailed && _pendingNativeRecovery?.replaced == false) {
           RuntimeSnapshot? recovered;
           try {
             recovered = await _withRuntimeActionTimeout('protectedHandoffSnapshot',
@@ -6138,7 +6137,7 @@ class ConnectionManager extends ChangeNotifier {
             // An unavailable read cannot retire retained protection.
           }
           if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
-          // Windows can verify the original tunnel while the alternate is prepared.
+          // The original tunnel can recover while the alternate is prepared.
           if (recovered != null && _reconcileHealthyNativeRecovery(recovered, beforeReplacement: true)) {
             final proven = recovered;
             _update(() => _runtimeSnapshot = proven);

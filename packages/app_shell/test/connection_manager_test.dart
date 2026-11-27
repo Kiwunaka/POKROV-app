@@ -6547,10 +6547,12 @@ void main() {
     expect(manager.retainsProtection, isFalse);
   });
 
-  test('Windows keeps the verified active tunnel when an alternate is prepared', () async {
-    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+  for (final platform in [HostPlatform.android, HostPlatform.windows]) {
+  test('${platform.name} keeps the verified active tunnel when an alternate is prepared', () async {
+    final runtime = _Runtime(hostPlatform: platform)
       ..supportsCandidates = true
-      ..guardPeriodicEgressFailure = true
+      ..guardPeriodicEgressFailure = platform == HostPlatform.windows
+      ..omitUnverifiedEffectiveDigest = platform == HostPlatform.android
       ..profileDigest = 'a' * 64
       ..proofObservedAt = DateTime.utc(2026, 10, 8)
       ..profileSource = const RuntimeProfileSource(revision: 'current-owner',
@@ -6558,6 +6560,10 @@ void main() {
     final bootstrapper = _CatalogFailureBootstrapper()..catalogFailure = null;
     final manager = _manager(runtime, bootstrapper,
         authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    if (platform == HostPlatform.android) {
+      manager.updateExperience(const PokrovClientExperienceState.empty().copyWith(
+        routingPreferences: const PokrovRoutingPreferences.defaults().copyWith(autoConnectOnUntrustedWifi: true)));
+    }
     addTearDown(manager.dispose);
     await manager.connect();
     expect(manager.status.phase, ConnectionPhase.connected);
@@ -6586,6 +6592,7 @@ void main() {
     expect(runtime.handoffCalls, 0);
     expect(runtime.calls, isNot(contains('disconnect')));
   });
+  }
 
   for (final platform in [HostPlatform.android, HostPlatform.windows]) {
   test('fresh ${platform.name} native proof retires a preparation-only session rejection', () async {
