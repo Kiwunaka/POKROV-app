@@ -278,7 +278,13 @@ class CandidateRankerShadow {
       'history': [for (final item in _history)
         if ((item['completed_at_ms'] as int) < now) item],
     };
-    final tokens = _encodeRankerDecision(decision);
+    final Float32List tokens;
+    try {
+      tokens = _encodeRankerDecision(decision);
+    } on RangeError {
+      lastFailure = 'inference_failed';
+      return;
+    }
     final model = _model!;
     lastFailure = null;
     // A single background inference cannot delay native probes or accumulate
@@ -323,7 +329,8 @@ const _nativeFailures = {'connect_failed', 'tls_failed', 'timeout', 'data_stalle
   'probe_failed', 'unexpected_status'};
 const _rankerCategories = <String, List<String>>{
   'protocol': ['unknown', 'vless', 'naive', 'awg', 'hysteria2', 'warp'],
-  'transport': ['unknown', 'tcp', 'grpc', 'xhttp', 'h2', 'udp', 'dnstt', 'slipstream', 'mts'],
+  // The v1 model has a fixed transport vocabulary. New carriers map to unknown.
+  'transport': ['unknown', 'tcp', 'grpc', 'xhttp', 'h2', 'udp', 'dnstt', 'slipstream'],
   'protection': ['unknown', 'reality', 'tls', 'noise', 'awg31', 'warp'],
   'network': ['unknown', 'tcp', 'udp'],
   'family': ['unknown', 'ipv4', 'ipv6'],
