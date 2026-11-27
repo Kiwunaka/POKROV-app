@@ -6,6 +6,7 @@ const _whitelistProfiles = {
   'slipstream_vless',
   'vk_vless',
   'avito_vless',
+  'bitrix_hy2',
 };
 
 String whitelistProfile(String preference) {

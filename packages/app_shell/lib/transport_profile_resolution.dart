@@ -105,7 +105,9 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
             (transport == 'vk' && protection == 'reality') ||
             (transport == 'slipstream' && protection == 'tls'),
         'awg' => transport == 'udp' && protection == 'awg31',
-        'hysteria2' => transport == 'udp' && protection == 'tls',
+        'hysteria2' => protection == 'tls' && (transport == 'udp' ||
+            (transport == 'bitrix' && profile == 'bitrix_hy2' && parameters['network'] == 'udp' &&
+                parameters['flow'] == '' && deliveryId == null)),
         'naive' => transport == 'h2' && protection == 'tls',
         'warp' => warpDirect && transport == 'udp' && protection == 'warp',
         _ => false,

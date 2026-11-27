@@ -76,7 +76,7 @@ class TransportCandidate {
   final Set<RuntimeTransportFeature> requiredFeatures;
 
   bool get usesWhitelistTransport =>
-      warpMode == null && const {'mts', 'vk', 'dnstt', 'slipstream', 'avito'}.contains(transport);
+      warpMode == null && const {'mts', 'vk', 'dnstt', 'slipstream', 'avito', 'bitrix'}.contains(transport);
 
   /// Location selection follows the Node; WARP's final exit stays unknown.
   String nodeCountryCode(Iterable<TransportCandidate> catalogCandidates) {

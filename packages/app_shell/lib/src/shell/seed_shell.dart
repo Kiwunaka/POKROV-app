@@ -453,6 +453,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             profiles.putIfAbsent(candidate.profileRef, () => []).add(candidate);
           }
           String transportName(domain.TransportCandidate candidate) => switch (candidate.transport) {
+            'bitrix' => 'Битрикс',
             'mts' => 'МТС Доски',
             'avito' => 'Avito Code',
             'vk' => 'VK Звонки',
