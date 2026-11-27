@@ -6496,6 +6496,46 @@ void main() {
     expect(manager.retainsProtection, isFalse);
   });
 
+  test('Windows keeps the verified active tunnel when an alternate is prepared', () async {
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+      ..supportsCandidates = true
+      ..guardPeriodicEgressFailure = true
+      ..profileDigest = 'a' * 64
+      ..proofObservedAt = DateTime.utc(2026, 10, 8)
+      ..profileSource = const RuntimeProfileSource(revision: 'current-owner',
+          origin: RuntimeProfileSourceOrigin.managedManifest, protocol: 'vless');
+    final bootstrapper = _CatalogFailureBootstrapper()..catalogFailure = null;
+    final manager = _manager(runtime, bootstrapper,
+        authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    addTearDown(manager.dispose);
+    await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.connected);
+
+    final preparation = Completer<void>();
+    addTearDown(() {
+      if (!preparation.isCompleted) preparation.complete();
+    });
+    bootstrapper.gate = preparation;
+    final requests = bootstrapper.resolutions.length;
+    runtime.warpEgressFailure = true;
+    final deadline = DateTime.now().add(const Duration(seconds: 3));
+    while ((!manager.busy || bootstrapper.resolutions.length == requests) &&
+        DateTime.now().isBefore(deadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(manager.status.phase, ConnectionPhase.recovering);
+    runtime.warpEgressFailure = false;
+    runtime.proofObservedAt = DateTime.now().toUtc();
+    preparation.complete();
+    while (manager.busy && DateTime.now().isBefore(deadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(manager.materialCandidate?.candidateRef, _candidates.first.candidateRef);
+    expect(runtime.handoffCalls, 0);
+    expect(runtime.calls, isNot(contains('disconnect')));
+  });
+
   for (final platform in [HostPlatform.android, HostPlatform.windows]) {
   test('fresh ${platform.name} native proof retires a preparation-only session rejection', () async {
     final recoveryExperience = _ExperienceStore();

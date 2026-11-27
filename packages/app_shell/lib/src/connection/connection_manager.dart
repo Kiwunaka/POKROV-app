@@ -527,12 +527,14 @@ class ConnectionManager extends ChangeNotifier {
     }
   }
 
-  bool _reconcileHealthyNativeRecovery(RuntimeSnapshot current) {
+  bool _reconcileHealthyNativeRecovery(RuntimeSnapshot current, {bool beforeReplacement = false}) {
     if (!const {HostPlatform.android, HostPlatform.windows}.contains(_appContext.hostPlatform) ||
         _disposed || !_protectedHandoffActive) return false;
     bool blocked(_NativeRecoveryBlockReason reason) => _recordNativeRecoveryBlock(current, reason);
-    if (_activePhase != ConnectionPhase.actionRequired) return blocked(_NativeRecoveryBlockReason.phaseMismatch);
-    if (_runtimeIntent != ConnectionTransitionIntent.none || _runtimeActionsInFlight.isNotEmpty)
+    final phase = beforeReplacement ? ConnectionPhase.recovering : ConnectionPhase.actionRequired;
+    final intent = beforeReplacement ? ConnectionTransitionIntent.recover : ConnectionTransitionIntent.none;
+    if (_activePhase != phase) return blocked(_NativeRecoveryBlockReason.phaseMismatch);
+    if (_runtimeIntent != intent || _runtimeActionsInFlight.isNotEmpty)
       return blocked(_NativeRecoveryBlockReason.actionInFlight);
     if (_accessDenialPending || _cachedProfileFallbackGate.authorizationDenied)
       return blocked(_NativeRecoveryBlockReason.accessDenied);
@@ -540,7 +542,8 @@ class ConnectionManager extends ChangeNotifier {
     if (!_isConnectionProven(current) || current.lastFailureKind != null || current.proofObservedAt == null)
       return blocked(_NativeRecoveryBlockReason.proofUnavailable);
     final pending = _pendingNativeRecovery;
-    if (pending == null) return blocked(_NativeRecoveryBlockReason.pendingOwnerMissing);
+    if (pending == null || beforeReplacement && pending.replaced)
+      return blocked(_NativeRecoveryBlockReason.pendingOwnerMissing);
     if (pending.command != _commandNumber) return blocked(_NativeRecoveryBlockReason.commandChanged);
     if (pending.profileRevision != _managedProfileRevision) return blocked(_NativeRecoveryBlockReason.profileInputsChanged);
     if (pending.replaced && pending.candidateRef != _candidateRef)
@@ -6037,6 +6040,26 @@ class ConnectionManager extends ChangeNotifier {
             ownerGeneration: generation);
       } else {
         _protectedHandoffActive = true;
+        if (confirmedFailure && _appContext.hostPlatform == HostPlatform.windows &&
+            _pendingNativeRecovery?.replaced == false) {
+          RuntimeSnapshot? recovered;
+          try {
+            recovered = await _withRuntimeActionTimeout('protectedHandoffSnapshot',
+                _runtimeEngine.snapshot, ownerGeneration: generation);
+          } on ConnectionOperationSuperseded {
+            rethrow;
+          } on Object {
+            // An unavailable read cannot retire retained protection.
+          }
+          if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
+          // Windows can verify the original tunnel while the alternate is prepared.
+          if (recovered != null && _reconcileHealthyNativeRecovery(recovered, beforeReplacement: true)) {
+            final proven = recovered;
+            _update(() => _runtimeSnapshot = proven);
+            _finalizeProvenConnection(proven);
+            return;
+          }
+        }
         try {
           current = await _withRuntimeActionTimeout('replaceManagedProfile',
               () => _stageManagedProfileWithLeaseBinding(prepared, replaceProtected: true), ownerGeneration: generation);
