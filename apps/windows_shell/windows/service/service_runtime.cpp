@@ -2185,8 +2185,10 @@ RuntimeResult RuntimeHost::RecheckEgress(const CheckInterruption& interrupted,
   if (owned_dns_profile_ && core_egress_validated_ && !guarded &&
       interruption != OperationInterruption::kCancelled && observation &&
       IsTransientOwnedEgressFailure(*observation)) {
-    // Give an established tunnel one bounded confirmation before blocking traffic.
-    deadline_tick = ::GetTickCount64() + EgressCheckBudgetMs();
+    // The regular budget is split between probe targets. Each slice can
+    // expire during a slow TLS handshake on an otherwise working tunnel.
+    const auto confirmation_budget = (std::max)(EgressCheckBudgetMs(), std::uint32_t{6000});
+    deadline_tick = ::GetTickCount64() + confirmation_budget;
     failure = VerifyEgress(true, check, deadline_tick);
     interruption = check();
   }

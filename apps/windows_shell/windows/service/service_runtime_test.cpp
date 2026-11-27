@@ -1209,8 +1209,13 @@ void TestOwnedDnsProtectsStagingAndRetriesProof() {
       const auto calls_before = egress->verify_calls;
       egress->on_verify = [&] {
         const bool first_check = egress->verify_calls == calls_before + 1;
-        egress->verify_error = first_check ? failure : "";
-        egress->observation = first_check
+        // A healthy but slow TLS handshake still times out if the confirmation
+        // repeats the regular three-second budget across both probe targets.
+        const bool slow_tls = observation.stage == EgressProbeStage::kTls &&
+            egress->last_deadline_tick < ::GetTickCount64() + 5000;
+        const bool check_failed = first_check || slow_tls;
+        egress->verify_error = check_failed ? failure : "";
+        egress->observation = check_failed
             ? std::optional<EgressProbeObservation>(observation) : std::nullopt;
       };
       const auto first_deadline = ::GetTickCount64() + 1;
