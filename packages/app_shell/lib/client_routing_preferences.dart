@@ -723,6 +723,7 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
 }
 
 ManagedProfilePayload applyWindowsOwnedDns(ManagedProfilePayload payload) {
+  if (payload.materialCandidate?.usesWhitelistTransport == true) return payload;
   final config = _routingMap(jsonDecode(payload.configPayload));
   final outbounds = _routingListOfMaps(config['outbounds']);
   final endpoints = _routingListOfMaps(config['endpoints']);

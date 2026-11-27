@@ -71,6 +71,22 @@ void main() {
     }
   }, skip: !windowsOwnedDnsConfigured);
 
+  test('Windows candidate probing keeps the whitelist carrier resolver', () {
+    final mts = TransportCandidate(
+      candidateRef: 'nl:mts_vless', profileRef: 'mts_vless', nodeCode: 'nl',
+      countryCode: 'NL', protocol: 'vless', transport: 'mts', protection: 'noise',
+      priority: 0, network: 'tcp', flow: '', minimumClientRelease: '2.0.6',
+      minimumCoreRelease: null, platforms: {HostPlatform.windows}, requiredFeatures: {},
+    );
+    final payload = ManagedProfilePayload(
+      profileName: 'fixture', configPayload: _profile().configPayload,
+      transportCatalog: TransportCandidateCatalog(revision: 'current',
+        selectedCandidateRef: mts.candidateRef, candidates: [mts]),
+      materialCandidateRef: mts.candidateRef,
+    );
+    expect(applyWindowsOwnedDns(payload), same(payload));
+  });
+
   test('Windows owned DNS keeps both API proof hosts on the app tunnel', () {
     final profile = applyPokrovRoutingPreferences(
       _profile(mode: RouteMode.selectedApps),
