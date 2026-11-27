@@ -178,7 +178,7 @@ void main() {
 
   test('Auto settles bridges in server priority order before trying a remembered direct route', () async {
     final selector = SmartConnectCandidateSelector();
-    final direct = _candidate(3, node: 'us', country: 'US');
+    final direct = _candidate(3, udp: true, node: 'us', country: 'US');
     final firstBridge = _candidate(1, bridge: 'mini');
     final secondBridge = _candidate(2, node: 'ch', country: 'CH', bridge: 'ru-spb');
     selector.recordSuccess('network-a', direct.candidateRef);
@@ -189,7 +189,7 @@ void main() {
     final selected = selector.select(
       catalog: _catalog([direct, secondBridge, firstBridge]),
       network: 'network-a', platform: HostPlatform.android,
-      cancelled: Completer<void>().future,
+      cancelled: Completer<void>().future, mixTcpUdpProbes: true,
       probe: (candidate, cancelled, timeout) async {
         started.add(candidate.candidateRef);
         if (candidate.bridgeId == null) return _success(candidate);
@@ -260,6 +260,7 @@ void main() {
       protection: 'tls', priority: 20, network: 'tcp', flow: '',
       minimumClientRelease: '1.5.0', minimumCoreRelease: null,
       platforms: v4.platforms, requiredFeatures: const {});
+    final udp = _candidate(19, udp: true);
     final loaded = _candidate(21, bridge: 'loaded');
     final selector = SmartConnectCandidateSelector()..recordSuccess('network-a', v4.candidateRef);
     final bridgeStarted = Completer<void>();
@@ -269,9 +270,9 @@ void main() {
     final prepared = <TransportCandidate>[];
     final selected = selector.select(
       catalog: _catalog([healthy, outsideCountry, ...List.generate(8, (i) => _candidate(i + 2)),
-        v4, v6, naive, loaded]),
+        v4, v6, naive, udp, loaded]),
       network: 'network-a', platform: HostPlatform.windows, preferredCountryCode: 'DE',
-      cancelled: Completer<void>().future,
+      cancelled: Completer<void>().future, mixTcpUdpProbes: true,
       prepare: (candidate, _) async => prepared.add(candidate),
       probe: (candidate, cancelled, timeout) async {
         if (candidate == healthy) {
@@ -332,6 +333,49 @@ void main() {
       expect(stopped, hasLength(parallelism - 1));
       expect(maxActive, parallelism);
       expect(active, 0);
+    });
+  }
+
+  for (final (platform, parallelism, firstUdp) in [
+    (HostPlatform.android, 3, false),
+    (HostPlatform.windows, 4, true),
+  ]) {
+    test('$platform probes the other network before a full wave of one type stalls', () async {
+      final alternate = _candidate(parallelism, udp: !firstUdp);
+      final candidates = [
+        for (var i = 0; i < parallelism; i++) _candidate(i, udp: firstUdp),
+        alternate,
+      ];
+      final started = <TransportCandidate>[];
+      final active = <TransportCandidate>{};
+      final proof = Completer<void>();
+      final selected = SmartConnectCandidateSelector().select(
+        catalog: _catalog(candidates), network: 'network-a', platform: platform,
+        cancelled: Completer<void>().future, mixTcpUdpProbes: true,
+        probe: (candidate, cancelled, _) async {
+          started.add(candidate);
+          active.add(candidate);
+          try {
+            if (candidate == alternate) {
+              await proof.future;
+              return _success(candidate);
+            }
+            await cancelled;
+            return const SmartConnectCandidateProbeResult.failure('cancelled');
+          } finally {
+            active.remove(candidate);
+          }
+        });
+      await Future<void>.delayed(Duration.zero);
+      final firstWave = List.of(started);
+      final activeFirstWave = active.length;
+      proof.complete();
+      expect((await selected).profileName, alternate.candidateRef);
+      expect(firstWave.first, candidates.first);
+      expect(firstWave, contains(alternate));
+      expect(firstWave, hasLength(parallelism));
+      expect(activeFirstWave, parallelism);
+      expect(active, isEmpty);
     });
   }
 

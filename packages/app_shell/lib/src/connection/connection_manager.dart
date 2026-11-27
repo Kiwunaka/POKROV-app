@@ -3173,6 +3173,7 @@ class ConnectionManager extends ChangeNotifier {
             // Psiphon owns a process-wide datastore. Keep helper startup and
             // shutdown in one slot, including the preferred candidate.
             serialProbes: alternateHelper,
+            mixTcpUdpProbes: identical(group, ordinaryCandidates),
             onProbeResult: (candidate, result) {
               if (_disposed || !_connectionCoordinator.ownsOperation(generation) ||
                   profileRevision != _managedProfileRevision) return;
@@ -3469,6 +3470,7 @@ class ConnectionManager extends ChangeNotifier {
                           : const Duration(seconds: 12)),
               excludeProbeCleanupFromBudget: twoWaveWarp,
               serialProbes: alternateHelper,
+              mixTcpUdpProbes: identical(group, ordinaryCandidates),
               probeSettlementTimeout: _candidateWorkTimeout,
               probeTimeout: alternateHelper ? helperTimeout : identical(group, dnsCandidates)
                   ? _dnsCandidateTimeoutFor(inputs)

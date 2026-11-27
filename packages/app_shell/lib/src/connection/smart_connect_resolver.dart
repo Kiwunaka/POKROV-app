@@ -172,6 +172,7 @@ class SmartConnectCandidateSelector {
     Duration probeSettlementTimeout = Duration.zero,
     bool excludeProbeCleanupFromBudget = false,
     bool serialProbes = false,
+    bool mixTcpUdpProbes = false,
   }) async {
     if (network.isEmpty) throw StateError('smart_connect_network_unavailable');
     // Keep one observer owner throughout this selection, including an async
@@ -289,6 +290,8 @@ class SmartConnectCandidateSelector {
     final committed = <String, TransportCandidate>{};
     final parallelism = serialProbes ? 1 :
         const {HostPlatform.android, HostPlatform.ios}.contains(platform) ? 3 : 4;
+    final mixNetworks = mixTcpUdpProbes && !serialProbes && recoveryCandidateRef.isEmpty;
+    final mixedGroups = <int>{};
     final fixedPrefix = <TransportCandidate>[];
     for (final group in capturing ? priorityGroups.values.toSet() : <int>{}) {
       final rows = candidates.where((candidate) => priorityGroups[candidate.candidateRef] == group).toList();
@@ -332,7 +335,7 @@ class SmartConnectCandidateSelector {
           parallelism: parallelism, at: _now(),
           probeBudget: remainingProbeBudget < probeTimeout ? remainingProbeBudget : probeTimeout,
           selectionBudget: remainingProbeBudget, ipv6Available: ipv6Available, networkClass: networkClass);
-      if (capturing) committed[candidate.candidateRef] = candidate;
+      if (capturing || mixNetworks) committed[candidate.candidateRef] = candidate;
       final cancellation = Completer<void>();
       probes.add(cancellation);
       var timedOut = false;
@@ -463,6 +466,26 @@ class SmartConnectCandidateSelector {
       onProbeResult?.call(candidate, failed);
       recordFailure(network, candidate.candidateRef, failureKind);
     }
+    void mixNextProbe() {
+      if (!mixNetworks || committed.isEmpty) return;
+      final first = candidates.first;
+      final group = priorityGroups[first.candidateRef]!;
+      if (mixedGroups.contains(group) || first.candidateRef == preferred ||
+          first.protocol == 'naive' || ipv6Siblings.containsKey(first.candidateRef)) return;
+      if (first.network != 'tcp' && first.network != 'udp') return;
+      final otherNetwork = first.network == 'tcp' ? 'udp' : 'tcp';
+      final activeNetworks = committed.values.map((candidate) => candidate.network).toSet();
+      if (!activeNetworks.contains(first.network) || activeNetworks.contains(otherNetwork)) return;
+      final alternate = candidates.indexWhere((candidate) =>
+          priorityGroups[candidate.candidateRef] == group &&
+          candidate.network == otherNetwork &&
+          !ipv6Siblings.containsKey(candidate.candidateRef));
+      if (alternate < 0) return;
+      // Give the other network one early slot per group, then follow the
+      // remaining queue so a series of failures cannot keep jumping it.
+      candidates.insert(0, candidates.removeAt(alternate));
+      mixedGroups.add(group);
+    }
     Duration preferredProbeTime = Duration.zero;
     Future<void> worker() async {
       var probeTime = preferredProbeTime;
@@ -481,6 +504,7 @@ class SmartConnectCandidateSelector {
           await Future.any<void>([ended.future, earlier.value.future]);
         }
         if (ended.isCompleted || candidates.isEmpty || startedCount >= maxAttempts) return;
+        mixNextProbe();
         // Shadow only reads the admitted, ordered queue. Its result has no
         // return path into scheduling, cancellation, hints or group admission.
         final remaining = selectionTimeout - probeTime;
