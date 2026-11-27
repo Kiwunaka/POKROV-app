@@ -611,7 +611,7 @@ void main() {
     final route = stagedConfig['route'] as Map<String, dynamic>;
     final rules = (route['rules'] as List).cast<Map<String, dynamic>>();
     expect(rules.first, <String, dynamic>{
-      'protocol': 'dns',
+      'port': 53,
       'action': 'hijack-dns',
     });
     expect(rules[1]['ip_is_private'], isTrue);

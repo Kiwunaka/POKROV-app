@@ -3111,7 +3111,7 @@ String _materializePokrovCoreConfig(
       if (telegramWs.isNotEmpty) 'telegram_ws': telegramWs,
     };
   }
-  _pinDnsHijackBeforeBypasses(config);
+  _pinDnsHijackBeforeBypasses(config, androidTun: preserveAndroidHostMetadata);
   if (!policy.canEnableRuntime) {
     final experimental =
         Map<String, Object?>.from(_runtimeObjectMap(config['experimental']));
@@ -3453,7 +3453,10 @@ void _validateHy2TransportContract(Map<String, Object?> config) {
   }
 }
 
-void _pinDnsHijackBeforeBypasses(Map<String, Object?> config) {
+void _pinDnsHijackBeforeBypasses(
+  Map<String, Object?> config, {
+  required bool androidTun,
+}) {
   final route = Map<String, Object?>.from(_runtimeObjectMap(config['route']));
   final rules = _runtimeMapList(route['rules']);
   final hijackRules = rules.where(_isRuntimeDnsHijackRule).toList();
@@ -3461,7 +3464,15 @@ void _pinDnsHijackBeforeBypasses(Map<String, Object?> config) {
     return;
   }
   rules.removeWhere(_isRuntimeDnsHijackRule);
-  rules.insert(0, hijackRules.first);
+  final hijack = hijackRules.first;
+  // Android's TUN receives DNS before the router has sniffed its protocol.
+  // Match the ordinary DNS port while retaining explicitly scoped rules.
+  if (androidTun && hijack.length == 2) {
+    hijack
+      ..remove('protocol')
+      ..['port'] = 53;
+  }
+  rules.insert(0, hijack);
   route['rules'] = rules;
   config['route'] = route;
 }
