@@ -896,8 +896,12 @@ class ConnectionManager extends ChangeNotifier {
           }
         }
       } else {
-        if (_firstProviderQaControlDiagnostic != null && _startedFirstProviderQaAdmissionId == admissionId) {
-          _firstProviderQaControlDiagnostic = const {'control_delivery': 'skipped', 'control_reason': 'connection_unavailable'};
+        if (_firstProviderQaControlDiagnostic?['control_delivery'] == 'not_started' &&
+            _startedFirstProviderQaAdmissionId == admissionId) {
+          _firstProviderQaControlDiagnostic = const {
+            'control_delivery': 'skipped',
+            'control_reason': 'connection_unavailable',
+          };
         }
       }
     } on Object catch (error, stack) {
@@ -5128,6 +5132,16 @@ class ConnectionManager extends ChangeNotifier {
       return;
     } on BootstrapFailure catch (error) {
       if (!_connectionCoordinator.ownsOperation(generation)) return;
+      if (_pendingFirstProviderQaAdmissionId != null &&
+          error.operation == 'routing_catalog' &&
+          RegExp(r'^(?:routing_catalog|catalog|smart_access)_[a-z0-9_]{1,64}$')
+              .hasMatch(error.code)) {
+        _firstProviderQaControlDiagnostic = {
+          'control_delivery': 'failed',
+          'failure_operation': 'routing_catalog',
+          'control_reason': error.code,
+        };
+      }
       if (diagnostic?.stage == null && diagnostic?.finished == false) {
         diagnostic?.enter(ConnectionDiagnosticStage.profile);
       }
