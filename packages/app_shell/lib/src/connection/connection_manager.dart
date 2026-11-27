@@ -1465,7 +1465,8 @@ class ConnectionManager extends ChangeNotifier {
       if (candidate.transport == 'dnstt' && candidate.protection == 'noise') return 'vless_dnstt_noise';
       if (candidate.transport == 'slipstream' && candidate.protection == 'tls') return 'vless_slipstream_tls';
     }
-    if (candidate.protocol == 'hysteria2' && candidate.transport == 'udp') return 'hysteria2';
+    if (candidate.protocol == 'hysteria2' &&
+        const {'udp', 'bitrix'}.contains(candidate.transport)) return 'hysteria2';
     if (candidate.protocol == 'awg' && candidate.protection == 'awg31') return 'awg31';
     return '';
   }
