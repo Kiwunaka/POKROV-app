@@ -5359,6 +5359,57 @@ void main() {
     expect(disconnects, 1);
   });
 
+  for (final failure in ['probe', 'catalog', 'egress']) {
+    test('Android rolls back a failed whitelist pin only after alternate VPN proof ($failure)', () async {
+      final dnstt = TransportCandidate(
+        candidateRef: 'de:dnstt_vless', profileRef: 'dnstt_vless', nodeCode: 'de',
+        countryCode: 'DE', protocol: 'vless', transport: 'dnstt', protection: 'noise',
+        priority: 1, network: 'udp', flow: '', minimumClientRelease: '2.1.3',
+        minimumCoreRelease: null, platforms: {HostPlatform.android}, requiredFeatures: {},
+      );
+      final ordinary = _candidates.first;
+      final bootstrapper = _Bootstrapper(catalog: true, bundle: true)
+        ..candidates = [ordinary, dnstt];
+      if (failure == 'catalog') {
+        bootstrapper.exactProfileFailure = const BootstrapFailure(
+          'Transport candidate unavailable', statusCode: 409,
+          operation: 'GET /api/client/profile/managed',
+        );
+      }
+      final runtime = _Runtime(heldOperation: 'connect')
+        ..supportsCandidates = true
+        ..failFirstActivation = failure == 'egress';
+      if (failure == 'probe') runtime.failedProbeProfiles.add(dnstt.candidateRef);
+      final store = _ExperienceStore()
+        ..saved = const PokrovClientExperienceState.empty().copyWith(
+          interfaceMode: PokrovInterfaceMode.advanced,
+          preferredCandidateRef: dnstt.candidateRef,
+        );
+      final manager = _manager(runtime, bootstrapper, experienceStore: store);
+      addTearDown(() {
+        if (!runtime.releaseOperation.isCompleted) runtime.releaseOperation.complete();
+        manager.dispose();
+      });
+      manager.updateExperience(store.saved);
+      final connecting = manager.connect();
+      await runtime.operationEntered.future.timeout(const Duration(seconds: 3));
+      expect(store.saved.preferredCandidateRef, dnstt.candidateRef);
+      runtime.releaseOperation.complete();
+      await connecting;
+      final deadline = DateTime.now().add(const Duration(seconds: 3));
+      while ((manager.busy || store.saved.preferredCandidateRef.isNotEmpty) &&
+          DateTime.now().isBefore(deadline)) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(manager.status.phase, ConnectionPhase.connected);
+      expect(manager.materialCandidate?.candidateRef, ordinary.candidateRef);
+      expect(runtime.probedPayloads.map((payload) => payload.profileName), [
+        if (failure != 'catalog') dnstt.candidateRef, ordinary.candidateRef,
+      ]);
+      expect(store.saved.preferredCandidateRef, isEmpty);
+    });
+  }
+
   testWidgets('fresh Android selects MTS from Обход БС without starting VPN', (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;

@@ -1389,6 +1389,7 @@ class ConnectionManager extends ChangeNotifier {
   Future<bool> _reconnectAfterManagedProfileChange({
     required String progressMessage,
     required String successMessage,
+    String requestedCandidateRef = '',
   }) async {
     if (_disposed || _runtimeSnapshot?.phase != RuntimePhase.running) {
       return false;
@@ -1412,11 +1413,15 @@ class ConnectionManager extends ChangeNotifier {
     final applied = _runtimeSnapshot?.phase == RuntimePhase.running &&
         !_managedProfileDirty;
     if (applied) {
+      final message = requestedCandidateRef.isNotEmpty &&
+              _clientExperience.preferredCandidateRef.isEmpty
+          ? _whitelistRollbackMessage
+          : successMessage;
       _update(() {
-        _runtimeHeadline = successMessage;
+        _runtimeHeadline = message;
       });
       _notify(
-        successMessage,
+        message,
         tone: PokrovSnackTone.success,
       );
     } else {
@@ -2914,6 +2919,7 @@ class ConnectionManager extends ChangeNotifier {
 
   Future<ManagedProfilePayload> _resolveManagedProfile({
     Duration? deadline,
+    ManagedProfileCacheInputs? cacheInputs,
     bool initialProfilePreparation = false,
     bool coldConnect = false,
     bool suppressWarpRuntime = false,
@@ -2947,7 +2953,7 @@ class ConnectionManager extends ChangeNotifier {
     final cancelled = _connectionCoordinator.actionInFlight
         ? _connectionCoordinator.whenOperationEnds(generation)
         : _connectionCoordinator.whenOperationChanges(generation);
-    final inputs = _managedProfileCacheInputs;
+    final inputs = cacheInputs ?? _managedProfileCacheInputs;
     smartAccessVpnFallback = smartAccessVpnFallback ||
         _isCurrentSmartAccessVpnFallback(_runtimeSnapshot);
     if (_pendingFirstProviderQaAdmissionId == null && _localSmartAccessSelected && !smartAccessVpnFallback) {
@@ -3236,6 +3242,7 @@ class ConnectionManager extends ChangeNotifier {
             inputs.preferredNodeCode.isEmpty && invitation == null) {
           return _resolveManagedProfile(
               ownerGeneration: generation, deadline: deadline, coldConnect: coldConnect,
+              cacheInputs: inputs,
               initialProfilePreparation: initialProfilePreparation, suppressWarpRuntime: suppressWarpRuntime,
               recoveryCandidateRef: recoveryCandidateRef, excludedCandidateRefs: excludedCandidateRefs,
               smartAccessVpnFallback: smartAccessVpnFallback, onMaterialOrigin: onMaterialOrigin,
@@ -3555,6 +3562,9 @@ class ConnectionManager extends ChangeNotifier {
   }
 
   ManagedProfileCacheInputs get _managedProfileCacheInputs =>
+      _connectionCacheInputs();
+
+  ManagedProfileCacheInputs _connectionCacheInputs({bool automaticCandidate = false}) =>
       ManagedProfileCacheInputs(
         hostPlatform: _appContext.hostPlatform,
         routeMode: _pendingFirstProviderQaAdmissionId == null ? _selectedRouteMode : RouteMode.selectiveServices,
@@ -3565,8 +3575,26 @@ class ConnectionManager extends ChangeNotifier {
         preferredNodeCode: _clientExperience.interfaceMode == PokrovInterfaceMode.advanced ? _preferredNodeCode : '',
         preferredVariantId: _clientExperience.interfaceMode == PokrovInterfaceMode.advanced ? _preferredVariantId : 'direct',
         preferredCountryCode: _clientExperience.preferredCountryCode,
-        preferredCandidateRef: _clientExperience.interfaceMode == PokrovInterfaceMode.advanced ? _clientExperience.preferredCandidateRef : '',
+        preferredCandidateRef: !automaticCandidate && _clientExperience.interfaceMode == PokrovInterfaceMode.advanced
+            ? _clientExperience.preferredCandidateRef : '',
       );
+
+  static const _whitelistRollbackMessage =
+      'Выбранный обход недоступен. Режим «Авто» восстановил подключение.';
+
+  String _androidWhitelistPin(ManagedProfileCacheInputs inputs) {
+    final ref = inputs.preferredCandidateRef;
+    if (inputs.hostPlatform != HostPlatform.android || ref.isEmpty) return '';
+    final candidate = _reportedCandidate(ref);
+    if (candidate != null) return candidate.usesWhitelistTransport ? ref : '';
+    // A saved manual selection can outlive the catalog that offered it.
+    const profiles = {'dnstt_vless', 'slipstream_vless', 'mts_vless', 'vk_vless', 'avito_vless'};
+    final parts = ref.split(':');
+    return parts.length == 2 && profiles.contains(parts[1]) ? ref : '';
+  }
+
+  bool _unavailablePinnedCandidate(BootstrapFailure error) =>
+      error.code == 'candidate_selection_exhausted' || error.isUnavailableManagedCandidate;
 
   Future<ManagedProfilePayload> _prepareManagedProfile(
     ManagedProfilePayload payload, {
@@ -4493,6 +4521,7 @@ class ConnectionManager extends ChangeNotifier {
     }
     var failureOperation = 'snapshot';
     var failureStage = ConnectionStage.profile;
+    var attemptedWhitelistPin = '';
     try {
       RuntimeSnapshot snapshot = _runtimeSnapshot ??
           await runOwnedRuntimeAction('snapshot', _runtimeEngine.snapshot);
@@ -4696,6 +4725,7 @@ class ConnectionManager extends ChangeNotifier {
       }
 
       final cacheInputs = _managedProfileCacheInputs;
+      attemptedWhitelistPin = _androidWhitelistPin(cacheInputs);
       final cacheService = _bootstrapper is CachedManagedProfileBootstrapper
           ? _bootstrapper as CachedManagedProfileBootstrapper
           : null;
@@ -5149,6 +5179,12 @@ class ConnectionManager extends ChangeNotifier {
       if (diagnostic?.stage == null && diagnostic?.finished == false) {
         diagnostic?.enter(ConnectionDiagnosticStage.profile);
       }
+      final snapshot = _runtimeSnapshot;
+      if (failureOperation == 'managed_profile_refresh' &&
+          _unavailablePinnedCandidate(error) && attemptedWhitelistPin.isNotEmpty &&
+          _managedProfileCacheInputs.preferredCandidateRef == attemptedWhitelistPin &&
+          snapshot != null && _scheduleCandidateRecovery(snapshot,
+              previousCandidateRef: attemptedWhitelistPin, profileErrorCode: error.operationalErrorCode)) return;
       if (diagnostic != null) _finishConnectionDiagnostic('failed', errorCode: error.operationalErrorCode);
       final businessOperation = _bootstrapFailureOperation(error.operation);
       final ioKind = const {'request_socket', 'request_http', 'request_timeout'}.contains(error.apiFailureKind)
@@ -5869,14 +5905,18 @@ class ConnectionManager extends ChangeNotifier {
     _scheduleCandidateRecovery(current, previousCandidateRef: previousCandidateRef);
   }
 
-  bool _scheduleCandidateRecovery(RuntimeSnapshot failed, {String? previousCandidateRef}) {
+  bool _scheduleCandidateRecovery(RuntimeSnapshot failed, {String? previousCandidateRef, String? profileErrorCode}) {
     if (_accessDenialPending || _cachedProfileFallbackGate.authorizationDenied) return false;
     if (_candidateRecoveryPending || _activePhase == ConnectionPhase.actionRequired) return false;
     final localFailure = _isLocalSmartAccessFailure(failed) ? _smartAccessRouteProfile : null;
     final currentRef = localFailure != null ? '' : previousCandidateRef ?? _activeCandidateRef ?? _candidateRef;
     if (currentRef == null) return false;
     _candidateRecoveryPending = true;
-    _recordDiagnosticEgressFailure(failed);
+    if (profileErrorCode == null) {
+      _recordDiagnosticEgressFailure(failed);
+    } else {
+      _connectionDiagnostic?.complete('failed', errorCode: profileErrorCode);
+    }
     _connectionDiagnostic?.enter(ConnectionDiagnosticStage.routeSwitch);
     final command = _commandNumber;
     final budget = _currentConnectBudget;
@@ -5886,7 +5926,8 @@ class ConnectionManager extends ChangeNotifier {
       try {
         if (_disposed || command != _commandNumber) return;
         await _replaceCommand(() => _recoverCandidateConnection(failed, currentRef,
-            confirmedFailure: true, smartAccessFallback: localFailure), automatic: true,
+            confirmedFailure: true, pinnedProfileFailed: profileErrorCode != null,
+            smartAccessFallback: localFailure), automatic: true,
             connectBudget: true, inheritedConnectBudget: budget);
       } finally { _candidateRecoveryPending = false; }
     }());
@@ -5895,6 +5936,7 @@ class ConnectionManager extends ChangeNotifier {
 
   Future<void> _recoverCandidateConnection(RuntimeSnapshot? failed, String currentRef,
       {int? ownerGeneration, bool confirmedFailure = false, bool preferCachedProfile = false,
+      bool pinnedProfileFailed = false,
       ({CatalogDomainPolicy policy, String digest})? smartAccessFallback}) async {
     final engine = _runtimeEngine;
     _cancelPostConnectHostHealthPolling();
@@ -5939,7 +5981,7 @@ class ConnectionManager extends ChangeNotifier {
         throw const BootstrapFailure(
             'Не удалось обновить настройки для быстрого подключения. Попробуй ещё раз.');
       }
-      final cacheInputs = _managedProfileCacheInputs;
+      var cacheInputs = _managedProfileCacheInputs;
       final profileRevision = _managedProfileRevision;
       final retainedSmartProfile = _smartAccessRouteProfile;
       final smartAccessVpnFallback = smartAccessFallback != null ||
@@ -5976,6 +6018,21 @@ class ConnectionManager extends ChangeNotifier {
       final failedActivations = <String>{
         if (confirmedFailure && currentRef.isNotEmpty) currentRef,
       };
+      var whitelistPin = _androidWhitelistPin(cacheInputs);
+      if (confirmedFailure && currentRef == whitelistPin &&
+          !pinnedProfileFailed && failed?.hasCoreEgressProbeFailure != true) {
+        whitelistPin = '';
+      }
+      var rolledBackWhitelist = false;
+      bool rollbackWhitelistSelection() {
+        if (whitelistPin.isEmpty || rolledBackWhitelist ||
+            profileRevision != _managedProfileRevision) return false;
+        cacheInputs = _connectionCacheInputs(automaticCandidate: true);
+        failedActivations.add(whitelistPin);
+        rolledBackWhitelist = true;
+        return true;
+      }
+      if (confirmedFailure && currentRef == whitelistPin) rollbackWhitelistSelection();
       if (confirmedFailure && currentRef.isNotEmpty && _candidateNetworkKey != null) {
         _candidateSelector.recordFailure(_candidateNetworkKey!, currentRef,
             failed?.lastFailureKind ?? '');
@@ -6023,9 +6080,16 @@ class ConnectionManager extends ChangeNotifier {
       if (payload == null) {
       try {
         payload = await _resolveManagedProfile(ownerGeneration: generation,
+            cacheInputs: cacheInputs,
             smartAccessVpnFallback: smartAccessVpnFallback,
             recoveryCandidateRef: currentRef, excludedCandidateRefs: failedActivations, deadline: _actionTimeout);
       } on Object catch (error) {
+        if (error is BootstrapFailure && _unavailablePinnedCandidate(error) &&
+            rollbackWhitelistSelection()) {
+          _connectionDiagnostic?.complete('failed', errorCode: error.operationalErrorCode);
+          _connectionDiagnostic?.enter(ConnectionDiagnosticStage.routeSwitch);
+          continue;
+        }
         if (error is BootstrapFailure && !error.sessionRejected &&
             (error.statusCode == 401 || error.statusCode == 403)) {
           _cachedProfileFallbackGate.markAuthorizationDenied();
@@ -6113,6 +6177,8 @@ class ConnectionManager extends ChangeNotifier {
           fallbackPolicy != null && fallbackDigest != null
           ? (policy: fallbackPolicy, digest: fallbackDigest) : null;
       final profileInputsChanged = profileRevision != _managedProfileRevision;
+      final restoredAutomaticSelection = rolledBackWhitelist && !profileInputsChanged &&
+          _isConnectionProven(current);
       if (!usedCachedProfile && !profileInputsChanged) _cachedProfileFallbackGate.markFreshProfileStaged();
       final tryNext = !profileInputsChanged && activation < 2 && current.hasCoreEgressProbeFailure &&
           _transportCatalog != null && _candidateRef != null;
@@ -6130,13 +6196,22 @@ class ConnectionManager extends ChangeNotifier {
                 failedAt: DateTime.now().toUtc(), replaced: true, snapshot: current) : null;
         _stagedProfileUsesWarp = prepared.warpPolicy.canEnableRuntime;
         _activeConnectUsedWarp = _stagedProfileUsesWarp;
+        if (restoredAutomaticSelection) {
+          _clientExperience = _clientExperience.copyWith(preferredCandidateRef: '');
+        }
         _managedProfileDirty = profileInputsChanged || !current.isCleanlyHealthy;
         _activePhase = current.isCleanlyHealthy ? null : tryNext ? ConnectionPhase.recovering : ConnectionPhase.actionRequired;
         _runtimeHeadline = current.isCleanlyHealthy
-            ? usedCachedProfile ? 'POKROV подключен по сохраненным настройкам. Сервис обновим позже.' : 'POKROV подключен.'
+            ? restoredAutomaticSelection
+                ? _whitelistRollbackMessage
+                : usedCachedProfile ? 'POKROV подключен по сохраненным настройкам. Сервис обновим позже.' : 'POKROV подключен.'
             : tryNext ? 'Проверяем другое защищённое подключение…'
             : 'Не удалось восстановить подключение. Попробуй ещё раз или отключи POKROV.';
       });
+      if (restoredAutomaticSelection) {
+        _invalidateQuickSettingsProfile();
+        _queueClientExperienceWrite();
+      }
       if (current.isCleanlyHealthy) {
         _protectedHandoffActive = false;
         _finalizeProvenConnection(current);
@@ -6147,6 +6222,7 @@ class ConnectionManager extends ChangeNotifier {
       }
       _connectionDiagnostic?.enter(ConnectionDiagnosticStage.routeSwitch);
       failedActivations.add(_candidateRef!);
+      if (_candidateRef == whitelistPin) rollbackWhitelistSelection();
       if (_candidateNetworkKey != null) _candidateSelector.recordFailure(
           _candidateNetworkKey!, _candidateRef!, current.lastFailureKind ?? '');
       }
@@ -6647,6 +6723,7 @@ class ConnectionManager extends ChangeNotifier {
       await _reconnectAfterManagedProfileChange(
         progressMessage: 'Применяем выбор подключения…',
         successMessage: 'Выбор подключения применён.',
+        requestedCandidateRef: next.preferredCandidateRef,
       );
     } else if (countryChanged) {
       unawaited(refreshTransportCatalog(force: true));
