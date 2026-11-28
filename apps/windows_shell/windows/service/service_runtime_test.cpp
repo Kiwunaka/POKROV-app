@@ -1306,6 +1306,17 @@ void TestSlipstreamPeriodicEgressBudget() {
   RemoveTestRoot(root);
 }
 
+void TestBitrixPeriodicEgressTargets() {
+  using namespace pokrov::service;
+  const std::string profile = R"({"outbounds":[{"type":"hysteria2","tag":"pokrov-bitrix"}],"route":{"final":"pokrov-bitrix"}})";
+  EgressProbeReserve reserve = EgressProbeReserve::kStatic;
+  Expect(WindowsConnectionHelperIoTimeoutMs(profile) == 15000,
+         "Bitrix periodic proof must allow the relay budget");
+  Expect(!ReadWindowsSmartAccessProbeTarget(profile, false, &reserve) &&
+             reserve == EgressProbeReserve::kApi,
+         "Bitrix periodic proof must use the reachable API reserve");
+}
+
 void TestEgressFailureStopsCoreAndIsSanitized() {
   using namespace pokrov::service;
   const auto root = CreateTestRoot();
@@ -2296,6 +2307,10 @@ void TestProtectedHandoffRetainsGuardUntilVerifiedOrExplicitOff() {
 }  // namespace
 
 int main(int argc, char** argv) {
+  if (argc == 2 && std::string(argv[1]) == "--bitrix-egress") {
+    TestBitrixPeriodicEgressTargets();
+    return failures == 0 ? 0 : 1;
+  }
   if (argc == 2 && std::string(argv[1]) == "--slipstream-egress") {
     TestSlipstreamPeriodicEgressBudget();
     return failures == 0 ? 0 : 1;
@@ -2369,6 +2384,7 @@ int main(int argc, char** argv) {
   TestOwnedDnsProtectsStagingAndRetriesProof();
   TestConnectionHelperWaitsForFullTunProof();
   TestSlipstreamPeriodicEgressBudget();
+  TestBitrixPeriodicEgressTargets();
   TestEgressFailureStopsCoreAndIsSanitized();
   TestDirectReadinessOverrideRequiresSelectedVpn();
   TestPendingRecoveryStopsCoreBeforeRuntimeReady();

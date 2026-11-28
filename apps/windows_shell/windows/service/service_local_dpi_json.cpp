@@ -178,6 +178,11 @@ ComPtr<IJsonObject> Tagged(const std::vector<ComPtr<IJsonObject>>& rows, const s
   return result;
 }
 
+bool IsBitrixRelay(IJsonObject* outbound) {
+  return String(outbound, L"type") == "hysteria2" &&
+      String(outbound, L"tag") == "pokrov-bitrix";
+}
+
 bool IsVpnProbeTarget(IJsonObject* profile, const std::vector<ComPtr<IJsonObject>>& outbounds,
                       const std::string& tag) {
   const auto target = Tagged(outbounds, tag);
@@ -323,7 +328,7 @@ std::uint32_t WindowsConnectionHelperIoTimeoutMs(const std::string& encoded) {
   if (!profile) return 3000;
   for (const auto& outbound : Rows(Array(profile.Get(), L"outbounds").Get())) {
     const auto type = String(outbound.Get(), L"type");
-    if (type == "psiphon" || type == "slipstream") return 15000;
+    if (type == "psiphon" || type == "slipstream" || IsBitrixRelay(outbound.Get())) return 15000;
   }
   return 3000;
 }
@@ -376,6 +381,13 @@ std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& 
   if (!profile) return std::string{};
   const auto route = Object(profile.Get(), L"route");
   const auto outbounds = Rows(Array(profile.Get(), L"outbounds").Get());
+  if (std::any_of(outbounds.begin(), outbounds.end(), [](const auto& row) {
+        return IsBitrixRelay(row.Get());
+      })) {
+    // This relay can reach both API proof hosts through the selected exit.
+    use_api_reserve = true;
+    if (egress_reserve) *egress_reserve = EgressProbeReserve::kApi;
+  }
   const auto final_tag = route ? String(route.Get(), L"final") : "";
   if (final_tag.empty()) return std::nullopt;
   const auto direct = Tagged(outbounds, final_tag);
