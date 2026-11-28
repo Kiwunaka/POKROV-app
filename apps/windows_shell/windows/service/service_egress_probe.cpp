@@ -31,6 +31,7 @@ struct ProbeTarget {
   const wchar_t* hostname;
   const wchar_t* proof_path;
   const wchar_t* data_path;
+  const wchar_t* address = nullptr;
 };
 
 constexpr ProbeTarget kProbeTargets[] = {
@@ -40,6 +41,10 @@ constexpr ProbeTarget kProbeTargets[] = {
 
 constexpr ProbeTarget kApiReserve = {
     L"app.pokrov.space", L"/api/public/authenticated-egress-probe", L"/api/public/egress-probe-64k"};
+
+// The direct POKROV origin serves the same TLS name and proof as the public front.
+constexpr ProbeTarget kBitrixOrigin = {
+    kApiReserve.hostname, kApiReserve.proof_path, kApiReserve.data_path, L"82.21.114.104"};
 
 struct TunDnsEndpoint {
   ULONG interface_index = 0;
@@ -606,8 +611,10 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
             ? OperationInterruption::kDeadlineExceeded : OperationInterruption::kNone;
       };
       const auto target_index = (std::min)(static_cast<std::size_t>(attempt), target_count - 1);
-      const auto& target = target_index != 0 && reserve == EgressProbeReserve::kApi
-          ? api_reserve_ : targets_[target_index];
+      const bool bitrix_origin = reserve == EgressProbeReserve::kBitrixOrigin;
+      const auto& target = bitrix_origin && target_index == 0 ? kBitrixOrigin :
+          target_index != 0 && (bitrix_origin || reserve == EgressProbeReserve::kApi)
+              ? api_reserve_ : targets_[target_index];
       failure = ProbeOnce(target, periodic, target_check,
           target_index == 0 ? EgressProbeTarget::kOwnedApi : EgressProbeTarget::kOwnedReserve,
           deadline_tick, io_timeout_ms);
@@ -698,8 +705,9 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
     }
     observation.stage = EgressProbeStage::kHttpSetup;
     EgressConnection connection(observation, interrupted, io_timeout_ms);
-    bool valid = connection.Connect(tun_dns_ ? numeric : target.hostname, port_,
-                                    expected_tun_ipv4);
+    const auto* address = target.address;
+    if (address == nullptr) address = tun_dns_ ? numeric.c_str() : target.hostname;
+    bool valid = connection.Connect(address, port_, expected_tun_ipv4);
     if (valid && secure_) valid = connection.Handshake(target.hostname);
     if (!valid) {
       RecordObservation(observation, started, false, interrupted);

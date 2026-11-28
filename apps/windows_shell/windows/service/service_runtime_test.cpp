@@ -1313,8 +1313,8 @@ void TestBitrixPeriodicEgressTargets() {
   Expect(WindowsConnectionHelperIoTimeoutMs(profile) == 15000,
          "Bitrix periodic proof must allow the relay budget");
   Expect(!ReadWindowsSmartAccessProbeTarget(profile, false, &reserve) &&
-             reserve == EgressProbeReserve::kApi,
-         "Bitrix periodic proof must use the reachable API reserve");
+             reserve == EgressProbeReserve::kBitrixOrigin,
+         "Bitrix periodic proof must use the reachable API origin");
 }
 
 void TestEgressFailureStopsCoreAndIsSanitized() {

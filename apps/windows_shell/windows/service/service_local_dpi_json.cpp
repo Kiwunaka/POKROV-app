@@ -384,9 +384,8 @@ std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& 
   if (std::any_of(outbounds.begin(), outbounds.end(), [](const auto& row) {
         return IsBitrixRelay(row.Get());
       })) {
-    // This relay can reach both API proof hosts through the selected exit.
     use_api_reserve = true;
-    if (egress_reserve) *egress_reserve = EgressProbeReserve::kApi;
+    if (egress_reserve) *egress_reserve = EgressProbeReserve::kBitrixOrigin;
   }
   const auto final_tag = route ? String(route.Get(), L"final") : "";
   if (final_tag.empty()) return std::nullopt;

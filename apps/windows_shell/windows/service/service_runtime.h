@@ -119,7 +119,7 @@ class CoreOperationalEventFence {
   std::int64_t last_sequence_ = 0;
 };
 
-enum class EgressProbeReserve { kStatic, kApi, kNone };
+enum class EgressProbeReserve { kStatic, kApi, kNone, kBitrixOrigin };
 
 class RuntimeEgressProbe {
  public:
