@@ -3393,6 +3393,7 @@ void _validateHy2TransportContract(Map<String, Object?> config) {
           _runtimeText(obfs['password']).length <= 128);
   final route = _runtimeObjectMap(config['route']);
   final domainResolver = outbound?['domain_resolver'];
+  final disablePathMtuDiscovery = outbound?['disable_path_mtu_discovery'];
   final domainResolverValid = domainResolver == null ||
       (domainResolver is String && domainResolver.isNotEmpty &&
           _runtimeMapList(_runtimeObjectMap(config['dns'])['servers']).any(
@@ -3409,6 +3410,7 @@ void _validateHy2TransportContract(Map<String, Object?> config) {
     'obfs',
     'tls',
     'domain_resolver',
+    'disable_path_mtu_discovery',
   };
   final contractIsCurrent = outbound != null &&
       _runtimeText(contract['id']) == _pokrovHy2ContractId &&
@@ -3421,6 +3423,7 @@ void _validateHy2TransportContract(Map<String, Object?> config) {
       ) &&
       outbound.keys.toSet().difference(allowedOutboundFields).isEmpty &&
       domainResolverValid &&
+      (disablePathMtuDiscovery == null || disablePathMtuDiscovery is bool) &&
       tag.isNotEmpty &&
       (route['final'] == tag || _runtimeMapList(route['rules']).any(
         (rule) => _runtimeText(rule['outbound']) == tag,
