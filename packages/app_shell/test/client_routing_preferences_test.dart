@@ -87,6 +87,32 @@ void main() {
     expect(applyWindowsOwnedDns(payload), same(payload));
   });
 
+  test('Windows Bitrix uses the owned DNS through the selected exit', () {
+    final bitrix = TransportCandidate(
+      candidateRef: 'nl:bitrix_hy2', profileRef: 'bitrix_hy2', nodeCode: 'nl',
+      countryCode: 'NL', protocol: 'hysteria2', transport: 'bitrix',
+      protection: 'tls', priority: 0, network: 'udp', flow: '',
+      minimumClientRelease: '2.1.7', minimumCoreRelease: null,
+      platforms: {HostPlatform.windows}, requiredFeatures: {},
+    );
+    final profile = _profile(mode: RouteMode.selectedApps);
+    final payload = ManagedProfilePayload(
+      profileName: profile.profileName, routeMode: profile.routeMode,
+      configPayload: profile.configPayload,
+      transportCatalog: TransportCandidateCatalog(revision: 'current',
+        selectedCandidateRef: bitrix.candidateRef, candidates: [bitrix]),
+      materialCandidateRef: bitrix.candidateRef,
+    );
+    final routed = applyPokrovRoutingPreferences(payload,
+      const PokrovRoutingPreferences.defaults(), hostPlatform: HostPlatform.windows);
+    final config = jsonDecode(routed.configPayload) as Map;
+    final dns = config['dns'] as Map;
+    expect(dns['final'], 'pokrov-owned-dns');
+    final resolver = (dns['servers'] as List).cast<Map>().singleWhere(
+      (server) => server['tag'] == dns['final']);
+    expect(resolver['detour'], 'proxy');
+  }, skip: !windowsOwnedDnsConfigured);
+
   test('Windows owned DNS keeps both API proof hosts on the app tunnel', () {
     final profile = applyPokrovRoutingPreferences(
       _profile(mode: RouteMode.selectedApps),

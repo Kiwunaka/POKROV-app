@@ -523,9 +523,8 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
   int nativeSmartAccessLeaseVersion = 0,
   List<String> defaultRuAppPackageIds = const <String>[],
 }) {
-  // The DNS resolver attached to the whitelist profile follows its VPN exit.
   final ownedDns = hostPlatform == HostPlatform.windows &&
-      windowsOwnedDnsConfigured && payload.materialCandidate?.usesWhitelistTransport != true;
+      windowsOwnedDnsConfigured && !_usesCarrierDns(payload);
   if (payload.materialCandidate?.usesWhitelistTransport == true) {
     preferences = preferences.copyWith(
       dnsPreset: PokrovDnsPreset.automatic,
@@ -722,8 +721,15 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
   return ownedDns ? applyWindowsOwnedDns(routed) : routed;
 }
 
+bool _usesCarrierDns(ManagedProfilePayload payload) {
+  final candidate = payload.materialCandidate;
+  // Bitrix can reach the owned Windows resolver through the selected exit.
+  return candidate != null && candidate.usesWhitelistTransport &&
+      candidate.transport != 'bitrix';
+}
+
 ManagedProfilePayload applyWindowsOwnedDns(ManagedProfilePayload payload) {
-  if (payload.materialCandidate?.usesWhitelistTransport == true) return payload;
+  if (_usesCarrierDns(payload)) return payload;
   final config = _routingMap(jsonDecode(payload.configPayload));
   final outbounds = _routingListOfMaps(config['outbounds']);
   final endpoints = _routingListOfMaps(config['endpoints']);
