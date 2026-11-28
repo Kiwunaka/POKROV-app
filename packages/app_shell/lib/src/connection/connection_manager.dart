@@ -6015,8 +6015,13 @@ class ConnectionManager extends ChangeNotifier {
               code: 'candidate_probe_unavailable');
         }
       }
+      // A new Bitrix call can move the relay without changing its candidate ref.
+      // Refresh the manually selected route before excluding that candidate.
+      final refreshBitrix = confirmedFailure && !pinnedProfileFailed &&
+          whitelistProfile(currentRef) == 'bitrix_hy2' &&
+          whitelistProfile(cacheInputs.preferredCandidateRef) == 'bitrix_hy2';
       final failedActivations = <String>{
-        if (confirmedFailure && currentRef.isNotEmpty) currentRef,
+        if (confirmedFailure && currentRef.isNotEmpty && !refreshBitrix) currentRef,
       };
       var whitelistPin = _androidWhitelistPin(cacheInputs);
       if (confirmedFailure && currentRef == whitelistPin &&
@@ -6032,8 +6037,8 @@ class ConnectionManager extends ChangeNotifier {
         rolledBackWhitelist = true;
         return true;
       }
-      if (confirmedFailure && currentRef == whitelistPin) rollbackWhitelistSelection();
-      if (confirmedFailure && currentRef.isNotEmpty && _candidateNetworkKey != null) {
+      if (confirmedFailure && currentRef == whitelistPin && !refreshBitrix) rollbackWhitelistSelection();
+      if (confirmedFailure && currentRef.isNotEmpty && !refreshBitrix && _candidateNetworkKey != null) {
         _candidateSelector.recordFailure(_candidateNetworkKey!, currentRef,
             failed?.lastFailureKind ?? '');
       }
@@ -6065,9 +6070,10 @@ class ConnectionManager extends ChangeNotifier {
       }
       for (var activation = 0; activation < 3; activation++) {
       _connectionDiagnostic?.enter(ConnectionDiagnosticStage.profile);
+      final refreshBitrixEndpoint = refreshBitrix && activation == 0;
       var usedCachedProfile = false;
       ManagedProfilePayload? payload;
-      if (confirmedFailure || preferCachedProfile) {
+      if (!refreshBitrixEndpoint && (confirmedFailure || preferCachedProfile)) {
         try {
           // Network movement can make the API unreachable. Probe authorized saved
           // material first; only a confirmed failure excludes the current route.
@@ -6094,7 +6100,7 @@ class ConnectionManager extends ChangeNotifier {
             (error.statusCode == 401 || error.statusCode == 403)) {
           _cachedProfileFallbackGate.markAuthorizationDenied();
         }
-        if (smartAccessFallback != null ||
+        if (refreshBitrixEndpoint || smartAccessFallback != null ||
             !(error is TimeoutException || error is BootstrapFailure && _isTransientProfileFailure(error))) rethrow;
         payload = await recoverCached(offline: true);
         if (payload == null) rethrow;

@@ -5408,6 +5408,47 @@ void main() {
     });
   }
 
+  for (final choice in ['auto:bitrix_hy2', 'de:bitrix_hy2']) {
+    test('Android refreshes the relay for the selected Bitrix route ($choice)', () async {
+      final bitrix = TransportCandidate(
+        candidateRef: 'de:bitrix_hy2', profileRef: 'bitrix_hy2', nodeCode: 'de',
+        countryCode: 'DE', protocol: 'hysteria2', transport: 'bitrix', protection: 'tls',
+        priority: 1, network: 'udp', flow: '', minimumClientRelease: '2.1.7',
+        minimumCoreRelease: null, platforms: {HostPlatform.android}, requiredFeatures: {},
+      );
+      final bootstrapper = _CachedBootstrapper(bundle: true)
+        ..candidates = [_candidates.first, bitrix]
+        ..cacheAvailable = false;
+      final runtime = _Runtime()..supportsCandidates = true;
+      final store = _ExperienceStore()
+        ..saved = const PokrovClientExperienceState.empty().copyWith(
+          interfaceMode: PokrovInterfaceMode.advanced, preferredCandidateRef: choice,
+        );
+      final manager = _manager(runtime, bootstrapper, experienceStore: store);
+      addTearDown(manager.dispose);
+      manager.updateExperience(store.saved);
+      await manager.connect();
+      expect(manager.materialCandidate?.candidateRef, bitrix.candidateRef);
+
+      bootstrapper
+        ..cacheAvailable = true
+        ..cachedCatalog = TransportCandidateCatalog(revision: 'old-relay',
+            selectedCandidateRef: bitrix.candidateRef, candidates: [bitrix]);
+      bootstrapper.resolutions.clear();
+      runtime.warpEgressFailure = true;
+      await manager.readSnapshot();
+      final deadline = DateTime.now().add(const Duration(seconds: 3));
+      while ((runtime.handoffCalls == 0 || manager.busy) && DateTime.now().isBefore(deadline)) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+
+      expect(bootstrapper.resolutions, isNotEmpty);
+      expect(runtime.handoffProfiles, [bitrix.candidateRef]);
+      expect(manager.status.phase, ConnectionPhase.connected);
+      expect(store.saved.preferredCandidateRef, choice);
+    });
+  }
+
   testWidgets('fresh Android selects MTS from Обход БС without starting VPN', (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
